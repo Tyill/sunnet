@@ -129,6 +129,97 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 	delete[] share;
 }
 
+void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
+	snSize outsz, snFloat* output, snFloat* outputInx){
+
+	size_t inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
+		   inStepByN = insz.w * insz.h * insz.d,         // шаг вх слоя по батчу
+		   outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
+		   outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
+
+	size_t shareStepByN = insz.d + insz.d;               // для локализации памяти
+	snFloat* share = new snFloat[shareStepByN * insz.n];
+
+	memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+
+	// по батчу
+#pragma omp parallel for
+	for (int n = 0; n < insz.n; ++n){
+
+		snFloat* outBuff = share + shareStepByN * n;
+		snFloat* outInxBuff = share + insz.d + shareStepByN * n;
+
+		for (size_t p = 0; p < outStepByD; ++p){
+
+			size_t ox = p % outsz.w, oy = p / outsz.w,
+				posW = ox * kernel, posH = oy * kernel;
+
+			memset(outBuff, 0, insz.d * sizeof(snFloat));
+			memset(outInxBuff, 0, insz.d * sizeof(snFloat));
+
+			if (type == 0){ // max
+
+				// ядро свертки
+				for (size_t c = 0; c < (kernel * kernel); ++c){
+
+					size_t cx = c % kernel, cy = c / kernel;
+					snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+
+					// по всем вх слоям
+					for (size_t d = 0; d < insz.d; ++d){
+						snFloat val = *pIn;
+						pIn += inStepByD;
+						if (val > outBuff[d]){
+							outBuff[d] = val;
+							outInxBuff[d] = c;
+						}
+					}
+				}
+
+				snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+				snFloat* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
+
+				// по всем вых слоям
+				for (size_t k = 0; k < outsz.d; ++k){
+
+					*pOut = outBuff[k];
+					*pOutInx = outInxBuff[k];
+
+					pOut += outStepByD;
+					pOutInx += outStepByD;
+				}
+			}
+			else{ // mean
+
+				// ядро свертки
+				for (size_t c = 0; c < (kernel * kernel); ++c){
+
+					size_t cx = c % kernel, cy = c / kernel;
+					snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+
+					// по всем вх слоям
+					for (size_t d = 0; d < insz.d; ++d){
+						outBuff[d] += *pIn / d;
+						pIn += inStepByD;
+					}
+				}
+
+				snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+				
+				// по всем вых слоям
+				for (size_t k = 0; k < outsz.d; ++k){
+
+					*pOut = outBuff[k];
+				
+					pOut += outStepByD;
+				}
+			}						
+		}
+	}
+
+	delete[] share;
+}
+
 void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNormParam prm){
  	
 	size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;

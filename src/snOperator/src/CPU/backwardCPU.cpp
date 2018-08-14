@@ -93,7 +93,7 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 	memset(dWeightOut, 0, (wStepByK + 1) * kernel * sizeof(snFloat));
 	
 	// по батчу  
-	for (int n = 0; n < insz.n; ++n){
+	for (size_t n = 0; n < insz.n; ++n){
 				
 		snFloat* inBuff = share;
 		snFloat* ginBuff = share + insz.d;
@@ -168,6 +168,76 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 
 	delete[] share;
 }   
+
+void bwdPooling(int type, size_t kernel, snSize outsz, snFloat* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
+
+	size_t inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
+		   inStepByN = insz.w * insz.h * insz.d,         // шаг вх слоя по батчу
+		   outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
+		   outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
+
+	size_t shareStepByN = insz.d;                        // для локализации памяти
+	snFloat* share = new snFloat[shareStepByN * insz.n];
+
+	memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+
+	// по батчу
+#pragma omp parallel for
+	for (int n = 0; n < insz.n; ++n){
+
+		snFloat* outBuff = share + shareStepByN * n;
+
+		for (size_t p = 0; p < outStepByD; ++p){
+
+			size_t ox = p % outsz.w, oy = p / outsz.w,
+				posW = ox * kernel, posH = oy * kernel;
+					
+			if (type == 0){ // max
+
+				snFloat* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
+				snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+				snFloat* pGrOut = gradOut + n * inStepByN;
+				
+				// по всем вх слоям
+				for (size_t d = 0; d < insz.d; ++d){
+					
+					size_t c = *pOutInx, cx = c % kernel, cy = c / kernel;
+					pGrOut[(cx + posW) + (cy + posH) * insz.w] = *pGrIn;
+
+					pGrIn += outStepByD;
+					pOutInx += outStepByD;
+					pGrOut += inStepByD;
+				}
+			}
+			else{ // mean
+								
+				snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+
+				// по всем вых слоям
+				for (size_t k = 0; k < outsz.d; ++k){
+					outBuff[k] = *pGrIn;
+					pGrIn += outStepByD;
+				}
+
+				// ядро свертки
+				for (size_t c = 0; c < (kernel * kernel); ++c){
+
+					size_t cx = c % kernel, cy = c / kernel;
+					snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+
+					// по всем вх слоям
+					for (size_t d = 0; d < insz.d; ++d){
+						*pGrOut = outBuff[d] / kernel;
+						pGrOut += inStepByD;
+					}
+				}
+			}			
+		}
+	}
+
+	delete[] share;
+}
+
 
 void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNormParam prm){
 	// https://kevinzakka.github.io/2016/09/14/batch_normalization/

@@ -29,6 +29,25 @@
 #include"SNOperator/src/mathFunctions.h"
 
 
+/// прямой проход
+void fwdPooling(   int type,   ///< тип: max, avr..
+	          size_t kernel,   ///< размер маски
+       SN_Base::snSize insz,   ///< вход значения размер 
+    SN_Base::snFloat* input,   ///< вход значения
+      SN_Base::snSize outsz,   ///< выход значения размер 
+   SN_Base::snFloat* output,   ///< выход значения
+SN_Base::snFloat* outputInx);  ///< выход значения индекс ненулевого элемента
+
+/// обратный проход
+void bwdPooling(   int type,   ///< тип: max, avr..
+              size_t kernel,   ///< размер маски
+	  SN_Base::snSize outsz,   ///< выход значения размер 
+SN_Base::snFloat* outputInx,   ///< выход значения индекс ненулевого элемента
+   SN_Base::snFloat* gradIn,   ///< входной градиент
+       SN_Base::snSize insz,   ///< вход значения размер 
+  SN_Base::snFloat* gradOut);  ///< выходной градиент
+
+
 /// объединяющий слой
 class Pooling : SN_Base::OperatorBase{
 
