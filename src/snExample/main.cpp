@@ -14,7 +14,7 @@
 
 #include "skynet/skynet.h"
 #include "snAux/auxFunc.h"
-#include "Lib/OpenBLAS/include/cblas.h"
+#include "Lib/OpenBLAS/cblas.h"
 #include "snBase\snBase.h"
 
 #include "Lib/OpenCV_3.3.0/opencv2/core/core_c.h"
@@ -74,14 +74,14 @@ int main(int argc, _TCHAR* argv[])
 		"\"NodeName\":\"F1\","    
 		"\"NextNodes\":\"F2\","   
 		"\"OperatorName\":\"Convolution\","  
-		"\"OperatorParams\":{\"kernel\":\"10\"," 
-		                    "\"krnWidth\":\"3\","
-							"\"krnHeight\":\"3\","
+		"\"OperatorParams\":{\"kernel\":\"30\"," 
+		                    "\"krnWidth\":\"5\","
+							"\"krnHeight\":\"5\","
 							"\"padding\":\"1\","
 							"\"stride\":\"1\","
-		                    "\"weightInitType\":\"he\","
+		                    "\"weightInitType\":\"uniform\","
 		                    "\"activeType\":\"none\","  
-		                    "\"optimizerType\":\"sgd\"," 
+		                    "\"optimizerType\":\"adam\"," 
 		                    "\"batchNormType\":\"none\"}"    
 		"},"
 
@@ -222,7 +222,7 @@ int main(int argc, _TCHAR* argv[])
 	size_t num_inst = 0;
 
 fff:
-	float accuratSumm = 0, lr = 0.05;
+	float accuratSumm = 0, lr = 0.001;
 	for (int k = 0; k < 1000; ++k){
 
 		fill_n(targetLayer, classCnt * batchSz, 0.F);
@@ -279,7 +279,7 @@ fff:
 
 				for (size_t c = 0; c < nc; ++c){
 										
-					refData[r * nc + c] = max<int>(0, (pt[c] - mean));
+					refData[r * nc + c] = (pt[c] - mean);
 				}
 			}
 
@@ -299,7 +299,7 @@ fff:
 			               &accurat);
 
 		accuratSumm += accurat;
-		cout << k << " metrix " << accuratSumm / k << endl;
+		//cout << k << " metrix " << accuratSumm / k << endl;
 	}
 	
 	/*SN_API::batchNorm bn;
@@ -318,7 +318,7 @@ fff:
 	SN_API::snSetWeightNode(snet, "F1", weight, wsz);*/
 
 
-	goto fff;
+	//goto fff;
 
 	cin.get();
 

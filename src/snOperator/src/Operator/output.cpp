@@ -25,7 +25,7 @@ std::vector<std::string> Output::Do(const learningParam& lernPrm, const std::vec
 
 			inFwTns_ = *neighbOpr[0]->getOutput();
 
-			int sz = neighbOpr.size();
+			size_t sz = neighbOpr.size();
 			for (size_t i = 1; i < sz; ++i)
 				inFwTns_ += *neighbOpr[i]->getOutput();
 

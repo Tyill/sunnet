@@ -9,7 +9,7 @@
 #define SN_DEBUG
 
 #ifdef SN_DEBUG
-#define SN_PRINTMESS(mess) printf("%s \n", mess);
+#define SN_PRINTMESS(mess) printf("%s \n", (mess).c_str());
 #else
 #define SN_PRINTMESS(mess);
 #endif
@@ -51,7 +51,6 @@ namespace SN_Base{
 	};
 		
 	/// тензор - вход данные и выходные данные каждого узла сети.
-	/// Операторы копирования не переопределены - память заново не выделяется, копируется указатель.
 	struct Tensor{
 				
 		explicit Tensor(const snSize& sz = snSize(0,0,0,0,0)) : sz_(sz){
