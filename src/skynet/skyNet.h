@@ -1,4 +1,27 @@
-﻿
+﻿//
+// SkyNet Project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+//
+// This code is licensed under the MIT License.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files(the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions :
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+//
 
 #ifndef SKYNET_C_API_H_
 #define SKYNET_C_API_H_
@@ -20,39 +43,39 @@ namespace SN_API{
 
 		typedef float snFloat;
 
-		// размер слоя данных
+		/// data layer size
 		struct snLSize{
 
-			size_t w, h, ch, bch; ///< ширина, высота, каналы, батч
+			size_t w, h, ch, bch; ///< width, height, channels, batch
 			snLSize(size_t w_ = 1, size_t h_ = 1, size_t ch_ = 1, size_t bch_ = 1) :
 				w(w_), h(h_), ch(ch_), bch(bch_){};
 		};
 
-		/// объект нсети
+		/// object net
 		typedef void* skyNet;
 
-		typedef void* snUData;                                      ///< польз данные	
-		typedef void(*snStatusCBack)(const char* mess, snUData);    ///< статус callback
+		typedef void* snUData;                                      ///< user data	
+		typedef void(*snStatusCBack)(const char* mess, snUData);    ///< status callback
 
-		/// создать объект нсети
-		/// @param[in] jnNet - архитектура сети в JSON
-		/// @param[out] out_err - ошибка разбора jsNet. "" - ok. Память выделяет польз-ль.
-		/// @param[in] statusCBack - callback состояния. Необязательно
-		/// @param[in] udata - польз данные (для callback состояния). Необязательно
+		/// create net
+		/// @param[in] jnNet - network architecture in JSON
+		/// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+		/// @param[in] statusCBack - callback state. Not necessary
+		/// @param[in] udata - user data. Not necessary
 		SKYNET_API skyNet snCreateNet(const char* jnNet,
 			                          char* out_err /*sz 256*/, 
 									  snStatusCBack = nullptr, 
 			                          snUData = nullptr);
 
-		/// тренинг - цикл вперед-назад с автокоррекцией весов
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] lr - скорость обучения
-		/// @param[in] iLayer - входной слой
-		/// @param[in] lsz - размер вх слоя
-		/// @param[in] targetData - целевой результат, размер должен соот-ть разметке. Память выделяет польз-ль.
-		/// @param[out] outData - выходной результат, размер соот-ет разметке. Память выделяет польз-ль.
-		/// @param[in] tsz - размер целевого и выходного результата. Задается для проверки.
-		/// @param[out] outAccurate - текущая точность
+		/// training - a cycle forward-back with auto-correction of weights
+		/// @param[in] skyNet - object net
+		/// @param[in] lr - learning rate
+		/// @param[in] iLayer - input layer
+		/// @param[in] lsz - input layer size
+		/// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
+		/// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
+		/// @param[in] tsz - size of target and result. Sets for verification
+		/// @param[out] outAccurate - current accuracy
 		/// @return true - ok
 		SKYNET_API bool snTraining(skyNet, 
 			                       snFloat lr,
@@ -63,13 +86,13 @@ namespace SN_API{
 								   snLSize tsz,
 								   snFloat* outAccurate);
 
-		/// прямой проход
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] isLern - обучение?
-		/// @param[in] iLayer - входной слой
-		/// @param[in] lsz - размер вх слоя
-		/// @param[out] outData - выходной результат, размер соот-ет разметке. Память выделяет польз-ль.
-		/// @param[in] osz - размер выходного результата. Задается для проверки.
+		/// forward pass
+		/// @param[in] skyNet - object net
+		/// @param[in] isLern - is lern?
+		/// @param[in] iLayer - input layer
+		/// @param[in] lsz - input layer size
+		/// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
+		/// @param[in] osz - size of result. Sets for verification
 		/// @return true - ok
 		SKYNET_API bool snForward(skyNet,
 			                      bool isLern,
@@ -78,11 +101,11 @@ namespace SN_API{
 								  snFloat* outData,
 								  snLSize osz);
 
-		/// обратный проход
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] lr - скорость обучения
-		/// @param[in] inGradErr - градиент ошибки, размер должен соот-ть выходному результату
-		/// @param[in] gsz - размер градиента ошибки. Задается для проверки.
+		/// backward pass
+		/// @param[in] skyNet - object net
+		/// @param[in] lr - learning rate
+		/// @param[in] inGradErr - error gradient, the size must match the output
+		/// @param[in] gsz - size of the error gradient. Sets for verification
 		/// @return true - ok
 		SKYNET_API bool snBackward(skyNet,
 			                       snFloat lr,
@@ -90,129 +113,129 @@ namespace SN_API{
 								   snLSize gsz);
 
 		
-		/// задать веса узла сети
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[in] inData - данные
-		/// @param[in] dsz - размер данных
+		/// set weight of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[in] inData - data
+		/// @param[in] dsz - data size
 		/// @return true - ok
 		SKYNET_API bool snSetWeightNode(skyNet,
 			                            const char* nodeName,
 									    const snFloat* inData,
 									    snLSize dsz);
 
-		/// вернуть веса узла сети
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[out] outData - данные. Сначала передать NULL, потом передавать его же. 
-		/// @param[out] outSz - размер данных
+		/// get weight of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[out] outData - output data. First pass NULL, then pass it to the same 
+		/// @param[out] outSz - output size
 		/// @return true - ok
 		SKYNET_API bool snGetWeightNode(skyNet,
 			                            const char* nodeName,
 									    snFloat** outData,
 									    snLSize* outSz);
 
-		/// нормализация слоя по батчу
+		/// batchNorm
 		struct batchNorm{
-			snFloat* mean;      ///< среднее вх значений. Память выделяет польз-ль
-			snFloat* varce;     ///< дисперсия вх значений
-			snFloat* scale;     ///< коэф γ
-			snFloat* schift;    ///< коэф β
+			snFloat* mean;      ///< mean. The memory is allocated by the user
+			snFloat* varce;     ///< disp
+			snFloat* scale;     ///< coef γ
+			snFloat* schift;    ///< coef β
 		};
 
-		/// задать нормализацию для узла
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[in] inData - данные
-		/// @param[in] dsz - размер данных
+		/// set batchNorm of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[in] inData - data
+		/// @param[in] dsz - data size
 		/// @return true - ok
 		SKYNET_API bool snSetBatchNormNode(skyNet,
 			                               const char* nodeName,
 										   const batchNorm inData,
 			                               snLSize dsz);
 
-		/// вернуть нормализацию узла
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[out] outData - данные 
-		/// @param[out] outSz - размер данных
+		/// get batchNorm of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[out] outData - data 
+		/// @param[out] outSz - data size
 		/// @return true - ok
 		SKYNET_API bool snGetBatchNormNode(skyNet,
 			                               const char* nodeName,
 			                               batchNorm* outData,
 			                               snLSize* outSz);
 						
-		/// задать входные данные узла (актуально для доп входов)
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[in] inData - данные
-		/// @param[in] dsz - размер данных
+		/// set input node (relevant for additional inputs)
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[in] inData - data
+		/// @param[in] dsz - data size
 		/// @return true - ok
 		SKYNET_API bool snSetInputNode(skyNet,
 			                           const char* nodeName,
 			                           const snFloat* inData,
 			                           snLSize dsz);
 
-		/// вернуть выходные значения узла (актуально для доп выходов)
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[out] outData - данные. Сначала передать NULL, потом передавать его же. 
-		/// @param[out] outSz - размер данных
+		/// get output node (relevant for additional inputs)
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[out] outData - data. First pass NULL, then pass it to the same 
+		/// @param[out] outSz - data size
 		/// @return true - ok
 		SKYNET_API bool snGetOutputNode(skyNet,
 			                            const char* nodeName,
 			                            snFloat** outData,
 			                            snLSize* outSz);
 
-		/// задать градиент значения узла (актуально для доп выходов)
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[in] inData - данные
-		/// @param[in] dsz - размер данных
+		/// set gradient node (relevant for additional outputs)
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[in] inData - data
+		/// @param[in] dsz - data size
 		/// @return true - ok
 		SKYNET_API bool snSetGradientNode(skyNet,
 			                              const char* nodeName,
 			                              const snFloat* inData,
 			                              snLSize dsz);
 
-		/// вернуть градиент значения узла (актуально для доп выходов)
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[out] outData - данные. Сначала передать NULL, потом передавать его же. 
-		/// @param[out] outSz - размер данных
+		/// get gradient node (relevant for additional outputs)
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[out] outData - data. First pass NULL, then pass it to the same 
+		/// @param[out] outSz - data size
 		/// @return true - ok
 		SKYNET_API bool snGetGradientNode(skyNet,
 			                              const char* nodeName,
 			                              snFloat** outData,
 			                              snLSize* outSz);
 
-		/// задать параметры узла
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[in] jnParam - параметры узла в JSON. 
+		/// set params of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[in] jnParam - params of node in JSON. 
 		/// @return true - ok
 		SKYNET_API bool snSetParamNode(skyNet,
 			                           const char* nodeName,
 									   const char* jnParam);
 
-		/// вернуть параметры узла
-		/// @param[in] skyNet - объект нсети
-		/// @param[in] nodeName - имя узла
-		/// @param[out] jnParam - параметры узла в JSON. Память выделяет пользователь. 
+		/// get params of node
+		/// @param[in] skyNet - object net
+		/// @param[in] nodeName - name node
+		/// @param[out] jnParam - params of node in JSON. The memory is allocated by the user 
 		/// @return true - ok
 		SKYNET_API bool snGetParamNode(skyNet,
 			                           const char* nodeName,
 									   char* jnParam /*minsz 256*/);
 
-		/// вернуть архитектуру сети
-		/// @param[in] skyNet - объект нсети
-		/// @param[out] jnNet - архитектура сети в JSON. Память выделяет пользователь.
+		/// get architecture of net
+		/// @param[in] skyNet - object net
+		/// @param[out] jnNet - architecture of net in JSON. The memory is allocated by the user
 		/// @return true - ok
 		SKYNET_API bool snGetArchitecNet(skyNet,
 			                             char* jnNet /*minsz 2048*/);
 
-		/// освободить объект сети
-		/// @param[in] skyNet - объект нсети
+		/// free object net
+		/// @param[in] skyNet - object net
 		SKYNET_API void snFreeNet(skyNet);
 
 
