@@ -48,7 +48,7 @@ std::vector<std::string> LossFunction::Do(const learningParam& lernPrm, const st
 
 			inFwTns_ = *neighbOpr[0]->getOutput();
 
-			int sz = neighbOpr.size();
+			size_t sz = neighbOpr.size();
 			for (size_t i = 1; i < sz; ++i)
 				inFwTns_ += *neighbOpr[i]->getOutput();
 
@@ -58,7 +58,7 @@ std::vector<std::string> LossFunction::Do(const learningParam& lernPrm, const st
 
 			inBwTns_ = *neighbOpr[0]->getGradient();
 
-			int sz = neighbOpr.size();
+			size_t sz = neighbOpr.size();
 			for (size_t i = 1; i < sz; ++i)
 				inBwTns_ +=  *neighbOpr[i]->getGradient();
 

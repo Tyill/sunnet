@@ -2,6 +2,7 @@
 #include "../stdafx.h"
 #include "SNOperator/src/structurs.h"
 #include "SNOperator/src/mathFunctions.h"
+#include <omp.h>  
 
 using namespace std;
 using namespace SN_Base;
@@ -63,30 +64,35 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 		   outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
 		   outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
 
-	vector<snFloat> inBuff(insz.d, 0), ginBuff(kernel, 0), goutBuff(insz.d, 0);
-
+	size_t shareStepByN = insz.d + kernel + insz.d;      // для локализации памяти
+	snFloat* share = new snFloat[shareStepByN * insz.n];
+		
 	memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
-	memset(dWeightOut, 0, wStepByK * kernel * sizeof(snFloat));
-
+	memset(dWeightOut, 0, (wStepByK + 1) * kernel * sizeof(snFloat));
+	PROFILE_START
 	// по батчу
-	for (size_t n = 0; n < insz.n; ++n){
+//#pragma omp parallel for
+	for (int n = 0; n < insz.n; ++n){
 
-//#pragma omp parallel for private(inBuff, ginBuff, goutBuff)
+		snFloat* inBuff = share + shareStepByN * n;
+		snFloat* ginBuff = share + insz.d + shareStepByN * n;
+		snFloat* goutBuff = share + insz.d + kernel + shareStepByN * n;
+
 		for (size_t p = 0; p < outStepByD; ++p){
 
 			size_t ox = p % outsz.w, oy = p / outsz.w,
 				posW = ox * stride, posH = oy * stride;
 					
 			snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
-			snFloat* pdW = dWeightOut + wStepByK;
+			snFloat* pdW = dWeightOut;
 
 			for (size_t k = 0; k < kernel; ++k){
 					
-				pdW += k * wStepByK + k;
+				pdW += wStepByK;
 
 				ginBuff[k] = *pGrIn;				
 				
-				*pdW += *pGrIn;      // + bias
+				*(pdW + k) += *pGrIn;      // + bias
 
 				pGrIn += outStepByD;
 			}
@@ -104,7 +110,7 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 					pIn += inStepByD;
 				}
 
-				memset(goutBuff.data(), 0, insz.d * sizeof(snFloat));
+				memset(goutBuff, 0, insz.d * sizeof(snFloat));
 
 				// по всем вых слоям
 				for (size_t k = 0; k < kernel; ++k){
@@ -113,9 +119,9 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 					snFloat gin = ginBuff[k];
 					for (size_t d = 0; d < insz.d; ++d){
 						goutBuff[d] += gin * (*pW);
-						*pdW += gin * inBuff[d];
-						
 						pW += wStepByD;
+
+						*pdW += gin * inBuff[d];
 						pdW += wStepByD;
 					}
 
@@ -131,17 +137,14 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 				}				
 			}					
 		}
-	}
-		
-	for (size_t i = 0; i < (wStepByK * kernel); ++i)
-		dWeightOut[i] /= kernel;
-
+	}		
+	PROFILE_END("BWD")
 	if (insz.n > 1){
-		for (size_t i = 0; i < (wStepByK * kernel); ++i)
+		for (size_t i = 0; i < ((wStepByK + 1) * kernel); ++i)
 			dWeightOut[i] /= insz.n;
 	}
 
-	bool ret = false;
+	delete[] share;
 }   
 
 void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNormParam prm){

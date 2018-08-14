@@ -139,7 +139,7 @@ std::vector<std::string> Convolution::Do(const learningParam& lernPrm, const std
 		
 			inFwTns_ = *neighbOpr[0]->getOutput();
 
-			int sz = neighbOpr.size();
+			size_t sz = neighbOpr.size();
 			for (size_t i = 1; i < sz; ++i)
 				inFwTns_ += *neighbOpr[i]->getOutput();
 			
@@ -149,7 +149,7 @@ std::vector<std::string> Convolution::Do(const learningParam& lernPrm, const std
 		
 			inBwTns_ = *neighbOpr[0]->getGradient();
 
-			int sz = neighbOpr.size();
+			size_t sz = neighbOpr.size();
 			for (size_t i = 1; i < sz; ++i)
 				inBwTns_ += *neighbOpr[i]->getGradient();
 						
@@ -294,10 +294,10 @@ void Convolution::updateConfig(const snSize& newsz){
 	
 
 	snSize outSz(0, 0, kernel_, newsz.n, 1);
-	for (int i = krnWidth_ / 2; i < (newsz.w + padding_ * 2 - krnWidth_ / 2); i += stride_)
+	for (size_t i = krnWidth_ / 2; i < (newsz.w + padding_ * 2 - krnWidth_ / 2); i += stride_)
 		++outSz.w;
 
-	for (int i = krnHeight_ / 2; i < (newsz.h + padding_ * 2 - krnHeight_ / 2); i += stride_)
+	for (size_t i = krnHeight_ / 2; i < (newsz.h + padding_ * 2 - krnHeight_ / 2); i += stride_)
 		++outSz.h;
 
 	baseOut_->resize(outSz);

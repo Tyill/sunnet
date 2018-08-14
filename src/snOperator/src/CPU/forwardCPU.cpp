@@ -3,6 +3,7 @@
 
 #include "../stdafx.h"
 #include "SNOperator/src/mathFunctions.h"
+#include <omp.h>  
 
 using namespace std;
 using namespace SN_Base;
@@ -42,34 +43,37 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 		   outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
 		   outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
 
-	vector<snFloat> inBuff(insz.d, 0), outBuff(kernel, 0);
-
+	size_t shareStepByN = insz.d + kernel;               // для локализации памяти
+	snFloat* share = new snFloat[shareStepByN * insz.n];
+	
 	memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-
+	
 	// по батчу
-	for (size_t n = 0; n < insz.n; ++n){
+#pragma omp parallel for
+	for (int n = 0; n < insz.n; ++n){
 
-//#pragma omp parallel for private(inBuff, outBuff)
+		snFloat* inBuff = share + shareStepByN * n;
+		snFloat* outBuff = share + insz.d + shareStepByN * n;
+
 		for (size_t p = 0; p < outStepByD; ++p){
-
+		
 			size_t ox = p % outsz.w, oy = p / outsz.w,
 				posW = ox * stride, posH = oy * stride;
 
-			memset(outBuff.data(), 0, kernel * sizeof(snFloat));
+			memset(outBuff, 0, kernel * sizeof(snFloat));
 
 			// ядро свертки
 			for (size_t c = 0; c < (krnWidth * krnHeight); ++c){
 
 				size_t cx = c % krnWidth, cy = c / krnWidth;
 				snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+				snFloat* pW = weight + cx + cy * krnWidth;
 
 				for (size_t d = 0; d < insz.d; ++d){
 					inBuff[d] = *pIn;
 					pIn += inStepByD;
 				}
-
-				snFloat* pW = weight + cx + cy * krnWidth;
-
+			
 				// по всем вых слоям
 				for (size_t k = 0; k < kernel; ++k){
 										
@@ -85,19 +89,21 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 			}
 
 			snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-			snFloat* pW = weight + wStepByK;
+			snFloat* pW = weight;
 
 			// по всем вых слоям
 			for (size_t k = 0; k < kernel; ++k){
 				
-				pW += k * wStepByK + k;
+				pW += wStepByK;
 
-				*pOut += outBuff[k] + *pW; // + bias
-							
+				*pOut += outBuff[k] + *(pW + k); // + bias
+				
 				pOut += outStepByD;
 			}
-		}
+		}		
 	}
+	
+	delete[] share;
 }
 
 void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNormParam prm){
