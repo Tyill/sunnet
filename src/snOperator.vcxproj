@@ -185,6 +185,7 @@
     <ClInclude Include="snOperator\src\operator\input.h" />
     <ClInclude Include="snOperator\src\operator\lossFunction.h" />
     <ClInclude Include="snOperator\src\operator\output.h" />
+    <ClInclude Include="snOperator\src\Operator\pooling.h" />
     <ClInclude Include="snOperator\src\optimizer.h" />
     <ClInclude Include="snOperator\src\random.h" />
     <ClInclude Include="snOperator\src\stdafx.h" />
@@ -200,6 +201,7 @@
     <ClCompile Include="snOperator\src\operator\input.cpp" />
     <ClCompile Include="snOperator\src\operator\lossFunction.cpp" />
     <ClCompile Include="snOperator\src\operator\output.cpp" />
+    <ClCompile Include="snOperator\src\Operator\pooling.cpp" />
     <ClCompile Include="snOperator\src\optimizer.cpp" />
     <ClCompile Include="snOperator\src\random.cpp" />
     <ClCompile Include="snOperator\src\snOperator.cpp" />

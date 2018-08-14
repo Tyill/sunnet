@@ -35,3 +35,9 @@ enum class batchNormType{
 	beforeActive = 0,
 	postActive = 1,
 };
+
+/// pooling
+enum class poolType{
+	max = 0,
+	avg = 1,
+};

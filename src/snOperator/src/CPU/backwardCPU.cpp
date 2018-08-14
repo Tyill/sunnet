@@ -64,19 +64,17 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 		   outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
 		   outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
 
-	size_t shareStepByN = insz.d + kernel + insz.d;      // для локализации памяти
-	snFloat* share = new snFloat[shareStepByN * insz.n];
+	snFloat* share = new snFloat[insz.d + kernel + insz.d]; // для локализации памяти
 		
 	memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 	memset(dWeightOut, 0, (wStepByK + 1) * kernel * sizeof(snFloat));
-	PROFILE_START
-	// по батчу
-//#pragma omp parallel for
+	
+	// по батчу  
 	for (int n = 0; n < insz.n; ++n){
-
-		snFloat* inBuff = share + shareStepByN * n;
-		snFloat* ginBuff = share + insz.d + shareStepByN * n;
-		snFloat* goutBuff = share + insz.d + kernel + shareStepByN * n;
+				
+		snFloat* inBuff = share;
+		snFloat* ginBuff = share + insz.d;
+		snFloat* goutBuff = share + insz.d + kernel;
 
 		for (size_t p = 0; p < outStepByD; ++p){
 
@@ -132,13 +130,14 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 				snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
 				for (size_t d = 0; d < insz.d; ++d){
+                   
 					*pGrOut += goutBuff[d];
 					pGrOut += inStepByD;
 				}				
 			}					
 		}
 	}		
-	PROFILE_END("BWD")
+	
 	if (insz.n > 1){
 		for (size_t i = 0; i < ((wStepByK + 1) * kernel); ++i)
 			dWeightOut[i] /= insz.n;

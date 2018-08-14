@@ -66,6 +66,9 @@
     <ClInclude Include="snOperator\src\Operator\convolution.h">
       <Filter>Operator</Filter>
     </ClInclude>
+    <ClInclude Include="snOperator\src\Operator\pooling.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="snOperator\src\operator\fullyConnected.cpp">
@@ -106,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="snOperator\src\CPU\forwardCPU.cpp">
       <Filter>CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="snOperator\src\Operator\pooling.cpp">
+      <Filter>Operator</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

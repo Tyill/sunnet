@@ -96,7 +96,7 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 				
 				pW += wStepByK;
 
-				*pOut += outBuff[k] + *(pW + k); // + bias
+                *pOut += outBuff[k] + *(pW + k); // + bias
 				
 				pOut += outStepByD;
 			}

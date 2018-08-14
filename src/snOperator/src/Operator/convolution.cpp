@@ -229,17 +229,17 @@ void Convolution::backward(SN_Base::Tensor* inTns, const learningParam& lernPrm)
 		snFloat* out = baseOut_->getData();
 		
 		// производная функции активации
-		size_t ksz = kernel_ * inSzMem_.n;
+		size_t osz = baseOut_->size().size();
 		switch (activeType_){
-		case activeType::sigmoid:   df_sigmoid(out, ksz); break;
-		case activeType::relu:      df_relu(out, ksz); break;
-		case activeType::leakyRelu: df_leakyRelu(out, ksz); break;
-		case activeType::elu:       df_elu(out, ksz); break;
+		case activeType::sigmoid:   df_sigmoid(out, osz); break;
+		case activeType::relu:      df_relu(out, osz); break;
+		case activeType::leakyRelu: df_leakyRelu(out, osz); break;
+		case activeType::elu:       df_elu(out, osz); break;
 		default: break;
 		}
 
 		// обновл градиент
-		for (size_t i = 0; i < ksz; ++i) gradIn[i] *= out[i];
+		for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
 	}
 
 	/// batchNorm

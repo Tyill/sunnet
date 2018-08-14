@@ -74,25 +74,36 @@ int main(int argc, _TCHAR* argv[])
 		"\"NodeName\":\"F1\","    
 		"\"NextNodes\":\"F2\","   
 		"\"OperatorName\":\"Convolution\","  
-		"\"OperatorParams\":{\"kernel\":\"30\"," 
-		                    "\"krnWidth\":\"5\","
-							"\"krnHeight\":\"5\","
+		"\"OperatorParams\":{\"kernel\":\"32\"," 
+		                    "\"krnWidth\":\"3\","
+							"\"krnHeight\":\"3\","
 							"\"padding\":\"1\","
 							"\"stride\":\"1\","
-		                    "\"weightInitType\":\"uniform\","
-		                    "\"activeType\":\"none\","  
+		                    "\"weightInitType\":\"he\","
+		                    "\"activeType\":\"relu\","  
 		                    "\"optimizerType\":\"adam\"," 
 		                    "\"batchNormType\":\"none\"}"    
 		"},"
-
+						
 		"{"
 		"\"NodeName\":\"F2\","    
-		"\"NextNodes\":\"LS\","   
+		"\"NextNodes\":\"F5\","   
 		"\"OperatorName\":\"FullyConnected\"," 
+		"\"OperatorParams\":{\"kernel\":\"100\","
+		                    "\"weightInitType\":\"he\","
+		                    "\"activeType\":\"relu\","
+		                    "\"optimizerType\":\"adam\","
+		                    "\"batchNormType\":\"none\"}"
+		"},"
+
+		"{"
+		"\"NodeName\":\"F5\","
+		"\"NextNodes\":\"LS\","
+		"\"OperatorName\":\"FullyConnected\","
 		"\"OperatorParams\":{\"kernel\":\"10\","
 		                    "\"weightInitType\":\"uniform\","
 		                    "\"activeType\":\"none\","
-		                    "\"optimizerType\":\"sgd\","
+		                    "\"optimizerType\":\"adam\","
 		                    "\"batchNormType\":\"none\"}"
 		"},"
 		/*
@@ -159,7 +170,7 @@ int main(int argc, _TCHAR* argv[])
 	string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
 	//string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 		
-	int batchSz = 10, classCnt = 10, w = 28, h = 28;
+	int batchSz = 1, classCnt = 10, w = 28, h = 28;
 	SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
 	SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
 	SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -299,7 +310,7 @@ fff:
 			               &accurat);
 
 		accuratSumm += accurat;
-		//cout << k << " metrix " << accuratSumm / k << endl;
+		cout << k << " metrix " << accuratSumm / k << endl;
 	}
 	
 	/*SN_API::batchNorm bn;
