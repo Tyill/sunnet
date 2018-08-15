@@ -31,7 +31,7 @@
 
 /// прямой проход
 void fwdPooling(   int type,   ///< тип: max, avr..
-	          size_t kernel,   ///< размер маски
+              size_t kernel,   ///< размер маски
        SN_Base::snSize insz,   ///< вход значения размер 
     SN_Base::snFloat* input,   ///< вход значения
       SN_Base::snSize outsz,   ///< выход значения размер 
@@ -41,7 +41,7 @@ SN_Base::snFloat* outputInx);  ///< выход значения индекс н�
 /// обратный проход
 void bwdPooling(   int type,   ///< тип: max, avr..
               size_t kernel,   ///< размер маски
-	  SN_Base::snSize outsz,   ///< выход значения размер 
+      SN_Base::snSize outsz,   ///< выход значения размер 
 SN_Base::snFloat* outputInx,   ///< выход значения индекс ненулевого элемента
    SN_Base::snFloat* gradIn,   ///< входной градиент
        SN_Base::snSize insz,   ///< вход значения размер 
@@ -53,24 +53,24 @@ class Pooling : SN_Base::OperatorBase{
 
 public:
 
-	Pooling(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Pooling(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-	~Pooling() = default;
+    ~Pooling() = default;
 
-	std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
-	
-		
+    std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+    
+        
 private:
-		
-	size_t kernel_ = 2;                                         ///< размер
-		
-	poolType poolType_ = poolType::max;                         ///< тип
+        
+    size_t kernel_ = 2;                                         ///< размер
+        
+    poolType poolType_ = poolType::max;                         ///< тип
 
-	SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
-		
-	void load(std::map<std::string, std::string>& prms);
-		
-	void forward(SN_Base::Tensor* inTns);
-	void backward(SN_Base::Tensor* inTns, const SN_Base::learningParam& lernPrm);
+    SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
+        
+    void load(std::map<std::string, std::string>& prms);
+        
+    void forward(SN_Base::Tensor* inTns);
+    void backward(SN_Base::Tensor* inTns, const SN_Base::learningParam& lernPrm);
 
 };

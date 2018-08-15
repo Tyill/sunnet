@@ -32,18 +32,18 @@ using namespace SN_Base;
 Input::Input(const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(name, node, prms){
 
-	
+    
 }
 
 /// задать аргументы для расчета
 bool Input::setInput(SN_Base::Tensor* args){
-	baseOut_ = args;
-	return true;
+    baseOut_ = args;
+    return true;
 }
 
 /// выполнить расчет
 std::vector<std::string> Input::Do(const learningParam&, const std::vector<OperatorBase*>& neighbOpr){
-		
-	
-	return std::vector<std::string>();
+        
+    
+    return std::vector<std::string>();
 }

@@ -35,85 +35,85 @@
 class SNet
 {
 public:
-	SNet(const char* jnNet, char* out_err /*sz 256*/, SN_API::snStatusCBack = nullptr, SN_API::snUData = nullptr);
-	~SNet();
-		
-	/// тренинг
-	bool training(SN_Base::snFloat lr, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz,
-		SN_Base::snFloat* targetData, SN_Base::snFloat* outData, const SN_Base::snSize& tsz, SN_Base::snFloat* outAccurate);
+    SNet(const char* jnNet, char* out_err /*sz 256*/, SN_API::snStatusCBack = nullptr, SN_API::snUData = nullptr);
+    ~SNet();
+        
+    /// тренинг
+    bool training(SN_Base::snFloat lr, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz,
+        SN_Base::snFloat* targetData, SN_Base::snFloat* outData, const SN_Base::snSize& tsz, SN_Base::snFloat* outAccurate);
 
-	/// прямой проход
-	bool forward(bool isLern, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz, SN_Base::snFloat* outData, const SN_Base::snSize& osz);
-	
-	/// обратный проход
-	bool backward(SN_Base::snFloat lr, SN_Base::snFloat* gradErr, const SN_Base::snSize& gsz);
+    /// прямой проход
+    bool forward(bool isLern, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz, SN_Base::snFloat* outData, const SN_Base::snSize& osz);
+    
+    /// обратный проход
+    bool backward(SN_Base::snFloat lr, SN_Base::snFloat* gradErr, const SN_Base::snSize& gsz);
 
-	/// задать веса узла сети
-	bool setWeightNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    /// задать веса узла сети
+    bool setWeightNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
 
-	/// вернуть веса узла сети
-	bool getWeightNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& dsz);
-		
-	/// задать нормализацию для узла
-	bool setBatchNormNode(const char* nodeName, const SN_Base::batchNorm&);
+    /// вернуть веса узла сети
+    bool getWeightNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& dsz);
+        
+    /// задать нормализацию для узла
+    bool setBatchNormNode(const char* nodeName, const SN_Base::batchNorm&);
 
-	/// вернуть нормализацию узла
-	bool getBatchNormNode(const char* nodeName, SN_Base::batchNorm&);
+    /// вернуть нормализацию узла
+    bool getBatchNormNode(const char* nodeName, SN_Base::batchNorm&);
 
-	/// задать входные данные узла (актуально для доп входов)
-	bool setInputNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    /// задать входные данные узла (актуально для доп входов)
+    bool setInputNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
 
-	/// вернуть выходные значения узла (актуально для доп выходов)
-	bool getOutputNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
+    /// вернуть выходные значения узла (актуально для доп выходов)
+    bool getOutputNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
 
-	/// задать градиент значения узла (актуально для доп выходов)
-	bool setGradientNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    /// задать градиент значения узла (актуально для доп выходов)
+    bool setGradientNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
 
-	/// вернуть градиент значения узла (актуально для доп выходов)
-	bool getGradientNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
+    /// вернуть градиент значения узла (актуально для доп выходов)
+    bool getGradientNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
 
-	/// задать параметры узла
-	bool setParamNode(const char* nodeName, const char* jnParam);
+    /// задать параметры узла
+    bool setParamNode(const char* nodeName, const char* jnParam);
 
-	/// вернуть параметры узла
-	bool getParamNode(const char* nodeName, char* jnParam /*minsz 256*/);
+    /// вернуть параметры узла
+    bool getParamNode(const char* nodeName, char* jnParam /*minsz 256*/);
 
-	/// вернуть архитектуру сети
-	bool getArchitecNet(char* jnArchitecNet /*minsz 2048*/);
+    /// вернуть архитектуру сети
+    bool getArchitecNet(char* jnArchitecNet /*minsz 2048*/);
 
 private:
 
-	SN_Eng::SNEngine* engine_ = nullptr;                        ///< движок 
-		
-	SN_Base::Node inNet_;                                       ///< вход сети
-	SN_Base::Node outNet_;                                      ///< выход сети
-	std::map<std::string, SN_Base::Node> nodes_;                ///< все узлы сети(ветки)
-	std::map<std::string, SN_Base::OperatorBase*> operats_;     ///< все операторы. ключ - название узла
+    SN_Eng::SNEngine* engine_ = nullptr;                        ///< движок 
+        
+    SN_Base::Node inNet_;                                       ///< вход сети
+    SN_Base::Node outNet_;                                      ///< выход сети
+    std::map<std::string, SN_Base::Node> nodes_;                ///< все узлы сети(ветки)
+    std::map<std::string, SN_Base::OperatorBase*> operats_;     ///< все операторы. ключ - название узла
 
-	std::mutex mtxCmn_;
-				
-	std::map<std::string, SN_Base::Tensor*> weight_;            ///< веса узлов. ключ - название узла
-	std::map<std::string, SN_Base::Tensor*> inData_;            ///< вх данные узлов. ключ - название узла
-	std::map<std::string, SN_Base::Tensor*> gradData_;          ///< град данные узлов. ключ - название узла
+    std::mutex mtxCmn_;
+                
+    std::map<std::string, SN_Base::Tensor*> weight_;            ///< веса узлов. ключ - название узла
+    std::map<std::string, SN_Base::Tensor*> inData_;            ///< вх данные узлов. ключ - название узла
+    std::map<std::string, SN_Base::Tensor*> gradData_;          ///< град данные узлов. ключ - название узла
 
-	SN_Base::learningParam lernParam_;                          ///< параметры тек итерации
+    SN_Base::learningParam lernParam_;                          ///< параметры тек итерации
 
-	rapidjson::Document jnNet_;                                 ///< архитектура сети в JSON  
+    rapidjson::Document jnNet_;                                 ///< архитектура сети в JSON  
 
-	SN_API::snUData udata_ = nullptr;
-	SN_API::snStatusCBack stsCBack_ = nullptr;
+    SN_API::snUData udata_ = nullptr;
+    SN_API::snStatusCBack stsCBack_ = nullptr;
 
-	void statusMess(const std::string&);
+    void statusMess(const std::string&);
 
-	/// парсинг структуры сети
-	bool jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std::string& out_err);
+    /// парсинг структуры сети
+    bool jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std::string& out_err);
 
-	/// проверка перекр ссылок мду узлами
-	bool checkCrossRef(std::map<std::string, SN_Base::Node>& nodes, std::string& err);
+    /// проверка перекр ссылок мду узлами
+    bool checkCrossRef(std::map<std::string, SN_Base::Node>& nodes, std::string& err);
 
-	/// создание сети
-	bool createNet(SN_Base::Net& inout_net, std::string& out_err);
+    /// создание сети
+    bool createNet(SN_Base::Net& inout_net, std::string& out_err);
 
-	/// считаем метрику
-	SN_Base::snFloat calcAccurate(SN_Base::Tensor* targetTens, SN_Base::Tensor* outTens);
+    /// считаем метрику
+    SN_Base::snFloat calcAccurate(SN_Base::Tensor* targetTens, SN_Base::Tensor* outTens);
 };
