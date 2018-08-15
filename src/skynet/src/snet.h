@@ -96,7 +96,7 @@ private:
     std::map<std::string, SN_Base::Tensor*> inData_;            ///< вх данные узлов. ключ - название узла
     std::map<std::string, SN_Base::Tensor*> gradData_;          ///< град данные узлов. ключ - название узла
 
-    SN_Base::learningParam lernParam_;                          ///< параметры тек итерации
+    SN_Base::operationParam operPrm_;                          ///< параметры тек итерации
 
     rapidjson::Document jnNet_;                                 ///< архитектура сети в JSON  
 

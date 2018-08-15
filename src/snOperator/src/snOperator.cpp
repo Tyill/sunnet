@@ -26,6 +26,7 @@
 #include "snBase/snBase.h"
 #include "Operator/fullyConnected.h"
 #include "Operator/convolution.h"
+#include "Operator/pooling.h"
 #include "Operator/input.h"
 #include "Operator/output.h"
 #include "Operator/lossFunction.h"
@@ -50,7 +51,8 @@ namespace SN_Opr{
         else if (fname == "FullyConnected") ret = (SN_Base::OperatorBase*)new FullyConnected(fname, node, prms);
         else if (fname == "LossFunction")   ret = (SN_Base::OperatorBase*)new LossFunction(fname, node, prms);
         else if (fname == "Convolution")    ret = (SN_Base::OperatorBase*)new Convolution(fname, node, prms);
-        
+        else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(fname, node, prms);
+
         return ret;
     }
 
@@ -63,6 +65,7 @@ namespace SN_Opr{
             else if (fname == "FullyConnected") delete (FullyConnected*)opr;
             else if (fname == "LossFunction")   delete (LossFunction*)opr;
             else if (fname == "Convolution")    delete (Convolution*)opr;
+            else if (fname == "Pooling")        delete (Pooling*)opr;
         }
     }
         

@@ -37,14 +37,14 @@ OperatorBase(name, node, prms){
 }
 
 /// выполнить расчет
-std::vector<std::string> Output::Do(const learningParam& lernPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> Output::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
     if (neighbOpr.size() == 1){
-        if (lernPrm.action == snAction::forward)
+        if (operPrm.action == snAction::forward)
             baseOut_ = neighbOpr[0]->getOutput();
     }
     else{
-        if (lernPrm.action == snAction::forward){
+        if (operPrm.action == snAction::forward){
 
             inFwTns_ = *neighbOpr[0]->getOutput();
 

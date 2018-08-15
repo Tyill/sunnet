@@ -169,7 +169,7 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
     delete[] share;
 }   
 
-void bwdPooling(int type, size_t kernel, snSize outsz, snFloat* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
+void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
            inStepByN = insz.w * insz.h * insz.d,         // шаг вх слоя по батчу
@@ -182,7 +182,7 @@ void bwdPooling(int type, size_t kernel, snSize outsz, snFloat* outputInx, snFlo
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
     // по батчу
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
 
         snFloat* outBuff = share + shareStepByN * n;
@@ -194,7 +194,7 @@ void bwdPooling(int type, size_t kernel, snSize outsz, snFloat* outputInx, snFlo
                     
             if (type == 0){ // max
 
-                snFloat* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
+                size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
                 

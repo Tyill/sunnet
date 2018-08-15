@@ -62,7 +62,7 @@ public:
 
     ~Convolution() = default;
 
-    std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
         
     bool setInternPrm(std::map<std::string, std::string>& prms) override;
     
@@ -71,7 +71,7 @@ private:
     size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
     size_t krnWidth_ = 3;                                       ///< длина слоя свертки
     size_t krnHeight_ = 3;                                      ///< высота слоя свертки
-    size_t padding_ = 0;                                        ///< доп отступ по краям для свертки
+    size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
 
     activeType activeType_ = activeType::none;                  ///< тип ф-ии активации
@@ -97,6 +97,6 @@ private:
     void updateConfig(const SN_Base::snSize& newSz);
         
     void forward(SN_Base::Tensor* inTns);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::learningParam& lernPrm);
+    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 
 };

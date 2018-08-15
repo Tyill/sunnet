@@ -40,10 +40,10 @@ namespace SN_Eng{
         ~SNEngine();
     
         /// прямой проход
-        bool forward(const SN_Base::learningParam&);
+        bool forward(const SN_Base::operationParam&);
 
         /// обратный проход
-        bool backward(const SN_Base::learningParam&);
+        bool backward(const SN_Base::operationParam&);
         
     private:
         
@@ -62,7 +62,7 @@ namespace SN_Eng{
         ThreadPool* thrPoolForward_ = nullptr, *thrPoolBackward_ = nullptr;
         bool fWorkEnd_ = false;                       ///< закрытие всех потоков
     
-        SN_Base::learningParam lernParam_;            ///< параметры тек итерации
+        SN_Base::operationParam operParam_;            ///< параметры тек итерации
 
         void statusMess(const std::string&);
             

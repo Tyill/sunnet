@@ -72,6 +72,13 @@ namespace SN_Aux{
         return str.substr(first, (last - first + 1));
     }
 
+    std::string toLower(const std::string& str)
+    {
+        string out = str;
+        std::transform(str.begin(), str.end(), out.begin(), ::tolower);
+
+        return out;
+    }
 
     bool is_number(const std::string& s)
     {

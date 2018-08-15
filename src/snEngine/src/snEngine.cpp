@@ -92,7 +92,7 @@ namespace SN_Eng{
         /// для backward
         thrExist.clear();
 
-        lernParam_.action = SN_Base::snAction::backward;
+        operParam_.action = SN_Base::snAction::backward;
             
         for (auto& n : nodes){
             if (n.second.oprName == "Output"){
@@ -157,9 +157,9 @@ namespace SN_Eng{
     }
             
     /// прямой проход
-    bool SNEngine::forward(const SN_Base::learningParam& lernPrm){
+    bool SNEngine::forward(const SN_Base::operationParam& operPrm){
         
-        lernParam_ = lernPrm;
+        operParam_ = operPrm;
 
         /// предварительно установим готовность
         thrPoolForward_->preStartAll();
@@ -179,9 +179,9 @@ namespace SN_Eng{
     }
 
     /// обратный проход
-    bool SNEngine::backward(const SN_Base::learningParam& lernPrm){
+    bool SNEngine::backward(const SN_Base::operationParam& operPrm){
                                 
-        lernParam_ = lernPrm;
+        operParam_ = operPrm;
 
         /// предварительно установим готовность
         thrPoolBackward_->preStartAll();
@@ -211,7 +211,7 @@ namespace SN_Eng{
             
             /// выполнение оператора
             auto& pn = prevNodes[0];                SN_ENG_DMESS("node " + nname + " actionForward single prevNode " + pn)
-            ndStates_[nname].selectNextNodes = operats_[nname]->Do(lernParam_, vector<OperatorBase*>{operats_[pn]});
+            ndStates_[nname].selectNextNodes = operats_[nname]->Do(operParam_, vector<OperatorBase*>{operats_[pn]});
         }
         else{
             /// собираем все предыд операторы
@@ -253,7 +253,7 @@ namespace SN_Eng{
             
             /// выполнение оператора
             SN_ENG_DMESS("node " + nname + " actionForward multi")
-            ndStates_[nname].selectNextNodes = operats_[nname]->Do(lernParam_, neighb);
+            ndStates_[nname].selectNextNodes = operats_[nname]->Do(operParam_, neighb);
         }
         ndStates_[nname].isWasRun = true;
     }
@@ -267,7 +267,7 @@ namespace SN_Eng{
             
             /// выполнение оператора
             auto& nd = nodes[nname].nextNodes[0];         SN_ENG_DMESS("node " + nname + " actionBackward single prevNode " + nd)
-            operats_[nname]->Do(lernParam_, vector<OperatorBase*>{operats_[nd]});
+            operats_[nname]->Do(operParam_, vector<OperatorBase*>{operats_[nd]});
         }
         else{
             /// следующие узлы, которые были выбраны на пред итерации
@@ -303,7 +303,7 @@ namespace SN_Eng{
             
             /// выполнение оператора
             SN_ENG_DMESS("node " + nname + " actionBackward multi")
-            operats_[nname]->Do(lernParam_, neighb);
+            operats_[nname]->Do(operParam_, neighb);
         }
     }
         

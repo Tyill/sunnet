@@ -41,7 +41,7 @@ public:
 
     ~LossFunction() = default;
             
-    std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private:
     lossType lossType_ = lossType::softMaxACrossEntropy;
@@ -53,5 +53,5 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void forward(SN_Base::Tensor* inTns);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::learningParam& lernPrm);
+    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 };

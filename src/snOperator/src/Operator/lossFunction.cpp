@@ -58,16 +58,16 @@ OperatorBase(name, node, prms){
 
 
 /// выполнить расчет
-std::vector<std::string> LossFunction::Do(const learningParam& lernPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
 
     if (neighbOpr.size() == 1){
-        if (lernPrm.action == snAction::forward)
+        if (operPrm.action == snAction::forward)
             forward(neighbOpr[0]->getOutput());
         else
-            backward(neighbOpr[0]->getGradient(), lernPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);
     }
     else{
-        if (lernPrm.action == snAction::forward){
+        if (operPrm.action == snAction::forward){
 
             inFwTns_ = *neighbOpr[0]->getOutput();
 
@@ -85,7 +85,7 @@ std::vector<std::string> LossFunction::Do(const learningParam& lernPrm, const st
             for (size_t i = 1; i < sz; ++i)
                 inBwTns_ +=  *neighbOpr[i]->getGradient();
 
-            backward(&inBwTns_, lernPrm);
+            backward(&inBwTns_, operPrm);
         }
     }
 
@@ -139,7 +139,7 @@ void LossFunction::forward(Tensor* inTns){
 
 }
 
-void LossFunction::backward(Tensor* inTns, const learningParam& lernPrm){
+void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
 
     snSize tsz = inTns->size();
         
@@ -149,7 +149,7 @@ void LossFunction::backward(Tensor* inTns, const learningParam& lernPrm){
         baseGrad_->resize(tsz);
 
     // градиент уже задан сверху? расчит ошибку не надо
-    if (!lernPrm.isAutoCalcError){
+    if (!operPrm.isAutoCalcError){
         baseGrad_->setData(inTns->getData(), grsz);
         return;
     }

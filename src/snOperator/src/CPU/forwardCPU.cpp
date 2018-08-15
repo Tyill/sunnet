@@ -24,6 +24,7 @@
 //
 #pragma once
 
+
 #include "../stdafx.h"
 #include "SNOperator/src/mathFunctions.h"
 #include <omp.h>  
@@ -130,24 +131,26 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
 }
 
 void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
-    snSize outsz, snFloat* output, snFloat* outputInx){
+    snSize outsz, snFloat* output, size_t* outputInx){
 
     size_t inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
            inStepByN = insz.w * insz.h * insz.d,         // шаг вх слоя по батчу
            outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
            outStepByN = outsz.w * outsz.h * outsz.d;     // шаг вых слоя по батчу
 
-    size_t shareStepByN = insz.d + insz.d;               // для локализации памяти
-    snFloat* share = new snFloat[shareStepByN * insz.n];
+   
+    size_t* shareI = new size_t[insz.d * insz.n];
+    snFloat* shareF = new snFloat[insz.d * insz.n];
 
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+    memset(outputInx, 0, outStepByN * insz.n * sizeof(snFloat));
 
     // по батчу
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
 
-        snFloat* outBuff = share + shareStepByN * n;
-        snFloat* outInxBuff = share + insz.d + shareStepByN * n;
+        snFloat* outBuff = shareF + insz.d * n;
+        size_t* outInxBuff = shareI + insz.d * n;
 
         for (size_t p = 0; p < outStepByD; ++p){
 
@@ -155,7 +158,7 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
                 posW = ox * kernel, posH = oy * kernel;
 
             memset(outBuff, 0, insz.d * sizeof(snFloat));
-            memset(outInxBuff, 0, insz.d * sizeof(snFloat));
+            memset(outInxBuff, 0, insz.d * sizeof(size_t));
 
             if (type == 0){ // max
 
@@ -177,7 +180,7 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
                 }
 
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-                snFloat* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
+                size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
 
                 // по всем вых слоям
                 for (size_t k = 0; k < outsz.d; ++k){
@@ -215,7 +218,8 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
         }
     }
 
-    delete[] share;
+    delete[] shareI; 
+    delete[] shareF;
 }
 
 void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNormParam prm){

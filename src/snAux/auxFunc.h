@@ -36,6 +36,8 @@ namespace SN_Aux{
 
     std::string trim(const std::string& str);
 
+    std::string toLower(const std::string& str);
+
     void sleepMs(int ms);
 
     bool is_number(const std::string& s);

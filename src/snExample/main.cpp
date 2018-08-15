@@ -75,21 +75,50 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F2\","   
         "\"OperatorName\":\"Convolution\","  
         "\"OperatorParams\":{\"kernel\":\"32\"," 
-                            "\"krnWidth\":\"5\","
-                            "\"krnHeight\":\"5\","
-                            "\"padding\":\"1\","
+                            "\"krnWidth\":\"4\","
+                            "\"krnHeight\":\"4\","
+                            "\"padding\":\"same\","
                             "\"stride\":\"1\","
                             "\"weightInitType\":\"he\","
                             "\"activeType\":\"relu\","  
                             "\"optimizerType\":\"adam\"," 
                             "\"batchNormType\":\"none\"}"    
         "},"
-                        
+       
         "{"
-        "\"NodeName\":\"F2\","    
-        "\"NextNodes\":\"F5\","   
-        "\"OperatorName\":\"FullyConnected\"," 
-        "\"OperatorParams\":{\"kernel\":\"100\","
+        "\"NodeName\":\"F2\","
+        "\"NextNodes\":\"F3\","
+        "\"OperatorName\":\"Pooling\","
+        "\"OperatorParams\":{\"kernel\":\"2\"}"
+        "},"   
+
+        "{"
+        "\"NodeName\":\"F3\","
+        "\"NextNodes\":\"F4\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"64\","
+        "\"krnWidth\":\"5\","
+        "\"krnHeight\":\"5\","
+        "\"padding\":\"2\","
+        "\"stride\":\"1\","
+        "\"weightInitType\":\"he\","
+        "\"activeType\":\"relu\","
+        "\"optimizerType\":\"adam\","
+        "\"batchNormType\":\"none\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F4\","
+        "\"NextNodes\":\"F5\","
+        "\"OperatorName\":\"Pooling\","
+        "\"OperatorParams\":{\"kernel\":\"2\"}"
+        "},"
+        
+        "{"
+        "\"NodeName\":\"F5\","
+        "\"NextNodes\":\"F6\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"1024\","
                             "\"weightInitType\":\"he\","
                             "\"activeType\":\"relu\","
                             "\"optimizerType\":\"adam\","
@@ -97,58 +126,16 @@ int main(int argc, _TCHAR* argv[])
         "},"
 
         "{"
-        "\"NodeName\":\"F5\","
+        "\"NodeName\":\"F6\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
-                            "\"weightInitType\":\"uniform\","
-                            "\"activeType\":\"none\","
-                            "\"optimizerType\":\"adam\","
-                            "\"batchNormType\":\"none\"}"
+        "\"weightInitType\":\"uniform\","
+        "\"activeType\":\"none\","
+        "\"optimizerType\":\"adam\","
+        "\"batchNormType\":\"none\"}"
         "},"
-        /*
-        "{"
-        "\"NodeName\":\"F3\","    
-        "\"NextNodes\":\"LS\","   
-        "\"OperatorName\":\"FullyConnected\","  
-        "\"OperatorParams\":{\"kernel\":\"10\","
-                            "\"weightInitType\":\"uniform\","
-                            "\"activeType\":\"none\","
-                            "\"optimizerType\":\"adam\","
-                            "\"batchNormType\":\"none\"}"
-        "},"*/
-        
-        /*"{"
-        "\"NodeName\":\"F4\","    
-        "\"NextNodes\":\"LS\","   
-        "\"OperatorName\":\"FullyConnected\"," 
-        "\"OperatorParams\":{\"kernel\":\"1\","
-                            "\"activeType\":\"sigmoid\","
-                            "\"optimizerType\":\"adam\","
-                            "\"batchNormType\":\"none\"}"
-        "},"*/
-    /*
-        "{"
-        "\"NodeName\":\"F3\","    
-        "\"NextNodes\":\"F4\","   
-        "\"OperatorName\":\"FullyConnected\","   
-        "\"OperatorParams\":{\"fullyKernel\":\"300\",\"activeType\":\"relu\", \"optimizerType\":\"adam\"}" 
-        "},"
-
-        "{"
-        "\"NodeName\":\"F4\","   
-        "\"NextNodes\":\"F5\"," 
-        "\"OperatorName\":\"FullyConnected\"," 
-        "\"OperatorParams\":{\"fullyKernel\":\"100\",\"activeType\":\"relu\", \"optimizerType\":\"adam\"}"  
-        "},"
-
-        "{"
-        "\"NodeName\":\"F5\","    
-        "\"NextNodes\":\"SM\"," 
-        "\"OperatorName\":\"FullyConnected\"," 
-        "\"OperatorParams\":{\"fullyKernel\":\"10\",\"activeType\":\"none\", \"optimizerType\":\"adam\"}"  
-        "},"
-*/                    
+                
         "{"
         "\"NodeName\":\"LS\","    
         "\"NextNodes\":\"EndNet\","  
@@ -170,7 +157,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
         
-    int batchSz = 10, classCnt = 10, w = 28, h = 28;
+    int batchSz = 1, classCnt = 10, w = 28, h = 28;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -233,8 +220,8 @@ int main(int argc, _TCHAR* argv[])
     size_t num_inst = 0;
 
 fff:
-    float accuratSumm = 0, lr = 0.001;
-    for (int k = 0; k < 1000; ++k){
+    float accuratSumm = 0, lr = 0.0001;
+    for (int k = 0; k < 10000; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);
         fill_n(outLayer, classCnt * batchSz, 0.F);
@@ -290,7 +277,7 @@ fff:
 
                 for (size_t c = 0; c < nc; ++c){
                                         
-                    refData[r * nc + c] = (pt[c] - mean);
+                    refData[r * nc + c] = (pt[c] - mean) / maxVal;
                 }
             }
 
@@ -310,7 +297,7 @@ fff:
                            &accurat);
 
         accuratSumm += accurat;
-    //    cout << k << " metrix " << accuratSumm / k << endl;
+        cout << k << " metrix " << accuratSumm / k << endl;
     }
     
     /*SN_API::batchNorm bn;

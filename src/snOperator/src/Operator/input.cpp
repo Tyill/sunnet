@@ -42,7 +42,7 @@ bool Input::setInput(SN_Base::Tensor* args){
 }
 
 /// выполнить расчет
-std::vector<std::string> Input::Do(const learningParam&, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> Input::Do(const operationParam&, const std::vector<OperatorBase*>& neighbOpr){
         
     
     return std::vector<std::string>();

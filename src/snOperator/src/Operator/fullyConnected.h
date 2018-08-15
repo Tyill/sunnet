@@ -54,7 +54,7 @@ public:
 
     ~FullyConnected() = default;
 
-    std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
         
     bool setInternPrm(std::map<std::string, std::string>& prms);
         
@@ -84,6 +84,6 @@ private:
     void updateConfig(const SN_Base::snSize& newSz);
         
     void forward(SN_Base::Tensor* inTns);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::learningParam& lernPrm);
+    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 
 };

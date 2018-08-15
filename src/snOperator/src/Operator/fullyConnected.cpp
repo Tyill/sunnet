@@ -144,16 +144,16 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 }
 
 /// выполнить расчет
-std::vector<std::string> FullyConnected::Do(const learningParam& lernPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
 
     if (neighbOpr.size() == 1){
-        if (lernPrm.action == snAction::forward)
+        if (operPrm.action == snAction::forward)
             forward(neighbOpr[0]->getOutput());
         else
-            backward(neighbOpr[0]->getGradient(), lernPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);
     }
     else{
-        if (lernPrm.action == snAction::forward){
+        if (operPrm.action == snAction::forward){
 
             inFwTns_ = *neighbOpr[0]->getOutput();
 
@@ -171,7 +171,7 @@ std::vector<std::string> FullyConnected::Do(const learningParam& lernPrm, const 
             for (size_t i = 1; i < sz; ++i)
                 inBwTns_ += *neighbOpr[i]->getGradient();
 
-            backward(&inBwTns_, lernPrm);
+            backward(&inBwTns_, operPrm);
         }
     }
     
@@ -219,7 +219,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns){
 
 }
 
-void FullyConnected::backward(SN_Base::Tensor* inTns, const learningParam& lernPrm){
+void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snFloat* gradIn = inTns->getData();
 
@@ -262,11 +262,11 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const learningParam& lernP
     size_t wsz = baseWeight_->size().size();
     
     switch (optimizerType_){
-    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, lernPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
+    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
+    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
+    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
     default: break;
     }
 
@@ -297,7 +297,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     }
     
     baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));
-    baseGrad_->resize(snSize(newsz.w, newsz.h, newsz.d, newsz.n));
+    baseGrad_->resize(newsz);
         
     // вспом массивы
     auxParams_["dWeight"].resize(ntp, 0);

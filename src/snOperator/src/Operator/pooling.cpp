@@ -43,16 +43,21 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
     
-    if ((prms.find("kernel") != prms.end()) && SN_Aux::is_number(prms["kernel"])){
+    auto setIntParam = [&prms](const string& name, bool isZero, size_t& value){
 
-        size_t kernel = stoi(prms["kernel"]);
-        if (kernel > 0)
-            kernel_ = kernel;
+        if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
+
+            size_t v = stoi(prms[name]);
+            if ((v > 0) || (isZero && (v == 0)))
+                value = v;
+            else
+                statusMess("Pooling::setInternPrm error: param '" + name + (isZero ? "' < 0" : "' <= 0"));
+        }
         else
-            statusMess("Pooling::setInternPrm error: param 'kernel' <= 0");
-    }
-    else
-        statusMess("Pooling::setInternPrm error: not found (or not numder) param 'kernel'");
+            statusMess("Pooling::setInternPrm error: not found (or not numder) param '" + name + "'");
+    };
+    
+    setIntParam("kernel", false, kernel_);   
 
     if (prms.find("poolType") != prms.end()){
 
@@ -62,18 +67,20 @@ void Pooling::load(std::map<std::string, std::string>& prms){
         else
             statusMess("Pooling::setInternPrm error: param 'poolType' = " + atype + " indefined");
     }
+
+    basePrms_ = prms;
 }
 
-std::vector<std::string> Pooling::Do(const learningParam& lernPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
 
     if (neighbOpr.size() == 1){
-        if (lernPrm.action == snAction::forward)
+        if (operPrm.action == snAction::forward)
             forward(neighbOpr[0]->getOutput());
         else
-            backward(neighbOpr[0]->getGradient(), lernPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);
     }
     else{
-        if (lernPrm.action == snAction::forward){
+        if (operPrm.action == snAction::forward){
 
             inFwTns_ = *neighbOpr[0]->getOutput();
 
@@ -91,7 +98,7 @@ std::vector<std::string> Pooling::Do(const learningParam& lernPrm, const std::ve
             for (size_t i = 1; i < sz; ++i)
                 inBwTns_ += *neighbOpr[i]->getGradient();
 
-            backward(&inBwTns_, lernPrm);
+            backward(&inBwTns_, operPrm);
         }
     }
     
@@ -103,23 +110,34 @@ void Pooling::forward(SN_Base::Tensor* inTns){
     snSize insz = inTns->size();
 
     /// размер вх данных изменился?
-    /*if (insz != inSzMem_){
+    if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
-    }*/
+    }
             
-    /// расчет выходных значений нейронов
+    /// расчет выходных значений
     snFloat* out = baseOut_->getData();
-    //fwdFullyConnected(kernel_, insz, pDtMem, baseWeight_->getData(), out);
-
-    
+    fwdPooling((int)poolType_, kernel_, insz, inTns->getData(), baseOut_->size(), out, outInx_.data());
+       
 }
 
-void Pooling::backward(SN_Base::Tensor* inTns, const learningParam& lernPrm){
+void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns->getData();
+    snFloat* gradIn = inTns->getData(), *gradOut = baseGrad_->getData();
     
-    // расчет вых градиента и коррекции весов
-    snFloat* gradOut = baseGrad_->getData();
-    //bwdFullyConnected(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight);
+    /// расчет вых градиента
+    bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inSzMem_, gradOut);
+}
+
+void Pooling::updateConfig(const snSize& newsz){
+           
+    snSize outSz(0, 0, newsz.d, newsz.n);
+      
+    outSz.w = (newsz.w - (kernel_ / 2) * 2) / kernel_;
+    outSz.h = (newsz.h - (kernel_ / 2) * 2) / kernel_;
+
+    baseOut_->resize(outSz);
+    baseGrad_->resize(newsz);
+
+    outInx_.resize(outSz.size(), 0);
 }

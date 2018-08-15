@@ -65,7 +65,12 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     setIntParam("kernel", false, kernel_);
     setIntParam("krnWidth", false, krnWidth_);
     setIntParam("krnHeight", false, krnHeight_);
-    setIntParam("padding", true, padding_);
+
+    if ((prms.find("padding") != prms.end()) && (prms["padding"] == "same"))
+        paddingSet_ = -1;
+    else
+        setIntParam("padding", true, paddingSet_);
+
     setIntParam("stride", true, stride_);
             
     // вспом массивы
@@ -79,7 +84,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
     auxParams_["bn_schift"] = vector<snFloat>(kernel_, 0);   bnPrm_.schift = auxParams_["bn_schift"].data();
     auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
-    auxParams_["bn_onc"] = vector<snFloat>();                 bnPrm_.onc = auxParams_["bn_onc"].data();
+    auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
 
     setInternPrm(prms);
 }
@@ -149,16 +154,16 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
 }
 
 /// выполнить расчет
-std::vector<std::string> Convolution::Do(const learningParam& lernPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
     if (neighbOpr.size() == 1){
-        if (lernPrm.action == snAction::forward)
+        if (operPrm.action == snAction::forward)
             forward(neighbOpr[0]->getOutput());
         else
-            backward(neighbOpr[0]->getGradient(), lernPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);
     }
     else{
-        if (lernPrm.action == snAction::forward){
+        if (operPrm.action == snAction::forward){
         
             inFwTns_ = *neighbOpr[0]->getOutput();
 
@@ -176,7 +181,7 @@ std::vector<std::string> Convolution::Do(const learningParam& lernPrm, const std
             for (size_t i = 1; i < sz; ++i)
                 inBwTns_ += *neighbOpr[i]->getGradient();
                         
-            backward(&inBwTns_, lernPrm);
+            backward(&inBwTns_, operPrm);
         }
     }
 
@@ -197,19 +202,19 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
 
-    if (padding_ == 0)
+    if (paddingSet_ == 0)
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
     else{
-        size_t padding = padding_, sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+        size_t paddW = paddingW_, paddH = paddingH_, sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
         for (size_t i = 0; i < sz; ++i){
 
             if (i % stH == 0)
-                pDtMem += (stW + padding * 2) * padding;
+                pDtMem += (stW + paddW * 2) * paddH;
 
-            pDtMem += padding;
+            pDtMem += paddW;
             for (size_t j = 0; j < stW; ++j)
                 pDtMem[j] = pInTns[j];
-            pDtMem += padding + stW;
+            pDtMem += paddW + stW;
 
             pInTns += stW;
         }
@@ -238,7 +243,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
         fwdBatchNorm(outsz, out, out, bnPrm_);
 }
 
-void Convolution::backward(SN_Base::Tensor* inTns, const learningParam& lernPrm){
+void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snFloat* gradIn = inTns->getData();
 
@@ -282,11 +287,11 @@ void Convolution::backward(SN_Base::Tensor* inTns, const learningParam& lernPrm)
     size_t wsz = baseWeight_->size().size();
     
     switch (optimizerType_){
-    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, lernPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, lernPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
+    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
+    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
+    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
     default: break;
     }
 
@@ -309,22 +314,30 @@ void Convolution::updateConfig(const snSize& newsz){
         case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, kernel_); break;
         }
     }
+        
+    snSize outSz(0, 0, kernel_, newsz.n, 1);
+          
+    if (paddingSet_ == -1){
+        outSz.w = newsz.w;
+        outSz.h = newsz.h;
 
-    inDataExpSz_ = snSize(newsz.w + padding_ * 2, newsz.h + padding_ * 2, newsz.d, newsz.n);
+        paddingW_ = (newsz.w * (stride_ - 1) + (krnWidth_ / 2) * 2) / 2;
+        paddingH_ = (newsz.h * (stride_ - 1) + (krnHeight_ / 2) * 2) / 2;
+    }
+    else{
+        outSz.w = (newsz.w + paddingSet_ * 2 - (krnWidth_ / 2) * 2) / stride_;
+        outSz.h = (newsz.h + paddingSet_ * 2 - (krnHeight_ / 2) * 2) / stride_;
+
+        paddingW_ = paddingH_ = paddingSet_;
+    }
+
+    inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
     inDataExp_.resize(inDataExpSz_.size());
 
     memset(inDataExp_.data(), 0, inDataExpSz_.size() * sizeof(snFloat));
-    
-
-    snSize outSz(0, 0, kernel_, newsz.n, 1);
-    for (size_t i = krnWidth_ / 2; i < (newsz.w + padding_ * 2 - krnWidth_ / 2); i += stride_)
-        ++outSz.w;
-
-    for (size_t i = krnHeight_ / 2; i < (newsz.h + padding_ * 2 - krnHeight_ / 2); i += stride_)
-        ++outSz.h;
 
     baseOut_->resize(outSz);
-    baseGrad_->resize(outSz);
+    baseGrad_->resize(newsz);
         
     // вспом массивы
     auxParams_["dWeight"].resize(ntp, 0);

@@ -158,15 +158,15 @@ namespace SN_Base{
         snSize sz_;
     };
 
-    /// параметры обучения
-    struct learningParam{
+    /// параметры тек действия
+    struct operationParam{
 
         bool isAutoCalcError; ///< расчит ошибку автоматич
         bool isLerning;       ///< обучение
         snAction action;      ///< режим работы
         snFloat lr;           ///< коэф скорости обучения
         
-        learningParam(bool isAutoCalcError_ = false, bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
+        operationParam(bool isAutoCalcError_ = false, bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
             isAutoCalcError(isAutoCalcError_), isLerning(isLerning_), action(action_), lr(lr_){}
     };
     
@@ -288,7 +288,7 @@ namespace SN_Base{
         /// @param learnPrm - параметры обучения на тек итерации
         /// @param neighbOpr - соседние операторы, передающие сюда данные
         /// @return - список след узлов куда идти, если след-х > 1. Если ничего не выбрано идем на все
-        virtual std::vector<std::string> Do(const learningParam& learnPrm, const std::vector<OperatorBase*>& neighbOpr) = 0;
+        virtual std::vector<std::string> Do(const operationParam& learnPrm, const std::vector<OperatorBase*>& neighbOpr) = 0;
                 
     protected:
         std::string node_;                            ///< имя узла, в котором вычисляется оператор

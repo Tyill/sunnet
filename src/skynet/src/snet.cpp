@@ -171,11 +171,11 @@ bool SNet::training(snFloat lr, snFloat* iLayer, const snSize& lsz, snFloat* tar
     // идем обратно    
     gradData_["EndNet"]->setData(targetData, tsz);
 
-    lernParam_.lr = lr;
-    lernParam_.action = snAction::backward;
-    lernParam_.isAutoCalcError = true;
-    lernParam_.isLerning = true;
-    engine_->backward(lernParam_);
+    operPrm_.lr = lr;
+    operPrm_.action = snAction::backward;
+    operPrm_.isAutoCalcError = true;
+    operPrm_.isLerning = true;
+    engine_->backward(operPrm_);
 
     // метрика
     auto outTensor = operats_["EndNet"]->getOutput();
@@ -200,9 +200,9 @@ bool SNet::forward(bool isLern, snFloat* iLayer, const snSize& lsz, snFloat* out
 
     inData_["BeginNet"]->setData(iLayer, lsz);
 
-    lernParam_.action = snAction::forward;
-    lernParam_.isLerning = isLern;
-    engine_->forward(lernParam_);
+    operPrm_.action = snAction::forward;
+    operPrm_.isLerning = isLern;
+    engine_->forward(operPrm_);
 
     Tensor* tnsOut = operats_["EndNet"]->getOutput();
 
@@ -235,11 +235,11 @@ bool SNet::backward(snFloat lr, snFloat* gradErr, const snSize& gsz){
         
         gradData_["EndNet"]->setData(gradErr, outTensor->size());
 
-        lernParam_.lr = lr;
-        lernParam_.action = snAction::backward;
-        lernParam_.isAutoCalcError = false;
-        lernParam_.isLerning = true;
-        engine_->backward(lernParam_);
+        operPrm_.lr = lr;
+        operPrm_.action = snAction::backward;
+        operPrm_.isAutoCalcError = false;
+        operPrm_.isLerning = true;
+        engine_->backward(operPrm_);
     }
     else{
         statusMess("backward error: net not create");

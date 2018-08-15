@@ -39,5 +39,5 @@ public:
     /// задать аргументы для расчета
     bool setInput(SN_Base::Tensor* args) override;
             
-    std::vector<std::string> Do(const SN_Base::learningParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 };
