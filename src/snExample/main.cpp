@@ -75,8 +75,8 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F2\","   
         "\"OperatorName\":\"Convolution\","  
         "\"OperatorParams\":{\"kernel\":\"32\"," 
-                            "\"krnWidth\":\"4\","
-                            "\"krnHeight\":\"4\","
+                            "\"krnWidth\":\"5\","
+                            "\"krnHeight\":\"5\","
                             "\"padding\":\"same\","
                             "\"stride\":\"1\","
                             "\"weightInitType\":\"he\","
@@ -85,13 +85,13 @@ int main(int argc, _TCHAR* argv[])
                             "\"batchNormType\":\"none\"}"    
         "},"
        
-        "{"
+       "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
         "\"OperatorName\":\"Pooling\","
         "\"OperatorParams\":{\"kernel\":\"2\"}"
         "},"   
-
+        
         "{"
         "\"NodeName\":\"F3\","
         "\"NextNodes\":\"F4\","
@@ -99,7 +99,7 @@ int main(int argc, _TCHAR* argv[])
         "\"OperatorParams\":{\"kernel\":\"64\","
         "\"krnWidth\":\"5\","
         "\"krnHeight\":\"5\","
-        "\"padding\":\"2\","
+        "\"padding\":\"same\","
         "\"stride\":\"1\","
         "\"weightInitType\":\"he\","
         "\"activeType\":\"relu\","
@@ -181,7 +181,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; if (cnt > 1000) break;
+            ++cnt; //if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;

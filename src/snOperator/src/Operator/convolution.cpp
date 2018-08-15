@@ -67,13 +67,14 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     setIntParam("krnHeight", false, krnHeight_);
 
     if ((prms.find("padding") != prms.end()) && (prms["padding"] == "same"))
-        paddingSet_ = -1;
+        isPaddingSame_ = true;
     else
-        setIntParam("padding", true, paddingSet_);
+        setIntParam("padding", true, paddingSet_);   
 
     setIntParam("stride", true, stride_);
             
     // вспом массивы
+    auxParams_["outGradExp"] = vector<snFloat>();
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();
@@ -155,12 +156,12 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
 
 /// выполнить расчет
 std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-        
+       
     if (neighbOpr.size() == 1){
         if (operPrm.action == snAction::forward)
-            forward(neighbOpr[0]->getOutput());
+            forward(neighbOpr[0]->getOutput());        
         else
-            backward(neighbOpr[0]->getGradient(), operPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);       
     }
     else{
         if (operPrm.action == snAction::forward){
@@ -189,7 +190,7 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
 }
 
 void Convolution::forward(SN_Base::Tensor* inTns){
-
+   
     snSize insz = inTns->size();
 
     /// размер вх данных изменился?
@@ -202,7 +203,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
 
-    if (paddingSet_ == 0)
+    if ((paddingW_ == 0) && (paddingH_ == 0))
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
     else{
         size_t paddW = paddingW_, paddH = paddingH_, sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
@@ -240,11 +241,11 @@ void Convolution::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        fwdBatchNorm(outsz, out, out, bnPrm_);
+        fwdBatchNorm(outsz, out, out, bnPrm_);   
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
-
+    
     snFloat* gradIn = inTns->getData();
 
     /// batchNorm
@@ -275,12 +276,32 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         bwdBatchNorm(inTns->size(), gradIn, gradIn, bnPrm_);
 
     // расчет вых градиента и коррекции весов
-    snFloat* gradOut = baseGrad_->getData();
+    bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
+    snFloat* pGrOutExp = isSame ? baseGrad_->getData() : auxParams_["outGradExp"].data();
+   
     snFloat* weight = baseWeight_->getData();
     snFloat* dWeight = auxParams_["dWeight"].data();
     bwdConvolution(kernel_, krnWidth_, krnHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-        baseOut_->size(), gradIn, gradOut, dWeight);
+        baseOut_->size(), gradIn, pGrOutExp, dWeight);
         
+    if (!isSame){
+        /// копируем градиент со смещением padding для каждого изобр
+        snFloat* pGrOut = baseGrad_->getData();
+        size_t paddW = paddingW_, paddH = paddingH_, sz = inSzMem_.h * inSzMem_.d * inSzMem_.n, stW = inSzMem_.w, stH = inSzMem_.h;
+        for (size_t i = 0; i < sz; ++i){
+
+            if (i % stH == 0)
+                pGrOutExp += (stW + paddW * 2) * paddH;
+
+            pGrOutExp += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                pGrOut[j] = pGrOutExp[j];
+            pGrOutExp += paddW + stW;
+
+            pGrOut += stW;
+        }
+    }
+
     // корректируем веса
     snFloat* dWPrev = auxParams_["dWPrev"].data();
     snFloat* dWGrad = auxParams_["dWGrad"].data();
@@ -294,7 +315,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
     default: break;
     }
-
+   
 }
 
 void Convolution::updateConfig(const snSize& newsz){
@@ -317,7 +338,7 @@ void Convolution::updateConfig(const snSize& newsz){
         
     snSize outSz(0, 0, kernel_, newsz.n, 1);
           
-    if (paddingSet_ == -1){
+    if (isPaddingSame_){
         outSz.w = newsz.w;
         outSz.h = newsz.h;
 
@@ -340,6 +361,8 @@ void Convolution::updateConfig(const snSize& newsz){
     baseGrad_->resize(newsz);
         
     // вспом массивы
+    if (inDataExpSz_ != newsz)
+        auxParams_["outGradExp"].resize(inDataExpSz_.size(), 0);
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);

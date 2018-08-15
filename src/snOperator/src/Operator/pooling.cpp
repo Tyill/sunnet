@@ -72,12 +72,12 @@ void Pooling::load(std::map<std::string, std::string>& prms){
 }
 
 std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-
+    
     if (neighbOpr.size() == 1){
         if (operPrm.action == snAction::forward)
-            forward(neighbOpr[0]->getOutput());
+            forward(neighbOpr[0]->getOutput());           
         else
-            backward(neighbOpr[0]->getGradient(), operPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);           
     }
     else{
         if (operPrm.action == snAction::forward){

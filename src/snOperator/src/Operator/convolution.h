@@ -70,9 +70,11 @@ private:
         
     size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
     size_t krnWidth_ = 3;                                       ///< длина слоя свертки
-    size_t krnHeight_ = 3;                                      ///< высота слоя свертки
-    size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
+    size_t krnHeight_ = 3;                                      ///< высота слоя свертки    
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
+    size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
+
+    bool isPaddingSame_ = false;
 
     activeType activeType_ = activeType::none;                  ///< тип ф-ии активации
     optimizerType optimizerType_ = optimizerType::sgd;          ///< тип оптимизатора весов

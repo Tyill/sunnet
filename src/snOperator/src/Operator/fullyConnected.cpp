@@ -145,12 +145,12 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 
 /// выполнить расчет
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-
+    
     if (neighbOpr.size() == 1){
         if (operPrm.action == snAction::forward)
-            forward(neighbOpr[0]->getOutput());
+            forward(neighbOpr[0]->getOutput());        
         else
-            backward(neighbOpr[0]->getGradient(), operPrm);
+            backward(neighbOpr[0]->getGradient(), operPrm);         
     }
     else{
         if (operPrm.action == snAction::forward){
@@ -171,10 +171,10 @@ std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const
             for (size_t i = 1; i < sz; ++i)
                 inBwTns_ += *neighbOpr[i]->getGradient();
 
-            backward(&inBwTns_, operPrm);
+            backward(&inBwTns_, operPrm);           
         }
     }
-    
+   
     return std::vector<std::string>();
 }
 
