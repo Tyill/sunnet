@@ -43,7 +43,7 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
     
-    auto setIntParam = [&prms, this](const string& name, bool isZero, size_t& value){
+    auto setIntParam = [&prms, this](const string& name, bool isZero, bool checkExist, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
 
@@ -53,12 +53,12 @@ void Pooling::load(std::map<std::string, std::string>& prms){
             else
                 ERROR_MESS("param '" + name + (isZero ? "' < 0" : "' <= 0"));
         }
-        else
+        else if (checkExist)
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
     
-    setIntParam("kernel", false, kernel_);   
-
+    setIntParam("kernel", false, false, kernel_);
+    
     if (prms.find("poolType") != prms.end()){
 
         string atype = prms["poolType"];

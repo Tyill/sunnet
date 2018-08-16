@@ -76,15 +76,15 @@ private:
 
     bool isPaddingSame_ = false;
 
-    activeType activeType_ = activeType::none;                  ///< тип ф-ии активации
-    optimizerType optimizerType_ = optimizerType::sgd;          ///< тип оптимизатора весов
-    weightInitType weightInitType_ = weightInitType::uniform;   ///< тип инициализации весов
+    activeType activeType_ = activeType::relu;                  ///< тип ф-ии активации
+    optimizerType optimizerType_ = optimizerType::adam;         ///< тип оптимизатора весов
+    weightInitType weightInitType_ = weightInitType::he;        ///< тип инициализации весов
     batchNormType batchNormType_ = batchNormType::none;         ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
     SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
 
-    batchNormParam bnPrm_;                                      ///< параметры batchNorm
+    std::vector<batchNormParam> bnPrm_;                         ///< параметры batchNorm
 
     SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
 
@@ -98,6 +98,8 @@ private:
 
     void updateConfig(const SN_Base::snSize& newSz);
         
+    void batchNorm(bool fwBw, const SN_Base::snSize& outSz, snFloat* out);
+
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
        

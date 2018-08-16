@@ -57,7 +57,6 @@ void fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weig
         kernel);                       // Out, шаг до след Y (Y21 - Y11) 
 }
 
-
 void fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
 
@@ -68,7 +67,7 @@ void fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
            outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
            outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
 
-    size_t shareStepByN = insz.d + kernel;               // для локализации памяти
+    size_t shareStepByN = insz.d + kernel;     // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
     
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
@@ -145,22 +144,22 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
     memset(outputInx, 0, outStepByN * insz.n * sizeof(snFloat));
 
-    // по батчу
+    if (type == 0){ // max
+
+        // по батчу
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < insz.n; ++n){
 
-        snFloat* outBuff = shareF + insz.d * n;
-        size_t* outInxBuff = shareI + insz.d * n;
+            snFloat* outBuff = shareF + insz.d * n;
+            size_t* outInxBuff = shareI + insz.d * n;
 
-        for (size_t p = 0; p < outStepByD; ++p){
+            for (size_t p = 0; p < outStepByD; ++p){
 
-            size_t ox = p % outsz.w, oy = p / outsz.w,
-                posW = ox * kernel, posH = oy * kernel;
+                size_t ox = p % outsz.w, oy = p / outsz.w,
+                    posW = ox * kernel, posH = oy * kernel;
 
-            memset(outBuff, 0, insz.d * sizeof(snFloat));
-            memset(outInxBuff, 0, insz.d * sizeof(size_t));
-
-            if (type == 0){ // max
+                memset(outBuff, 0, insz.d * sizeof(snFloat));
+                memset(outInxBuff, 0, insz.d * sizeof(size_t));
 
                 // ядро свертки
                 for (size_t c = 0; c < kernelSz; ++c){
@@ -192,8 +191,23 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
                     pOutInx += outStepByD;
                 }
             }
-            else{ // mean
+        }
+    }
+    else{ // mean
 
+        // по батчу
+#pragma omp parallel for
+        for (int n = 0; n < insz.n; ++n){
+
+            snFloat* outBuff = shareF + insz.d * n;
+          
+            for (size_t p = 0; p < outStepByD; ++p){
+
+                size_t ox = p % outsz.w, oy = p / outsz.w,
+                    posW = ox * kernel, posH = oy * kernel;
+
+                memset(outBuff, 0, insz.d * sizeof(snFloat));
+              
                 // ядро свертки
                 for (size_t c = 0; c < kernelSz; ++c){
 
@@ -208,13 +222,13 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
                 }
 
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-                
+
                 // по всем вых слоям
                 for (size_t k = 0; k < outsz.d; ++k){
                     *pOut = outBuff[k] / kernelSz;
                     pOut += outStepByD;
                 }
-            }                        
+            }
         }
     }
    

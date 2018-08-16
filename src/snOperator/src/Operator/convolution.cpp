@@ -48,7 +48,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     baseGrad_ = new Tensor();
     baseWeight_ = new Tensor();    
 
-    auto setIntParam = [&prms, this](const string& name, bool isZero, size_t& value){
+    auto setIntParam = [&prms, this](const string& name, bool isZero, bool checkExist, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
 
@@ -58,34 +58,26 @@ void Convolution::load(std::map<std::string, std::string>& prms){
             else
                 ERROR_MESS("param '" + name + (isZero ? "' < 0" : "' <= 0"));
         }
-        else
+        else if (checkExist)
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
-
-    setIntParam("kernel", false, kernel_);
-    setIntParam("fWidth", false, fWidth_);
-    setIntParam("fHeight", false, fHeight_);
-
-    if ((prms.find("padding") != prms.end()) && (prms["padding"] == "same"))
+        
+    setIntParam("kernel", false, true, kernel_);
+    setIntParam("fWidth", false, false, fWidth_);
+    setIntParam("fHeight", false, false, fHeight_);
+        
+    if ((prms.find("padding") != prms.end()) && (prms["padding"] == "-1"))
         isPaddingSame_ = true;
     else
-        setIntParam("padding", true, paddingSet_);   
+        setIntParam("padding", true, false, paddingSet_);
 
-    setIntParam("stride", true, stride_);
+    setIntParam("stride", true, false, stride_);
             
     // вспом массивы
     auxParams_["outGradExp"] = vector<snFloat>();
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
-    auxParams_["dWGrad"] = vector<snFloat>();
-    auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
-    auxParams_["bn_mean"] = vector<snFloat>(kernel_, 0);     bnPrm_.mean = auxParams_["bn_mean"].data();
-    auxParams_["bn_varce"] = vector<snFloat>(kernel_, 0);    bnPrm_.varce = auxParams_["bn_varce"].data();
-    auxParams_["bn_scale"] = vector<snFloat>(kernel_, 1.F);  bnPrm_.scale = auxParams_["bn_scale"].data();
-    auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
-    auxParams_["bn_schift"] = vector<snFloat>(kernel_, 0);   bnPrm_.schift = auxParams_["bn_schift"].data();
-    auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
-    auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
+    auxParams_["dWGrad"] = vector<snFloat>();    
 
     setInternPrm(prms);
 }
@@ -149,12 +141,12 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         opt_lmbRegular_ = stof(prms["lmbRegular"]);
 
     if (prms.find("batchNormLr") != prms.end())
-        bnPrm_.lr = stof(prms["batchNormLr"]);
+        for (auto& bn : bnPrm_)
+            bn.lr = stof(prms["batchNormLr"]);
                 
     return true;
 }
 
-/// выполнить расчет
 std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
     if (neighbOpr.size() == 1){
@@ -229,7 +221,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        fwdBatchNorm(outsz, out, out, bnPrm_);
+        batchNorm(true, outsz, out);
 
     /// функция активации
     switch (activeType_){
@@ -242,7 +234,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        fwdBatchNorm(outsz, out, out, bnPrm_);   
+        batchNorm(true, outsz, out);
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -251,7 +243,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        bwdBatchNorm(inTns->size(), gradIn, gradIn, bnPrm_);
+        batchNorm(false, inTns->size(), gradIn);
 
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
@@ -274,7 +266,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        bwdBatchNorm(inTns->size(), gradIn, gradIn, bnPrm_);
+        batchNorm(false, inTns->size(), gradIn);
 
     // расчет вых градиента и коррекции весов
     bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
@@ -318,6 +310,25 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     default: break;
     }
    
+}
+
+void Convolution::batchNorm(bool fwBw, const SN_Base::snSize& outsz, snFloat* out){
+
+    snFloat* share = (snFloat*)calloc(outsz.w * outsz.h * outsz.n, sizeof(snFloat));
+    for (size_t i = 0; i < outsz.d; ++i){
+
+        snFloat* pSh = share;
+        snFloat* pOut = out + (outsz.w * outsz.h) * i;
+        for (size_t j = 0; j < outsz.n; ++j){
+
+            memcpy(pSh, pOut, outsz.w * outsz.h * sizeof(snFloat));
+
+            pSh += outsz.w * outsz.h;
+            pOut += outsz.w * outsz.h * outsz.d;
+        }
+
+        fwdBatchNorm(outsz, share, share, bnPrm_[i]);
+    }
 }
 
 void Convolution::updateConfig(const snSize& newsz){
@@ -378,8 +389,34 @@ void Convolution::updateConfig(const snSize& newsz){
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
-    auxParams_["bn_norm"].resize(newsz.n * kernel_, 0);   bnPrm_.norm = auxParams_["bn_norm"].data();
-    auxParams_["bn_onc"].resize(newsz.n, 1.F);            bnPrm_.onc = auxParams_["bn_onc"].data();
+
+    size_t osz = outSz.w * outSz.h;
+
+    for (size_t i = 0; i < outSz.d; ++i){ //!!!!!!!!!!!!
+        /*string nm = "bn_norm" + to_string(i);
+        auxParams_[nm] = vector<snFloat>(osz * newsz.n, 0);  bnPrm_[i].norm = auxParams_[nm].data();
+        
+        nm = "bn_mean" + to_string(i);
+        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].mean = auxParams_[nm].data();
+                                                             
+        nm = "bn_varce" + to_string(i);                      
+        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].varce = auxParams_[nm].data();
+                                                             
+        nm = "bn_scale" + to_string(i);                      
+        auxParams_[nm] = vector<snFloat>(osz, 1.F);          bnPrm_[i].scale = auxParams_[nm].data();
+                                                             
+        nm = "bn_dScale" + to_string(i);                     
+        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].dScale = auxParams_[nm].data();
+                                                             
+        nm = "bn_schift" + to_string(i);                     
+        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].schift = auxParams_[nm].data();
+                                                             
+        nm = "bn_dSchift" + to_string(i);                    
+        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].dSchift = auxParams_[nm].data();
+                                                             
+        nm = "bn_onc" + to_string(i);                        
+        auxParams_[nm].resize(newsz.n, 1.F);                 bnPrm_[i].onc = auxParams_[nm].data();*/
+    }
 } 
 
 

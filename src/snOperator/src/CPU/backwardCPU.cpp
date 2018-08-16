@@ -183,36 +183,31 @@ void bwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
 void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,           // шаг вх слоя по входу
-           inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
-           outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
-           outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
-           kernelSz = kernel * kernel;
-
-    size_t shareStepByN = insz.d;                 // для локализации памяти
-    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
-
+        inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
+        outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
+        outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
+        kernelSz = kernel * kernel;
+        
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
-    // по батчу
+    if (type == 0){ // max
+
+        // по батчу
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < insz.n; ++n){
 
-        snFloat* outBuff = share + shareStepByN * n;
+            for (size_t p = 0; p < outStepByD; ++p){
 
-        for (size_t p = 0; p < outStepByD; ++p){
-
-            size_t ox = p % outsz.w, oy = p / outsz.w,
-                posW = ox * kernel, posH = oy * kernel;
-                    
-            if (type == 0){ // max
+                size_t ox = p % outsz.w, oy = p / outsz.w,
+                    posW = ox * kernel, posH = oy * kernel;
 
                 size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
-                
+
                 // по всем вх слоям
                 for (size_t d = 0; d < insz.d; ++d){
-                    
+
                     size_t c = *pOutInx, cx = c % kernel, cy = c / kernel;
                     pGrOut[(cx + posW) + (cy + posH) * insz.w] = *pGrIn;
 
@@ -221,10 +216,26 @@ void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloa
                     pGrOut += inStepByD;
                 }
             }
-            else{ // mean
-                                
+        }
+    }
+    else{ // mean
+
+        size_t shareStepByN = insz.d;                 // для локализации памяти
+        snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+        // по батчу
+#pragma omp parallel for
+        for (int n = 0; n < insz.n; ++n){
+
+            snFloat* outBuff = share + shareStepByN * n;
+
+            for (size_t p = 0; p < outStepByD; ++p){
+
+                size_t ox = p % outsz.w, oy = p / outsz.w,
+                    posW = ox * kernel, posH = oy * kernel;
+
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
-            
+
                 // по всем вых слоям
                 for (size_t k = 0; k < outsz.d; ++k){
                     outBuff[k] = *pGrIn;
@@ -243,13 +254,13 @@ void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloa
                         pGrOut += inStepByD;
                     }
                 }
-            }            
+            }
         }
-    }
-   
-    free(share);
-}
 
+        free(share);
+    }
+}
+   
 
 void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNormParam prm){
     // https://kevinzakka.github.io/2016/09/14/batch_normalization/

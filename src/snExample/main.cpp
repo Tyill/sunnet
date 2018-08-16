@@ -74,44 +74,30 @@ int main(int argc, _TCHAR* argv[])
         "\"NodeName\":\"F1\","    
         "\"NextNodes\":\"F2\","   
         "\"OperatorName\":\"Convolution\","  
-        "\"OperatorParams\":{\"kernel\":\"32\"," 
-                            "\"fWidth\":\"5\","
-                            "\"fHeight\":\"5\","
-                            "\"padding\":\"same\","
-                            "\"stride\":\"1\","
-                            "\"weightInitType\":\"he\","
-                            "\"activeType\":\"relu\","  
-                            "\"optimizerType\":\"adam\"," 
+        "\"OperatorParams\":{\"kernel\":\"32\","                           
+                            "\"padding\":\"-1\","
                             "\"batchNormType\":\"none\"}"    
         "},"
        
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
-        "\"OperatorName\":\"Pooling\","
-        "\"OperatorParams\":{\"kernel\":\"2\"}"
+        "\"OperatorName\":\"Pooling\""
         "},"   
         
         "{"
         "\"NodeName\":\"F3\","
         "\"NextNodes\":\"F4\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"64\","
-        "\"fWidth\":\"5\","
-        "\"fHeight\":\"5\","
-        "\"padding\":\"same\","
-        "\"stride\":\"1\","
-        "\"weightInitType\":\"he\","
-        "\"activeType\":\"relu\","
-        "\"optimizerType\":\"adam\","
-        "\"batchNormType\":\"none\"}"
+        "\"OperatorParams\":{\"kernel\":\"64\","       
+                            "\"padding\":\"-1\","
+                            "\"batchNormType\":\"none\"}"
         "},"
 
         "{"
         "\"NodeName\":\"F4\","
         "\"NextNodes\":\"F5\","
-        "\"OperatorName\":\"Pooling\","
-        "\"OperatorParams\":{\"kernel\":\"2\"}"
+        "\"OperatorName\":\"Pooling\""
         "},"
         
         "{"
@@ -119,10 +105,7 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F6\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"1024\","
-                            "\"weightInitType\":\"he\","
-                            "\"activeType\":\"relu\","
-                            "\"optimizerType\":\"adam\","
-                            "\"batchNormType\":\"none\"}"
+                            "\"batchNormType\":\"beforeActive\"}"
         "},"
 
         "{"
@@ -157,7 +140,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
         
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.0001;
+    int batchSz = 10, classCnt = 10, w = 28, h = 28; float lr = 0.0001;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
