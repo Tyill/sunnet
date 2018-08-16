@@ -36,7 +36,7 @@ using namespace SN_Base;
 #ifdef SN_CPU
 
 void fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output){
-        
+    
     // Out = α * In * W + βC
     // In - матрица вход данных - значения с предыд слоя
     // W - матрица весов
@@ -57,10 +57,11 @@ void fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weig
         kernel);                       // Out, шаг до след Y (Y21 - Y11) 
 }
 
-void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t stride,
+
+void fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
 
-    size_t wStepByD = krnWidth * krnHeight,    // шаг весов по входу
+    size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
            wStepByK = wStepByD * insz.d,       // шаг весов по выходу
            inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
            inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
@@ -71,7 +72,7 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
     
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-    
+        
     // по батчу
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
@@ -87,11 +88,11 @@ void fwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
             memset(outBuff, 0, kernel * sizeof(snFloat));
 
             // ядро свертки
-            for (size_t c = 0; c < (krnWidth * krnHeight); ++c){
+            for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
-                size_t cx = c % krnWidth, cy = c / krnWidth;
+                size_t cx = c % fWidth, cy = c / fWidth;
                 snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
-                snFloat* pW = weight + cx + cy * krnWidth;
+                snFloat* pW = weight + cx + cy * fWidth;
 
                 for (size_t d = 0; d < insz.d; ++d){
                     inBuff[d] = *pIn;

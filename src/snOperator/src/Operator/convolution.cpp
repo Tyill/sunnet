@@ -63,8 +63,8 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     };
 
     setIntParam("kernel", false, kernel_);
-    setIntParam("krnWidth", false, krnWidth_);
-    setIntParam("krnHeight", false, krnHeight_);
+    setIntParam("fWidth", false, fWidth_);
+    setIntParam("fHeight", false, fHeight_);
 
     if ((prms.find("padding") != prms.end()) && (prms["padding"] == "same"))
         isPaddingSame_ = true;
@@ -202,15 +202,16 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     /// копируем со смещением padding для каждого изобр
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
-
+   
     if ((paddingW_ == 0) && (paddingH_ == 0))
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
     else{
         size_t paddW = paddingW_, paddH = paddingH_, sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+        pDtMem += (stW + paddW * 2) * paddH;
         for (size_t i = 0; i < sz; ++i){
 
-            if (i % stH == 0)
-                pDtMem += (stW + paddW * 2) * paddH;
+            if ((i % stH == 0) && (i > 0))
+                pDtMem += (stW + paddW * 2) * paddH * 2;
 
             pDtMem += paddW;
             for (size_t j = 0; j < stW; ++j)
@@ -224,7 +225,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
-    fwdConvolution(kernel_, krnWidth_, krnHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out);
+    fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out);
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
@@ -281,17 +282,18 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
    
     snFloat* weight = baseWeight_->getData();
     snFloat* dWeight = auxParams_["dWeight"].data();
-    bwdConvolution(kernel_, krnWidth_, krnHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
+    bwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
         baseOut_->size(), gradIn, pGrOutExp, dWeight);
         
     if (!isSame){
         /// копируем градиент со смещением padding для каждого изобр
         snFloat* pGrOut = baseGrad_->getData();
         size_t paddW = paddingW_, paddH = paddingH_, sz = inSzMem_.h * inSzMem_.d * inSzMem_.n, stW = inSzMem_.w, stH = inSzMem_.h;
+        pGrOutExp += (stW + paddW * 2) * paddH;
         for (size_t i = 0; i < sz; ++i){
 
-            if (i % stH == 0)
-                pGrOutExp += (stW + paddW * 2) * paddH;
+            if ((i % stH == 0) && (i > 0))
+                pGrOutExp += (stW + paddW * 2) * paddH * 2;
 
             pGrOutExp += paddW;
             for (size_t j = 0; j < stW; ++j)
@@ -320,7 +322,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
 void Convolution::updateConfig(const snSize& newsz){
     
-    size_t stp = krnWidth_ * krnHeight_ * newsz.d, ntp = (stp + 1) * kernel_;
+    size_t stp = fWidth_ * fHeight_ * newsz.d, ntp = (stp + 1) * kernel_;
         
     // имеющиеся веса оставляем как есть, остаток инициализируем
     size_t wcsz = baseWeight_->size().size();
@@ -336,30 +338,30 @@ void Convolution::updateConfig(const snSize& newsz){
         }
     }
         
-    snSize outSz(0, 0, kernel_, newsz.n, 1);
+    snSize outSz(0, 0, kernel_, newsz.n);
           
     if (isPaddingSame_){
         outSz.w = newsz.w;
         outSz.h = newsz.h;
 
-        paddingW_ = (newsz.w * (stride_ - 1) + krnWidth_ - stride_) / 2;
-        paddingH_ = (newsz.h * (stride_ - 1) + krnHeight_ - stride_) / 2;
+        paddingW_ = (newsz.w * (stride_ - 1) + fWidth_ - stride_) / 2;
+        paddingH_ = (newsz.h * (stride_ - 1) + fHeight_ - stride_) / 2;
     }
     else{
         paddingW_ = paddingH_ = paddingSet_;
 
-        outSz.w = (newsz.w + paddingW_ * 2 - krnWidth_) / stride_ + 1;
-        outSz.h = (newsz.h + paddingH_ * 2 - krnHeight_) / stride_ + 1;
+        outSz.w = (newsz.w + paddingW_ * 2 - fWidth_) / stride_ + 1;
+        outSz.h = (newsz.h + paddingH_ * 2 - fHeight_) / stride_ + 1;
     }
 
     // проверка коррект
-    int res = (newsz.w + paddingW_ * 2 - krnWidth_) % stride_;
+    int res = (newsz.w + paddingW_ * 2 - fWidth_) % stride_;
     if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'krnWidth'");
+        ERROR_MESS("not correct param 'stride' or 'fWidth'");
 
-    res = (newsz.h + paddingH_ * 2 - krnHeight_) % stride_;
+    res = (newsz.h + paddingH_ * 2 - fHeight_) % stride_;
     if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'krnHeight'");
+        ERROR_MESS("not correct param 'stride' or 'fHeight'");
 
 
     inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);

@@ -30,8 +30,8 @@
 
 /// прямой проход
 void fwdConvolution(size_t kernel,   ///< колво вых слоев
-                  size_t krnWidth,   ///< ширина маски
-                 size_t krnHeight,   ///< высота маски
+                  size_t fWidth,     ///< ширина маски
+                 size_t fHeight,     ///< высота маски
                     size_t stride,   ///< шаг движения маски
          SN_Base::snFloat* weight,   ///< веса
              SN_Base::snSize insz,   ///< вход значения размер 
@@ -41,8 +41,8 @@ void fwdConvolution(size_t kernel,   ///< колво вых слоев
 
 /// обратный проход
 void bwdConvolution(size_t kernel,   ///< колво вых слоев
-                  size_t krnWidth,   ///< ширина маски
-                 size_t krnHeight,   ///< высота маски
+                  size_t fWidth,     ///< ширина маски
+                 size_t fHeight,     ///< высота маски
                     size_t stride,   ///< шаг движения маски
          SN_Base::snFloat* weight,   ///< веса
              SN_Base::snSize insz,   ///< вход значения размер 
@@ -69,8 +69,8 @@ public:
 private:
         
     size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
-    size_t krnWidth_ = 3;                                       ///< длина слоя свертки
-    size_t krnHeight_ = 3;                                      ///< высота слоя свертки    
+    size_t fWidth_ = 3;                                         ///< длина слоя свертки
+    size_t fHeight_ = 3;                                        ///< высота слоя свертки    
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
     size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
 

@@ -75,9 +75,9 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F2\","   
         "\"OperatorName\":\"Convolution\","  
         "\"OperatorParams\":{\"kernel\":\"32\"," 
-                            "\"krnWidth\":\"3\","
-                            "\"krnHeight\":\"3\","
-                            "\"padding\":\"1\","
+                            "\"fWidth\":\"5\","
+                            "\"fHeight\":\"5\","
+                            "\"padding\":\"same\","
                             "\"stride\":\"1\","
                             "\"weightInitType\":\"he\","
                             "\"activeType\":\"relu\","  
@@ -85,7 +85,7 @@ int main(int argc, _TCHAR* argv[])
                             "\"batchNormType\":\"none\"}"    
         "},"
        
-       "{"
+        "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
         "\"OperatorName\":\"Pooling\","
@@ -97,8 +97,8 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F4\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"64\","
-        "\"krnWidth\":\"3\","
-        "\"krnHeight\":\"3\","
+        "\"fWidth\":\"5\","
+        "\"fHeight\":\"5\","
         "\"padding\":\"same\","
         "\"stride\":\"1\","
         "\"weightInitType\":\"he\","
@@ -157,7 +157,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
         
-    int batchSz = 24, classCnt = 10, w = 28, h = 28;
+    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.0001;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -220,7 +220,7 @@ int main(int argc, _TCHAR* argv[])
     size_t num_inst = 0;
 
 fff:
-    float accuratSumm = 0, lr = 0.0001;
+    float accuratSumm = 0;
     for (int k = 0; k < 10000; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);

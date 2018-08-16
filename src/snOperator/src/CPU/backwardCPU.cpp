@@ -77,16 +77,16 @@ void bwdFullyConnected(size_t kernel, snFloat* weight,
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
 }
 
-void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t stride, 
+void bwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, 
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
-
-    size_t wStepByD = krnWidth * krnHeight,                  // шаг весов по входу
-           wStepByK = wStepByD * insz.d,                     // шаг весов по выходу
-           wStepByN = (wStepByK + 1) * kernel,               // шаг весов по батчу
-           inStepByD = insz.w * insz.h,                      // шаг вх слоя по входу
-           inStepByN = inStepByD * insz.d,                   // шаг вх слоя по батчу
-           outStepByD = outsz.w * outsz.h,                   // шаг вых слоя по выходу
-           outStepByN = outStepByD * outsz.d;                // шаг вых слоя по батчу
+    
+    size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
+           wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
+           wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
+           inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
 
     size_t shareStepByN = insz.d + kernel + insz.d;          // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
@@ -124,12 +124,12 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
             }
                        
             // ядро свертки
-            for (size_t c = 0; c < (krnWidth * krnHeight); ++c){
+            for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
-                size_t cx = c % krnWidth, cy = c / krnWidth;
+                size_t cx = c % fWidth, cy = c / fWidth;
                 snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;                
-                snFloat* pW = weight + cx + cy * krnWidth;
-                snFloat* pdW = wBuff + cx + cy * krnWidth;
+                snFloat* pW = weight + cx + cy * fWidth;
+                snFloat* pdW = wBuff + cx + cy * fWidth;
 
                 for (size_t d = 0; d < insz.d; ++d){
                     inBuff[d] = *pIn;
@@ -177,7 +177,7 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
     }
     
     free(share);
-  
+
 }   
 
 void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
