@@ -63,7 +63,7 @@ public:
 private:
         
     size_t kernel_ = 2;                                               ///< размер
-  
+    
     poolType poolType_ = poolType::max;                               ///< тип
                                                                       
     SN_Base::Tensor inFwTns_, inBwTns_;                               ///< тензор с сосед слоя 

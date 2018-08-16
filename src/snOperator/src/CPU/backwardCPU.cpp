@@ -96,10 +96,10 @@ void bwdConvolution(size_t kernel, size_t krnWidth, size_t krnHeight, size_t str
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
    
-    // по батчу  
+     // по батчу  
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
-                
+          
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* ginBuff = share + insz.d + shareStepByN * n;
         snFloat* goutBuff = share + insz.d + kernel + shareStepByN * n;

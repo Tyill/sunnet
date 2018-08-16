@@ -43,7 +43,7 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
     
-    auto setIntParam = [&prms](const string& name, bool isZero, size_t& value){
+    auto setIntParam = [&prms, this](const string& name, bool isZero, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
 
@@ -51,10 +51,10 @@ void Pooling::load(std::map<std::string, std::string>& prms){
             if ((v > 0) || (isZero && (v == 0)))
                 value = v;
             else
-                statusMess("Pooling::setInternPrm error: param '" + name + (isZero ? "' < 0" : "' <= 0"));
+                ERROR_MESS("param '" + name + (isZero ? "' < 0" : "' <= 0"));
         }
         else
-            statusMess("Pooling::setInternPrm error: not found (or not numder) param '" + name + "'");
+            ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
     
     setIntParam("kernel", false, kernel_);   
@@ -65,7 +65,7 @@ void Pooling::load(std::map<std::string, std::string>& prms){
         if (atype == "max") poolType_ = poolType::max;
         else if (atype == "avg") poolType_ = poolType::avg;
         else
-            statusMess("Pooling::setInternPrm error: param 'poolType' = " + atype + " indefined");
+            ERROR_MESS("param 'poolType' = " + atype + " indefined");
     }
 
     basePrms_ = prms;
@@ -132,10 +132,15 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 void Pooling::updateConfig(const snSize& newsz){
            
     snSize outSz(0, 0, newsz.d, newsz.n);
-      
-    outSz.w = (newsz.w - (kernel_ / 2) * 2) / kernel_;
-    outSz.h = (newsz.h - (kernel_ / 2) * 2) / kernel_;
+                 
+    outSz.w = (newsz.w - kernel_) / kernel_ + 1;
+    outSz.h = (newsz.h - kernel_) / kernel_ + 1;
 
+    // проверка коррект
+    int resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;
+    if ((resW != 0) || (resH != 0))
+        ERROR_MESS("not correct param 'kernel'");
+       
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
 

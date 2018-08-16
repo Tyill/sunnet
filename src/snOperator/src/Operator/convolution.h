@@ -100,5 +100,5 @@ private:
         
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
-
+       
 };

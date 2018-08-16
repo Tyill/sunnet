@@ -48,7 +48,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     baseGrad_ = new Tensor();
     baseWeight_ = new Tensor();    
 
-    auto setIntParam = [&prms](const string& name, bool isZero, size_t& value){
+    auto setIntParam = [&prms, this](const string& name, bool isZero, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
 
@@ -56,10 +56,10 @@ void Convolution::load(std::map<std::string, std::string>& prms){
             if ((v > 0) || (isZero && (v == 0)))
                 value = v;
             else
-                statusMess("Convolution::setInternPrm error: param '" + name + (isZero ? "' < 0" : "' <= 0"));
+                ERROR_MESS("param '" + name + (isZero ? "' < 0" : "' <= 0"));
         }
         else
-            statusMess("Convolution::setInternPrm error: not found (or not numder) param '" + name + "'");
+            ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
 
     setIntParam("kernel", false, kernel_);
@@ -103,7 +103,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         else if (atype == "leakyRelu") activeType_ = activeType::leakyRelu;
         else if (atype == "elu") activeType_ = activeType::elu;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'activeType' = " + atype + " indefined");
+            ERROR_MESS("param 'activeType' = " + atype + " indefined");
     }
 
     if (prms.find("optimizerType") != prms.end()){
@@ -115,7 +115,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         else if (optType == "adam") optimizerType_ = optimizerType::adam;
         else if (optType == "RMSprop") optimizerType_ = optimizerType::RMSprop;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'optimizerType' = " + optType + " indefined");
+            ERROR_MESS("param 'optimizerType' = " + optType + " indefined");
     }
 
     if (prms.find("weightInitType") != prms.end()){
@@ -126,7 +126,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         else if (wInit == "lecun") weightInitType_ = weightInitType::lecun;
         else if (wInit == "xavier") weightInitType_ = weightInitType::xavier;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'weightInitType' = " + wInit + " indefined");
+            ERROR_MESS("param 'weightInitType' = " + wInit + " indefined");
     }
 
     if (prms.find("batchNormType") != prms.end()){
@@ -136,7 +136,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
         else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'batchNormType' = " + bnType + " indefined");
+            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
     }
 
     if (prms.find("decayMomentDW") != prms.end())
@@ -342,15 +342,25 @@ void Convolution::updateConfig(const snSize& newsz){
         outSz.w = newsz.w;
         outSz.h = newsz.h;
 
-        paddingW_ = (newsz.w * (stride_ - 1) + (krnWidth_ / 2) * 2) / 2;
-        paddingH_ = (newsz.h * (stride_ - 1) + (krnHeight_ / 2) * 2) / 2;
+        paddingW_ = (newsz.w * (stride_ - 1) + krnWidth_ - stride_) / 2;
+        paddingH_ = (newsz.h * (stride_ - 1) + krnHeight_ - stride_) / 2;
     }
     else{
-        outSz.w = (newsz.w + paddingSet_ * 2 - (krnWidth_ / 2) * 2) / stride_;
-        outSz.h = (newsz.h + paddingSet_ * 2 - (krnHeight_ / 2) * 2) / stride_;
-
         paddingW_ = paddingH_ = paddingSet_;
+
+        outSz.w = (newsz.w + paddingW_ * 2 - krnWidth_) / stride_ + 1;
+        outSz.h = (newsz.h + paddingH_ * 2 - krnHeight_) / stride_ + 1;
     }
+
+    // проверка коррект
+    int res = (newsz.w + paddingW_ * 2 - krnWidth_) % stride_;
+    if (res != 0)
+        ERROR_MESS("not correct param 'stride' or 'krnWidth'");
+
+    res = (newsz.h + paddingH_ * 2 - krnHeight_) % stride_;
+    if (res != 0)
+        ERROR_MESS("not correct param 'stride' or 'krnHeight'");
+
 
     inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
     inDataExp_.resize(inDataExpSz_.size());

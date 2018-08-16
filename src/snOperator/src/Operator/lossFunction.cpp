@@ -43,10 +43,10 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
         else if (stype == "binaryCrossEntropy")
             lossType_ = lossType::binaryCrossEntropy;
         else
-            statusMess("LossFunction::setInternPrm error: param 'lossType' = " + stype + " indefined");
+            ERROR_MESS("param 'lossType' = " + stype + " indefined");
     }
     else
-        statusMess("LossFunction::setInternPrm error: not found param 'lossType'");
+        ERROR_MESS("not found param 'lossType'");
 }
 
 /// оператор - расчет ошибки
@@ -133,7 +133,7 @@ void LossFunction::forward(Tensor* inTns){
     }
     break;
     default:
-        statusMess("LossFunction::Do error: param 'lossType' indefined");
+        ERROR_MESS("param 'lossType' indefined");
         break;
     }
 
@@ -179,7 +179,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
         break;
     }
     default:
-        statusMess("LossFunction::Do error: param 'lossType' indefined");
+        ERROR_MESS("param 'lossType' indefined");
         break;
     }
 }

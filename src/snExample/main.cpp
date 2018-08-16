@@ -75,9 +75,9 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F2\","   
         "\"OperatorName\":\"Convolution\","  
         "\"OperatorParams\":{\"kernel\":\"32\"," 
-                            "\"krnWidth\":\"5\","
-                            "\"krnHeight\":\"5\","
-                            "\"padding\":\"same\","
+                            "\"krnWidth\":\"3\","
+                            "\"krnHeight\":\"3\","
+                            "\"padding\":\"1\","
                             "\"stride\":\"1\","
                             "\"weightInitType\":\"he\","
                             "\"activeType\":\"relu\","  
@@ -97,8 +97,8 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F4\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"64\","
-        "\"krnWidth\":\"5\","
-        "\"krnHeight\":\"5\","
+        "\"krnWidth\":\"3\","
+        "\"krnHeight\":\"3\","
         "\"padding\":\"same\","
         "\"stride\":\"1\","
         "\"weightInitType\":\"he\","
@@ -157,7 +157,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
         
-    int batchSz = 1, classCnt = 10, w = 28, h = 28;
+    int batchSz = 24, classCnt = 10, w = 28, h = 28;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -181,7 +181,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; //if (cnt > 1000) break;
+            ++cnt; if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -277,7 +277,7 @@ fff:
 
                 for (size_t c = 0; c < nc; ++c){
                                         
-                    refData[r * nc + c] = (pt[c] - mean) / maxVal;
+                    refData[r * nc + c] = (pt[c] - mean);
                 }
             }
 

@@ -54,10 +54,10 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
         if (kernel > 0)
             kernel_ = kernel;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'kernel' <= 0");
+            ERROR_MESS("param 'kernel' <= 0");
     }
     else
-        statusMess("FullyConnected::setInternPrm error: not found (or not numder) param 'kernel'");
+        ERROR_MESS("not found (or not numder) param 'kernel'");
 
     baseOut_->resize(snSize(kernel_));
 
@@ -92,7 +92,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         else if (atype == "leakyRelu") activeType_ = activeType::leakyRelu;
         else if (atype == "elu") activeType_ = activeType::elu;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'activeType' = " + atype + " indefined");
+            ERROR_MESS("param 'activeType' = " + atype + " indefined");
     }
 
     if (prms.find("optimizerType") != prms.end()){
@@ -104,7 +104,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         else if (optType == "adam") optimizerType_ = optimizerType::adam;
         else if (optType == "RMSprop") optimizerType_ = optimizerType::RMSprop;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'optimizerType' = " + optType + " indefined");
+            ERROR_MESS("param 'optimizerType' = " + optType + " indefined");
     }
 
     if (prms.find("weightInitType") != prms.end()){
@@ -115,7 +115,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         else if (wInit == "lecun") weightInitType_ = weightInitType::lecun;
         else if (wInit == "xavier") weightInitType_ = weightInitType::xavier;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'weightInitType' = " + wInit + " indefined");
+            ERROR_MESS("param 'weightInitType' = " + wInit + " indefined");
     }
 
     if (prms.find("batchNormType") != prms.end()){
@@ -125,7 +125,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
         else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
         else
-            statusMess("FullyConnected::setInternPrm error: param 'batchNormType' = " + bnType + " indefined");
+            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
     }
 
     if (prms.find("decayMomentDW") != prms.end())
