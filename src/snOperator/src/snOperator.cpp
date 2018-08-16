@@ -30,6 +30,10 @@
 #include "Operator/input.h"
 #include "Operator/output.h"
 #include "Operator/lossFunction.h"
+#include "Operator/lock.h"
+#include "Operator/summator.h"
+#include "Operator/concatenate.h"
+#include "Operator/resize.h"
 
 SN_API::snStatusCBack g_sts = nullptr;
 SN_API::snUData g_ud = nullptr;
@@ -52,6 +56,10 @@ namespace SN_Opr{
         else if (fname == "LossFunction")   ret = (SN_Base::OperatorBase*)new LossFunction(fname, node, prms);
         else if (fname == "Convolution")    ret = (SN_Base::OperatorBase*)new Convolution(fname, node, prms);
         else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(fname, node, prms);
+        else if (fname == "Lock")           ret = (SN_Base::OperatorBase*)new Lock(fname, node, prms);
+        else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(fname, node, prms);
+        else if (fname == "Concatenate")    ret = (SN_Base::OperatorBase*)new Concatenate(fname, node, prms);
+        else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(fname, node, prms);
 
         return ret;
     }
@@ -66,6 +74,10 @@ namespace SN_Opr{
             else if (fname == "LossFunction")   delete (LossFunction*)opr;
             else if (fname == "Convolution")    delete (Convolution*)opr;
             else if (fname == "Pooling")        delete (Pooling*)opr;
+            else if (fname == "Lock")           delete (Lock*)opr;
+            else if (fname == "Summator")       delete (Summator*)opr;
+            else if (fname == "Concatenate")    delete (Concatenate*)opr;
+            else if (fname == "Resize")         delete (Resize*)opr;
         }
     }
         

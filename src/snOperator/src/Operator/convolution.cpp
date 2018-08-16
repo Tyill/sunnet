@@ -194,7 +194,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     /// копируем со смещением padding для каждого изобр
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
-   
+       
     if ((paddingW_ == 0) && (paddingH_ == 0))
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
     else{
@@ -213,7 +213,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
             pInTns += stW;
         }
     }
-    
+
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();

@@ -98,7 +98,7 @@ private:
 
     void updateConfig(const SN_Base::snSize& newSz);
         
-    void batchNorm(bool fwBw, const SN_Base::snSize& outSz, snFloat* out);
+    void batchNorm(bool fwBw, const SN_Base::snSize& outSz, SN_Base::snFloat* out);
 
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
