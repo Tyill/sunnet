@@ -137,7 +137,7 @@ void Pooling::updateConfig(const snSize& newsz){
     outSz.h = (newsz.h - kernel_) / kernel_ + 1;
 
     // проверка коррект
-    int resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;
+    size_t resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;
     if ((resW != 0) || (resH != 0))
         ERROR_MESS("not correct param 'kernel'");
        

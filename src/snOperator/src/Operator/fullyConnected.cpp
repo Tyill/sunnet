@@ -59,24 +59,38 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
     else
         ERROR_MESS("not found (or not numder) param 'kernel'");
 
+    if (prms.find("batchNormType") != prms.end()){
+
+        string bnType = prms["batchNormType"];
+        if (bnType == "none") batchNormType_ = batchNormType::none;
+        else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
+        else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
+        else
+            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
+    }
+
     baseOut_->resize(snSize(kernel_));
 
-    baseBatchNorm_.mean.resize(kernel_);                  bnPrm_.mean = baseBatchNorm_.mean.data();
-    baseBatchNorm_.varce.resize(kernel_);                 bnPrm_.varce = baseBatchNorm_.varce.data();
-    baseBatchNorm_.scale.resize(kernel_, 1);              bnPrm_.scale = baseBatchNorm_.scale.data();
-    baseBatchNorm_.schift.resize(kernel_);                bnPrm_.schift = baseBatchNorm_.schift.data();
-    baseBatchNorm_.sz.w = kernel_;
-
+    // текущие параметры
+    setInternPrm(prms);
+  
     // вспом массивы
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();
-    auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
-    auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
-    auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
-    auxParams_["bn_onc"] = vector<snFloat>();                 bnPrm_.onc = auxParams_["bn_onc"].data();
 
-    setInternPrm(prms);
+    if (batchNormType_ != batchNormType::none){
+        baseBatchNorm_.mean.resize(kernel_, 0);                  bnPrm_.mean = baseBatchNorm_.mean.data();
+        baseBatchNorm_.varce.resize(kernel_, 1);                 bnPrm_.varce = baseBatchNorm_.varce.data();
+        baseBatchNorm_.scale.resize(kernel_, 1);                 bnPrm_.scale = baseBatchNorm_.scale.data();
+        baseBatchNorm_.schift.resize(kernel_, 0);                bnPrm_.schift = baseBatchNorm_.schift.data();
+        baseBatchNorm_.sz.w = kernel_;
+
+        auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
+    }
 }
 
 bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
@@ -117,17 +131,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         else
             ERROR_MESS("param 'weightInitType' = " + wInit + " indefined");
     }
-
-    if (prms.find("batchNormType") != prms.end()){
-
-        string bnType = prms["batchNormType"];
-        if (bnType == "none") batchNormType_ = batchNormType::none;
-        else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
-        else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
-        else
-            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
-    }
-
+       
     if (prms.find("decayMomentDW") != prms.end())
         opt_decayMomentDW_ = stof(prms["decayMomentDW"]);
 
@@ -143,7 +147,6 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
     return true;
 }
 
-/// выполнить расчет
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
     if (neighbOpr.size() == 1){
@@ -188,21 +191,26 @@ void FullyConnected::forward(SN_Base::Tensor* inTns){
         updateConfig(insz);
     }
 
-    /// копируем со смещением X0 для каждого изобр
+    /// копируем со смещением для bias для каждого изобр
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
     size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
     for (size_t i = 0; i < insz.n; ++i){
         memcpy(pDtMem + i * stp + i + 1, pInTns + i * stp, ssz);
     }
-    
+
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData();
     fwdFullyConnected(kernel_, insz, pDtMem, baseWeight_->getData(), out);
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        fwdBatchNorm(baseOut_->size(), out, out, bnPrm_);
+    snSize outSz = baseOut_->size();
+    if (batchNormType_ == batchNormType::beforeActive){
+        if (outSz.n == 1)
+            batchNormOnc(true, outSz, out, out, bnPrm_);
+        else
+            fwdBatchNorm(outSz, out, out, bnPrm_);
+    }
 
     /// функция активации
     switch (activeType_){
@@ -214,9 +222,12 @@ void FullyConnected::forward(SN_Base::Tensor* inTns){
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        fwdBatchNorm(baseOut_->size(), out, out, bnPrm_);
-
+    if (batchNormType_ == batchNormType::postActive){
+        if (outSz.n == 1)
+            batchNormOnc(true, outSz, out, out, bnPrm_);
+        else
+            fwdBatchNorm(outSz, out, out, bnPrm_);
+    }
 }
 
 void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -224,8 +235,13 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     snFloat* gradIn = inTns->getData();
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        bwdBatchNorm(inTns->size(), gradIn, gradIn, bnPrm_);
+    snSize gsz = inTns->size();
+    if (batchNormType_ == batchNormType::postActive){     
+        if (gsz.n == 1)
+            batchNormOnc(false, gsz, gradIn, gradIn, bnPrm_);
+        else
+            bwdBatchNorm(gsz, gradIn, gradIn, bnPrm_);
+    }
 
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
@@ -247,8 +263,12 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        bwdBatchNorm(inTns->size(), gradIn, gradIn, bnPrm_);
+    if (batchNormType_ == batchNormType::beforeActive){
+        if (gsz.n == 1)
+            batchNormOnc(false, gsz, gradIn, gradIn, bnPrm_);
+        else
+            bwdBatchNorm(gsz, gradIn, gradIn, bnPrm_);
+    }
 
     // расчет вых градиента и коррекции весов
     snFloat* gradOut = baseGrad_->getData();
@@ -270,6 +290,24 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     default: break;
     }
 
+}
+
+void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNormParam& prm){
+
+    size_t inSz = insz.w * insz.h * insz.d;
+
+    if (fwBw){
+
+        /// y = ^x * γ + β
+        for (size_t i = 0; i < inSz; ++i)
+            out[i] = (in[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];        
+    }
+    else{
+       
+        /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+        for (size_t i = 0; i < inSz; ++i)            
+            out[i] = prm.scale[i] * (in[i] - prm.dSchift[i] - prm.norm[i] * prm.dScale[i]) / prm.varce[i];
+    }
 }
 
 void FullyConnected::updateConfig(const snSize& newsz){
@@ -303,9 +341,11 @@ void FullyConnected::updateConfig(const snSize& newsz){
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
-    auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); bnPrm_.norm = auxParams_["bn_norm"].data();
-    auxParams_["bn_onc"].resize(newsz.n, 1.F);          bnPrm_.onc = auxParams_["bn_onc"].data();    
-    
+
+    if (batchNormType_ != batchNormType::none){
+        auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); bnPrm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_onc"].resize(newsz.n, 1.F);          bnPrm_.onc = auxParams_["bn_onc"].data();
+    }
 } 
 
 

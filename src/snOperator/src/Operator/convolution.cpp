@@ -220,7 +220,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out);
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
+    if ((batchNormType_ == batchNormType::beforeActive) && (outsz.n > 0))
         batchNorm(true, outsz, out);
 
     /// функция активации
@@ -233,7 +233,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
+    if ((batchNormType_ == batchNormType::postActive) && (outsz.n > 0))
         batchNorm(true, outsz, out);
 }
 
@@ -366,7 +366,7 @@ void Convolution::updateConfig(const snSize& newsz){
     }
 
     // проверка коррект
-    int res = (newsz.w + paddingW_ * 2 - fWidth_) % stride_;
+    size_t res = (newsz.w + paddingW_ * 2 - fWidth_) % stride_;
     if (res != 0)
         ERROR_MESS("not correct param 'stride' or 'fWidth'");
 
