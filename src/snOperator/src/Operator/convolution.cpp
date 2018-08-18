@@ -73,6 +73,17 @@ void Convolution::load(std::map<std::string, std::string>& prms){
 
     setIntParam("stride", true, false, stride_);
             
+
+    if (prms.find("batchNormType") != prms.end()){
+
+        string bnType = prms["batchNormType"];
+        if (bnType == "none") batchNormType_ = batchNormType::none;
+        else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
+        else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
+        else
+            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
+    }
+
     // вспом массивы
     auxParams_["outGradExp"] = vector<snFloat>();
     auxParams_["dWeight"] = vector<snFloat>();
@@ -120,17 +131,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         else
             ERROR_MESS("param 'weightInitType' = " + wInit + " indefined");
     }
-
-    if (prms.find("batchNormType") != prms.end()){
-
-        string bnType = prms["batchNormType"];
-        if (bnType == "none") batchNormType_ = batchNormType::none;
-        else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
-        else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
-        else
-            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
-    }
-
+       
     if (prms.find("decayMomentDW") != prms.end())
         opt_decayMomentDW_ = stof(prms["decayMomentDW"]);
 
@@ -141,8 +142,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
         opt_lmbRegular_ = stof(prms["lmbRegular"]);
 
     if (prms.find("batchNormLr") != prms.end())
-        for (auto& bn : bnPrm_)
-            bn.lr = stof(prms["batchNormLr"]);
+        bnPrm_.lr = stof(prms["batchNormLr"]);
                 
     return true;
 }
@@ -197,23 +197,9 @@ void Convolution::forward(SN_Base::Tensor* inTns){
        
     if ((paddingW_ == 0) && (paddingH_ == 0))
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
-    else{
-        size_t paddW = paddingW_, paddH = paddingH_, sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
-        pDtMem += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                pDtMem += (stW + paddW * 2) * paddH * 2;
-
-            pDtMem += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                pDtMem[j] = pInTns[j];
-            pDtMem += paddW + stW;
-
-            pInTns += stW;
-        }
-    }
-
+    else
+        paddingOffs(false, insz, pDtMem, pInTns);
+        
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
@@ -221,7 +207,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if ((batchNormType_ == batchNormType::beforeActive) && (outsz.n > 0))
-        batchNorm(true, outsz, out);
+        batchNorm(true, outsz, out, out, bnPrm_);
 
     /// функция активации
     switch (activeType_){
@@ -234,7 +220,7 @@ void Convolution::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if ((batchNormType_ == batchNormType::postActive) && (outsz.n > 0))
-        batchNorm(true, outsz, out);
+        batchNorm(true, outsz, out, out, bnPrm_);
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -243,7 +229,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        batchNorm(false, inTns->size(), gradIn);
+        batchNorm(false, inTns->size(), gradIn, gradIn, bnPrm_);
 
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
@@ -266,7 +252,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        batchNorm(false, inTns->size(), gradIn);
+        batchNorm(false, inTns->size(), gradIn, gradIn, bnPrm_);
 
     // расчет вых градиента и коррекции весов
     bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
@@ -277,24 +263,8 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     bwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
         baseOut_->size(), gradIn, pGrOutExp, dWeight);
         
-    if (!isSame){
-        /// копируем градиент со смещением padding для каждого изобр
-        snFloat* pGrOut = baseGrad_->getData();
-        size_t paddW = paddingW_, paddH = paddingH_, sz = inSzMem_.h * inSzMem_.d * inSzMem_.n, stW = inSzMem_.w, stH = inSzMem_.h;
-        pGrOutExp += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                pGrOutExp += (stW + paddW * 2) * paddH * 2;
-
-            pGrOutExp += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                pGrOut[j] = pGrOutExp[j];
-            pGrOutExp += paddW + stW;
-
-            pGrOut += stW;
-        }
-    }
+    if (!isSame)
+        paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
 
     // корректируем веса
     snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -312,23 +282,99 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
    
 }
 
-void Convolution::batchNorm(bool fwBw, const SN_Base::snSize& outsz, snFloat* out){
+void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){
 
-    snFloat* share = (snFloat*)calloc(outsz.w * outsz.h * outsz.n, sizeof(snFloat));
-    for (size_t i = 0; i < outsz.d; ++i){
+    /// копируем со смещением padding для каждого изобр
+    
+    size_t paddW = paddingW_, paddH = paddingH_,
+        sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+    if (in2out){
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
 
-        snFloat* pSh = share;
-        snFloat* pOut = out + (outsz.w * outsz.h) * i;
-        for (size_t j = 0; j < outsz.n; ++j){
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
 
-            memcpy(pSh, pOut, outsz.w * outsz.h * sizeof(snFloat));
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                out[j] = in[j];
+            in += paddW + stW;
 
-            pSh += outsz.w * outsz.h;
-            pOut += outsz.w * outsz.h * outsz.d;
+            out += stW;
         }
-
-        fwdBatchNorm(outsz, share, share, bnPrm_[i]);
     }
+    else{
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                in[j] = out[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+}
+
+void Convolution::batchNorm(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, batchNormParam& prm){
+
+    /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
+
+    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d;
+    if (insz.n == 1){
+        for (size_t i = 0; i < insz.d; ++i){
+
+            snFloat* pIn = in + stepD * i;
+            snFloat* pOut = out + stepD * i;
+
+            prm.offset(stepD * i);
+
+            size_t inSz = insz.w * insz.h * insz.d;
+            if (fwBw){
+                /// y = ^x * γ + β
+                for (size_t i = 0; i < inSz; ++i){
+                    prm.norm[i] = (pIn[i] - prm.mean[i]) / prm.varce[i];
+                    pOut[i] = (pIn[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];
+                }
+            }
+            else{
+                /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+                for (size_t i = 0; i < inSz; ++i)
+                    pOut[i] = prm.scale[i] * (pIn[i] - prm.dSchift[i] - prm.norm[i] * prm.dScale[i]) / prm.varce[i];
+            }
+        }
+    }
+    else{ // insz.n > 1
+        for (size_t i = 0; i < insz.d; ++i){
+
+            snFloat* pSh = prm.share;
+            snFloat* pIn = in + stepD * i;
+            for (size_t j = 0; j < insz.n; ++j){
+                memcpy(pSh, pIn, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pIn += stepN;
+            }
+
+            prm.offset(stepD * i);
+            if (fwBw)
+                fwdBatchNorm(insz, prm.share, prm.share, prm);
+            else
+                bwdBatchNorm(insz, prm.share, prm.share, prm);
+
+            pSh = prm.share;
+            snFloat* pOut = out + stepD * i;
+            for (size_t j = 0; j < insz.n; ++j){
+                memcpy(pOut, pSh, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pOut += stepN;
+            }
+        }
+    }
+    prm.offset(-int(stepD * insz.d));
 }
 
 void Convolution::updateConfig(const snSize& newsz){
@@ -391,32 +437,20 @@ void Convolution::updateConfig(const snSize& newsz){
     auxParams_["dWGrad"].resize(ntp, 0);
 
     size_t osz = outSz.w * outSz.h;
+    
+    if (batchNormType_ != batchNormType::none){
+        baseBatchNorm_.mean.resize(osz, 0);                      bnPrm_.mean = baseBatchNorm_.mean.data();
+        baseBatchNorm_.varce.resize(osz, 1);                     bnPrm_.varce = baseBatchNorm_.varce.data();
+        baseBatchNorm_.scale.resize(osz, 1);                     bnPrm_.scale = baseBatchNorm_.scale.data();
+        baseBatchNorm_.schift.resize(osz, 0);                    bnPrm_.schift = baseBatchNorm_.schift.data();
+        baseBatchNorm_.sz.w = kernel_;
 
-    for (size_t i = 0; i < outSz.d; ++i){ //!!!!!!!!!!!!
-        /*string nm = "bn_norm" + to_string(i);
-        auxParams_[nm] = vector<snFloat>(osz * newsz.n, 0);  bnPrm_[i].norm = auxParams_[nm].data();
-        
-        nm = "bn_mean" + to_string(i);
-        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].mean = auxParams_[nm].data();
-                                                             
-        nm = "bn_varce" + to_string(i);                      
-        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].varce = auxParams_[nm].data();
-                                                             
-        nm = "bn_scale" + to_string(i);                      
-        auxParams_[nm] = vector<snFloat>(osz, 1.F);          bnPrm_[i].scale = auxParams_[nm].data();
-                                                             
-        nm = "bn_dScale" + to_string(i);                     
-        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].dScale = auxParams_[nm].data();
-                                                             
-        nm = "bn_schift" + to_string(i);                     
-        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].schift = auxParams_[nm].data();
-                                                             
-        nm = "bn_dSchift" + to_string(i);                    
-        auxParams_[nm] = vector<snFloat>(osz, 0);            bnPrm_[i].dSchift = auxParams_[nm].data();
-                                                             
-        nm = "bn_onc" + to_string(i);                        
-        auxParams_[nm].resize(newsz.n, 1.F);                 bnPrm_[i].onc = auxParams_[nm].data();*/
-    }
+        auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
+        auxParams_["bn_share"] = vector<snFloat>();              bnPrm_.share = auxParams_["bn_share"].data();
+    }  
 } 
 
 

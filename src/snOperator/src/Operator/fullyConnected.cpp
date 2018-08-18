@@ -299,8 +299,10 @@ void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, sn
     if (fwBw){
 
         /// y = ^x * γ + β
-        for (size_t i = 0; i < inSz; ++i)
-            out[i] = (in[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];        
+        for (size_t i = 0; i < inSz; ++i){
+            prm.norm[i] = (in[i] - prm.mean[i]) / prm.varce[i];
+            out[i] = (in[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];
+        }
     }
     else{
        

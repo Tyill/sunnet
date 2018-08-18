@@ -84,7 +84,7 @@ private:
     SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
 
-    std::vector<batchNormParam> bnPrm_;                         ///< параметры batchNorm
+    batchNormParam bnPrm_;                                      ///< параметры batchNorm
 
     SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
 
@@ -97,8 +97,10 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
-        
-    void batchNorm(bool fwBw, const SN_Base::snSize& outSz, SN_Base::snFloat* out);
+    
+    void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
+
+    void batchNorm(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, batchNormParam& prm);
 
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);

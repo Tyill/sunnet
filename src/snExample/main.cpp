@@ -61,62 +61,91 @@ int main(int argc, _TCHAR* argv[])
     stringstream ss;
 
     ss << "{"
-        
-        "\"BeginNet\":"                         
+
+        "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"F1\""                     
+        "\"NextNodes\":\"F1\""
         "},"
 
-        "\"Nodes\":"                            
+        "\"Nodes\":"
         "["
 
-        "{"
-        "\"NodeName\":\"F1\","    
-        "\"NextNodes\":\"F2\","   
-        "\"OperatorName\":\"Convolution\","  
-        "\"OperatorParams\":{\"kernel\":\"32\","                           
-                            "\"padding\":\"-1\","
-                            "\"batchNormType\":\"none\"}"    
+      /*  "{"
+        "\"NodeName\":\"F1\","
+        "\"NextNodes\":\"F2\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"32\","
+                            "\"padding\":\"-1\"}"
         "},"
-       
+
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
-        "\"OperatorName\":\"Pooling\""
-        "},"   
-        
-        "{"
-        "\"NodeName\":\"F3\","
-        "\"NextNodes\":\"F4\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"64\","       
-                            "\"padding\":\"-1\","
-                            "\"batchNormType\":\"none\"}"
+        "\"OperatorParams\":{\"kernel\":\"32\","
+                            "\"padding\":\"-1\"}"
         "},"
 
         "{"
+        "\"NodeName\":\"F3\","
+        "\"NextNodes\":\"F4\","
+        "\"OperatorName\":\"Pooling\""
+        "},"*/
+
+       /* "{"
         "\"NodeName\":\"F4\","
         "\"NextNodes\":\"F5\","
-        "\"OperatorName\":\"Pooling\""
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"64\","
+                            "\"padding\":\"-1\"}"
         "},"
-        
+
         "{"
         "\"NodeName\":\"F5\","
         "\"NextNodes\":\"F6\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"64\","
+                            "\"padding\":\"-1\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F6\","
+        "\"NextNodes\":\"F7\","
+        "\"OperatorName\":\"Pooling\""
+        "},"        */
+                
+        "{"
+        "\"NodeName\":\"F1\","
+        "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"1024\","
                             "\"batchNormType\":\"beforeActive\"}"
         "},"
 
         "{"
-        "\"NodeName\":\"F6\","
+        "\"NodeName\":\"F2\","
+        "\"NextNodes\":\"F3\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"512\","
+        "\"batchNormType\":\"beforeActive\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F3\","
+        "\"NextNodes\":\"F4\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"128\","
+        "\"batchNormType\":\"beforeActive\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F4\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"10\","
+        "\"OperatorParams\":{\"kernel\":\"7\","
         "\"weightInitType\":\"uniform\","
         "\"activeType\":\"none\","
-        "\"optimizerType\":\"adam\","
-        "\"batchNormType\":\"none\"}"
+        "\"optimizerType\":\"adam\"}"
         "},"
                 
         "{"
@@ -137,10 +166,10 @@ int main(int argc, _TCHAR* argv[])
 
     char err[256];
     auto snet = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
-    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
-    //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
+    //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
+    string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
         
-    int batchSz = 10, classCnt = 10, w = 28, h = 28; float lr = 0.0001;
+    int batchSz = 10, classCnt = 7, w = 500, h = 50; float lr = 0.05;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -164,7 +193,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; if (cnt > 1000) break;
+            ++cnt;// if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -276,7 +305,7 @@ fff:
                            SN_API::snLSize(w, h, 1, batchSz),
                            targetLayer,
                            outLayer,
-                           SN_API::snLSize(10, 1, 1, batchSz),
+                           SN_API::snLSize(7, 1, 1, batchSz),
                            &accurat);
 
         accuratSumm += accurat;
