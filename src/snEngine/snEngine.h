@@ -26,16 +26,16 @@
 
 #include <mutex>
 #include "snBase/snBase.h"
-#include "skynet/skynet.h"
 #include "snOperator/snOperator.h"
 #include "src/threadPool.h"
 
 namespace SN_Eng{
-
+        
     class SNEngine{
 
     public:
-        SNEngine(SN_Base::Net&, SN_API::snStatusCBack, SN_API::snUData);
+                      
+        SNEngine(SN_Base::Net&, std::function<void(const std::string&)>);
         
         ~SNEngine();
     
@@ -56,8 +56,7 @@ namespace SN_Eng{
         std::map<std::string, SN_Base::Node> nodes_;           ///< узлы сети. ключ - название узла
         std::map<std::string, SN_Base::OperatorBase*> operats_;///< все операторы. ключ - название узла
                 
-        SN_API::snUData udata_ = nullptr;
-        SN_API::snStatusCBack stsCBack_ = nullptr;
+        std::function<void(const std::string&)> stsCBack_ = nullptr;
 
         ThreadPool* thrPoolForward_ = nullptr, *thrPoolBackward_ = nullptr;
         bool fWorkEnd_ = false;                       ///< закрытие всех потоков

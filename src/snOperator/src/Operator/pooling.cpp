@@ -32,8 +32,8 @@ using namespace SN_Base;
 
 /// объединяющий слой
 
-Pooling::Pooling(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-    OperatorBase(name, node, prms){
+Pooling::Pooling(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+    OperatorBase(net, name, node, prms){
         
     load(prms);
 }

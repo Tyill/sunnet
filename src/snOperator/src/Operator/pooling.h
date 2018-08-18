@@ -53,7 +53,7 @@ class Pooling : SN_Base::OperatorBase{
 
 public:
 
-    Pooling(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Pooling(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Pooling() = default;
 

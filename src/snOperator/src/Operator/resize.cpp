@@ -30,16 +30,16 @@ using namespace std;
 using namespace SN_Base;
 
 /// изменение размера слоя
-Resize::Resize(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-OperatorBase(name, node, prms){
+Resize::Resize(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
 
     
 }
 
 std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
    
-    if (basePrms_.find("outSize") == basePrms_.end()){
-        ERROR_MESS("not set param 'outSize'");
+    if (basePrms_.find("outDiapByN") == basePrms_.end()){
+        ERROR_MESS("not set param 'outDiapByN'");
         return std::vector < std::string > {"noWay"};
     }
 
@@ -58,24 +58,23 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
         outTns = baseGrad_;
     }
           
-    snSize nsz, csz = inTns->size();
-    auto ss = SN_Aux::split(basePrms_["outSize"], " ");
-    if (ss.size() < 4){
-        ERROR_MESS("'outSize' args < 4");
+    snSize csz = inTns->size();
+    auto ss = SN_Aux::split(basePrms_["outDiapByN"], " ");
+    if (ss.size() < 2){
+        ERROR_MESS("'outSize' args < 2");
         return std::vector < std::string > {"noWay"};
     }
-    nsz.w = stol(ss[0]);
-    nsz.h = stol(ss[1]);
-    nsz.d = stol(ss[2]);
-    nsz.n = stol(ss[3]);
-
-    if ((nsz.w != csz.w) || (nsz.h != csz.h) || (nsz.d != csz.d)){
-        ERROR_MESS("(nsz.w != csz.w) || (nsz.h != csz.h) || (nsz.d != csz.d)");
+    size_t bgDiapN = stol(ss[0]),
+           endDiapN = stol(ss[1]);
+    
+    if ((csz.n < bgDiapN) || (csz.n < endDiapN)){
+        ERROR_MESS("'outDiapByN' (csz.n < bgDiapN) || (csz.n < endDiapN)");
         return std::vector < std::string > {"noWay"};
     }
+    csz.n = max<size_t>(1, endDiapN - bgDiapN);
+    outTns->resize(csz);
 
-    outTns->setData(inTns->getData(), inTns->size());
-    outTns->resize(nsz);
-
+    outTns->setData(inTns->getData() + bgDiapN * csz.w * csz.h * csz.d, csz);
+   
     return std::vector<std::string>();
 }

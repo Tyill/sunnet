@@ -234,6 +234,33 @@ namespace SN_API{
         SKYNET_API bool snGetArchitecNet(skyNet,
                                          char* jnNet /*minsz 2048*/);
 
+
+        /// userCallBack for 'userLayer' node
+        /// @param[in] cbname - name user cback 
+        /// @param[in] node - name node 
+        /// @param[in] fwdBwd - current action forward(true) or backward(false)
+        /// @param[in] insz - input layer size - receive from prev node
+        /// @param[in] in - input layer - receive from prev node
+        /// @param[out] outsz - output layer size - send to next node
+        /// @param[out] out - output layer - send to next node
+        /// @param[in] ud - aux used data
+        typedef void(*snUserCBack)(const char* cbname,
+                                   const char* node,
+                                   bool fwdBwd,
+                                   snLSize insz,
+                                   snFloat* in,
+                                   snLSize* outsz,
+                                   snFloat** out,
+                                   snUData ud);
+
+        /// add user callBack for 'userLayer' node
+        /// @param[in] skyNet - object net
+        /// @param[in] cbName - name callBack
+        /// @param[in] snUserCBack - callBack
+        /// @param[in] snUData - user data
+        /// @return true - ok
+        SKYNET_API bool snAddUserCallBack(skyNet, const char* cbName, snUserCBack, snUData = nullptr);
+
         /// free object net
         /// @param[in] skyNet - object net
         SKYNET_API void snFreeNet(skyNet);

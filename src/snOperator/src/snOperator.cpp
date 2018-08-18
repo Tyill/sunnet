@@ -34,32 +34,28 @@
 #include "Operator/summator.h"
 #include "Operator/concatenate.h"
 #include "Operator/resize.h"
-
-SN_API::snStatusCBack g_sts = nullptr;
-SN_API::snUData g_ud = nullptr;
-
-void statusMess(const std::string& mess){
-
-    if (g_sts) g_sts(mess.c_str(), g_ud);
-}
+#include "Operator/userLayer.h"
+#include "Operator/switch.h"
 
 namespace SN_Opr{
-    
-    SN_Base::OperatorBase* createOperator(const std::string& fname, const std::string& node,
+
+    SN_Base::OperatorBase* createOperator(void* net, const std::string& fname, const std::string& node,
         std::map<std::string, std::string>& prms){
 
         SN_Base::OperatorBase* ret = nullptr;
 
-        if (fname == "Input")               ret = (SN_Base::OperatorBase*)new Input(fname, node, prms);
-        else if (fname == "Output")         ret = (SN_Base::OperatorBase*)new Output(fname, node, prms);
-        else if (fname == "FullyConnected") ret = (SN_Base::OperatorBase*)new FullyConnected(fname, node, prms);
-        else if (fname == "LossFunction")   ret = (SN_Base::OperatorBase*)new LossFunction(fname, node, prms);
-        else if (fname == "Convolution")    ret = (SN_Base::OperatorBase*)new Convolution(fname, node, prms);
-        else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(fname, node, prms);
-        else if (fname == "Lock")           ret = (SN_Base::OperatorBase*)new Lock(fname, node, prms);
-        else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(fname, node, prms);
-        else if (fname == "Concatenate")    ret = (SN_Base::OperatorBase*)new Concatenate(fname, node, prms);
-        else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(fname, node, prms);
+        if (fname == "Input")               ret = (SN_Base::OperatorBase*)new Input(net, fname, node, prms);
+        else if (fname == "Output")         ret = (SN_Base::OperatorBase*)new Output(net, fname, node, prms);
+        else if (fname == "FullyConnected") ret = (SN_Base::OperatorBase*)new FullyConnected(net, fname, node, prms);
+        else if (fname == "LossFunction")   ret = (SN_Base::OperatorBase*)new LossFunction(net, fname, node, prms);
+        else if (fname == "Convolution")    ret = (SN_Base::OperatorBase*)new Convolution(net, fname, node, prms);
+        else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(net, fname, node, prms);
+        else if (fname == "Lock")           ret = (SN_Base::OperatorBase*)new Lock(net, fname, node, prms);
+        else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(net, fname, node, prms);
+        else if (fname == "Concatenate")    ret = (SN_Base::OperatorBase*)new Concatenate(net, fname, node, prms);
+        else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
+        else if (fname == "Switch")         ret = (SN_Base::OperatorBase*)new Switch(net, fname, node, prms);
+        else if (fname == "UserLayer")      ret = (SN_Base::OperatorBase*)new UserLayer(net, fname, node, prms);
 
         return ret;
     }
@@ -78,15 +74,8 @@ namespace SN_Opr{
             else if (fname == "Summator")       delete (Summator*)opr;
             else if (fname == "Concatenate")    delete (Concatenate*)opr;
             else if (fname == "Resize")         delete (Resize*)opr;
+            else if (fname == "Switch")         delete (Switch*)opr;
+            else if (fname == "UserLayer")      delete (UserLayer*)opr;
         }
-    }
-        
-    /// задать статус callback
-    bool setStatusCBack(SN_API::snStatusCBack sts, SN_API::snUData ud){
-
-        g_sts = sts;
-        g_ud = ud;
-
-        return true;
     }
 }

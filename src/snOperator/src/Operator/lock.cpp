@@ -29,8 +29,8 @@ using namespace std;
 using namespace SN_Base;
 
 /// запирает дальнейший проход по графу
-Lock::Lock(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-OperatorBase(name, node, prms){
+Lock::Lock(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
 
     
 }

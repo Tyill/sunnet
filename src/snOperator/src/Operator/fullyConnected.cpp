@@ -36,8 +36,8 @@ using namespace SN_Base;
 
 /// полносвязный слой
 
-FullyConnected::FullyConnected(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-    OperatorBase(name, node, prms){
+FullyConnected::FullyConnected(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+    OperatorBase(net, name, node, prms){
         
     load(prms);
 }

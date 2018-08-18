@@ -58,7 +58,7 @@ class Convolution : SN_Base::OperatorBase{
 
 public:
 
-    Convolution(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Convolution(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Convolution() = default;
 

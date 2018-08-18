@@ -36,8 +36,8 @@ using namespace SN_Base;
 
 /// сверточный слой
 
-Convolution::Convolution(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-    OperatorBase(name, node, prms){
+Convolution::Convolution(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+    OperatorBase(net, name, node, prms){
         
     load(prms);
 }
@@ -436,19 +436,20 @@ void Convolution::updateConfig(const snSize& newsz){
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
 
-    size_t osz = outSz.w * outSz.h;
+    size_t osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){
         baseBatchNorm_.mean.resize(osz, 0);                      bnPrm_.mean = baseBatchNorm_.mean.data();
         baseBatchNorm_.varce.resize(osz, 1);                     bnPrm_.varce = baseBatchNorm_.varce.data();
         baseBatchNorm_.scale.resize(osz, 1);                     bnPrm_.scale = baseBatchNorm_.scale.data();
         baseBatchNorm_.schift.resize(osz, 0);                    bnPrm_.schift = baseBatchNorm_.schift.data();
-        baseBatchNorm_.sz.w = kernel_;
+        baseBatchNorm_.sz = outSz;
+        baseBatchNorm_.sz.n = 1;
 
-        auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
-        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
+        auxParams_["bn_norm"] = vector<snFloat>(osz * outSz.n);  bnPrm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(osz, 0);       bnPrm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(osz, 0);      bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"] = vector<snFloat>(outSz.n, 1.F);    bnPrm_.onc = auxParams_["bn_onc"].data();
         auxParams_["bn_share"] = vector<snFloat>();              bnPrm_.share = auxParams_["bn_share"].data();
     }  
 } 

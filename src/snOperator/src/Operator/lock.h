@@ -32,7 +32,7 @@ class Lock : SN_Base::OperatorBase{
 
 public:
 
-    Lock(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Lock(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Lock() = default;
                 

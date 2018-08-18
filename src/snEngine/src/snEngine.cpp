@@ -44,7 +44,7 @@ namespace SN_Eng{
 
     void SNEngine::statusMess(const std::string& mess){
 
-        if (stsCBack_) stsCBack_(mess.c_str(), udata_);
+        if (stsCBack_) stsCBack_(mess);
     }
         
     /// создание потоков
@@ -133,16 +133,13 @@ namespace SN_Eng{
     }
 
     SNEngine::SNEngine(Net& brNet, 
-        SN_API::snStatusCBack sts, SN_API::snUData ud) : stsCBack_(sts), udata_(ud){
+        std::function<void(const std::string&)> sts) : stsCBack_(sts){
 
         operats_ = brNet.operats;
         nodes_ = brNet.nodes;
         for (auto& n : brNet.nodes)
             ndStates_[n.first] = ndState();
-        
-            
-        SN_Opr::setStatusCBack(sts, ud);
-
+                
         thrPoolForward_ = new ThreadPool(bind(&SNEngine::operatorThreadForward, this, std::placeholders::_1));
         thrPoolBackward_ = new ThreadPool(bind(&SNEngine::operatorThreadBackward, this, std::placeholders::_1));
 

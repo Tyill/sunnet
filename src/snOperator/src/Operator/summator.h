@@ -32,7 +32,7 @@ class Summator : SN_Base::OperatorBase{
 
 public:
 
-    Summator(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Summator(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Summator() = default;
                 

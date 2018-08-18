@@ -31,12 +31,11 @@ using namespace SN_Base;
 
 
 /// конец сети - оператор заглушка - ничего не должен делать!
-Output::Output(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-OperatorBase(name, node, prms){
+Output::Output(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
         
 }
 
-/// выполнить расчет
 std::vector<std::string> Output::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
     if (neighbOpr.size() == 1){

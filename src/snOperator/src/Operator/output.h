@@ -32,7 +32,7 @@ class Output : SN_Base::OperatorBase{
 
 public:
 
-    Output(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Output(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Output() = default;
 

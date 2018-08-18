@@ -35,7 +35,7 @@
 #define PROFILE_START double ctm = omp_get_wtime(); 
 #define PROFILE_END(func) SN_PRINTMESS(std::string("Profile ") + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
 
-#define ERROR_MESS(mess) statusMess(name_ + " '" + node_ + "' error: " + mess);
+#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
 
 #ifdef SN_CPU
 #include "Lib/OpenBLAS/cblas.h"
@@ -43,4 +43,7 @@
 
 #endif
 
-void statusMess(const std::string&);
+void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
+
+void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
+    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);

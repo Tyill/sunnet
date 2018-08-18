@@ -311,6 +311,18 @@ namespace SN_API{
         return static_cast<SNet*>(fn)->getArchitecNet(jnArchitecNet);
     }
 
+    /// add user callBack for 'userLayer' node
+    /// @param[in] skyNet - object net
+    /// @param[in] cbackName - name 
+    /// @param[in] snUserCBack - callBack
+    /// @return true - ok
+    bool snAddUserCallBack(skyNet fn, const char* cbackName, snUserCBack ucb, snUData ud){
+
+        if (!fn) return false;
+
+        return static_cast<SNet*>(fn)->snAddUserCallBack(cbackName, ucb, ud);
+    }
+
     /// free object net
     /// @param[in] skyNet - object net
     void snFreeNet(skyNet fn){

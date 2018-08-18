@@ -50,7 +50,7 @@ class FullyConnected : SN_Base::OperatorBase{
 
 public:
 
-    FullyConnected(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    FullyConnected(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~FullyConnected() = default;
 

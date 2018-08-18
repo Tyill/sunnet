@@ -32,7 +32,7 @@ class Input : SN_Base::OperatorBase{
 
 public:
 
-    Input(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Input(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Input() = default;
 

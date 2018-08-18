@@ -50,8 +50,8 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
 }
 
 /// оператор - расчет ошибки
-LossFunction::LossFunction(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-OperatorBase(name, node, prms){
+LossFunction::LossFunction(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
 
     load(prms);
 }

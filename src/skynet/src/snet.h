@@ -81,6 +81,14 @@ public:
     /// вернуть архитектуру сети
     bool getArchitecNet(char* jnArchitecNet /*minsz 2048*/);
 
+    /// задать польз callBack
+    bool snAddUserCallBack(const char* ucbName, SN_API::snUserCBack, SN_API::snUData);
+   
+    void statusMess(const std::string&);
+
+    void userCBack(const std::string& cbname, const std::string& node,
+        bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+
 private:
 
     SN_Eng::SNEngine* engine_ = nullptr;                        ///< движок 
@@ -96,15 +104,16 @@ private:
     std::map<std::string, SN_Base::Tensor*> inData_;            ///< вх данные узлов. ключ - название узла
     std::map<std::string, SN_Base::Tensor*> gradData_;          ///< град данные узлов. ключ - название узла
 
-    SN_Base::operationParam operPrm_;                          ///< параметры тек итерации
+    /// польз callBack
+    std::map<std::string, std::pair<SN_API::snUserCBack, SN_API::snUData>> userCBack_;
+
+    SN_Base::operationParam operPrm_;                           ///< параметры тек итерации
 
     rapidjson::Document jnNet_;                                 ///< архитектура сети в JSON  
 
     SN_API::snUData udata_ = nullptr;
     SN_API::snStatusCBack stsCBack_ = nullptr;
-
-    void statusMess(const std::string&);
-
+   
     /// парсинг структуры сети
     bool jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std::string& out_err);
 

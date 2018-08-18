@@ -29,8 +29,8 @@ using namespace std;
 using namespace SN_Base;
 
 /// сумматор 2х и более слоев
-Summator::Summator(const string& name, const string& node, std::map<std::string, std::string>& prms) :
-OperatorBase(name, node, prms){
+Summator::Summator(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
 
     
 }

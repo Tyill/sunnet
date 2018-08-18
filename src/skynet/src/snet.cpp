@@ -29,13 +29,43 @@
 #include "snBase/snBase.h"
 #include "snet.h"
 
-
 using namespace std;
 using namespace SN_Base;
+
+void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess){
+
+    (static_cast<SNet*>(opr->Net))->statusMess(mess);
+}
+
+void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
+    bool fwBw, const snSize& insz, snFloat* in, snSize& outsz, snFloat** out){
+
+    (static_cast<SNet*>(opr->Net))->userCBack(cbname, node, fwBw, insz, in, outsz, out);
+}
+
+
 
 void SNet::statusMess(const string& mess){
 
     if (stsCBack_) stsCBack_(mess.c_str(), udata_);
+}
+
+void SNet::userCBack(const std::string& cbname, const std::string& node, bool fwBw, const snSize& insz, snFloat* in, snSize& outsz, snFloat** out){
+
+    if (userCBack_.find(cbname) != userCBack_.end()){
+     
+        SN_API::snLSize inlsz(insz.w, insz.h, insz.d, insz.n);
+        SN_API::snLSize outlsz;
+
+        userCBack_[cbname].first(cbname.c_str(), node.c_str(), fwBw, inlsz, in, &outlsz, out, userCBack_[cbname].second);
+
+        outsz.w = outlsz.w;
+        outsz.h = outlsz.h;
+        outsz.d = outlsz.ch;
+        outsz.n = outlsz.bch;
+    }
+    else
+        statusMess("userCBack error: not found cbname '" + cbname + "'");
 }
 
 // проверка перекр ссылок мду узлами
@@ -102,7 +132,7 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
 
     for (auto& n : inout_net.nodes){
 
-        OperatorBase* opr = SN_Opr::createOperator(n.second.oprName, n.first, n.second.oprPrms);
+        OperatorBase* opr = SN_Opr::createOperator(this, n.second.oprName, n.first, n.second.oprPrms);
 
         if (!opr){
             out_err = "Error createNet: not found operator '" + n.second.oprName + "'";
@@ -136,9 +166,7 @@ SNet::SNet(const char* jnNet, char* out_err /*sz 256*/,
         strcpy(out_err, err.c_str());
         return;
     }
-    
-    SN_Opr::setStatusCBack(sts, ud);
-
+     
     if (!createNet(net, err)){
         statusMess(err);
         strcpy(out_err, err.c_str());
@@ -148,7 +176,7 @@ SNet::SNet(const char* jnNet, char* out_err /*sz 256*/,
     nodes_ = net.nodes;
     operats_ = net.operats;
 
-    engine_ = new SN_Eng::SNEngine(net, sts, ud);
+    engine_ = new SN_Eng::SNEngine(net, bind(&SNet::statusMess, this, std::placeholders::_1));
 }
 
 SNet::~SNet(){
@@ -392,6 +420,15 @@ bool SNet::getGradientNode(const char* nodeName, SN_Base::snFloat** outData, SN_
     *outData = (snFloat*)realloc(*outData, outSz.size() * sizeof(snFloat));
 
     memcpy(*outData, gradData_[nodeName]->getData(), outSz.size() * sizeof(snFloat));
+
+    return true;
+}
+
+/// задать польз callBack
+bool SNet::snAddUserCallBack(const char* ucbName, SN_API::snUserCBack ucb, SN_API::snUData ud){
+    std::unique_lock<std::mutex> lk(mtxCmn_);
+
+    userCBack_[ucbName] = pair<SN_API::snUserCBack, SN_API::snUData>(ucb, ud);
 
     return true;
 }

@@ -206,8 +206,8 @@ namespace SN_Base{
         /// @param name - имя оператора - конкретный класс реализации 
         /// @param node - название узла в символьной структуре НС
         /// @param prms - параметры ф-и. Ключ - имя параметра. (задает польз-ль когда создает сеть - JSON структуру сети).
-        OperatorBase(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms) :
-            name_(name), node_(node), basePrms_(prms){}
+        OperatorBase(void* Net_, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms) :
+            Net(Net_), name_(name), node_(node), basePrms_(prms){}
         ~OperatorBase(){        
             if (baseInput_) delete baseInput_;
             if (baseWeight_) delete baseWeight_;
@@ -215,7 +215,10 @@ namespace SN_Base{
             if (baseOut_) delete baseOut_;
         }
     public:
-                    
+        
+        /// обратная ссылка на родит-й объект сети
+        void* Net = nullptr;
+
         /// задать параметры
         virtual bool setInternPrm(std::map<std::string, std::string>& prms){
             basePrms_ = prms;
@@ -289,7 +292,7 @@ namespace SN_Base{
         /// @param neighbOpr - соседние операторы, передающие сюда данные
         /// @return - список след узлов куда идти, если след-х > 1. Если ничего не выбрано идем на все
         virtual std::vector<std::string> Do(const operationParam& learnPrm, const std::vector<OperatorBase*>& neighbOpr) = 0;
-                
+        
     protected:
         std::string node_;                            ///< имя узла, в котором вычисляется оператор
         std::string name_;                            ///< имя оператора - конкретный класс реализации 

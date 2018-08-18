@@ -32,7 +32,7 @@ class Resize : SN_Base::OperatorBase{
 
 public:
 
-    Resize(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Resize(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Resize() = default;
                 

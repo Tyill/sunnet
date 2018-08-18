@@ -32,7 +32,7 @@ class Concatenate : SN_Base::OperatorBase{
 
 public:
 
-    Concatenate(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Concatenate(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~Concatenate() = default;
                 

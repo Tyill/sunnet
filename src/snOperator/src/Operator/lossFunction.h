@@ -37,7 +37,7 @@ public:
         binaryCrossEntropy = 1,
     };
 
-    LossFunction(const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    LossFunction(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~LossFunction() = default;
             
