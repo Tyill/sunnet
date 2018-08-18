@@ -45,9 +45,7 @@ public:
 
 private:
     lossType lossType_ = lossType::softMaxACrossEntropy;
-
-    SN_Base::Tensor inFwTns_, inBwTns_;                              ///< тензор с сосед слоя 
-
+       
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_; ///< вспом данные для расчета
 
     void load(std::map<std::string, std::string>& prms);

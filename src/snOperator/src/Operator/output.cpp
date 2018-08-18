@@ -38,23 +38,14 @@ OperatorBase(net, name, node, prms){
 
 std::vector<std::string> Output::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
-    if (neighbOpr.size() == 1){
-        if (operPrm.action == snAction::forward)
-            baseOut_ = neighbOpr[0]->getOutput();
-    }
-    else{
-        if (operPrm.action == snAction::forward){
-
-            inFwTns_ = *neighbOpr[0]->getOutput();
-
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i)
-                inFwTns_ += *neighbOpr[i]->getOutput();
-
-            baseOut_ = &inFwTns_;
-        }
+    if (neighbOpr.size() > 1){
+        ERROR_MESS("neighbOpr.size() > 1");
+        return std::vector < std::string > {"noWay"};
     }
 
+    if (operPrm.action == snAction::forward)
+        baseOut_ = neighbOpr[0]->getOutput();
+    
     return std::vector<std::string>();
 }
 

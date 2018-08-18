@@ -33,7 +33,8 @@ using namespace SN_Base;
 Resize::Resize(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    
+    baseOut_ = new Tensor();
+    baseGrad_ = new Tensor();
 }
 
 std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){

@@ -73,34 +73,15 @@ void Pooling::load(std::map<std::string, std::string>& prms){
 
 std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    if (neighbOpr.size() == 1){
-        if (operPrm.action == snAction::forward)
-            forward(neighbOpr[0]->getOutput());           
-        else
-            backward(neighbOpr[0]->getGradient(), operPrm);           
+    if (neighbOpr.size() > 1){
+        ERROR_MESS("neighbOpr.size() > 1");
+        return std::vector < std::string > {"noWay"};
     }
-    else{
-        if (operPrm.action == snAction::forward){
 
-            inFwTns_ = *neighbOpr[0]->getOutput();
-
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i)
-                inFwTns_ += *neighbOpr[i]->getOutput();
-
-            forward(&inFwTns_);
-        }
-        else{
-
-            inBwTns_ = *neighbOpr[0]->getGradient();
-
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i)
-                inBwTns_ += *neighbOpr[i]->getGradient();
-
-            backward(&inBwTns_, operPrm);
-        }
-    }
+    if (operPrm.action == snAction::forward)
+        forward(neighbOpr[0]->getOutput());
+    else
+        backward(neighbOpr[0]->getGradient(), operPrm);
     
     return std::vector<std::string>();
 }

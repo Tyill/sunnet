@@ -66,8 +66,6 @@ private:
     
     poolType poolType_ = poolType::max;                               ///< тип
                                                                       
-    SN_Base::Tensor inFwTns_, inBwTns_;                               ///< тензор с сосед слоя 
-                                                                      
     SN_Base::snSize inSzMem_;                                         ///< размер вх данных
 
     std::vector<size_t> outInx_;                                      ///< индекс выбран эл-та (если maxPool)

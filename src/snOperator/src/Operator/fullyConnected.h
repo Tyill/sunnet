@@ -70,9 +70,7 @@ private:
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
 
     batchNormParam bnPrm_;                                      ///< параметры batchNorm
-
-    SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
-
+      
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;

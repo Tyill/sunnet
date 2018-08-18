@@ -54,6 +54,27 @@ vector<string> split(string text, const char* sep)
 
     return res;
 }
+void UserCBack(const char* cbname,
+    const char* node,
+    bool fwdBwd,
+    SN_API::snLSize insz,
+    snFloat* in,
+    SN_API::snLSize* outsz,
+    snFloat** out,
+    SN_API::snUData ud){
+
+    *out = (float*)calloc(insz.w * insz.h *insz.ch *insz.bch, sizeof(float));
+
+    memcpy(*out, in, insz.w * insz.h *insz.ch *insz.bch* sizeof(float));
+    outsz->w = insz.w;
+    outsz->h = insz.h;
+    outsz->ch = insz.ch;
+    outsz->bch = insz.bch;
+    
+
+    bool dd = false;
+
+}
 
 
 int main(int argc, _TCHAR* argv[])
@@ -125,11 +146,10 @@ int main(int argc, _TCHAR* argv[])
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
-        "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"512\","
-        "\"batchNormType\":\"beforeActive\"}"
+        "\"OperatorName\":\"UserLayer\","
+        "\"OperatorParams\":{\"cbackName\":\"opa\"}"
         "},"
-
+                
         "{"
         "\"NodeName\":\"F3\","
         "\"NextNodes\":\"F4\","
@@ -142,7 +162,7 @@ int main(int argc, _TCHAR* argv[])
         "\"NodeName\":\"F4\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"7\","
+        "\"OperatorParams\":{\"kernel\":\"10\","
         "\"weightInitType\":\"uniform\","
         "\"activeType\":\"none\","
         "\"optimizerType\":\"adam\"}"
@@ -166,10 +186,12 @@ int main(int argc, _TCHAR* argv[])
 
     char err[256];
     auto snet = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
-    //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
-    string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
+    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
+    //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
+
+    SN_API::snAddUserCallBack(snet,"opa", UserCBack);
         
-    int batchSz = 10, classCnt = 7, w = 500, h = 50; float lr = 0.05;
+    int batchSz = 100, classCnt = 10, w = 500, h = 50; float lr = 0.05;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -193,7 +215,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt;// if (cnt > 1000) break;
+            ++cnt; if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -305,7 +327,7 @@ fff:
                            SN_API::snLSize(w, h, 1, batchSz),
                            targetLayer,
                            outLayer,
-                           SN_API::snLSize(7, 1, 1, batchSz),
+                           SN_API::snLSize(classCnt, 1, 1, batchSz),
                            &accurat);
 
         accuratSumm += accurat;
