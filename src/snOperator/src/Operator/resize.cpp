@@ -38,31 +38,30 @@ OperatorBase(net, name, node, prms){
 }
 
 std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
+       
+    if (neighbOpr.size() > 1){
+        ERROR_MESS("neighbOpr.size() > 1");
+        return std::vector < std::string > {"noWay"};
+    }
+      
+    if (operPrm.action == snAction::backward){
+        Tensor* inTns = neighbOpr[0]->getGradient();
+        baseGrad_->setData(inTns->getData(), inTns->size());
+
+        return std::vector<std::string>();
+    }
    
     if (basePrms_.find("outDiapByN") == basePrms_.end()){
         ERROR_MESS("not set param 'outDiapByN'");
         return std::vector < std::string > {"noWay"};
     }
 
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
+    Tensor* inTns = neighbOpr[0]->getOutput(), *outTns = baseOut_;
     
-    Tensor* inTns = nullptr, *outTns = nullptr;
-    if (operPrm.action == snAction::forward){
-        inTns = neighbOpr[0]->getOutput();
-        outTns = baseOut_;
-    }
-    else{
-        inTns = neighbOpr[0]->getGradient();
-        outTns = baseGrad_;
-    }
-          
     snSize csz = inTns->size();
     auto ss = SN_Aux::split(basePrms_["outDiapByN"], " ");
     if (ss.size() < 2){
-        ERROR_MESS("'outSize' args < 2");
+        ERROR_MESS("'outDiapByN' args < 2");
         return std::vector < std::string > {"noWay"};
     }
     size_t bgDiapN = stol(ss[0]),

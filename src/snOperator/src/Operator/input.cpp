@@ -42,6 +42,9 @@ bool Input::setInput(SN_Base::Tensor* args){
 
 std::vector<std::string> Input::Do(const operationParam&, const std::vector<OperatorBase*>& neighbOpr){
         
-    
+    if (neighbOpr.size() > 1){
+        ERROR_MESS("neighbOpr.size() > 1");
+        return std::vector < std::string > {"noWay"};
+    }
     return std::vector<std::string>();
 }

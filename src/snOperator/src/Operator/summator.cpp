@@ -72,7 +72,7 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
             size_t sz = neighbOpr.size();
             for (size_t i = 1; i < sz; ++i){
              
-                if (inBwTns_ != *neighbOpr[i]->getOutput()){
+                if (inBwTns_ != *neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }                
