@@ -35,8 +35,8 @@ void fwdFullyConnected(size_t kernel,   ///< размер скрыт слоя
             SN_Base::snFloat* weight,   ///< веса
             SN_Base::snFloat* output);  ///< выход знач (скрытых нейронов) для след слоя
 
-/// обратный проход
-void bwdFullyConnected(size_t kernel,   ///< размер скрыт слоя
+/// обратный проход. Расчет град-в и весов
+void bwdFullyConnectedGW(size_t kernel,   ///< размер скрыт слоя
             SN_Base::snFloat* weight,   ///< веса
                 SN_Base::snSize insz,   ///< вход значения размер 
              SN_Base::snFloat* input,   ///< вход значения 
@@ -44,6 +44,13 @@ void bwdFullyConnected(size_t kernel,   ///< размер скрыт слоя
            SN_Base::snFloat* gradOut,   ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut);  ///< дельта изменения весов
 
+/// обратный проход. Расчет град-в
+void bwdFullyConnectedG(size_t kernel,   ///< размер скрыт слоя
+             SN_Base::snFloat* weight,   ///< веса
+                 SN_Base::snSize insz,   ///< вход значения размер 
+             SN_Base::snFloat* gradIn,   ///< вход градиент ошибки с пред слоя
+            SN_Base::snFloat* gradOut);   ///< выход градиент ошибки для след слоя
+        
 
 /// полносвязный слой
 class FullyConnected : SN_Base::OperatorBase{
@@ -69,6 +76,8 @@ private:
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
           
+    bool isFreeze_ = false;                                     ///< не менять веса
+
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;

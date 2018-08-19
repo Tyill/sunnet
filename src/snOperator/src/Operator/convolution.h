@@ -39,8 +39,8 @@ void fwdConvolution(size_t kernel,   ///< колво вых слоев
             SN_Base::snSize outsz,   ///< выход значения размер 
          SN_Base::snFloat* output);  ///< выход знач (скрытых нейронов) для след слоя
 
-/// обратный проход
-void bwdConvolution(size_t kernel,   ///< колво вых слоев
+/// обратный проход. Расчет град-в и весов
+void bwdConvolutionGW(size_t kernel,   ///< колво вых слоев
                   size_t fWidth,     ///< ширина маски
                  size_t fHeight,     ///< высота маски
                     size_t stride,   ///< шаг движения маски
@@ -52,6 +52,18 @@ void bwdConvolution(size_t kernel,   ///< колво вых слоев
         SN_Base::snFloat* gradOut,   ///< выход градиент ошибки для след слоя
      SN_Base::snFloat* dWeightOut);  ///< дельта изменения весов
 
+/// обратный проход. Расчет град-в
+void bwdConvolutionG(size_t kernel,   ///< колво вых слоев
+                     size_t fWidth,     ///< ширина маски
+                    size_t fHeight,     ///< высота маски
+                     size_t stride,   ///< шаг движения маски
+          SN_Base::snFloat* weight,   ///< веса
+              SN_Base::snSize insz,   ///< вход значения размер 
+           SN_Base::snFloat* input,   ///< вход значения 
+             SN_Base::snSize outsz,   ///< выход значения размер 
+          SN_Base::snFloat* gradIn,   ///< вход градиент ошибки с пред слоя
+         SN_Base::snFloat* gradOut);   ///< выход градиент ошибки для след слоя
+     
 
 /// сверточный слой
 class Convolution : SN_Base::OperatorBase{
@@ -84,6 +96,8 @@ private:
     SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
           
+    bool isFreeze_ = false;                                     ///< не менять веса
+
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;

@@ -240,27 +240,32 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     snFloat* pGrOutExp = isSame ? baseGrad_->getData() : auxParams_["outGradExp"].data();
    
     snFloat* weight = baseWeight_->getData();
-    snFloat* dWeight = auxParams_["dWeight"].data();
-    bwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-        baseOut_->size(), gradIn, pGrOutExp, dWeight);
-        
+  
+    if (!isFreeze_){
+        snFloat* dWeight = auxParams_["dWeight"].data();
+        bwdConvolutionGW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
+            baseOut_->size(), gradIn, pGrOutExp, dWeight);
+
+        // корректируем веса
+        snFloat* dWPrev = auxParams_["dWPrev"].data();
+        snFloat* dWGrad = auxParams_["dWGrad"].data();
+        size_t wsz = baseWeight_->size().size();
+
+        switch (optimizerType_){
+        case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+        case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
+        case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
+        case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+        case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
+        default: break;
+        }
+    }
+    else // isFreeze
+        bwdConvolutionG(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
+            baseOut_->size(), gradIn, pGrOutExp);
+
     if (!isSame)
         paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
-
-    // корректируем веса
-    snFloat* dWPrev = auxParams_["dWPrev"].data();
-    snFloat* dWGrad = auxParams_["dWGrad"].data();
-    size_t wsz = baseWeight_->size().size();
-    
-    switch (optimizerType_){
-    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
-    default: break;
-    }
-   
 }
 
 void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){

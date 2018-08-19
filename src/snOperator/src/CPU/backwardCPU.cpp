@@ -33,7 +33,7 @@ using namespace SN_Base;
 
 #ifdef SN_CPU
 
-void bwdFullyConnected(size_t kernel, snFloat* weight,
+void bwdFullyConnectedGW(size_t kernel, snFloat* weight,
     snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
@@ -77,7 +77,32 @@ void bwdFullyConnected(size_t kernel, snFloat* weight,
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
 }
 
-void bwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, 
+void bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
+
+    size_t imSz = insz.w * insz.h * insz.d + 1;
+       
+    // Градиент для предыд слоя
+    // GrOut = αGrIn * W^T + βGrOut
+    // GrIn - матрица градиентов со след слоя
+    // W - веса
+    cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
+        CBLAS_TRANSPOSE::CblasNoTrans,
+        CBLAS_TRANSPOSE::CblasTrans,
+        insz.n,                        // GrIn, строк, размер батча     
+        imSz - 1,                      // W, столбцов, кол-во вх значений 
+        kernel,                        // GrIn, столбцов. W, строк, кол-во скрытых нейронов                 
+        1.0F,                          // α, коэф 
+        gradIn,                        // GrIn, градиент пришедший со след слоя
+        kernel,                        // GrIn, шаг до след X (X21 - X11) 
+        weight + kernel,               // W, веса
+        kernel,                        // W, шаг до след W (W21 - W11) 
+        0.0F,                          // β, доп коэф 
+        gradOut,                       // GrOut, градиент для предыд слоя
+        imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
+}
+
+
+void bwdConvolutionGW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, 
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -180,13 +205,90 @@ void bwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
 
 }   
 
+void bwdConvolutionG(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
+
+    size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
+           wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
+           wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
+           inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
+
+    size_t shareStepByN = insz.d + kernel + insz.d;          // для локализации памяти
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+       
+    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+    
+    // по батчу  
+#pragma omp parallel for
+    for (int n = 0; n < insz.n; ++n){
+
+        snFloat* inBuff = share + shareStepByN * n;
+        snFloat* ginBuff = share + insz.d + shareStepByN * n;
+        snFloat* goutBuff = share + insz.d + kernel + shareStepByN * n;
+       
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+           
+            // по всем вых слоям
+            for (size_t k = 0; k < kernel; ++k){
+                ginBuff[k] = *pGrIn;
+                pGrIn += outStepByD;
+            }
+
+            // ядро свертки
+            for (size_t c = 0; c < (fWidth * fHeight); ++c){
+
+                size_t cx = c % fWidth, cy = c / fWidth;
+                snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pW = weight + cx + cy * fWidth;
+          
+                for (size_t d = 0; d < insz.d; ++d){
+                    inBuff[d] = *pIn;
+                    pIn += inStepByD;
+                }
+
+                memset(goutBuff, 0, insz.d * sizeof(snFloat));
+
+                // по всем вых слоям
+                for (size_t k = 0; k < kernel; ++k){
+
+                    // по всем вх слоям
+                    snFloat gin = ginBuff[k];
+                    for (size_t d = 0; d < insz.d; ++d){
+                        goutBuff[d] += gin * (*pW);
+                        pW += wStepByD;
+                    }
+                    pW += 1;           // bias;
+                }
+
+                snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+
+                for (size_t d = 0; d < insz.d; ++d){
+                    *pGrOut += goutBuff[d];
+                    pGrOut += inStepByD;
+                }
+            }
+        }
+    }
+        
+    free(share);
+}
+
+
 void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,           // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
-        kernelSz = kernel * kernel;
+           inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
+           kernelSz = kernel * kernel;
         
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 

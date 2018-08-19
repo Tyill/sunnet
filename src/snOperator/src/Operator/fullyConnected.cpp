@@ -143,6 +143,9 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 
     if (prms.find("batchNormLr") != prms.end())
         baseBatchNorm_.lr = stof(prms["batchNormLr"]);
+
+    if (prms.find("freeze") != prms.end())
+        isFreeze_ = prms["freeze"] == "1";
     
     return true;
 }
@@ -254,23 +257,28 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     // расчет вых градиента и коррекции весов
     snFloat* gradOut = baseGrad_->getData();
     snFloat* weight = baseWeight_->getData();
-    snFloat* dWeight = auxParams_["dWeight"].data();
-    bwdFullyConnected(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight);
-        
-    // корректируем веса
-    snFloat* dWPrev = auxParams_["dWPrev"].data();
-    snFloat* dWGrad = auxParams_["dWGrad"].data();
-    size_t wsz = baseWeight_->size().size();
-    
-    switch (optimizerType_){
-    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
-    default: break;
-    }
 
+    if (!isFreeze_){
+
+        snFloat* dWeight = auxParams_["dWeight"].data();
+        bwdFullyConnectedGW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight);
+
+        // корректируем веса
+        snFloat* dWPrev = auxParams_["dWPrev"].data();
+        snFloat* dWGrad = auxParams_["dWGrad"].data();
+        size_t wsz = baseWeight_->size().size();
+
+        switch (optimizerType_){
+        case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+        case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
+        case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
+        case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
+        case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
+        default: break;
+        }
+    }
+    else // isFreeze
+        bwdFullyConnectedG(kernel_, weight, inSzMem_, gradIn, gradOut);
 }
 
 void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
