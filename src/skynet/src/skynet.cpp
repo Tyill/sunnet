@@ -48,103 +48,103 @@ namespace SN_API{
     /// training - a cycle forward-back with auto-correction of weights
     /// @param[in] skyNet - object net
     /// @param[in] lr - learning rate
-    /// @param[in] iLayer - input layer
-    /// @param[in] lsz - input layer size
-    /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
+    /// @param[in] isz - input layer size
+    /// @param[in] iLayer - input layer        
+    /// @param[in] osz - size of target and result. Sets for verification
     /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
-    /// @param[in] tsz - size of target and result. Sets for verification
+    /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
     /// @param[out] outAccurate - current accuracy
     /// @return true - ok
     bool snTraining(skyNet fn,
                     snFloat lr,
-                    snFloat* iLayer,
-                    snLSize lsz,
-                    snFloat* targetData,
+                    snLSize isz,
+                    const snFloat* iLayer,
+                    snLSize osz,
                     snFloat* outData,
-                    snLSize tsz,
+                    const snFloat* targetData,
                     snFloat* outAccurate){
 
         if (!fn) return false;
 
-        SN_Base::snSize bsz(lsz.w, lsz.h, lsz.ch, lsz.bch);
-        SN_Base::snSize tnsz(tsz.w, tsz.h, tsz.ch, tsz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
+        SN_Base::snSize tnsz(osz.w, osz.h, osz.ch, osz.bch);
 
-        return static_cast<SNet*>(fn)->training(lr, iLayer, bsz, targetData, outData, tnsz, outAccurate);
+        return static_cast<SNet*>(fn)->training(lr, bsz, iLayer, tnsz, outData, targetData, outAccurate);
     }
 
     /// forward pass
     /// @param[in] skyNet - object net
     /// @param[in] isLern - is lern?
-    /// @param[in] iLayer - input layer
-    /// @param[in] lsz - input layer size
-    /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
+    /// @param[in] isz - input layer size
+    /// @param[in] iLayer - input layer       
     /// @param[in] osz - size of result. Sets for verification
+    /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
     /// @return true - ok
     bool snForward(skyNet fn,
                    bool isLern,
-                   snFloat* iLayer,
-                   snLSize lsz,
-                   snFloat* outData,
-                   snLSize osz){
+                   snLSize isz,
+                   const snFloat* iLayer,
+                   snLSize osz,
+                   snFloat* outData){
 
         if (!fn) return false;
 
-        SN_Base::snSize bsz(lsz.w, lsz.h, lsz.ch, lsz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
         SN_Base::snSize onsz(osz.w, osz.h, osz.ch, osz.bch);
 
-        return static_cast<SNet*>(fn)->forward(isLern, iLayer, bsz, outData, onsz);
+        return static_cast<SNet*>(fn)->forward(isLern, bsz, iLayer, onsz, outData);
     }
 
     /// backward pass
     /// @param[in] skyNet - object net
     /// @param[in] lr - learning rate
-    /// @param[in] inGradErr - error gradient, the size must match the output
     /// @param[in] gsz - size of the error gradient. Sets for verification
+    /// @param[in] grad - error gradient, the size must match the output
     /// @return true - ok
     bool snBackward(skyNet fn,
                     snFloat lr,
-                    snFloat* inGradErr,
-                    snLSize gsz){
+                    snLSize gsz,
+                    const snFloat* grad){
 
         if (!fn) return false;
 
         SN_Base::snSize gnsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
 
-        return static_cast<SNet*>(fn)->backward(lr, inGradErr, gnsz);
+        return static_cast<SNet*>(fn)->backward(lr, gnsz, grad);
     }
 
     /// set weight of node
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[in] inData - data
-    /// @param[in] dsz - data size
+    /// @param[in] wsz - size
+    /// @param[in] wData - weight        
     /// @return true - ok
-    bool snSetWeightNode(skyNet fn, const char* nodeName, const snFloat* inData, snLSize dsz){
+    bool snSetWeightNode(skyNet fn, const char* nodeName, snLSize wsz, const snFloat* wData){
 
         if (!fn) return false;
 
-        SN_Base::snSize bsz(dsz.w, dsz.h, dsz.ch, dsz.bch);
+        SN_Base::snSize bsz(wsz.w, wsz.h, wsz.ch, wsz.bch);
 
-        return static_cast<SNet*>(fn)->setWeightNode(nodeName, inData, bsz);
+        return static_cast<SNet*>(fn)->setWeightNode(nodeName, bsz, wData);
     }
 
     /// get weight of node
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[out] outData - output data. First pass NULL, then pass it to the same 
-    /// @param[out] outSz - output size
+    /// @param[out] wsz - output size
+    /// @param[out] wData - output data. First pass NULL, then pass it to the same 
     /// @return true - ok
-    bool snGetWeightNode(skyNet fn, const char* nodeName, snFloat** outData, snLSize* dsz){
+    bool snGetWeightNode(skyNet fn, const char* nodeName, snLSize* wsz, snFloat** wData){
 
         if (!fn) return false;
 
         SN_Base::snSize bsz;
-        if (!static_cast<SNet*>(fn)->getWeightNode(nodeName, outData, bsz)) return false;
+        if (!static_cast<SNet*>(fn)->getWeightNode(nodeName, bsz, wData)) return false;
 
-        dsz->w = bsz.w;
-        dsz->h = bsz.h;
-        dsz->ch = bsz.d;
-        dsz->bch = bsz.n;
+        wsz->w = bsz.w;
+        wsz->h = bsz.h;
+        wsz->ch = bsz.d;
+        wsz->bch = bsz.n;
                 
         return true;
     }
@@ -152,16 +152,19 @@ namespace SN_API{
     /// set batchNorm of node
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[in] inData - data
-    /// @param[in] dsz - data size
+    /// @param[in] bnsz - data size
+    /// @param[in] bnData - data       
     /// @return true - ok
-    bool snSetBatchNormNode(skyNet fn, const char* nodeName, const SN_API::batchNorm inData, snLSize dsz){
+    bool snSetBatchNormNode(skyNet fn, const char* nodeName, snLSize bnsz, const SN_API::batchNorm bnData){
 
         if (!fn) return false;
 
-        SN_Base::batchNorm bn;
-        SN_Base::snSize sz(dsz.w * dsz.h * dsz.ch);
-        bn.set(inData.mean, inData.varce, inData.scale, inData.schift, sz);
+        SN_Base::batchNorm bn;        
+        bn.mean = bnData.mean;
+        bn.varce = bnData.varce;
+        bn.scale = bnData.scale;
+        bn.schift = bnData.schift;
+        bn.sz = SN_Base::snSize(bnsz.w * bnsz.h * bnsz.ch);
         
         return static_cast<SNet*>(fn)->setBatchNormNode(nodeName, bn);
     }
@@ -169,10 +172,10 @@ namespace SN_API{
     /// get batchNorm of node
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[out] outData - data 
-    /// @param[out] outSz - data size
+    /// @param[out] bnsz - data size
+    /// @param[out] bnData - data         
     /// @return true - ok
-    bool snGetBatchNormNode(skyNet fn, const char* nodeName, batchNorm* outData, snLSize* outSz){
+    bool snGetBatchNormNode(skyNet fn, const char* nodeName, snLSize* bnsz, batchNorm* bnData){
 
         if (!fn) return false;
 
@@ -181,12 +184,12 @@ namespace SN_API{
 
         size_t sz = bn.sz.size();
 
-        outData->mean =   new snFloat[sz]; memcpy(outData->mean, bn.mean.data(),    sz * sizeof(snFloat));
-        outData->varce =  new snFloat[sz]; memcpy(outData->varce, bn.varce.data(),  sz * sizeof(snFloat));
-        outData->scale =  new snFloat[sz]; memcpy(outData->scale, bn.scale.data(),  sz * sizeof(snFloat));
-        outData->schift = new snFloat[sz]; memcpy(outData->schift, bn.schift.data(),sz * sizeof(snFloat));
+        bnData->mean =   new snFloat[sz]; memcpy(bnData->mean,  bn.mean,  sz * sizeof(snFloat));
+        bnData->varce =  new snFloat[sz]; memcpy(bnData->varce, bn.varce, sz * sizeof(snFloat));
+        bnData->scale =  new snFloat[sz]; memcpy(bnData->scale, bn.scale, sz * sizeof(snFloat));
+        bnData->schift = new snFloat[sz]; memcpy(bnData->schift,bn.schift,sz * sizeof(snFloat));
 
-        *outSz = snLSize(bn.sz.w, bn.sz.h, bn.sz.d);
+        *bnsz = snLSize(bn.sz.w, bn.sz.h, bn.sz.d);
 
         return true;
     }
@@ -194,41 +197,41 @@ namespace SN_API{
     /// set input node (relevant for additional inputs)
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[in] inData - data
-    /// @param[in] dsz - data size
+    /// @param[in] isz - data size
+    /// @param[in] inData - data       
     /// @return true - ok
     bool snSetInputNode(skyNet fn,
-        const char* nodeName,
-        const snFloat* inData,
-        snLSize dsz){
+                        const char* nodeName,
+                        snLSize isz,
+                        const snFloat* inData){
 
         if (!fn) return false;
 
-        SN_Base::snSize bsz(dsz.w, dsz.h, dsz.ch, dsz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
 
-        return static_cast<SNet*>(fn)->setInputNode(nodeName, inData, bsz);
+        return static_cast<SNet*>(fn)->setInputNode(nodeName, bsz, inData);
     }
 
     /// get output node (relevant for additional inputs)
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
+    /// @param[out] osz - data size
     /// @param[out] outData - data. First pass NULL, then pass it to the same 
-    /// @param[out] outSz - data size
     /// @return true - ok
     bool snGetOutputNode(skyNet fn,
-        const char* nodeName,
-        snFloat** outData,
-        snLSize* dsz){
+                         const char* nodeName,
+                         snLSize* osz,
+                         snFloat** outData){
 
         if (!fn) return false;
 
         SN_Base::snSize bsz;
-        if (!static_cast<SNet*>(fn)->getOutputNode(nodeName, outData, bsz)) return false;
+        if (!static_cast<SNet*>(fn)->getOutputNode(nodeName, bsz, outData)) return false;
 
-        dsz->w = bsz.w;
-        dsz->h = bsz.h;
-        dsz->ch = bsz.d;
-        dsz->bch = bsz.n;
+        osz->w = bsz.w;
+        osz->h = bsz.h;
+        osz->ch = bsz.d;
+        osz->bch = bsz.n;
 
         return true;
 
@@ -237,41 +240,41 @@ namespace SN_API{
     /// set gradient node (relevant for additional outputs)
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[in] inData - data
-    /// @param[in] dsz - data size
+    /// @param[in] gsz - data size
+    /// @param[in] gData - data        
     /// @return true - ok
     bool snSetGradientNode(skyNet fn,
         const char* nodeName,
-        const snFloat* inData,
-        snLSize dsz){
+        snLSize gsz,
+        const snFloat* gData){
 
         if (!fn) return false;
 
-        SN_Base::snSize bsz(dsz.w, dsz.h, dsz.ch, dsz.bch);
+        SN_Base::snSize bsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
 
-        return static_cast<SNet*>(fn)->setGradientNode(nodeName, inData, bsz);
+        return static_cast<SNet*>(fn)->setGradientNode(nodeName, bsz, gData);
     }
 
     /// get gradient node (relevant for additional outputs)
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[out] outData - data. First pass NULL, then pass it to the same 
-    /// @param[out] outSz - data size
+    /// @param[out] gsz - data size
+    /// @param[out] gData - data. First pass NULL, then pass it to the same 
     /// @return true - ok
     bool snGetGradientNode(skyNet fn,
         const char* nodeName,
-        snFloat** outData,
-        snLSize* dsz){
+        snLSize* gsz,
+        snFloat** gData){
 
         if (!fn) return false;
 
         SN_Base::snSize bsz;
-        if (!static_cast<SNet*>(fn)->getGradientNode(nodeName, outData, bsz)) return false;
+        if (!static_cast<SNet*>(fn)->getGradientNode(nodeName, bsz, gData)) return false;
 
-        dsz->w = bsz.w;
-        dsz->h = bsz.h;
-        dsz->ch = bsz.d;
-        dsz->bch = bsz.n;
+        gsz->w = bsz.w;
+        gsz->h = bsz.h;
+        gsz->ch = bsz.d;
+        gsz->bch = bsz.n;
 
         return true;
     }

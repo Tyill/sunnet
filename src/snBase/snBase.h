@@ -124,7 +124,7 @@ namespace SN_Base{
             return data_;
         }
                 
-        void setData(snFloat* data, const snSize& nsz){
+        void setData(const snFloat* data, const snSize& nsz){
 
             size_t nnsz = nsz.size();
             assert(data && (nnsz > 0));
@@ -172,29 +172,17 @@ namespace SN_Base{
     
     /// нормализация слоя по батчу
     struct batchNorm{
-        std::vector<SN_Base::snFloat> mean;       ///< среднее вх значений
-        std::vector<SN_Base::snFloat> varce;      ///< дисперсия вх значений
-        std::vector<SN_Base::snFloat> scale;      ///< коэф γ
-        std::vector<SN_Base::snFloat> schift;     ///< коэф β
-        snSize sz;
+       SN_Base::snFloat* norm = nullptr;       ///< нормирован вх значения
+       SN_Base::snFloat* mean = nullptr;       ///< среднее вх значений
+       SN_Base::snFloat* varce = nullptr;      ///< дисперсия вх значений
+       SN_Base::snFloat* scale = nullptr;      ///< коэф γ
+       SN_Base::snFloat* dScale = nullptr;     ///< dγ
+       SN_Base::snFloat* schift = nullptr;     ///< коэф β
+       SN_Base::snFloat* dSchift = nullptr;    ///< dβ
+       SN_Base::snFloat* onc = nullptr;        ///< 1й вектор
+       SN_Base::snFloat lr = 0.001F;           ///< коэф для изменения γ и β
 
-        void set(SN_Base::snFloat* mean_,
-                 SN_Base::snFloat* varce_,
-                 SN_Base::snFloat* scale_,
-                 SN_Base::snFloat* schift_,
-                 snSize sz_){
-
-            size_t lsz = sz_.w *  sz_.h *  sz_.d;
-
-            mean.resize(lsz);   memcpy(mean.data(), mean_, lsz * sizeof(snFloat));
-            varce.resize(lsz);  memcpy(varce.data(), varce_, lsz * sizeof(snFloat));
-            scale.resize(lsz);  memcpy(scale.data(), scale_, lsz * sizeof(snFloat));
-            schift.resize(lsz); memcpy(schift.data(), schift_, lsz * sizeof(snFloat));
-
-            sz = sz_;
-        }
-
-    
+       snSize sz;                     
     };
 
     /// базовый оператор сети. Реализация слоев, расчет весов, градиентов, активации и тд.

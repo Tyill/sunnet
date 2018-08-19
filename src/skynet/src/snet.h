@@ -39,20 +39,20 @@ public:
     ~SNet();
         
     /// тренинг
-    bool training(SN_Base::snFloat lr, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz,
-        SN_Base::snFloat* targetData, SN_Base::snFloat* outData, const SN_Base::snSize& tsz, SN_Base::snFloat* outAccurate);
+    bool training(SN_Base::snFloat lr, const SN_Base::snSize& isz, const SN_Base::snFloat* iLayer,
+        const SN_Base::snSize& osz, SN_Base::snFloat* outData, const SN_Base::snFloat* targetData, SN_Base::snFloat* outAccurate);
 
     /// прямой проход
-    bool forward(bool isLern, SN_Base::snFloat* iLayer, const SN_Base::snSize& lsz, SN_Base::snFloat* outData, const SN_Base::snSize& osz);
+    bool forward(bool isLern, const SN_Base::snSize& isz, const SN_Base::snFloat* iLayer, const SN_Base::snSize& osz, SN_Base::snFloat* outData);
     
     /// обратный проход
-    bool backward(SN_Base::snFloat lr, SN_Base::snFloat* gradErr, const SN_Base::snSize& gsz);
+    bool backward(SN_Base::snFloat lr, const SN_Base::snSize& gsz, const SN_Base::snFloat* grad);
 
     /// задать веса узла сети
-    bool setWeightNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    bool setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const SN_Base::snFloat* wData);
 
     /// вернуть веса узла сети
-    bool getWeightNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& dsz);
+    bool getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::snFloat** wData);
         
     /// задать нормализацию для узла
     bool setBatchNormNode(const char* nodeName, const SN_Base::batchNorm&);
@@ -61,16 +61,16 @@ public:
     bool getBatchNormNode(const char* nodeName, SN_Base::batchNorm&);
 
     /// задать входные данные узла (актуально для доп входов)
-    bool setInputNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    bool setInputNode(const char* nodeName, const SN_Base::snSize& isz, const SN_Base::snFloat* inData);
 
     /// вернуть выходные значения узла (актуально для доп выходов)
-    bool getOutputNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
+    bool getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::snFloat** outData);
 
     /// задать градиент значения узла (актуально для доп выходов)
-    bool setGradientNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz);
+    bool setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, const SN_Base::snFloat* gData);
 
     /// вернуть градиент значения узла (актуально для доп выходов)
-    bool getGradientNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz);
+    bool getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::snFloat** gData);
 
     /// задать параметры узла
     bool setParamNode(const char* nodeName, const char* jnParam);

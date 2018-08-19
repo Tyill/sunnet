@@ -80,16 +80,16 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
     auxParams_["dWGrad"] = vector<snFloat>();
 
     if (batchNormType_ != batchNormType::none){
-        baseBatchNorm_.mean.resize(kernel_, 0);                  bnPrm_.mean = baseBatchNorm_.mean.data();
-        baseBatchNorm_.varce.resize(kernel_, 1);                 bnPrm_.varce = baseBatchNorm_.varce.data();
-        baseBatchNorm_.scale.resize(kernel_, 1);                 bnPrm_.scale = baseBatchNorm_.scale.data();
-        baseBatchNorm_.schift.resize(kernel_, 0);                bnPrm_.schift = baseBatchNorm_.schift.data();
+        auxParams_["bn_mean"] = vector<snFloat>(kernel_, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+        auxParams_["bn_varce"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+        auxParams_["bn_scale"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+        auxParams_["bn_schift"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+        auxParams_["bn_norm"] = vector<snFloat>();               baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"] = vector<snFloat>();                baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+    
         baseBatchNorm_.sz.w = kernel_;
-
-        auxParams_["bn_norm"] = vector<snFloat>();               bnPrm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   bnPrm_.dScale = auxParams_["bn_dScale"].data();
-        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  bnPrm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"] = vector<snFloat>();                bnPrm_.onc = auxParams_["bn_onc"].data();
     }
 }
 
@@ -142,7 +142,7 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
         opt_lmbRegular_ = stof(prms["lmbRegular"]);
 
     if (prms.find("batchNormLr") != prms.end())
-        bnPrm_.lr = stof(prms["batchNormLr"]);
+        baseBatchNorm_.lr = stof(prms["batchNormLr"]);
     
     return true;
 }
@@ -155,14 +155,14 @@ std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const
     }
 
     if (operPrm.action == snAction::forward)
-        forward(neighbOpr[0]->getOutput());        
+        forward(neighbOpr[0]->getOutput(), operPrm);
     else
         backward(neighbOpr[0]->getGradient(), operPrm);         
    
     return std::vector<std::string>();
 }
 
-void FullyConnected::forward(SN_Base::Tensor* inTns){
+void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snSize insz = inTns->size();
 
@@ -187,10 +187,10 @@ void FullyConnected::forward(SN_Base::Tensor* inTns){
     /// batchNorm
     snSize outSz = baseOut_->size();
     if (batchNormType_ == batchNormType::beforeActive){
-        if (outSz.n == 1)
-            batchNormOnc(true, outSz, out, out, bnPrm_);
+        if (!operPrm.isLerning)
+            batchNormOnc(true, outSz, out, out, baseBatchNorm_);
         else
-            fwdBatchNorm(outSz, out, out, bnPrm_);
+            fwdBatchNorm(outSz, out, out, baseBatchNorm_);
     }
 
     /// функция активации
@@ -204,10 +204,10 @@ void FullyConnected::forward(SN_Base::Tensor* inTns){
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive){
-        if (outSz.n == 1)
-            batchNormOnc(true, outSz, out, out, bnPrm_);
+        if (!operPrm.isLerning)
+            batchNormOnc(true, outSz, out, out, baseBatchNorm_);
         else
-            fwdBatchNorm(outSz, out, out, bnPrm_);
+            fwdBatchNorm(outSz, out, out, baseBatchNorm_);
     }
 }
 
@@ -218,10 +218,10 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     /// batchNorm
     snSize gsz = inTns->size();
     if (batchNormType_ == batchNormType::postActive){     
-        if (gsz.n == 1)
-            batchNormOnc(false, gsz, gradIn, gradIn, bnPrm_);
+        if (!operPrm.isLerning)
+            batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
         else
-            bwdBatchNorm(gsz, gradIn, gradIn, bnPrm_);
+            bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_);
     }
 
     // проходим через ф-ю активации, если есть
@@ -245,10 +245,10 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive){
-        if (gsz.n == 1)
-            batchNormOnc(false, gsz, gradIn, gradIn, bnPrm_);
+        if (!operPrm.isLerning)
+            batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
         else
-            bwdBatchNorm(gsz, gradIn, gradIn, bnPrm_);
+            bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_);
     }
 
     // расчет вых градиента и коррекции весов
@@ -273,7 +273,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
 }
 
-void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNormParam& prm){
+void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
 
     size_t inSz = insz.w * insz.h * insz.d;
 
@@ -326,8 +326,8 @@ void FullyConnected::updateConfig(const snSize& newsz){
     auxParams_["dWGrad"].resize(ntp, 0);
 
     if (batchNormType_ != batchNormType::none){
-        auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); bnPrm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_onc"].resize(newsz.n, 1.F);          bnPrm_.onc = auxParams_["bn_onc"].data();
+        auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_onc"].resize(newsz.n, 1.F);          baseBatchNorm_.onc = auxParams_["bn_onc"].data();
     }
 } 
 

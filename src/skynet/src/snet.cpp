@@ -188,16 +188,16 @@ SNet::~SNet(){
 }
 
 /// тренинг
-bool SNet::training(snFloat lr, snFloat* iLayer, const snSize& lsz, snFloat* targetData, snFloat* outData, const snSize& tsz, snFloat* outAccurate){
+bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const snSize& osz, snFloat* outData, const snFloat* targetData, snFloat* outAccurate){
     
     // идем вперед
-    if (!forward(true, iLayer, lsz, outData, tsz))
+    if (!forward(true, isz, iLayer, osz, outData))
         return false;
 
     std::unique_lock<std::mutex> lk(mtxCmn_);
         
     // идем обратно    
-    gradData_["EndNet"]->setData(targetData, tsz);
+    gradData_["EndNet"]->setData(targetData, osz);
 
     operPrm_.lr = lr;
     operPrm_.action = snAction::backward;
@@ -213,7 +213,7 @@ bool SNet::training(snFloat lr, snFloat* iLayer, const snSize& lsz, snFloat* tar
 }
 
 /// прямой проход
-bool SNet::forward(bool isLern, snFloat* iLayer, const snSize& lsz, snFloat* outData, const snSize& osz){
+bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const snSize& osz, snFloat* outData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
     
     if (!engine_){
@@ -221,12 +221,12 @@ bool SNet::forward(bool isLern, snFloat* iLayer, const snSize& lsz, snFloat* out
         return false;
     }
         
-    if (((snSize)lsz).size() <= 0){
+    if (((snSize)isz).size() <= 0){
         statusMess("forward error: lsz.size() <= 0");
         return false;
     }
 
-    inData_["BeginNet"]->setData(iLayer, lsz);
+    inData_["BeginNet"]->setData(iLayer, isz);
 
     operPrm_.action = snAction::forward;
     operPrm_.isLerning = isLern;
@@ -247,7 +247,7 @@ bool SNet::forward(bool isLern, snFloat* iLayer, const snSize& lsz, snFloat* out
 }
 
 /// обратный проход
-bool SNet::backward(snFloat lr, snFloat* gradErr, const snSize& gsz){
+bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (engine_){
@@ -307,27 +307,27 @@ SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
 }
 
 /// задать веса узла сети
-bool SNet::setWeightNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz){
+bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const SN_Base::snFloat* wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()) return false;
         
-    weight_[nodeName]->setData((SN_Base::snFloat*)inData, dsz);
+    weight_[nodeName]->setData((SN_Base::snFloat*)wData, wsz);
             
     return true;
 }
 
 /// вернуть веса узла сети
-bool SNet::getWeightNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& dsz){
+bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::snFloat** wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()) return false;
     
-    dsz = weight_[nodeName]->size();
+    wsz = weight_[nodeName]->size();
 
-    *outData = (snFloat*)realloc(*outData, dsz.size() * sizeof(snFloat));
+    *wData = (snFloat*)realloc(*wData, wsz.size() * sizeof(snFloat));
         
-    memcpy(*outData, weight_[nodeName]->getData(), dsz.size() * sizeof(snFloat));
+    memcpy(*wData, weight_[nodeName]->getData(), wsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -363,63 +363,63 @@ bool SNet::getBatchNormNode(const char* nodeName, SN_Base::batchNorm& obn){
 }
 
 /// задать входные данные узла (актуально для доп входов)
-bool SNet::setInputNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz){
+bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const SN_Base::snFloat* inData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()) return false;
 
-    inData_[nodeName]->setData((SN_Base::snFloat*)inData, dsz);
+    inData_[nodeName]->setData((SN_Base::snFloat*)inData, isz);
 
     return true;
 }
 
 /// вернуть выходные значения узла (актуально для доп выходов)
-bool SNet::getOutputNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz){
+bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::snFloat** outData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()) return false;
 
     Tensor* outTns = operats_[nodeName]->getOutput();
 
-    outSz = outTns->size();
+    osz = outTns->size();
 
-    *outData = (snFloat*)realloc(*outData, outSz.size() * sizeof(snFloat));
+    *outData = (snFloat*)realloc(*outData, osz.size() * sizeof(snFloat));
 
-    memcpy(*outData, outTns->getData(), outSz.size() * sizeof(snFloat));
+    memcpy(*outData, outTns->getData(), osz.size() * sizeof(snFloat));
 
     return true;
 }
 
 /// задать градиент значения узла (актуально для доп выходов)
-bool SNet::setGradientNode(const char* nodeName, const SN_Base::snFloat* inData, const SN_Base::snSize& dsz){
+bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, const SN_Base::snFloat* gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()) return false;
 
     snSize tsz = gradData_[nodeName]->size();
 
-    if (tsz != dsz){
+    if (tsz != gsz){
         statusMess("setGradientNode error: tsz != dsz. Must be dsz: " +
             to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d));
         return false;
     }
 
-    gradData_[nodeName]->setData((SN_Base::snFloat*)inData, dsz);
+    gradData_[nodeName]->setData((SN_Base::snFloat*)gData, gsz);
 
     return true;
 }
 
 /// вернуть градиент значения узла (актуально для доп выходов)
-bool SNet::getGradientNode(const char* nodeName, SN_Base::snFloat** outData, SN_Base::snSize& outSz){
+bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::snFloat** gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
     
     if (operats_.find(nodeName) == operats_.end()) return false;
 
-    outSz = gradData_[nodeName]->size();
+    gsz = gradData_[nodeName]->size();
 
-    *outData = (snFloat*)realloc(*outData, outSz.size() * sizeof(snFloat));
+    *gData = (snFloat*)realloc(*gData, gsz.size() * sizeof(snFloat));
 
-    memcpy(*outData, gradData_[nodeName]->getData(), outSz.size() * sizeof(snFloat));
+    memcpy(*gData, gradData_[nodeName]->getData(), gsz.size() * sizeof(snFloat));
 
     return true;
 }

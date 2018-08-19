@@ -236,7 +236,7 @@ void fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
     free(shareF);
 }
 
-void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNormParam prm){
+void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
      
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
 

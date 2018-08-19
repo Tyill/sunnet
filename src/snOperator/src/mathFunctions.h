@@ -26,35 +26,12 @@
 
 #include "snBase/snBase.h"
 
-struct batchNormParam{
-    SN_Base::snFloat* norm = nullptr;       ///< нормирован вх значения
-    SN_Base::snFloat* mean = nullptr;       ///< среднее вх значений
-    SN_Base::snFloat* varce = nullptr;      ///< дисперсия вх значений
-    SN_Base::snFloat* scale = nullptr;      ///< коэф γ
-    SN_Base::snFloat* dScale = nullptr;     ///< dγ
-    SN_Base::snFloat* schift = nullptr;     ///< коэф β
-    SN_Base::snFloat* dSchift = nullptr;    ///< dβ
-    SN_Base::snFloat* onc = nullptr;        ///< 1й вектор
-    SN_Base::snFloat* share = nullptr;      ///< доп память
-    SN_Base::snFloat lr = 0.001F;           ///< коэф для изменения γ и β
-
-    void offset(int offs){
-        norm    += offs;
-        mean    += offs;
-        varce   += offs;
-        scale   += offs;
-        dScale  += offs;
-        schift  += offs;
-        dSchift += offs;
-    };
-};
-
 void fwdBatchNorm(SN_Base::snSize insz,
                   SN_Base::snFloat* in,
                   SN_Base::snFloat* out,
-                  batchNormParam);
+                  SN_Base::batchNorm);
 
 void bwdBatchNorm(SN_Base::snSize insz, 
                   SN_Base::snFloat* gradIn,
                   SN_Base::snFloat* gradOut,
-                  batchNormParam);
+                  SN_Base::batchNorm);

@@ -130,7 +130,7 @@ int main(int argc, _TCHAR* argv[])
         "{"
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"F3\","
-        "\"OperatorName\":\"Concatenate\""
+        "\"OperatorName\":\"Summator\""
         "},"
                         
         "{"

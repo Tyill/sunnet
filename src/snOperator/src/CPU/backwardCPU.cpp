@@ -262,7 +262,7 @@ void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloa
 }
    
 
-void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNormParam prm){
+void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
     // https://kevinzakka.github.io/2016/09/14/batch_normalization/
 
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;

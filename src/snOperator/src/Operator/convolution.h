@@ -83,9 +83,7 @@ private:
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
     SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
     std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
-
-    batchNormParam bnPrm_;                                      ///< параметры batchNorm
-      
+          
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;
@@ -98,9 +96,9 @@ private:
     
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
-    void batchNorm(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, batchNormParam& prm);
+    void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
 
-    void forward(SN_Base::Tensor* inTns);
+    void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
        
 };
