@@ -44,37 +44,53 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
         return std::vector < std::string > {"noWay"};
     }
       
-    if (operPrm.action == snAction::backward){
-        Tensor* inTns = neighbOpr[0]->getGradient();
-        baseGrad_->setData(inTns->getData(), inTns->size());
+    if (operPrm.action == snAction::forward){
 
-        return std::vector<std::string>();
+        if (basePrms_.find("outDiapByN") == basePrms_.end()){
+            ERROR_MESS("not set param 'outDiapByN'");
+            return std::vector < std::string > {"noWay"};
+        }
+                      
+        auto ss = SN_Aux::split(basePrms_["outDiapByN"], " ");
+        if (ss.size() < 2){
+            ERROR_MESS("'outDiapByN' args < 2");
+            return std::vector < std::string > {"noWay"};
+        }
+        bgDiapN_ = max(0, stoi(ss[0]));
+        endDiapN_ = max(0, stoi(ss[1]));
+        
+        if (bgDiapN_ > endDiapN_){
+            ERROR_MESS("'outDiapByN' bgDiapN > endDiapN");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        Tensor* inTns = neighbOpr[0]->getOutput(), *outTns = baseOut_;
+
+        snSize csz = inTns->size();
+        inSizeMem_ = csz;
+        
+        if ((csz.n < bgDiapN_) || (csz.n < endDiapN_)){
+            ERROR_MESS("'outDiapByN' (csz.n < bgDiapN_) || (csz.n < endDiapN_)");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        csz.n = endDiapN_ - bgDiapN_;
+       
+        outTns->setData(inTns->getData() + bgDiapN_ * csz.w * csz.h * csz.d, csz);
     }
-   
-    if (basePrms_.find("outDiapByN") == basePrms_.end()){
-        ERROR_MESS("not set param 'outDiapByN'");
-        return std::vector < std::string > {"noWay"};
+    else{
+        Tensor* inTns = neighbOpr[0]->getGradient(), *outTns = baseGrad_;
+                      
+        outTns->resize(inSizeMem_);
+      
+        snSize csz = inTns->size();
+        size_t stp = csz.w * csz.h * csz.d;
+        outTns->setData(inTns->getData() + bgDiapN_ * stp, csz);
+
+        // остаток обнуляем
+        memset(outTns->getData(), 0, bgDiapN_ * stp * sizeof(snFloat));
+        memset(outTns->getData() + endDiapN_ * stp, 0, (inSizeMem_.n - endDiapN_) * stp * sizeof(snFloat));
     }
 
-    Tensor* inTns = neighbOpr[0]->getOutput(), *outTns = baseOut_;
-    
-    snSize csz = inTns->size();
-    auto ss = SN_Aux::split(basePrms_["outDiapByN"], " ");
-    if (ss.size() < 2){
-        ERROR_MESS("'outDiapByN' args < 2");
-        return std::vector < std::string > {"noWay"};
-    }
-    size_t bgDiapN = stol(ss[0]),
-           endDiapN = stol(ss[1]);
-    
-    if ((csz.n < bgDiapN) || (csz.n < endDiapN)){
-        ERROR_MESS("'outDiapByN' (csz.n < bgDiapN) || (csz.n < endDiapN)");
-        return std::vector < std::string > {"noWay"};
-    }
-    csz.n = max<size_t>(1, endDiapN - bgDiapN);
-    outTns->resize(csz);
-
-    outTns->setData(inTns->getData() + bgDiapN * csz.w * csz.h * csz.d, csz);
-   
     return std::vector<std::string>();
 }

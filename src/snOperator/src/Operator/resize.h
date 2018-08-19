@@ -37,4 +37,9 @@ public:
     ~Resize() = default;
                 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+
+private:
+    SN_Base::snSize inSizeMem_;
+
+    size_t bgDiapN_ = 0, endDiapN_ = 0;
 };
