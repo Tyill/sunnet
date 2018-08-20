@@ -401,34 +401,39 @@ void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Ba
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
 
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
-    for (size_t i = 0; i < insz.d; ++i){
-               
-        if (fwBw){
+    if (fwBw){
+
+        for (size_t i = 0; i < insz.d; ++i){
+
             /// norm = (in - mean) / varce
             /// y = ^x * γ + β
             for (size_t j = 0; j < bsz; ++j){
 
                 snFloat* cin = in + stepN * j + stepD * i,
-                       * cout = out + stepN * j + stepD * i,
-                       * norm = prm.norm + stepN * j + stepD * i;
+                    *cout = out + stepN * j + stepD * i,
+                    *norm = prm.norm + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k){
                     norm[k] = (cin[k] - prm.mean[k]) / prm.varce[k];
                     cout[k] = norm[k] * prm.scale[k] + prm.schift[k];
                 }
             }
+            prm.offset(stepD);
         }
-        else{
+    }
+    else{
+        for (size_t i = 0; i < insz.d; ++i){
+
             /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
             for (size_t j = 0; j < bsz; ++j){
 
                 snFloat* igr = in + stepN * j + stepD * i,
-                       * ogr = out + stepN * j + stepD * i, 
-                       * norm = prm.norm + stepN * j + stepD * i;
+                    *ogr = out + stepN * j + stepD * i,
+                    *norm = prm.norm + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k)
                     ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
             }
-        }   
-        prm.offset(stepD);       
+            prm.offset(stepD);
+        }
     }
     
     prm.offset(-int(stepD * insz.d));

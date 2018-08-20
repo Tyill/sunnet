@@ -62,6 +62,7 @@ namespace SN_API{
         /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
         /// @param[in] statusCBack - callback state. Not necessary
         /// @param[in] udata - user data. Not necessary
+        /// @return object net
         SKYNET_API skyNet snCreateNet(const char* jnNet,
                                       char* out_err /*sz 256*/, 
                                       snStatusCBack = nullptr, 
