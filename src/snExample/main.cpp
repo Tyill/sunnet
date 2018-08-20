@@ -85,12 +85,26 @@ int main(int argc, _TCHAR* argv[])
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"F1\""
+        "\"NextNodes\":\"C1\""
         "},"
 
         "\"Nodes\":"
         "["
-                        
+             
+        "{"
+        "\"NodeName\":\"C1\","
+        "\"NextNodes\":\"P1\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"32\"},"
+        "\"batchNormType\":\"beforeActive\""
+        "},"
+
+        "{"
+        "\"NodeName\":\"P1\","
+        "\"NextNodes\":\"F1\","
+        "\"OperatorName\":\"Pooling\""
+        "},"
+
         "{"
         "\"NodeName\":\"F1\","
         "\"NextNodes\":\"F3\","
@@ -156,7 +170,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; if (cnt > 1000) break;
+            ++cnt; //if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;

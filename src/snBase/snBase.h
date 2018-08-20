@@ -181,8 +181,16 @@ namespace SN_Base{
        SN_Base::snFloat* dSchift = nullptr;    ///< dβ
        SN_Base::snFloat* onc = nullptr;        ///< 1й вектор
        SN_Base::snFloat lr = 0.001F;           ///< коэф для изменения γ и β
+       snSize sz;
 
-       snSize sz;                     
+       void offset(int offs){
+           mean += offs;
+           varce += offs;
+           scale += offs;
+           dScale += offs;
+           schift += offs;
+           dSchift += offs;
+       }
     };
 
     /// базовый оператор сети. Реализация слоев, расчет весов, градиентов, активации и тд.

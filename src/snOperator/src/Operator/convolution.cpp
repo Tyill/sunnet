@@ -309,58 +309,68 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
 void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
-
+       
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d;
-    if (insz.n == 1){
+   
+    if (!isLern){
         for (size_t i = 0; i < insz.d; ++i){
 
             snFloat* pIn = in + stepD * i;
             snFloat* pOut = out + stepD * i;
 
-            //prm.offset(stepD * i);
-
-            size_t inSz = insz.w * insz.h * insz.d;
+            size_t sz = insz.w * insz.h;
             if (fwBw){
                 /// y = ^x * γ + β
-                for (size_t i = 0; i < inSz; ++i){
+                for (size_t i = 0; i < sz; ++i){
                     prm.norm[i] = (pIn[i] - prm.mean[i]) / prm.varce[i];
                     pOut[i] = (pIn[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];
                 }
             }
             else{
                 /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
-                for (size_t i = 0; i < inSz; ++i)
+                for (size_t i = 0; i < sz; ++i)
                     pOut[i] = prm.scale[i] * (pIn[i] - prm.dSchift[i] - prm.norm[i] * prm.dScale[i]) / prm.varce[i];
             }
+            prm.offset(stepD);
+            prm.norm += stepD * insz.n;
         }
     }
-    else{ // insz.n > 1
-        for (size_t i = 0; i < insz.d; ++i){
+    else{ // isLern
 
-            snFloat* pSh = nullptr;//prm.share;
+        snFloat* share = (snFloat*)calloc(stepD * insz.n, sizeof(snFloat));
+        snSize sz(insz.w, insz.h, 1, insz.n);
+        for (size_t i = 0; i < insz.d; ++i){
+           
+            snFloat* pSh = share;
             snFloat* pIn = in + stepD * i;
             for (size_t j = 0; j < insz.n; ++j){
+
                 memcpy(pSh, pIn, stepD * sizeof(snFloat));
                 pSh += stepD;
                 pIn += stepN;
-            }
+            }           
 
-           // prm.offset(stepD * i);
-            /*if (fwBw)
-                fwdBatchNorm(insz, prm.share, prm.share, prm);
+            if (fwBw)
+                fwdBatchNorm(sz, share, share, prm);
             else
-                bwdBatchNorm(insz, prm.share, prm.share, prm);
-*/
-            //pSh = prm.share;
-            snFloat* pOut = out + stepD * i;
+                bwdBatchNorm(sz, share, share, prm);
+           
+            pSh = share;
+            snFloat* pOut = out + stepD * i; 
             for (size_t j = 0; j < insz.n; ++j){
                 memcpy(pOut, pSh, stepD * sizeof(snFloat));
                 pSh += stepD;
                 pOut += stepN;
             }
+
+            prm.offset(stepD);
+            prm.norm += stepD * insz.n;
         }
+        free(share);
     }
-   // prm.offset(-int(stepD * insz.d));
+   
+    prm.offset(-int(stepD * insz.d));
+    prm.norm -= stepD * insz.d * insz.n;
 }
 
 void Convolution::updateConfig(const snSize& newsz){
