@@ -89,7 +89,7 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
         auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
         auxParams_["bn_onc"] = vector<snFloat>();                baseBatchNorm_.onc = auxParams_["bn_onc"].data();
     
-        baseBatchNorm_.sz.w = kernel_;
+        baseBatchNorm_.sz = snSize(kernel_);
     }
 }
 
@@ -147,6 +147,25 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
     if (prms.find("freeze") != prms.end())
         isFreeze_ = prms["freeze"] == "1";
     
+    return true;
+}
+
+bool FullyConnected::setBatchNorm(const batchNorm& bn){
+
+    size_t osz = bn.sz.size();
+
+    auxParams_["bn_mean"] = vector<snFloat>(osz, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+    auxParams_["bn_varce"] = vector<snFloat>(osz, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+    auxParams_["bn_scale"] = vector<snFloat>(osz, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+    auxParams_["bn_schift"] = vector<snFloat>(osz, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+
+    memcpy(baseBatchNorm_.mean, bn.mean, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.varce, bn.varce, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.scale, bn.scale, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.schift, bn.schift, osz * sizeof(snFloat));
+
+    baseBatchNorm_.sz = bn.sz;
+
     return true;
 }
 

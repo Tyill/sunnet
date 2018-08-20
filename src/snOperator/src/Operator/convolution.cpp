@@ -90,6 +90,17 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();    
 
+    if (batchNormType_ != batchNormType::none){
+        auxParams_["bn_mean"] = vector<snFloat>();
+        auxParams_["bn_varce"] = vector<snFloat>();
+        auxParams_["bn_scale"] = vector<snFloat>();
+        auxParams_["bn_schift"] = vector<snFloat>();
+        auxParams_["bn_norm"] = vector<snFloat>();
+        auxParams_["bn_dScale"] = vector<snFloat>();
+        auxParams_["bn_dSchift"] = vector<snFloat>();
+        auxParams_["bn_onc"] = vector<snFloat>();
+    }
+
     setInternPrm(prms);
 }
 
@@ -143,7 +154,29 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
 
     if (prms.find("batchNormLr") != prms.end())
         baseBatchNorm_.lr = stof(prms["batchNormLr"]);
+
+    if (prms.find("freeze") != prms.end())
+        isFreeze_ = prms["freeze"] == "1";
                 
+    return true;
+}
+
+bool Convolution::setBatchNorm(const batchNorm& bn){
+
+    size_t osz = bn.sz.size();
+
+    auxParams_["bn_mean"] = vector<snFloat>(osz, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+    auxParams_["bn_varce"] = vector<snFloat>(osz, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+    auxParams_["bn_scale"] = vector<snFloat>(osz, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+    auxParams_["bn_schift"] = vector<snFloat>(osz, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+
+    memcpy(baseBatchNorm_.mean, bn.mean, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.varce, bn.varce, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.scale, bn.scale, osz * sizeof(snFloat));
+    memcpy(baseBatchNorm_.schift, bn.schift, osz * sizeof(snFloat));
+
+    baseBatchNorm_.sz = bn.sz;
+
     return true;
 }
 
@@ -375,9 +408,9 @@ void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Ba
             /// y = ^x * γ + β
             for (size_t j = 0; j < bsz; ++j){
 
-                snFloat* cin = in + stepN * i + stepD * j,
-                       *cout = out + stepN * i + stepD * j,
-                       *norm = prm.norm + stepN * i + stepD * j;
+                snFloat* cin = in + stepN * j + stepD * i,
+                       * cout = out + stepN * j + stepD * i,
+                       * norm = prm.norm + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k){
                     norm[k] = (cin[k] - prm.mean[k]) / prm.varce[k];
                     cout[k] = norm[k] * prm.scale[k] + prm.schift[k];
@@ -388,9 +421,9 @@ void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Ba
             /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
             for (size_t j = 0; j < bsz; ++j){
 
-                snFloat* igr = in + stepN * i + stepD * j,
-                        *ogr = out + stepN * i + stepD * j, 
-                       *norm = prm.norm + stepN * i + stepD * j;
+                snFloat* igr = in + stepN * j + stepD * i,
+                       * ogr = out + stepN * j + stepD * i, 
+                       * norm = prm.norm + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k)
                     ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
             }
@@ -463,14 +496,14 @@ void Convolution::updateConfig(const snSize& newsz){
     size_t osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-        auxParams_["bn_mean"] = vector<snFloat>(osz, 0);         baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-        auxParams_["bn_varce"] = vector<snFloat>(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
-        auxParams_["bn_scale"] = vector<snFloat>(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
-        auxParams_["bn_schift"] = vector<snFloat>(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
-        auxParams_["bn_norm"] = vector<snFloat>(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_dScale"] = vector<snFloat>(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
-        auxParams_["bn_dSchift"] = vector<snFloat>(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"] = vector<snFloat>(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+        auxParams_["bn_mean"].resize(osz, 0);         baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+        auxParams_["bn_varce"].resize(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+        auxParams_["bn_scale"].resize(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+        auxParams_["bn_schift"].resize(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+        auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"].resize(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"].resize(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"].resize(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  

@@ -137,10 +137,10 @@ namespace SN_API{
 
         /// batchNorm
         struct batchNorm{
-            snFloat* mean;      ///< mean. The memory is allocated by the user
-            snFloat* varce;     ///< disp
-            snFloat* scale;     ///< coef γ
-            snFloat* schift;    ///< coef β
+            snFloat* mean = nullptr;      ///< mean. The memory is allocated by the user
+            snFloat* varce = nullptr;     ///< disp
+            snFloat* scale = nullptr;     ///< coef γ
+            snFloat* schift = nullptr;    ///< coef β
         };
 
         /// set batchNorm of node

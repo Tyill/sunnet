@@ -63,8 +63,10 @@ public:
 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
         
-    bool setInternPrm(std::map<std::string, std::string>& prms);
+    bool setInternPrm(std::map<std::string, std::string>& prms) override;
         
+    bool setBatchNorm(const SN_Base::batchNorm& bn) override;
+
 private:
         
     size_t kernel_ = 10;                                        ///< кол-во скрытых нейронов

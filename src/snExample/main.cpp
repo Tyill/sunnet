@@ -54,31 +54,9 @@ vector<string> split(string text, const char* sep)
 
     return res;
 }
-void UserCBack(const char* cbname,
-    const char* node,
-    bool fwdBwd,
-    SN_API::snLSize insz,
-    snFloat* in,
-    SN_API::snLSize* outsz,
-    snFloat** out,
-    SN_API::snUData ud){
 
-    *out = (float*)calloc(insz.w * insz.h *insz.ch *insz.bch, sizeof(float));
+bool createNet(SN_API::skyNet& net){
 
-    memcpy(*out, in, insz.w * insz.h *insz.ch *insz.bch* sizeof(float));
-    outsz->w = insz.w;
-    outsz->h = insz.h;
-    outsz->ch = insz.ch;
-    outsz->bch = insz.bch;
-    
-
-    bool dd = false;
-
-}
-
-
-int main(int argc, _TCHAR* argv[])
-{
     stringstream ss;
 
     ss << "{"
@@ -90,13 +68,13 @@ int main(int argc, _TCHAR* argv[])
 
         "\"Nodes\":"
         "["
-             
+
         "{"
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"32\"},"
-        "\"batchNormType\":\"beforeActive\""
+        "\"OperatorParams\":{\"kernel\":\"32\","
+        "\"batchNormType\":\"beforeActive\",\"freeze\":\"1\" }"
         "},"
 
         "{"
@@ -110,7 +88,7 @@ int main(int argc, _TCHAR* argv[])
         "\"NextNodes\":\"F3\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"128\","
-        "\"batchNormType\":\"none\"}"
+        "\"batchNormType\":\"beforeActive\",\"freeze\":\"1\"}"
         "},"
 
         "{"
@@ -120,15 +98,15 @@ int main(int argc, _TCHAR* argv[])
         "\"OperatorParams\":{\"kernel\":\"10\","
         "\"weightInitType\":\"uniform\","
         "\"activeType\":\"none\","
-        "\"optimizerType\":\"adam\"}"
+        "\"optimizerType\":\"adam\",\"freeze\":\"1\"}"
         "},"
-                
+
         "{"
-        "\"NodeName\":\"LS\","    
-        "\"NextNodes\":\"EndNet\","  
-        "\"OperatorName\":\"LossFunction\","  
-        "\"OperatorParams\":{\"lossType\":\"softMaxToCrossEntropy\"}" 
-    //    "\"OperatorParams\":{\"lossType\":\"binaryCrossEntropy\" 
+        "\"NodeName\":\"LS\","
+        "\"NextNodes\":\"EndNet\","
+        "\"OperatorName\":\"LossFunction\","
+        "\"OperatorParams\":{\"lossType\":\"softMaxToCrossEntropy\"}"
+        //    "\"OperatorParams\":{\"lossType\":\"binaryCrossEntropy\" 
         "}"
 
         "],"
@@ -139,22 +117,14 @@ int main(int argc, _TCHAR* argv[])
         "}";
 
 
-    char err[256];
-    auto snet = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
-    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
-    //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
+    char err[256]; err[0] = '\0';
+    net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
 
-    SN_API::snAddUserCallBack(snet,"opa", UserCBack);
-        
-    int batchSz = 10, classCnt = 10, w = 28, h = 28; float lr = 0.005;
-    SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
-    SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
-    SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
+    return string(err) == "";
+}
+
+bool loadImage(SN_API::skyNet& net, string& imgPath, int classCnt, vector<vector<string>>& imgName, vector<int>& imgCntDir, map<string, cv::Mat>& images){
     
-    // собираем все изобр
-    vector<vector<string>> imgName(classCnt);
-    vector<int> imgCntDir(classCnt);
-    map<string, cv::Mat> images;
     for (int i = 0; i < classCnt; ++i){
 
         namespace fs = std::tr2::sys;
@@ -176,41 +146,156 @@ int main(int argc, _TCHAR* argv[])
         imgCntDir[i] = cnt;
     }
 
-    
-    /*std::ifstream ifs;
+    return true;
+}
+
+bool readWeight(SN_API::skyNet& snet){
+
+    std::ifstream ifs;
     ifs.open("c:/C++/w.dat", std::ifstream::in | std::ifstream::binary);
 
     if (!ifs.good()) return false;
 
-    string str = "";
-    getline(ifs, str);
+    SN_API::batchNorm bn;
+    while (!ifs.eof()){
 
-    auto insz = split(str, " ");*/
-    /*if (insz.size() != 3 || !is_number(insz[1]) || !is_number(insz[2])){
-        statusMess("isolFinder::createNet error: input size not set");
-        return false;
-    }*/
+        string str = "";
+        getline(ifs, str);
 
-    /*size_t dbSz = stoi(insz[1]) * stoi(insz[2]);
+        auto opr = split(str, " ");
+        if (opr.empty()) 
+            continue;
 
-    std::vector<SN_API::snFloat> db(dbSz);
-    if (dbSz > 0){
-        ifs.read((char*)db.data(), dbSz * sizeof(SN_API::snFloat));
+        auto args = split(opr[0], "_");
+        string nm = args[0];
+        size_t w = stoi(opr[1]), h = stoi(opr[2]), d = stoi(opr[3]), dsz = w*h*d;
+
+        std::vector<SN_API::snFloat> db(w * h * d);
+
+        ifs.read((char*)db.data(), dsz * sizeof(SN_API::snFloat));
+
+        SN_API::snLSize lsz(w, h, d);
+
+        if (args[1] == "w")
+            SN_API::snSetWeightNode(snet, nm.c_str(), lsz, db.data());
+        else if (args[1] == "bn"){
+            
+            if (args[2] == "mean")
+                bn.mean = db.data();
+            else if (args[2] == "varce")
+                bn.varce = db.data();
+            else if (args[2] == "scale")
+                bn.scale = db.data();
+            else if (args[2] == "schift")
+                bn.schift = db.data();
+        }
+
+        if (bn.mean &&  bn.varce &&  bn.scale &&  bn.schift){
+                        
+            SN_API::snSetBatchNormNode(snet, nm.c_str(), lsz, bn);
+
+            bn = SN_API::batchNorm();
+        }
+
+    }
+}
+
+bool writeWeight(SN_API::skyNet& snet){
+
+    std::ofstream ofs;
+    ofs.open("c:/C++/w.dat", std::ios_base::out | std::ios_base::binary);
+
+    if (ofs.good()) {
+
+    SN_API::snFloat* data = nullptr;
+    SN_API::snLSize lSize;
+
+    SN_API::snGetWeightNode(snet, "C1", &lSize, &data);
+    ofs << "C1_w " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
+
+    SN_API::snGetWeightNode(snet, "F1", &lSize, &data);
+    ofs << "F1_w " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
+
+    SN_API::batchNorm bn;
+    SN_API::snGetBatchNormNode(snet, "F1", &lSize, &bn);
+    ofs << "F1_bn_mean " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.mean, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "F1_bn_varce " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.varce, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "F1_bn_scale " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.scale, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "F1_bn_schift " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.schift, lSize.w * lSize.h * lSize.ch * sizeof(float));
+
+    SN_API::snGetWeightNode(snet, "F3", &lSize, &data);
+    ofs << "F3_w " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
+
+
+    SN_API::snGetBatchNormNode(snet, "C1", &lSize, &bn);
+    ofs << "C1_bn_mean " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.mean, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "C1_bn_varce " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.varce, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "C1_bn_scale " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.scale, lSize.w * lSize.h * lSize.ch * sizeof(float));
+    ofs << "C1_bn_schift " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+    ofs.write((char*)bn.schift, lSize.w * lSize.h * lSize.ch * sizeof(float));
     }
 
-    ifs.close();
+    return true;
+}
 
-    SN_API::snLSize lsz(stoi(insz[1]), stoi(insz[2]));*/
+void showImg(){
 
-    //SN_API::snSetWeightNode(snet, "F1", db.data(), lsz);
+    /*cv::Mat imggg = img.clone();
+    cv::resize(imggg, imggg, cv::Size(500, 500));
+    string tt;
+    for (int h = 0; h < 10; ++h)
+    tt += " " + to_string(int(refTarget[h])) + " ";
+    cv::putText(imggg, tt,
+    cv::Point(25, 25), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar::all(255), 1);
 
+    cv::imshow("", imggg);
+    cv::waitKey(1000);
+    */
+}
 
+int main(int argc, _TCHAR* argv[])
+{
+    SN_API::skyNet snet = nullptr;
+    if (!createNet(snet)){
+        statusMess("createNet error", nullptr);
+        cin.get();
+        return -1;
+    }
+
+    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
+    //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
+
+    int batchSz = 10, classCnt = 10, w = 28, h = 28; float lr = 0.005;
+    vector<vector<string>> imgName(classCnt);
+    vector<int> imgCntDir(classCnt);
+    map<string, cv::Mat> images;
+
+    readWeight(snet);
+
+    if (!loadImage(snet, imgPath, classCnt, imgName, imgCntDir, images)){
+        statusMess("loadImage error", nullptr);
+        cin.get();
+        return -1;
+    }
+        
+    SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
+    SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
+    SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
+    
     size_t sum_metric = 0;
     size_t num_inst = 0;
-
-fff:
     float accuratSumm = 0;
-    for (int k = 0; k < 100; ++k){
+    for (int k = 0; k < 1000; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);
         fill_n(outLayer, classCnt * batchSz, 0.F);
@@ -220,14 +305,13 @@ fff:
         // выбираем случайно изобр из тренир выборки
 
         for (int i = 0; i < batchSz; ++i){
-            
+
             // директория
             int ndir = rand() % classCnt;
             while (imgCntDir[ndir] == 0) ndir = rand() % classCnt;
 
             // номер изобр
             int nimg = rand() % imgCntDir[ndir];
-
 
             // читаем изобр
             cv::Mat img; string nm = imgName[ndir][nimg];
@@ -236,102 +320,49 @@ fff:
             else{
                 img = cv::imread(imgPath + to_string(ndir) + "/" + nm, CV_LOAD_IMAGE_UNCHANGED);
                 images[nm] = img;
-            }                
-            
+            }
+
             float* refData = inLayer + i * w * h;
 
             float* refTarget = targetLayer + i * classCnt;
             refTarget[ndir] = 1.F;
 
-        //    refTarget[0] = (ndir == 0) ? 1.F : 0.F;
+            //    refTarget[0] = (ndir == 0) ? 1.F : 0.F;
 
-            /*cv::Mat imggg = img.clone();
-            cv::resize(imggg, imggg, cv::Size(500, 500));
-            string tt;
-            for (int h = 0; h < 10; ++h)
-                tt += " " + to_string(int(refTarget[h])) + " ";
-            cv::putText(imggg, tt,
-                cv::Point(25, 25), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar::all(255), 1);
-            
-            cv::imshow("", imggg);
-            cv::waitKey(1000);            
-*/
             double minVal = 0, maxVal = 0;
-            double mean = cv::mean(img)[0];// minv = 0, maxv = 0;
+            double mean = cv::mean(img)[0];
             cv::minMaxLoc(img, &minVal, &maxVal);
             size_t nr = img.rows, nc = img.cols;
             for (size_t r = 0; r < nr; ++r){
-
                 uchar* pt = img.ptr<uchar>(r);
-
-                for (size_t c = 0; c < nc; ++c){
-                                        
+                for (size_t c = 0; c < nc; ++c)
                     refData[r * nc + c] = (pt[c] - mean);
-                }
             }
-
         }
-
-        /*if (k % 100 == 0)
-            lr -= lr * 0.1;*/
 
         float accurat = 0;
         SN_API::snTraining(snet,
-                           lr,
-                           SN_API::snLSize(w, h, 1, batchSz),
-                           inLayer,
-                           SN_API::snLSize(classCnt, 1, 1, batchSz),
-                           outLayer,
-                           targetLayer,                           
-                           &accurat);
+            lr,
+            SN_API::snLSize(w, h, 1, batchSz),
+            inLayer,
+            SN_API::snLSize(classCnt, 1, 1, batchSz),
+            outLayer,
+            targetLayer,
+            &accurat);
 
         accuratSumm += accurat;
         cout << k << " metrix " << accuratSumm / k << endl;
     }
-    
-    /*SN_API::batchNorm bn;
-    SN_API::snLSize lsz;
-    SN_API::snGetBatchNormNode(snet, "F1", &bn, &lsz);
 
-    SN_API::snFloat* weight = nullptr;
-    SN_API::snLSize wsz;
-    SN_API::snGetWeightNode(snet, "F1", &weight, &wsz);
+    //writeWeight(snet);
 
-    
-    snet = SN_API::snCreateNet(ss.str().c_str(), err, "", statusMess);
-
-    SN_API::snSetBatchNormNode(snet, "F1", bn, lsz);
-
-    SN_API::snSetWeightNode(snet, "F1", weight, wsz);*/
-
-
-    //goto fff;
 
     cin.get();
 
+    return 0;
+}
 
-
-    std::ofstream ofs;        
-    ofs.open("c:/C++/w.dat", std::ios_base::out | std::ios_base::binary);
-
-    if (ofs.good()) {
-            
-        SN_API::snFloat* data = nullptr;
-        SN_API::snLSize lSize;
-        
-        SN_API::snGetWeightNode(snet, "C1", &lSize, &data);
-            
-        ofs << "C1_w " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
-        ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
-
-        SN_API::batchNorm bn;
-        SN_API::snGetBatchNormNode(snet, "C1", &lSize, &bn);
-
-        ofs << "C1_bn " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
-        ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
-    }
-
-
+ 
 //
 //
 //float a[15] = { 3., 1., 2., 3., 3.,                  // 3   0  5   
@@ -365,9 +396,3 @@ fff:
 //
 //
 //
-
-
-
-    return 0;    
-}
-

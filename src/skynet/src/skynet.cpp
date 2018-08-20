@@ -216,7 +216,7 @@ namespace SN_API{
         bn.varce = bnData.varce;
         bn.scale = bnData.scale;
         bn.schift = bnData.schift;
-        bn.sz = SN_Base::snSize(bnsz.w * bnsz.h * bnsz.ch);
+        bn.sz = SN_Base::snSize(bnsz.w, bnsz.h, bnsz.ch);
 
         if (bn.sz.size() == 0){
             static_cast<SNet*>(fn)->statusMess("SN error: bnsz == 0");

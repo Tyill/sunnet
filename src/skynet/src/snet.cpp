@@ -341,15 +341,7 @@ bool SNet::setBatchNormNode(const char* nodeName, const SN_Base::batchNorm& bn){
         statusMess("SN error: '" + string(nodeName) + "' not found");
         return false;
     }
-
-    snSize tsz = operats_[nodeName]->getOutput()->size();
-
-    if ((tsz.w != bn.sz.w) || (tsz.h != bn.sz.h) || (tsz.d != bn.sz.d) || (bn.sz.n > 1)){
-        statusMess("setBatchNormNode error: tsz != dsz. Must be dsz: " +
-            to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d));
-        return false;
-    }
-
+      
     operats_[nodeName]->setBatchNorm(bn);
 
     return true;
