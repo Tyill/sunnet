@@ -215,21 +215,21 @@ namespace SN_Base{
 
         /// задать входные данные для расчета
         virtual bool setInput(SN_Base::Tensor* in){            
-            if (baseInput_) baseInput_->~Tensor();
+            if (baseInput_) delete baseInput_;
             baseInput_ = in;
             return true;
         }
 
         /// задать градиент
         virtual bool setGradient(SN_Base::Tensor* grad){
-            if (baseGrad_) baseGrad_->~Tensor();
+            if (baseGrad_) delete baseGrad_;
             baseGrad_ = grad;
             return true;
         }
         
         /// задать веса
         virtual bool setWeight(SN_Base::Tensor* weight){
-            if (baseWeight_) baseWeight_->~Tensor();
+            if (baseWeight_) delete baseWeight_;
             baseWeight_ = weight;
             return true;
         }

@@ -85,64 +85,22 @@ int main(int argc, _TCHAR* argv[])
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"S1\""
+        "\"NextNodes\":\"F1\""
         "},"
 
         "\"Nodes\":"
         "["
-            
-        "{"
-        "\"NodeName\":\"S1\","
-        "\"NextNodes\":\"R1 R2\","
-        "\"OperatorName\":\"Switch\""
-        "},"
-
-        "{"
-        "\"NodeName\":\"R1\","
-        "\"NextNodes\":\"F1\","
-        "\"OperatorName\":\"Resize\","
-        "\"OperatorParams\":{\"outDiapByN\":\"0 50\"}"
-        "},"
-
-        "{"
-        "\"NodeName\":\"R2\","
-        "\"NextNodes\":\"F2\","
-        "\"OperatorName\":\"Resize\","
-        "\"OperatorParams\":{\"outDiapByN\":\"50 100\"}"
-        "},"
-
-        "{"
-        "\"NodeName\":\"F1\","
-        "\"NextNodes\":\"C1\","
-        "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"1024\","
-                            "\"batchNormType\":\"beforeActive\"}"
-        "},"       
-
-        "{"
-        "\"NodeName\":\"F2\","
-        "\"NextNodes\":\"C1\","
-        "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"1024\","
-        "\"batchNormType\":\"beforeActive\"}"
-        "},"
-
-        "{"
-        "\"NodeName\":\"C1\","
-        "\"NextNodes\":\"F3\","
-        "\"OperatorName\":\"Summator\""
-        "},"
                         
         "{"
-        "\"NodeName\":\"F3\","
-        "\"NextNodes\":\"F4\","
+        "\"NodeName\":\"F1\","
+        "\"NextNodes\":\"F3\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"128\","
-        "\"batchNormType\":\"beforeActive\"}"
+        "\"batchNormType\":\"none\"}"
         "},"
 
         "{"
-        "\"NodeName\":\"F4\","
+        "\"NodeName\":\"F3\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
@@ -174,7 +132,7 @@ int main(int argc, _TCHAR* argv[])
 
     SN_API::snAddUserCallBack(snet,"opa", UserCBack);
         
-    int batchSz = 100, classCnt = 10, w = 500, h = 50; float lr = 0.05;
+    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.005;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -238,7 +196,7 @@ int main(int argc, _TCHAR* argv[])
 
 fff:
     float accuratSumm = 0;
-    for (int k = 0; k < 10000; ++k){
+    for (int k = 0; k < 1000; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);
         fill_n(outLayer, classCnt * batchSz, 0.F);
@@ -306,11 +264,11 @@ fff:
         float accurat = 0;
         SN_API::snTraining(snet,
                            lr,
-                           inLayer,
                            SN_API::snLSize(w, h, 1, batchSz),
-                           targetLayer,
-                           outLayer,
+                           inLayer,
                            SN_API::snLSize(classCnt, 1, 1, batchSz),
+                           outLayer,
+                           targetLayer,                           
                            &accurat);
 
         accuratSumm += accurat;

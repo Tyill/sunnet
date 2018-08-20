@@ -253,9 +253,9 @@ void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
         0.0,                          // коэф
         prm.mean,                     // μ, результ
         1);                           // μ, шаг до след
-                
-    /// varce = sqrt(∑xx - mean^2 + e)
-    for (size_t i = 0; i < inSz; ++i){
+     
+   /// varce = sqrt(∑xx - mean^2 + e)
+   for (size_t i = 0; i < inSz; ++i){
 
         snFloat* cin = in + i, srq = 0.F;
         for (size_t j = 0; j < bsz; ++j){
@@ -264,24 +264,18 @@ void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
         }
         prm.varce[i] = sqrt(srq / bsz - prm.mean[i] * prm.mean[i] + 0.0001F);
     }
-
+      
     /// norm = (in - mean) / varce
     /// y = ^x * γ + β
-    for (size_t i = 0; i < inSz; ++i){
+    for (size_t j = 0; j < bsz; ++j){
 
-        snFloat* cin = in + i, * cout = out + i, * norm = prm.norm + i,
-            mean = prm.mean[i], varce = prm.varce[i], scale = prm.scale[i], schift = prm.schift[i];
-        for (size_t j = 0; j < bsz; ++j){
-                        
-            *norm = (*cin - mean) / varce;
+        snFloat* cin = in + j * inSz, *cout = out + j * inSz, *norm = prm.norm + j * inSz;
 
-            *cout = *norm * scale + schift;
-
-            cin += inSz;
-            cout += inSz;
-            norm += inSz;            
+        for (size_t i = 0; i < inSz; ++i){                        
+            norm[i] = (cin[i] - prm.mean[i]) / prm.varce[i];
+            cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
         }
-    }
+    }  
 }
 
 

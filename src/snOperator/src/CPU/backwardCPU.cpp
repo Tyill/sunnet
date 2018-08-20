@@ -382,13 +382,13 @@ void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm)
         0.0,                          // коэф
         prm.dSchift,                  // ∂f/∂β, результ
         1);
-    
+
     /// ∂f/∂γ = ∑∂f/∂y ⋅ ^x
     for (size_t i = 0; i < inSz; ++i){
-        
+
         snFloat* igr = gradIn + i, *norm = prm.norm + i, dScale = 0.F;
         for (size_t j = 0; j < bsz; ++j){
-            
+
             dScale += igr[0] * norm[0];
 
             norm += inSz;
@@ -396,25 +396,18 @@ void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm)
         }
         prm.dScale[i] = dScale;
     }
-
+    
     /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+    for (size_t j = 0; j < bsz; ++j){
+
+        snFloat* igr = gradIn + j * inSz, *ogr = gradOut + j * inSz, *norm = prm.norm + j * inSz;
+        for (size_t i = 0; i < inSz; ++i)
+            ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
+    }
     for (size_t i = 0; i < inSz; ++i){
-
-        snFloat* igr = gradIn + i, *ogr = gradOut + i, *norm = prm.norm + i,
-            varce = prm.varce[i] * bsz, scale = prm.scale[i] / varce,
-            dSchift = prm.dSchift[i], dScale = prm.dScale[i];
-        for (size_t j = 0; j < bsz; ++j){
-
-            *ogr = scale * (*igr * bsz - dSchift - *norm * dScale);
-
-            norm += inSz;
-            igr += inSz;
-            ogr += inSz;
-        }
-
         prm.schift[i] -= prm.dSchift[i] * prm.lr;
         prm.scale[i] -= prm.dScale[i] * prm.lr;
-    }    
+    }
 }
 
 

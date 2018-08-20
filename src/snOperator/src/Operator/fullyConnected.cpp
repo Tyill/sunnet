@@ -81,7 +81,7 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
 
     if (batchNormType_ != batchNormType::none){
         auxParams_["bn_mean"] = vector<snFloat>(kernel_, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-        auxParams_["bn_varce"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+        auxParams_["bn_varce"] = vector<snFloat>(kernel_, 0);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
         auxParams_["bn_scale"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
         auxParams_["bn_schift"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
         auxParams_["bn_norm"] = vector<snFloat>();               baseBatchNorm_.norm = auxParams_["bn_norm"].data();
@@ -283,21 +283,29 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
 void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
 
-    size_t inSz = insz.w * insz.h * insz.d;
+    size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
 
     if (fwBw){
-
+      
+        /// norm = (in - mean) / varce
         /// y = ^x * γ + β
-        for (size_t i = 0; i < inSz; ++i){
-            prm.norm[i] = (in[i] - prm.mean[i]) / prm.varce[i];
-            out[i] = (in[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];
+        for (size_t j = 0; j < bsz; ++j){
+
+            snFloat* cin = in + j * inSz, *cout = out + j * inSz, *norm = prm.norm + j * inSz;
+            for (size_t i = 0; i < inSz; ++i){
+                norm[i] = (cin[i] - prm.mean[i]) / prm.varce[i];
+                cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
+            }
         }
     }
     else{
-       
         /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
-        for (size_t i = 0; i < inSz; ++i)            
-            out[i] = prm.scale[i] * (in[i] - prm.dSchift[i] - prm.norm[i] * prm.dScale[i]) / prm.varce[i];
+        for (size_t j = 0; j < bsz; ++j){
+
+            snFloat* igr = in + j * inSz, *ogr = out + j * inSz, *norm = prm.norm + j * inSz;
+            for (size_t i = 0; i < inSz; ++i)
+                ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
+        }
     }
 }
 
