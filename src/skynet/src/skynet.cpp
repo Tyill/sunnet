@@ -41,6 +41,8 @@ namespace SN_API{
                        snStatusCBack sts,
                        snUData ud){
 
+        if (!jnNet || !out_err) return nullptr;
+       
         return new SNet(jnNet, out_err, sts, ud);
     }
     
@@ -66,8 +68,18 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!iLayer || !outData || !targetData || !outAccurate){
+            static_cast<SNet*>(fn)->statusMess("SN error: !iLayer || !outData || !targetData || !outAccurate");
+            return false;
+        }
+
         SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
         SN_Base::snSize tnsz(osz.w, osz.h, osz.ch, osz.bch);
+
+        if ((bsz.size() == 0) || (tnsz.size() == 0)){
+            static_cast<SNet*>(fn)->statusMess("SN error: (isz == 0) || (osz == 0)");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->training(lr, bsz, iLayer, tnsz, outData, targetData, outAccurate);
     }
@@ -89,8 +101,18 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!iLayer || !outData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !iLayer || !outData");
+            return false;
+        }
+
         SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
         SN_Base::snSize onsz(osz.w, osz.h, osz.ch, osz.bch);
+
+        if ((bsz.size() == 0) || (onsz.size() == 0)){
+            static_cast<SNet*>(fn)->statusMess("SN error: (isz == 0) || (osz == 0)");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->forward(isLern, bsz, iLayer, onsz, outData);
     }
@@ -108,7 +130,17 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!grad){
+            static_cast<SNet*>(fn)->statusMess("SN error: !grad");
+            return false;
+        }
+
         SN_Base::snSize gnsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
+
+        if (gnsz.size() == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: gsz == 0");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->backward(lr, gnsz, grad);
     }
@@ -123,7 +155,17 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !wData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !wData");
+            return false;
+        }
+
         SN_Base::snSize bsz(wsz.w, wsz.h, wsz.ch, wsz.bch);
+
+        if (bsz.size() == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: wsz == 0");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->setWeightNode(nodeName, bsz, wData);
     }
@@ -137,6 +179,11 @@ namespace SN_API{
     bool snGetWeightNode(skyNet fn, const char* nodeName, snLSize* wsz, snFloat** wData){
 
         if (!fn) return false;
+
+        if (!nodeName || !wsz){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !wsz");
+            return false;
+        }
 
         SN_Base::snSize bsz;
         if (!static_cast<SNet*>(fn)->getWeightNode(nodeName, bsz, wData)) return false;
@@ -159,13 +206,23 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !bnData.mean || !bnData.varce || !bnData.scale || !bnData.schift){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !bnData.mean || !bnData.varce || !bnData.scale || !bnData.schift");
+            return false;
+        }
+
         SN_Base::batchNorm bn;        
         bn.mean = bnData.mean;
         bn.varce = bnData.varce;
         bn.scale = bnData.scale;
         bn.schift = bnData.schift;
         bn.sz = SN_Base::snSize(bnsz.w * bnsz.h * bnsz.ch);
-        
+
+        if (bn.sz.size() == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: bnsz == 0");
+            return false;
+        }
+
         return static_cast<SNet*>(fn)->setBatchNormNode(nodeName, bn);
     }
 
@@ -179,10 +236,19 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !bnsz || !bnData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !bnsz || !bnData");
+            return false;
+        }
+
         SN_Base::batchNorm bn;
         if (!static_cast<SNet*>(fn)->getBatchNormNode(nodeName, bn)) return false;
 
         size_t sz = bn.sz.size();
+        if (sz == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: bnorm not found");
+            return false;
+        }
 
         bnData->mean =   new snFloat[sz]; memcpy(bnData->mean,  bn.mean,  sz * sizeof(snFloat));
         bnData->varce =  new snFloat[sz]; memcpy(bnData->varce, bn.varce, sz * sizeof(snFloat));
@@ -207,7 +273,17 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !inData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !inData");
+            return false;
+        }
+
         SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
+
+        if (bsz.size() == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: isz == 0");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->setInputNode(nodeName, bsz, inData);
     }
@@ -224,6 +300,11 @@ namespace SN_API{
                          snFloat** outData){
 
         if (!fn) return false;
+
+        if (!nodeName || !osz){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !osz");
+            return false;
+        }
 
         SN_Base::snSize bsz;
         if (!static_cast<SNet*>(fn)->getOutputNode(nodeName, bsz, outData)) return false;
@@ -250,7 +331,17 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !gData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !gData");
+            return false;
+        }
+
         SN_Base::snSize bsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
+
+        if (bsz.size() == 0){
+            static_cast<SNet*>(fn)->statusMess("SN error: gsz == 0");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->setGradientNode(nodeName, bsz, gData);
     }
@@ -267,6 +358,11 @@ namespace SN_API{
         snFloat** gData){
 
         if (!fn) return false;
+
+        if (!nodeName || !gsz){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !gsz");
+            return false;
+        }
 
         SN_Base::snSize bsz;
         if (!static_cast<SNet*>(fn)->getGradientNode(nodeName, bsz, gData)) return false;
@@ -287,6 +383,11 @@ namespace SN_API{
     bool snSetParamNode(skyNet fn, const char* nodeName, const char* jnParam){
         
         if (!fn) return false;
+
+        if (!nodeName || !jnParam){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !jnParam");
+            return false;
+        }
                 
         return static_cast<SNet*>(fn)->setParamNode(nodeName, jnParam);
     }
@@ -300,6 +401,11 @@ namespace SN_API{
 
         if (!fn) return false;
 
+        if (!nodeName || !jnParam){
+            static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !jnParam");
+            return false;
+        }
+
         return static_cast<SNet*>(fn)->getParamNode(nodeName, jnParam);
     }
 
@@ -310,6 +416,11 @@ namespace SN_API{
     bool snGetArchitecNet(skyNet fn, char* jnArchitecNet /*minsz 2048*/){
 
         if (!fn) return false;
+
+        if (!jnArchitecNet){
+            static_cast<SNet*>(fn)->statusMess("SN error: !jnArchitecNet");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->getArchitecNet(jnArchitecNet);
     }
@@ -322,6 +433,11 @@ namespace SN_API{
     bool snAddUserCallBack(skyNet fn, const char* cbackName, snUserCBack ucb, snUData ud){
 
         if (!fn) return false;
+
+        if (!cbackName){
+            static_cast<SNet*>(fn)->statusMess("SN error: !cbackName");
+            return false;
+        }
 
         return static_cast<SNet*>(fn)->snAddUserCallBack(cbackName, ucb, ud);
     }

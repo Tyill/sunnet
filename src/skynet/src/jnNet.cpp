@@ -302,6 +302,11 @@ bool SNet::jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std:
 bool SNet::setParamNode(const char* nodeName, const char* jnParam){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
+
     //rj::Document jnDoc;
     //jnDoc.Parse(jnParam);
 
@@ -335,6 +340,11 @@ bool SNet::setParamNode(const char* nodeName, const char* jnParam){
 /// вернуть параметры узла
 bool SNet::getParamNode(const char* nodeName, char* jnParam /*minsz 256*/){
     std::unique_lock<std::mutex> lk(mtxCmn_);
+
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     auto nodes = jnNet_["Nodes"].GetArray();
     int sz = nodes.Size();

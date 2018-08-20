@@ -163,7 +163,7 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
 }
 
 void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
-   
+
     snSize insz = inTns->size();
 
     /// размер вх данных изменился?
@@ -175,20 +175,24 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     /// копируем со смещением padding для каждого изобр
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
-       
+
     if ((paddingW_ == 0) && (paddingH_ == 0))
         memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
     else
         paddingOffs(false, insz, pDtMem, pInTns);
-        
+
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
     fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out);
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    if (batchNormType_ == batchNormType::beforeActive){
+        if (!operPrm.isLerning)
+            calcBatchNormOnc(true, outsz, out, out, baseBatchNorm_);
+        else
+            calcBatchNorm(true, outsz, out, out, baseBatchNorm_);
+    }
 
     /// функция активации
     switch (activeType_){
@@ -200,8 +204,12 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    if (batchNormType_ == batchNormType::postActive){
+        if (!operPrm.isLerning)
+            calcBatchNormOnc(true, outsz, out, out, baseBatchNorm_);
+        else
+            calcBatchNorm(true, outsz, out, out, baseBatchNorm_);
+    }
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -209,8 +217,12 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     snFloat* gradIn = inTns->getData();
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(false, operPrm.isLerning, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    if (batchNormType_ == batchNormType::postActive){
+        if (!operPrm.isLerning)
+            calcBatchNormOnc(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        else
+            calcBatchNorm(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    }
 
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
@@ -232,8 +244,12 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(false, operPrm.isLerning, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    if (batchNormType_ == batchNormType::beforeActive){
+        if (!operPrm.isLerning)
+            calcBatchNormOnc(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        else
+            calcBatchNorm(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    }
 
     // расчет вых градиента и коррекции весов
     bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
@@ -306,71 +322,83 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
     }
 }
 
-void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
+void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
        
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d;
-   
-    if (!isLern){
-        for (size_t i = 0; i < insz.d; ++i){
-
-            snFloat* pIn = in + stepD * i;
-            snFloat* pOut = out + stepD * i;
-
-            size_t sz = insz.w * insz.h;
-            if (fwBw){
-                /// y = ^x * γ + β
-                for (size_t i = 0; i < sz; ++i){
-                    prm.norm[i] = (pIn[i] - prm.mean[i]) / prm.varce[i];
-                    pOut[i] = (pIn[i] - prm.mean[i]) * prm.scale[i] / prm.varce[i] + prm.schift[i];
-                }
-            }
-            else{
-                /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
-                for (size_t i = 0; i < sz; ++i)
-                    pOut[i] = prm.scale[i] * (pIn[i] - prm.dSchift[i] - prm.norm[i] * prm.dScale[i]) / prm.varce[i];
-            }
-            prm.offset(stepD);
-            prm.norm += stepD * insz.n;
-        }
-    }
-    else{ // isLern
-
-        snFloat* share = (snFloat*)calloc(stepD * insz.n, sizeof(snFloat));
-        snSize sz(insz.w, insz.h, 1, insz.n);
-        for (size_t i = 0; i < insz.d; ++i){
+      
+    snFloat* share = (snFloat*)calloc(stepD * insz.n, sizeof(snFloat));
+    snSize sz(insz.w, insz.h, 1, insz.n);
+    for (size_t i = 0; i < insz.d; ++i){
            
-            snFloat* pSh = share;
-            snFloat* pIn = in + stepD * i;
-            for (size_t j = 0; j < insz.n; ++j){
+        snFloat* pSh = share;
+        snFloat* pIn = in + stepD * i;
+        for (size_t j = 0; j < insz.n; ++j){
 
-                memcpy(pSh, pIn, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pIn += stepN;
-            }           
+            memcpy(pSh, pIn, stepD * sizeof(snFloat));
+            pSh += stepD;
+            pIn += stepN;
+        }           
 
-            if (fwBw)
-                fwdBatchNorm(sz, share, share, prm);
-            else
-                bwdBatchNorm(sz, share, share, prm);
+        if (fwBw)
+            fwdBatchNorm(sz, share, share, prm);
+        else
+            bwdBatchNorm(sz, share, share, prm);
            
-            pSh = share;
-            snFloat* pOut = out + stepD * i; 
-            for (size_t j = 0; j < insz.n; ++j){
-                memcpy(pOut, pSh, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pOut += stepN;
-            }
-
-            prm.offset(stepD);
-            prm.norm += stepD * insz.n;
+        pSh = share;
+        snFloat* pOut = out + stepD * i; 
+        for (size_t j = 0; j < insz.n; ++j){
+            memcpy(pOut, pSh, stepD * sizeof(snFloat));
+            pSh += stepD;
+            pOut += stepN;
         }
-        free(share);
+
+        prm.offset(stepD);
+        prm.norm += stepD * insz.n;
     }
+    free(share);
    
     prm.offset(-int(stepD * insz.d));
     prm.norm -= stepD * insz.d * insz.n;
+}
+
+void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm){
+
+    /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
+
+    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
+    for (size_t i = 0; i < insz.d; ++i){
+               
+        if (fwBw){
+            /// norm = (in - mean) / varce
+            /// y = ^x * γ + β
+            for (size_t j = 0; j < bsz; ++j){
+
+                snFloat* cin = in + stepN * i + stepD * j,
+                       *cout = out + stepN * i + stepD * j,
+                       *norm = prm.norm + stepN * i + stepD * j;
+                for (size_t k = 0; k < stepD; ++k){
+                    norm[k] = (cin[k] - prm.mean[k]) / prm.varce[k];
+                    cout[k] = norm[k] * prm.scale[k] + prm.schift[k];
+                }
+            }
+        }
+        else{
+            /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+            for (size_t j = 0; j < bsz; ++j){
+
+                snFloat* igr = in + stepN * i + stepD * j,
+                        *ogr = out + stepN * i + stepD * j, 
+                       *norm = prm.norm + stepN * i + stepD * j;
+                for (size_t k = 0; k < stepD; ++k)
+                    ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
+            }
+        }   
+        prm.offset(stepD);       
+    }
+    
+    prm.offset(-int(stepD * insz.d));
 }
 
 void Convolution::updateConfig(const snSize& newsz){

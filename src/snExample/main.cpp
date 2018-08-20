@@ -146,7 +146,7 @@ int main(int argc, _TCHAR* argv[])
 
     SN_API::snAddUserCallBack(snet,"opa", UserCBack);
         
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.005;
+    int batchSz = 10, classCnt = 10, w = 28, h = 28; float lr = 0.005;
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
@@ -170,7 +170,7 @@ int main(int argc, _TCHAR* argv[])
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; //if (cnt > 1000) break;
+            ++cnt; if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -210,7 +210,7 @@ int main(int argc, _TCHAR* argv[])
 
 fff:
     float accuratSumm = 0;
-    for (int k = 0; k < 1000; ++k){
+    for (int k = 0; k < 100; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);
         fill_n(outLayer, classCnt * batchSz, 0.F);
@@ -311,7 +311,7 @@ fff:
 
 
 
-    /*std::ofstream ofs;        
+    std::ofstream ofs;        
     ofs.open("c:/C++/w.dat", std::ios_base::out | std::ios_base::binary);
 
     if (ofs.good()) {
@@ -319,12 +319,18 @@ fff:
         SN_API::snFloat* data = nullptr;
         SN_API::snLSize lSize;
         
-        SN_API::snGetWeightNode(snet, "F1", &data, &lSize);
+        SN_API::snGetWeightNode(snet, "C1", &lSize, &data);
             
-        ofs << "F1 " << lSize.w << " " << lSize.h << endl;
-        ofs.write((char*)data, lSize.w * lSize.h * sizeof(float));
+        ofs << "C1_w " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+        ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
+
+        SN_API::batchNorm bn;
+        SN_API::snGetBatchNormNode(snet, "C1", &lSize, &bn);
+
+        ofs << "C1_bn " << lSize.w << " " << lSize.h << " " << lSize.ch << endl;
+        ofs.write((char*)data, lSize.w * lSize.h * lSize.ch * sizeof(float));
     }
-*/
+
 
 //
 //

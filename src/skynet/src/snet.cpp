@@ -220,12 +220,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
         statusMess("forward error: net not create");
         return false;
     }
-        
-    if (((snSize)isz).size() <= 0){
-        statusMess("forward error: lsz.size() <= 0");
-        return false;
-    }
-
+    
     inData_["BeginNet"]->setData(iLayer, isz);
 
     operPrm_.action = snAction::forward;
@@ -310,7 +305,10 @@ SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
 bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const SN_Base::snFloat* wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
         
     weight_[nodeName]->setData((SN_Base::snFloat*)wData, wsz);
             
@@ -321,7 +319,10 @@ bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const
 bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::snFloat** wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()) {
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
     
     wsz = weight_[nodeName]->size();
 
@@ -336,7 +337,10 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
 bool SNet::setBatchNormNode(const char* nodeName, const SN_Base::batchNorm& bn){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     snSize tsz = operats_[nodeName]->getOutput()->size();
 
@@ -355,7 +359,10 @@ bool SNet::setBatchNormNode(const char* nodeName, const SN_Base::batchNorm& bn){
 bool SNet::getBatchNormNode(const char* nodeName, SN_Base::batchNorm& obn){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     obn = operats_[nodeName]->getBatchNorm();
 
@@ -366,7 +373,10 @@ bool SNet::getBatchNormNode(const char* nodeName, SN_Base::batchNorm& obn){
 bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const SN_Base::snFloat* inData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     inData_[nodeName]->setData((SN_Base::snFloat*)inData, isz);
 
@@ -377,7 +387,10 @@ bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const 
 bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::snFloat** outData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     Tensor* outTns = operats_[nodeName]->getOutput();
 
@@ -394,7 +407,10 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
 bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, const SN_Base::snFloat* gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     snSize tsz = gradData_[nodeName]->size();
 
@@ -413,7 +429,10 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
 bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::snFloat** gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
     
-    if (operats_.find(nodeName) == operats_.end()) return false;
+    if (operats_.find(nodeName) == operats_.end()){
+        statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
 
     gsz = gradData_[nodeName]->size();
 
