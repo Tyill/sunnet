@@ -59,13 +59,13 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     
     setIntParam("kernel", false, false, kernel_);
     
-    if (prms.find("poolType") != prms.end()){
+    if (prms.find("pool") != prms.end()){
 
-        string atype = prms["poolType"];
+        string atype = prms["pool"];
         if (atype == "max") poolType_ = poolType::max;
         else if (atype == "avg") poolType_ = poolType::avg;
         else
-            ERROR_MESS("param 'poolType' = " + atype + " indefined");
+            ERROR_MESS("param 'pool' = " + atype + " indefined");
     }
 
     basePrms_ = prms;

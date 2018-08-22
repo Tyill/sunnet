@@ -262,7 +262,7 @@ void fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
             srq += cin[0] * cin[0];
             cin += inSz;
         }
-        prm.varce[i] = sqrt(srq / bsz - prm.mean[i] * prm.mean[i] + 0.0001F);
+        prm.varce[i] = sqrt(srq / bsz - prm.mean[i] * prm.mean[i] + 0.00001F);
     }
       
     /// norm = (in - mean) / varce

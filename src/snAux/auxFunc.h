@@ -41,4 +41,6 @@ namespace SN_Aux{
     void sleepMs(int ms);
 
     bool is_number(const std::string& s);
+
+    bool createSubDirectory(const std::string& strDirs);
 }

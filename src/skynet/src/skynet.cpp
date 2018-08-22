@@ -442,6 +442,38 @@ namespace SN_API{
         return static_cast<SNet*>(fn)->snAddUserCallBack(cbackName, ucb, ud);
     }
 
+    /// save all weight's (and bnorm if exist) to file
+    /// @param[in] skyNet - object net
+    /// @param[in] filePath - path to file
+    /// @return true - ok
+    bool snSaveAllWeightToFile(skyNet fn, const char* filePath){
+
+        if (!fn) return false;
+
+        if (!filePath){
+            static_cast<SNet*>(fn)->statusMess("SN error: !filePath");
+            return false;
+        }
+
+        return static_cast<SNet*>(fn)->saveAllWeightToFile(filePath);
+    }
+
+    /// load all weight's (and bnorm if exist) from file
+    /// @param[in] skyNet - object net
+    /// @param[in] filePath - path to file
+    /// @return true - ok
+    bool snLoadAllWeightFromFile(skyNet fn, const char* filePath){
+
+        if (!fn) return false;
+
+        if (!filePath){
+            static_cast<SNet*>(fn)->statusMess("SN error: !filePath");
+            return false;
+        }
+
+        return static_cast<SNet*>(fn)->loadAllWeightFromFile(filePath);
+    }
+
     /// free object net
     /// @param[in] skyNet - object net
     void snFreeNet(skyNet fn){

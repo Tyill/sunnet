@@ -25,7 +25,9 @@
 
 #include <algorithm>
 #include <iterator>
+#include <fstream>
 #include "stdafx.h"
+#include "snAux/auxFunc.h"
 #include "snBase/snBase.h"
 #include "snet.h"
 
@@ -442,4 +444,123 @@ bool SNet::snAddUserCallBack(const char* ucbName, SN_API::snUserCBack ucb, SN_AP
     userCBack_[ucbName] = pair<SN_API::snUserCBack, SN_API::snUData>(ucb, ud);
 
     return true;
+}
+
+bool SNet::saveAllWeightToFile(const char* filePath){
+    
+    SN_Aux::createSubDirectory(filePath);
+
+    std::ofstream ofs;
+    ofs.open(filePath, std::ios_base::out | std::ios_base::binary);
+
+    if (ofs.good()) {
+
+        snFloat* data = nullptr;
+        snSize lSize;
+        for (auto opr : operats_){
+
+            data = weight_[opr.first]->getData();
+            lSize = weight_[opr.first]->size();
+
+            if (!data) continue;
+
+            ofs << opr.first <<"_w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs.write((char*)data, lSize.w * lSize.h * lSize.d * sizeof(float));
+                        
+            batchNorm bn = opr.second->getBatchNorm();
+
+            size_t sz = bn.sz.size() * sizeof(float);
+            if (sz == 0) continue;
+
+            lSize = bn.sz;
+            
+            ofs << opr.first << "_bn_mean " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs.write((char*)bn.mean, sz);
+            ofs << opr.first << "_bn_varce " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs.write((char*)bn.varce, sz);
+            ofs << opr.first << "_bn_scale " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs.write((char*)bn.scale, sz);
+            ofs << opr.first << "_bn_schift " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs.write((char*)bn.schift, sz);
+        }        
+    }
+    else {
+        statusMess("SN error save weight, check file path: " + string(filePath));
+        return false;
+    }
+
+    ofs.close();
+
+    return true;
+
+}
+
+bool SNet::loadAllWeightFromFile(const char* filePath){
+
+    std::ifstream ifs;
+    ifs.open(filePath, std::ifstream::in | std::ifstream::binary);
+
+    if (!ifs.good()){
+        statusMess("SN error load weight, check file path: " + string(filePath));
+        return false;
+    }
+
+    batchNorm bn;
+    std::vector<SN_API::snFloat> dbW, dbBNMean, dbBNShift, dbBNScale, dbBNVarce;
+    while (!ifs.eof()){
+
+        string str = "";
+        getline(ifs, str);
+
+        auto opr = SN_Aux::split(str, " ");
+        if (opr.empty()) continue;
+
+        auto args = SN_Aux::split(opr[0], "_");
+        string nm = args[0];
+
+        if (operats_.find(nm) == operats_.end()){
+            statusMess("SN error: node '" + nm + "' not found");
+            return false;
+        }
+
+        size_t w = stoi(opr[1]), h = stoi(opr[2]), d = stoi(opr[3]), dsz = w * h * d;
+        snSize lsz(w, h, d);
+
+        if (args[1] == "w"){
+            dbW.resize(dsz);
+            ifs.read((char*)dbW.data(), dsz * sizeof(SN_API::snFloat));
+            weight_[nm]->setData((SN_Base::snFloat*)dbW.data(), lsz);
+        }
+        else if (args[1] == "bn"){
+            if (args[2] == "mean"){
+                dbBNMean.resize(dsz);
+                ifs.read((char*)dbBNMean.data(), dsz * sizeof(SN_API::snFloat));
+                bn.mean = dbBNMean.data();
+            }
+            else if (args[2] == "varce"){
+                dbBNVarce.resize(dsz);
+                ifs.read((char*)dbBNVarce.data(), dsz * sizeof(SN_API::snFloat));
+                bn.varce = dbBNVarce.data();
+            }
+            else if (args[2] == "scale"){
+                dbBNScale.resize(dsz);
+                ifs.read((char*)dbBNScale.data(), dsz * sizeof(SN_API::snFloat));
+                bn.scale = dbBNScale.data();
+            }
+            else if (args[2] == "schift"){
+                dbBNShift.resize(dsz);
+                ifs.read((char*)dbBNShift.data(), dsz * sizeof(SN_API::snFloat));
+                bn.schift = dbBNShift.data();
+            }
+        }
+
+        if (bn.mean &&  bn.varce &&  bn.scale &&  bn.schift){
+
+            bn.sz = lsz;
+            operats_[nm]->setBatchNorm(bn);
+
+            bn = batchNorm();
+        }
+
+    }
 }

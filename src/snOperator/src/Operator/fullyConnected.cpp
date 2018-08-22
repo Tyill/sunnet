@@ -59,14 +59,14 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
     else
         ERROR_MESS("not found (or not numder) param 'kernel'");
 
-    if (prms.find("batchNormType") != prms.end()){
+    if (prms.find("batchNorm") != prms.end()){
 
-        string bnType = prms["batchNormType"];
+        string bnType = prms["batchNorm"];
         if (bnType == "none") batchNormType_ = batchNormType::none;
         else if (bnType == "beforeActive") batchNormType_ = batchNormType::beforeActive;
         else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
         else
-            ERROR_MESS("param 'batchNormType' = " + bnType + " indefined");
+            ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
     }
 
     baseOut_->resize(snSize(kernel_));
@@ -97,39 +97,39 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 
     basePrms_ = prms;
 
-    if (prms.find("activeType") != prms.end()){
+    if (prms.find("active") != prms.end()){
 
-        string atype = prms["activeType"];
+        string atype = prms["active"];
         if (atype == "none") activeType_ = activeType::none;
         else if (atype == "sigmoid") activeType_ = activeType::sigmoid;
         else if (atype == "relu") activeType_ = activeType::relu;
         else if (atype == "leakyRelu") activeType_ = activeType::leakyRelu;
         else if (atype == "elu") activeType_ = activeType::elu;
         else
-            ERROR_MESS("param 'activeType' = " + atype + " indefined");
+            ERROR_MESS("param 'active' = " + atype + " indefined");
     }
 
-    if (prms.find("optimizerType") != prms.end()){
+    if (prms.find("optimizer") != prms.end()){
 
-        string optType = prms["optimizerType"];
+        string optType = prms["optimizer"];
         if (optType == "sgd") optimizerType_ = optimizerType::sgd;
         else if (optType == "sgdMoment") optimizerType_ = optimizerType::sgdMoment;
         else if (optType == "adagrad") optimizerType_ = optimizerType::adagrad;
         else if (optType == "adam") optimizerType_ = optimizerType::adam;
         else if (optType == "RMSprop") optimizerType_ = optimizerType::RMSprop;
         else
-            ERROR_MESS("param 'optimizerType' = " + optType + " indefined");
+            ERROR_MESS("param 'optimizer' = " + optType + " indefined");
     }
 
-    if (prms.find("weightInitType") != prms.end()){
+    if (prms.find("weightInit") != prms.end()){
 
-        string wInit = prms["weightInitType"];
+        string wInit = prms["weightInit"];
         if (wInit == "uniform") weightInitType_ = weightInitType::uniform;
         else if (wInit == "he") weightInitType_ = weightInitType::he;
         else if (wInit == "lecun") weightInitType_ = weightInitType::lecun;
         else if (wInit == "xavier") weightInitType_ = weightInitType::xavier;
         else
-            ERROR_MESS("param 'weightInitType' = " + wInit + " indefined");
+            ERROR_MESS("param 'weightInit' = " + wInit + " indefined");
     }
        
     if (prms.find("decayMomentDW") != prms.end())

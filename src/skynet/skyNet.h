@@ -262,6 +262,18 @@ namespace SN_API{
         /// @return true - ok
         SKYNET_API bool snAddUserCallBack(skyNet, const char* cbName, snUserCBack, snUData = nullptr);
 
+        /// save all weight's (and bnorm if exist) to file
+        /// @param[in] skyNet - object net
+        /// @param[in] filePath - path to file
+        /// @return true - ok
+        SKYNET_API bool snSaveAllWeightToFile(skyNet, const char* filePath);
+
+        /// load all weight's (and bnorm if exist) from file
+        /// @param[in] skyNet - object net
+        /// @param[in] filePath - path to file
+        /// @return true - ok
+        SKYNET_API bool snLoadAllWeightFromFile(skyNet, const char* filePath);
+
         /// free object net
         /// @param[in] skyNet - object net
         SKYNET_API void snFreeNet(skyNet);

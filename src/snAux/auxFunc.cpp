@@ -24,7 +24,14 @@
 //
 #include <thread>
 #include <chrono>
+#include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "stdafx.h"
+
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 using namespace std;
 
@@ -88,5 +95,25 @@ namespace SN_Aux{
 
     void sleepMs(int ms){
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    }
+
+    bool createSubDirectory(const std::string& strDirs){
+
+        int sz = strDirs.size(), ret = 0;
+        string strTmp = "";
+        for (int i = 0; i < sz; ++i) {
+            char ch = strDirs[i];
+            if (ch != '\\' && ch != '/') strTmp += ch;
+            else {
+#if defined(_WIN32)
+                strTmp += "\\";
+                ret = CreateDirectoryA(strTmp.c_str(), NULL);
+#else
+                strTmp += "/";
+                ret = mkdir(strTmp.c_str(), 0733);
+#endif
+            }
+        }
+        return ret == 0;
     }
 }

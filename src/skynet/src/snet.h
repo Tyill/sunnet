@@ -84,11 +84,15 @@ public:
     /// задать польз callBack
     bool snAddUserCallBack(const char* ucbName, SN_API::snUserCBack, SN_API::snUData);
    
+    bool saveAllWeightToFile(const char* filePath);
+
+    bool loadAllWeightFromFile(const char* filePath);
+
     void statusMess(const std::string&);
 
     void userCBack(const std::string& cbname, const std::string& node,
         bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
-
+    
 private:
 
     SN_Eng::SNEngine* engine_ = nullptr;                        ///< движок 

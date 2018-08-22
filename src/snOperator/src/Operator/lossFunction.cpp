@@ -35,18 +35,18 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
 
-    if (prms.find("lossType") != prms.end()){
+    if (prms.find("loss") != prms.end()){
 
-        string stype = prms["lossType"];
+        string stype = prms["loss"];
         if (stype == "softMaxToCrossEntropy")
             lossType_ = lossType::softMaxACrossEntropy;
         else if (stype == "binaryCrossEntropy")
             lossType_ = lossType::binaryCrossEntropy;
         else
-            ERROR_MESS("param 'lossType' = " + stype + " indefined");
+            ERROR_MESS("param 'loss' = " + stype + " indefined");
     }
     else
-        ERROR_MESS("not found param 'lossType'");
+        ERROR_MESS("not found param 'loss'");
 }
 
 /// оператор - расчет ошибки
@@ -114,7 +114,7 @@ void LossFunction::forward(Tensor* inTns){
     }
     break;
     default:
-        ERROR_MESS("param 'lossType' indefined");
+        ERROR_MESS("param 'loss' indefined");
         break;
     }
 
