@@ -563,4 +563,6 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
         }
 
     }
+
+    return true;
 }
