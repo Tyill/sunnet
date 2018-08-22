@@ -95,19 +95,71 @@ void Pooling::forward(SN_Base::Tensor* inTns){
         inSzMem_ = insz;
         updateConfig(insz);
     }
-            
+
+    /// копируем со смещением padding для каждого изобр
+    snFloat* pDtMem = inTns->getData();
+    if (isPadding_){
+        pDtMem = inDataExp_.data();
+        paddingOffs(false, insz, pDtMem, inTns->getData());
+        insz = inDataExpSz_;
+    }
+
     /// расчет выходных значений
     snFloat* out = baseOut_->getData();
-    fwdPooling((int)poolType_, kernel_, insz, inTns->getData(), baseOut_->size(), out, outInx_.data());
+    fwdPooling((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data());
        
 }
 
 void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns->getData(), *gradOut = baseGrad_->getData();
+    snFloat* gradIn = inTns->getData();
     
+    snFloat* pGrOutExp = !isPadding_ ? baseGrad_->getData() : auxParams_["outGradExp"].data();
+
     /// расчет вых градиента
-    bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inSzMem_, gradOut);
+    bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp);
+
+    if (isPadding_)
+        paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
+}
+
+void Pooling::paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out){
+    
+    /// копируем со смещением padding для каждого изобр
+
+    size_t paddW = paddingW_, paddH = paddingH_,
+        sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+    if (in2out){
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                out[j] = in[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+    else{
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                in[j] = out[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+
 }
 
 void Pooling::updateConfig(const snSize& newsz){
@@ -118,12 +170,30 @@ void Pooling::updateConfig(const snSize& newsz){
     outSz.h = (newsz.h - kernel_) / kernel_ + 1;
 
     // проверка коррект
-    size_t resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;
-    if ((resW != 0) || (resH != 0))
-        ERROR_MESS("not correct param 'kernel'");
-       
+    size_t resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;    
+    isPadding_ = (resW != 0) || (resH != 0);
+
+    inDataExpSz_ = newsz;
+
+    if (isPadding_){   
+      
+        paddingW_ = 1;
+        paddingH_ = 1;
+
+        outSz.w = (newsz.w + paddingW_ * 2 - kernel_) / kernel_ + 1;
+        outSz.h = (newsz.h + paddingH_ * 2 - kernel_) / kernel_ + 1;
+
+        inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
+        inDataExp_.resize(inDataExpSz_.size());
+
+        memset(inDataExp_.data(), 0, inDataExpSz_.size() * sizeof(snFloat));
+    }
+        
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
 
     outInx_.resize(outSz.size(), 0);
+
+    if (isPadding_)
+        auxParams_["outGradExp"].resize(inDataExpSz_.size(), 0);
 }

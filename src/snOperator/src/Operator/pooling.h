@@ -70,9 +70,19 @@ private:
 
     std::vector<size_t> outInx_;                                      ///< индекс выбран эл-та (если maxPool)
 
+    SN_Base::snSize inDataExpSz_;                                     ///< размер вх данных
+    std::vector<SN_Base::snFloat> inDataExp_;                         ///< вход данные расширен
+
+    size_t paddingH_ = 0, paddingW_ = 0;                              ///< доп отступ по краям для свертки
+    bool isPadding_ = false;
+
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
+
     void load(std::map<std::string, std::string>& prms);
         
     void updateConfig(const SN_Base::snSize& newSz);
+
+    void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);

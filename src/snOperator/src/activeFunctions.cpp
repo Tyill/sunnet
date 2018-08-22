@@ -34,8 +34,10 @@ void fv_sigmoid(snFloat* ioVal, size_t sz){
     
     for (size_t i = 0; i < sz; ++i){
     
-        ioVal[i] = 1.F / (1.F + std::exp(-ioVal[i])) + 0.00001;
-             
+        ioVal[i] = 1.F / (1.F + std::exp(-ioVal[i]));
+        
+        if (ioVal[i] >  0.99999) ioVal[i] = 0.99999;
+        if (ioVal[i] < 0.00001) ioVal[i] = 0.00001;
     }
 }    
 void df_sigmoid(snFloat* ioSigm, size_t sz){

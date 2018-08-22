@@ -63,18 +63,31 @@ bool createNet(SN_API::skyNet& net){
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"F1\""
+        "\"NextNodes\":\"C1\""
         "},"
 
         "\"Nodes\":"
         "["
 
         "{"
+        "\"NodeName\":\"C1\","
+        "\"NextNodes\":\"P1\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"28\",\"padding\":\"1\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"P1\","
+        "\"NextNodes\":\"F1\","
+        "\"OperatorName\":\"Pooling\""
+        "},"
+
+        
+        "{"
         "\"NodeName\":\"F1\","
         "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"128\"}"
-        //    "\"batchNorm\":\"beforeActive\"}"
         "},"
 
         "{"
