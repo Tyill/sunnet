@@ -430,7 +430,7 @@ void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Ba
                     *ogr = out + stepN * j + stepD * i,
                     *norm = prm.norm + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k)
-                    ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
+					ogr[k] = prm.scale[k] * (igr[k] * bsz - prm.dSchift[k] - norm[k] * prm.dScale[k]) / (prm.varce[k] * bsz);
             }
             prm.offset(stepD);
         }
