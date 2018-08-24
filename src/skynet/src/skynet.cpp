@@ -37,13 +37,20 @@ namespace SN_API{
     /// @param[in] statusCBack - callback state. Not necessary
     /// @param[in] udata - user data. Not necessary
     skyNet snCreateNet(const char* jnNet,
-                       char* out_err /*sz 256*/,
-                       snStatusCBack sts,
-                       snUData ud){
+        char* out_err /*sz 256*/,
+        snStatusCBack sts,
+        snUData ud){
 
         if (!jnNet || !out_err) return nullptr;
-       
-        return new SNet(jnNet, out_err, sts, ud);
+
+        auto net = new SNet(jnNet, out_err, sts, ud);
+
+        if (strlen(out_err) > 0){
+            delete net;
+            net = nullptr;
+        }
+
+        return net;
     }
     
 
