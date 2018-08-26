@@ -33,7 +33,7 @@
 using namespace std;
 using namespace SN_Base;
 
-void bwdFullyConnectedGW(size_t kernel, snFloat* weight,
+bool bwdFullyConnectedGW(size_t kernel, snFloat* weight,
     snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
@@ -75,9 +75,11 @@ void bwdFullyConnectedGW(size_t kernel, snFloat* weight,
         0.0F,                          // β, доп коэф 
         gradOut,                       // GrOut, градиент для предыд слоя
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
+
+    return true;
 }
 
-void bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
+bool bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
        
@@ -99,10 +101,12 @@ void bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gr
         0.0F,                          // β, доп коэф 
         gradOut,                       // GrOut, градиент для предыд слоя
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
+
+    return true;
 }
 
 
-void bwdConvolutionGW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, 
+bool bwdConvolutionGW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -202,10 +206,10 @@ void bwdConvolutionGW(size_t kernel, size_t fWidth, size_t fHeight, size_t strid
     }
     
     free(share);
-
+    return true;
 }   
 
-void bwdConvolutionG(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+bool bwdConvolutionG(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -279,10 +283,11 @@ void bwdConvolutionG(size_t kernel, size_t fWidth, size_t fHeight, size_t stride
     }
         
     free(share);
+    return true;
 }
 
 
-void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
+bool bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,           // шаг вх слоя по входу
            inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
@@ -361,10 +366,11 @@ void bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloa
 
         free(share);
     }
+    return true;
 }
-   
+ 
 
-void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
+bool bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
     // https://kevinzakka.github.io/2016/09/14/batch_normalization/
 
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
@@ -408,6 +414,7 @@ void bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm)
         prm.schift[i] -= prm.dSchift[i] * prm.lr;
         prm.scale[i] -= prm.dScale[i] * prm.lr;
     }
+    return true;
 }
 
 

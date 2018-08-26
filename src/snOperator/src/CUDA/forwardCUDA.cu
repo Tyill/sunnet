@@ -33,162 +33,58 @@
 using namespace std;
 using namespace SN_Base;
 
-bool fwdMalloc(const string& func, size_t sz, snFloat *d_in){
-
-    int sts = cudaMalloc(reinterpret_cast<void **>(&d_in), sz * sizeof(snFloat));
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdMalloc device memory allocation error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-        
-    return true;
-};
-#define fcMalloc(sz, d_in) if (!fwdMalloc("fwdFullyConnected", sz, d_in)) return false;  
-#define bnMalloc(sz, d_in) if (!fwdMalloc("fwdBatchNorm", sz, d_in)) return false; 
-
-bool fwdFree(const string& func, snFloat *d_in){
-
-    int sts = cudaFree(d_in);
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdFree memory free error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-    return true;
-}
-#define fcFree(d_in) if (!fwdFree("fwdFullyConnected", d_in)) return false; 
-#define bnFree(d_in) if (!fwdFree("fwdBatchNorm", d_in)) return false;
-
-bool fwdMallocAndCopyVectorH2D(const string& func, size_t sz, snFloat *d_in, snFloat *h_in){
-
-    int sts = cudaMalloc(reinterpret_cast<void **>(&d_in), sz * sizeof(snFloat));
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdMallocAndCopyVectorH2D device memory allocation error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-
-    /* Initialize the device matrices with the host matrices */
-    sts = cublasSetVector(sz, sizeof(snFloat), h_in, 1, d_in, 1);
-    if (sts != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, (func + " fwdMallocAndCopyVectorH2D device access error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-    return true;
-};
-#define fcMallocAndCopyVectorH2D(sz, d_in, h_in) if (!fwdMallocAndCopyVectorH2D("fwdFullyConnected", sz, d_in, h_in)) return false; 
-#define bnMallocAndCopyVectorH2D(sz, d_in, h_in) if (!fwdMallocAndCopyVectorH2D("fwdBatchNorm", sz, d_in, h_in)) return false;
-
-bool fwdMallocAndCopyMatrixH2D(const string& func, size_t rows, size_t cols, snFloat *d_in, snFloat *h_in){
-
-    int sts = cudaMalloc(reinterpret_cast<void **>(&d_in), rows * cols * sizeof(snFloat));
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdMallocAndCopyMatrixH2D device memory allocation error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-
-    /* Initialize the device matrices with the host matrices */
-    sts = cublasSetMatrix(rows, cols, sizeof(snFloat), h_in, cols, d_in, cols);
-    if (sts != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, (func + " fwdMallocAndCopyMatrixH2D device access error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-    return true;
-};
-#define fcMallocAndCopyMatrixH2D(rows, cols, d_in, h_in) if (!fwdMallocAndCopyMatrixH2D("fwdFullyConnected", rows, cols, d_in, h_in)) return false; 
-#define bnMallocAndCopyMatrixH2D(rows, cols, d_in, h_in) if (!fwdMallocAndCopyMatrixH2D("fwdBatchNorm", rows, cols, d_in, h_in)) return false;
-
-bool fwdCopyAndFreeVectorD2H(const string& func, size_t sz, snFloat *d_in, snFloat *h_in){
-
-    /* Read the result back */   
-    int sts = cublasGetVector(sz, sizeof(snFloat), d_in, 1, h_in, 1);
-    if (sts != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, (func + " fwdCopyD2HAndFree device access error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-
-    sts = cudaFree(d_in);
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdCopyD2HAndFree memory free error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-    return true;
-}
-#define fcCopyAndFreeVectorD2H(sz, d_in, h_in) if (!fwdCopyAndFreeVectorD2H("fwdFullyConnected", sz, d_in, h_in)) return false; 
-#define bnCopyAndFreeVectorD2H(sz, d_in, h_in) if (!fwdCopyAndFreeVectorD2H("fwdBatchNorm", sz, d_in, h_in)) return false; 
-
-bool fwdCopyAndFreeMatrixD2H(const string& func, size_t rows, size_t cols, snFloat *d_in, snFloat *h_in){
-
-    /* Read the result back */
-    int sts = cublasGetMatrix(rows, cols, sizeof(snFloat), d_in, cols, h_in, cols);
-    if (sts != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, (func + " fwdCopyD2HAndFree device access error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-
-    sts = cudaFree(d_in);
-    if (sts != cudaSuccess) {
-        fprintf(stderr, (func + " fwdCopyD2HAndFree memory free error: sts " + to_string(sts) + "\n").c_str());
-        return false;
-    }
-    return true;
-}
-#define fcCopyAndFreeMatrixD2H(rows, cols, d_in, h_in) if (!fwdCopyAndFreeMatrixD2H("fwdFullyConnected", rows, cols, d_in, h_in)) return false; 
-#define bnCopyAndFreeMatrixD2H(rows, cols, d_in, h_in) if (!fwdCopyAndFreeMatrixD2H("fwdBatchNorm", rows, cols, d_in, h_in)) return false; 
-
 
 bool fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output){
     
     cublasHandle_t cuHandle = nullptr;
-    cublasStatus_t sta = cublasCreate(&cuHandle);
-    if (cublasCreate(&cuHandle) != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, "fwdFullyConnected CUBLAS initialization error\n");
+    int sts = cublasCreate(&cuHandle);
+    if (sts != CUBLAS_STATUS_SUCCESS){
+        fprintf(stderr, ("fwdFullyConnected CUBLAS initialization error: sts " + to_string(sts) + "\n").c_str());
         return false;
     }
 
-    size_t inSz = insz.w * insz.h * insz.d + 1, bsz = insz.n;
+    size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
     snFloat *d_in = 0;
-    fcMallocAndCopyMatrixH2D(bsz, inSz, d_in, input);
-
-    snFloat *d_w = 0;    
-    fcMallocAndCopyMatrixH2D(inSz, kernel, d_w, weight);
-
+    cudaError_t ddd = cudaMalloc(reinterpret_cast<void **>(&d_in), bsz * ida * sizeof(snFloat));
+    cublasStatus_t sts1 = cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz);
+    
+    snFloat *d_w = 0;  
+    cudaMalloc(reinterpret_cast<void **>(&d_w), ida * kernel * sizeof(snFloat));
+    sts1 = cublasSetMatrix(ida, kernel, sizeof(snFloat), weight, kernel, d_w, kernel);
+    
     snFloat *d_out = 0;    
-    fcMallocAndCopyMatrixH2D(bsz, kernel, d_out, output);
+    sts = cudaMalloc(reinterpret_cast<void **>(&d_out), bsz * kernel * sizeof(snFloat));
    
     // Out = α * In * W + βC
     // In - матрица вход данных - значения с предыд слоя
     // W - матрица весов
     // Out - матрица выход данных
-    float alpha = 1.0f;
-    float beta = 0.0f;
-    cublasStatus_t status = cublasSgemm(cuHandle,
+    float alpha = 1.0f, beta = 0.0f;
+    cublasSgemm(cuHandle,
         CUBLAS_OP_N,
         CUBLAS_OP_N,
         insz.n,                        // In, строк, кол-во изобр в батче
         kernel,                        // W, столбцов, кол-во скрытых нейронов 
-        insz.w * insz.h * insz.d + 1,  // In, столбцов, В М - строк, кол-во вх нейронов - размер одного изображения из батча. (+1 - X0)                   
+        ida,                           // In, столбцов, В М - строк, кол-во вх нейронов - размер одного изображения из батча. (+1 - X0)                   
         &alpha,                        // α, коэф
-        input,                         // In, вх данные - нейроны пришедшие с предыд слоя
-        insz.w * insz.h * insz.d + 1,  // In, шаг до след X (X21 - X11) 
-        weight,                        // W, веса
+        d_in,                          // In, вх данные - нейроны пришедшие с предыд слоя
+        ida,                           // In, шаг до след X (X21 - X11) 
+        d_w,                           // W, веса
         kernel,                        // W, шаг до след W (W21 - W11) 
         &beta,                         // β, коэф
-        output,                        // Out, выходные данные - нейроны для след слоя
+        d_out,                         // Out, выходные данные - нейроны для след слоя
         kernel);                       // Out, шаг до след Y (Y21 - Y11) 
-       
-    if (status != CUBLAS_STATUS_SUCCESS){
-        fprintf(stderr, "fwdFullyConnected kernel execution error.\n");
-        return false;
-    }
-        
-    fcFree(d_in);
+  
+    cublasGetMatrix(bsz, kernel, sizeof(snFloat), d_out, kernel, output, kernel);
+   
+    cudaFree(d_in);
+    cudaFree(d_w);
+    cudaFree(d_out);
+    
+    cublasDestroy(cuHandle);
 
-    fcFree(d_w);
-
-    fcCopyAndFreeMatrixD2H(bsz, kernel, d_out, output);
-
-    if (cublasDestroy(cuHandle) != CUBLAS_STATUS_SUCCESS)
-        fprintf(stderr, "fwdFullyConnected shutdown error (A)\n");
+    return true;
 }
 
 bool fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
@@ -261,6 +157,7 @@ bool fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     }
 
    free(share);
+   return true;
 }
 
 bool fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
@@ -368,31 +265,35 @@ bool fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
    
     free(shareI); 
     free(shareF);
+    return true;
 }
 
 bool fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
      
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
 
-    cublasHandle_t cuHandle;
-    if (cublasCreate(&cuHandle) != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, "fwdFullyConnected CUBLAS initialization error\n");
-        return;
+    cublasHandle_t cuHandle = nullptr;
+    int sts = cublasCreate(&cuHandle);
+    if (sts != CUBLAS_STATUS_SUCCESS) {
+        fprintf(stderr, ("fwdBatchNorm CUBLAS initialization error: sts " + to_string(sts) + "\n").c_str());
+        return false;
     }
 
-    snFloat *d_in = 0;
-    bnMallocAndCopyMatrixH2D(bsz, inSz, d_in, in);
+    snFloat* d_in = 0;
+    cudaMalloc(reinterpret_cast<void **>(&d_in), bsz * inSz * sizeof(snFloat));
+    cublasSetMatrix(bsz, inSz, sizeof(snFloat), in, inSz, d_in, inSz);
 
-    snFloat *d_onc = 0;
-    bnMallocAndCopyVectorH2D(bsz, d_onc, prm.onc);
+    snFloat* d_onc = 0;
+    cudaMalloc(reinterpret_cast<void **>(&d_in), bsz * sizeof(snFloat));
+    cublasSetVector(bsz, sizeof(snFloat), prm.onc, 1, d_onc, 1);
 
     snFloat *d_mean = 0;
-    bnMallocAndCopyVectorH2D(inSz, d_mean, prm.mean);
-
+    cudaMalloc(reinterpret_cast<void **>(&d_mean), inSz * sizeof(snFloat));
+   
     /// μ = 1/n * ∑x
     float alpha = 1.0f / bsz;
     float beta = 0.0f;
-    cublasStatus_t status = cublasSgemv(cuHandle,
+    cublasSgemv(cuHandle,
         CUBLAS_OP_T,
         bsz,                          // x, строк - размер батча
         inSz,                         // x, столбцов 
@@ -404,20 +305,17 @@ bool fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
         &beta,                        // коэф
         d_mean,                       // μ, результ
         1);                           // μ, шаг до след
-           
    
+    cublasGetVector(inSz, sizeof(snFloat), d_mean, 1, prm.onc, 1);
 
-    bnCopyD2HAndFree(inSz, d_mean, prm.mean);
-   
-    bnFree(d_in);
+    cudaFree(d_in);
+    cudaFree(d_onc);
+    cudaFree(d_mean);
+    
+    cublasDestroy(cuHandle);
 
-    bnFree(d_onc);
-
-    if (cublasDestroy(cuHandle) != CUBLAS_STATUS_SUCCESS)
-        fprintf(stderr, "fwdFullyConnected shutdown error (A)\n");
-
-   /// varce = sqrt(∑xx - mean^2 + e)
-   for (size_t i = 0; i < inSz; ++i){
+    /// varce = sqrt(∑xx - mean^2 + e)
+    for (size_t i = 0; i < inSz; ++i){
 
         snFloat* cin = in + i, srq = 0.F;
         for (size_t j = 0; j < bsz; ++j){
@@ -438,16 +336,8 @@ bool fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
             cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
         }
     }  
+
+    return true;
 }
-
-#undef fcMalloc
-#undef fcMallocAndCopyH2D
-#undef fcCopyD2HAndFree
-#undef fcFree
-
-#undef bnMalloc
-#undef bnMallocAndCopyH2D
-#undef bnCopyD2HAndFree
-#undef bnFree
 
 #endif //#ifdef SN_CPU

@@ -63,17 +63,17 @@ bool createNet(SN_API::skyNet& net){
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"C1\""
+        "\"NextNodes\":\"F2\""
         "},"
 
         "\"Nodes\":"
         "["
 
-        "{"
+       /* "{"
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"28\", \"batchNorm\":\"beforeActive\","
+        "\"OperatorParams\":{\"kernel\":\"28\", \"batchNorm\":\"none\","
         "\"freeze\":\"0\"}"
         "},"
 
@@ -88,27 +88,27 @@ bool createNet(SN_API::skyNet& net){
         "\"NodeName\":\"F1\","
         "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"128\", \"batchNorm\":\"beforeActive\","
+        "\"OperatorParams\":{\"kernel\":\"128\", \"batchNorm\":\"none\","
         "\"freeze\":\"0\"}"
-        "},"
+        "},"*/
 
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"1\","
+        "\"OperatorParams\":{\"kernel\":\"10\","
         "\"freeze\":\"0\","
         "\"weightInit\":\"uniform\","
-        "\"optimizer\":\"sgd\","
-        "\"active\":\"sigmoid\"}"
+        "\"optimizer\":\"adam\","
+        "\"active\":\"relu\"}"
         "},"
 
         "{"
         "\"NodeName\":\"LS\","
         "\"NextNodes\":\"EndNet\","
         "\"OperatorName\":\"LossFunction\","
-        // "\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
-        "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
+         "\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
+       // "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
         "}"
 
         "],"
@@ -194,16 +194,16 @@ int main(int argc, _TCHAR* argv[])
     }
 
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
-    SN_API::snFloat* targetLayer = new SN_API::snFloat[1 * batchSz];
-    SN_API::snFloat* outLayer = new SN_API::snFloat[1 * batchSz];
+    SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
+    SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
 
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
     for (int k = 0; k < 100; ++k){
 
-        fill_n(targetLayer, 1 * batchSz, 0.F);
-        fill_n(outLayer, 1 * batchSz, 0.F);
+        fill_n(targetLayer, classCnt * batchSz, 0.F);
+        fill_n(outLayer, classCnt * batchSz, 0.F);
 
         Sleep(1); srand(clock());
 
@@ -229,10 +229,10 @@ int main(int argc, _TCHAR* argv[])
 
             float* refData = inLayer + i * w * h;
 
-            float* refTarget = targetLayer + i;// * classCnt;
-            //refTarget[ndir] = 1.F;
+            float* refTarget = targetLayer + i * classCnt;
+            refTarget[ndir] = 1.F;
 
-            refTarget[0] = (ndir == 0) ? 1.F : 0.F;
+            //refTarget[0] = (ndir == 0) ? 1.F : 0.F;
 
             double minVal = 0, maxVal = 0;
             double mean = cv::mean(img)[0];
@@ -250,7 +250,7 @@ int main(int argc, _TCHAR* argv[])
             lr,
             SN_API::snLSize(w, h, 1, batchSz),
             inLayer,
-            SN_API::snLSize(1, 1, 1, batchSz),
+            SN_API::snLSize(classCnt, 1, 1, batchSz),
             outLayer,
             targetLayer,
             &accurat);
@@ -260,7 +260,7 @@ int main(int argc, _TCHAR* argv[])
 
         
     }
-    SN_API::snSaveAllWeightToFile(snet, "c:\\\C++\\ww\\w.dat");
+    //SN_API::snSaveAllWeightToFile(snet, "c:\\\C++\\ww\\w.dat");
     //writeWeight(snet);
 
 
