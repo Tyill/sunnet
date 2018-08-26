@@ -29,14 +29,11 @@
 #include <vector>
 #include <map>
 
-#define SN_DEBUG
-
 #ifdef SN_DEBUG
 #define SN_PRINTMESS(mess) printf("%s \n", (mess).c_str());
 #else
 #define SN_PRINTMESS(mess);
 #endif
-
 
 namespace SN_Base{
     

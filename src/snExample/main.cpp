@@ -74,7 +74,7 @@ bool createNet(SN_API::skyNet& net){
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"28\", \"batchNorm\":\"beforeActive\","
-        "\"freeze\":\"1\"}"
+        "\"freeze\":\"0\"}"
         "},"
 
         "{"
@@ -89,7 +89,7 @@ bool createNet(SN_API::skyNet& net){
         "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"128\", \"batchNorm\":\"beforeActive\","
-        "\"freeze\":\"1\"}"
+        "\"freeze\":\"0\"}"
         "},"
 
         "{"
@@ -97,7 +97,7 @@ bool createNet(SN_API::skyNet& net){
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"1\","
-        "\"freeze\":\"1\","
+        "\"freeze\":\"0\","
         "\"weightInit\":\"uniform\","
         "\"optimizer\":\"sgd\","
         "\"active\":\"sigmoid\"}"
@@ -175,7 +175,7 @@ int main(int argc, _TCHAR* argv[])
         return -1;
     }
 
-   SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
+  // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
@@ -256,7 +256,7 @@ int main(int argc, _TCHAR* argv[])
             &accurat);
 
         accuratSumm += accurat;
-        cout << k << " metrix " << accuratSumm / k << endl;
+       cout << k << " metrix " << accuratSumm / k << endl;
 
         
     }

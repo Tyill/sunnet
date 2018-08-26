@@ -204,15 +204,18 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData();
-    fwdFullyConnected(kernel_, insz, pDtMem, baseWeight_->getData(), out);
+    if (!fwdFullyConnected(kernel_, insz, pDtMem, baseWeight_->getData(), out))
+        ERROR_MESS("forward error")
 
     /// batchNorm
     snSize outSz = baseOut_->size();
     if (batchNormType_ == batchNormType::beforeActive){
         if (!operPrm.isLerning)
             batchNormOnc(true, outSz, out, out, baseBatchNorm_);
-        else
-            fwdBatchNorm(outSz, out, out, baseBatchNorm_);
+        else{
+            if (!fwdBatchNorm(outSz, out, out, baseBatchNorm_))
+                ERROR_MESS("fwd bnorm error")
+        }
     }
 
     /// функция активации
@@ -228,8 +231,10 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     if (batchNormType_ == batchNormType::postActive){
         if (!operPrm.isLerning)
             batchNormOnc(true, outSz, out, out, baseBatchNorm_);
-        else
-            fwdBatchNorm(outSz, out, out, baseBatchNorm_);
+        else{
+            if (!fwdBatchNorm(outSz, out, out, baseBatchNorm_))
+                ERROR_MESS("fwd bnorm error")
+        }
     }
 }
 
@@ -239,18 +244,20 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
     /// batchNorm
     snSize gsz = inTns->size();
-    if (batchNormType_ == batchNormType::postActive){     
+    if (batchNormType_ == batchNormType::postActive){
         if (!operPrm.isLerning)
             batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
-        else
-            bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_);
+        else{
+            if (!bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_))
+                ERROR_MESS("bwd bnorm error")
+        }
     }
 
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
 
         snFloat* out = baseOut_->getData();
-        
+
         // производная функции активации
         size_t osz = kernel_ * inSzMem_.n;
         switch (activeType_){
@@ -269,8 +276,10 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (batchNormType_ == batchNormType::beforeActive){
         if (!operPrm.isLerning)
             batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
-        else
-            bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_);
+        else{
+            if (!bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_))
+                ERROR_MESS("bwd bnorm error")
+        }
     }
 
     // расчет вых градиента и коррекции весов
@@ -280,10 +289,11 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (!isFreeze_){
 
         snFloat* dWeight = auxParams_["dWeight"].data();
-        bwdFullyConnectedGW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight);
+        if (!bwdFullyConnectedGW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight))
+            ERROR_MESS("backward error")
 
-        // корректируем веса
-        snFloat* dWPrev = auxParams_["dWPrev"].data();
+            // корректируем веса
+            snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
 
@@ -296,8 +306,10 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         default: break;
         }
     }
-    else // isFreeze
-        bwdFullyConnectedG(kernel_, weight, inSzMem_, gradIn, gradOut);
+    else{ // isFreeze
+        if (!bwdFullyConnectedG(kernel_, weight, inSzMem_, gradIn, gradOut))
+            ERROR_MESS("backward error")
+    }
 }
 
 void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){

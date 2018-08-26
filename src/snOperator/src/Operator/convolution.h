@@ -29,7 +29,7 @@
 #include"SNOperator/src/mathFunctions.h"
 
 /// прямой проход
-void fwdConvolution(size_t kernel,   ///< колво вых слоев
+bool fwdConvolution(size_t kernel,   ///< колво вых слоев
                   size_t fWidth,     ///< ширина маски
                  size_t fHeight,     ///< высота маски
                     size_t stride,   ///< шаг движения маски
@@ -40,7 +40,7 @@ void fwdConvolution(size_t kernel,   ///< колво вых слоев
          SN_Base::snFloat* output);  ///< выход знач (скрытых нейронов) для след слоя
 
 /// обратный проход. Расчет град-в и весов
-void bwdConvolutionGW(size_t kernel,   ///< колво вых слоев
+bool bwdConvolutionGW(size_t kernel,   ///< колво вых слоев
                   size_t fWidth,     ///< ширина маски
                  size_t fHeight,     ///< высота маски
                     size_t stride,   ///< шаг движения маски
@@ -53,7 +53,7 @@ void bwdConvolutionGW(size_t kernel,   ///< колво вых слоев
      SN_Base::snFloat* dWeightOut);  ///< дельта изменения весов
 
 /// обратный проход. Расчет град-в
-void bwdConvolutionG(size_t kernel,   ///< колво вых слоев
+bool bwdConvolutionG(size_t kernel,   ///< колво вых слоев
                      size_t fWidth,     ///< ширина маски
                     size_t fHeight,     ///< высота маски
                      size_t stride,   ///< шаг движения маски

@@ -30,7 +30,7 @@
 
 
 /// прямой проход
-void fwdPooling(   int type,   ///< тип: max, avr..
+bool fwdPooling(int type,   ///< тип: max, avr..
               size_t kernel,   ///< размер маски
        SN_Base::snSize insz,   ///< вход значения размер 
     SN_Base::snFloat* input,   ///< вход значения
@@ -39,7 +39,7 @@ void fwdPooling(   int type,   ///< тип: max, avr..
           size_t* outputInx);  ///< выход значения индекс ненулевого элемента
 
 /// обратный проход
-void bwdPooling(   int type,   ///< тип: max, avr..
+bool bwdPooling(int type,   ///< тип: max, avr..
               size_t kernel,   ///< размер маски
       SN_Base::snSize outsz,   ///< выход значения размер 
           size_t* outputInx,   ///< выход значения индекс ненулевого элемента

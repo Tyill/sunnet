@@ -106,7 +106,8 @@ void Pooling::forward(SN_Base::Tensor* inTns){
 
     /// расчет выходных значений
     snFloat* out = baseOut_->getData();
-    fwdPooling((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data());
+    if (!fwdPooling((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data()))
+        ERROR_MESS("forward error")
        
 }
 
@@ -117,7 +118,8 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
     snFloat* pGrOutExp = !isPadding_ ? baseGrad_->getData() : auxParams_["outGradExp"].data();
 
     /// расчет вых градиента
-    bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp);
+    if (!bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp))
+        ERROR_MESS("backward error")
 
     if (isPadding_)
         paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());

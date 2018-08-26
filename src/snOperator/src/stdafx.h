@@ -37,12 +37,6 @@
 
 #define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
 
-#ifdef SN_CPU
-#include "Lib/OpenBLAS/cblas.h"
-#else if SN_CUDA
-
-#endif
-
 void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
 
 void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,

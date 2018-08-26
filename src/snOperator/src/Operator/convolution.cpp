@@ -217,7 +217,8 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
-    fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out);
+    if (!fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out))
+        ERROR_MESS("forward error")
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive){
@@ -292,8 +293,9 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
-        bwdConvolutionGW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-            baseOut_->size(), gradIn, pGrOutExp, dWeight);
+        if (!bwdConvolutionGW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
+            baseOut_->size(), gradIn, pGrOutExp, dWeight))
+            ERROR_MESS("backward error")
 
         // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -309,9 +311,11 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         default: break;
         }
     }
-    else // isFreeze
-        bwdConvolutionG(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-            baseOut_->size(), gradIn, pGrOutExp);
+    else{ // isFreeze
+        if (!bwdConvolutionG(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
+            baseOut_->size(), gradIn, pGrOutExp))
+            ERROR_MESS("backward error")
+    }
 
     if (!isSame)
         paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
@@ -358,13 +362,14 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
 void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
-       
+
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d;
-      
+
+    bool ok = false;
     snFloat* share = (snFloat*)calloc(stepD * insz.n, sizeof(snFloat));
     snSize sz(insz.w, insz.h, 1, insz.n);
     for (size_t i = 0; i < insz.d; ++i){
-           
+
         snFloat* pSh = share;
         snFloat* pIn = in + stepD * i;
         for (size_t j = 0; j < insz.n; ++j){
@@ -372,15 +377,15 @@ void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFl
             memcpy(pSh, pIn, stepD * sizeof(snFloat));
             pSh += stepD;
             pIn += stepN;
-        }           
+        }
 
         if (fwBw)
-            fwdBatchNorm(sz, share, share, prm);
+            ok = fwdBatchNorm(sz, share, share, prm);
         else
-            bwdBatchNorm(sz, share, share, prm);
-           
+            ok = bwdBatchNorm(sz, share, share, prm);
+
         pSh = share;
-        snFloat* pOut = out + stepD * i; 
+        snFloat* pOut = out + stepD * i;
         for (size_t j = 0; j < insz.n; ++j){
             memcpy(pOut, pSh, stepD * sizeof(snFloat));
             pSh += stepD;
@@ -391,9 +396,12 @@ void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFl
         prm.norm += stepD * insz.n;
     }
     free(share);
-   
+
     prm.offset(-int(stepD * insz.d));
     prm.norm -= stepD * insz.d * insz.n;
+
+    if (!ok)
+        ERROR_MESS((fwBw ? "fwd" : "bwd") + " bnorm error")       
 }
 
 void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm){

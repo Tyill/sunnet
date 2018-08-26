@@ -36,249 +36,253 @@
 #define SKYNET_API
 #endif
 
+#if defined(__cplusplus)
+extern "C" {
+#endif /* __cplusplus */
 
-namespace SN_API{
+namespace SN_API{   
 
-    extern "C" {
+    typedef float snFloat;
 
-        typedef float snFloat;
+    /// data layer size
+    struct snLSize{
 
-        /// data layer size
-        struct snLSize{
+        size_t w, h, ch, bch; ///< width, height, channels, batch
+        snLSize(size_t w_ = 1, size_t h_ = 1, size_t ch_ = 1, size_t bch_ = 1) :
+            w(w_), h(h_), ch(ch_), bch(bch_){};
+    };
 
-            size_t w, h, ch, bch; ///< width, height, channels, batch
-            snLSize(size_t w_ = 1, size_t h_ = 1, size_t ch_ = 1, size_t bch_ = 1) :
-                w(w_), h(h_), ch(ch_), bch(bch_){};
-        };
+    /// object net
+    typedef void* skyNet;
 
-        /// object net
-        typedef void* skyNet;
+    typedef void* snUData;                                      ///< user data    
+    typedef void(*snStatusCBack)(const char* mess, snUData);    ///< status callback
 
-        typedef void* snUData;                                      ///< user data    
-        typedef void(*snStatusCBack)(const char* mess, snUData);    ///< status callback
+    /// create net
+    /// @param[in] jnNet - network architecture in JSON
+    /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+    /// @param[in] statusCBack - callback state. Not necessary
+    /// @param[in] udata - user data. Not necessary
+    /// @return object net
+    SKYNET_API skyNet snCreateNet(const char* jnNet,
+                                    char* out_err /*sz 256*/, 
+                                    snStatusCBack = nullptr, 
+                                    snUData = nullptr);
 
-        /// create net
-        /// @param[in] jnNet - network architecture in JSON
-        /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
-        /// @param[in] statusCBack - callback state. Not necessary
-        /// @param[in] udata - user data. Not necessary
-        /// @return object net
-        SKYNET_API skyNet snCreateNet(const char* jnNet,
-                                      char* out_err /*sz 256*/, 
-                                      snStatusCBack = nullptr, 
-                                      snUData = nullptr);
+    /// training - a cycle forward-back with auto-correction of weights
+    /// @param[in] skyNet - object net
+    /// @param[in] lr - learning rate
+    /// @param[in] isz - input layer size
+    /// @param[in] iLayer - input layer        
+    /// @param[in] osz - size of target and result. Sets for verification
+    /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
+    /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
+    /// @param[out] outAccurate - current accuracy
+    /// @return true - ok
+    SKYNET_API bool snTraining(skyNet, 
+                                snFloat lr,
+                                snLSize isz,
+                                const snFloat* iLayer,  
+                                snLSize osz,
+                                snFloat* outData,                                   
+                                const snFloat* targetData,
+                                snFloat* outAccurate);
 
-        /// training - a cycle forward-back with auto-correction of weights
-        /// @param[in] skyNet - object net
-        /// @param[in] lr - learning rate
-        /// @param[in] isz - input layer size
-        /// @param[in] iLayer - input layer        
-        /// @param[in] osz - size of target and result. Sets for verification
-        /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
-        /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
-        /// @param[out] outAccurate - current accuracy
-        /// @return true - ok
-        SKYNET_API bool snTraining(skyNet, 
-                                   snFloat lr,
-                                   snLSize isz,
-                                   const snFloat* iLayer,  
-                                   snLSize osz,
-                                   snFloat* outData,                                   
-                                   const snFloat* targetData,
-                                   snFloat* outAccurate);
+    /// forward pass
+    /// @param[in] skyNet - object net
+    /// @param[in] isLern - is lern?
+    /// @param[in] isz - input layer size
+    /// @param[in] iLayer - input layer       
+    /// @param[in] osz - size of result. Sets for verification
+    /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
+    /// @return true - ok
+    SKYNET_API bool snForward(skyNet,
+                                bool isLern,
+                                snLSize isz,
+                                const snFloat* iLayer,
+                                snLSize osz,
+                                snFloat* outData);
 
-        /// forward pass
-        /// @param[in] skyNet - object net
-        /// @param[in] isLern - is lern?
-        /// @param[in] isz - input layer size
-        /// @param[in] iLayer - input layer       
-        /// @param[in] osz - size of result. Sets for verification
-        /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
-        /// @return true - ok
-        SKYNET_API bool snForward(skyNet,
-                                  bool isLern,
-                                  snLSize isz,
-                                  const snFloat* iLayer,
-                                  snLSize osz,
-                                  snFloat* outData);
-
-        /// backward pass
-        /// @param[in] skyNet - object net
-        /// @param[in] lr - learning rate
-        /// @param[in] gsz - size of the error gradient. Sets for verification
-        /// @param[in] grad - error gradient, the size must match the output
-        /// @return true - ok
-        SKYNET_API bool snBackward(skyNet,
-                                   snFloat lr,
-                                   snLSize gsz,
-                                   const snFloat* grad);
+    /// backward pass
+    /// @param[in] skyNet - object net
+    /// @param[in] lr - learning rate
+    /// @param[in] gsz - size of the error gradient. Sets for verification
+    /// @param[in] grad - error gradient, the size must match the output
+    /// @return true - ok
+    SKYNET_API bool snBackward(skyNet,
+                                snFloat lr,
+                                snLSize gsz,
+                                const snFloat* grad);
 
         
-        /// set weight of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[in] wsz - size
-        /// @param[in] wData - weight        
-        /// @return true - ok
-        SKYNET_API bool snSetWeightNode(skyNet,
+    /// set weight of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[in] wsz - size
+    /// @param[in] wData - weight        
+    /// @return true - ok
+    SKYNET_API bool snSetWeightNode(skyNet,
+                                    const char* nodeName,
+                                    snLSize wsz,
+                                    const snFloat* wData);
+
+    /// get weight of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[out] wsz - output size
+    /// @param[out] wData - output data. First pass NULL, then pass it to the same 
+    /// @return true - ok
+    SKYNET_API bool snGetWeightNode(skyNet,
+                                    const char* nodeName,
+                                    snLSize* wsz,
+                                    snFloat** wData);
+
+    /// batchNorm
+    struct batchNorm{
+        snFloat* mean = nullptr;      ///< mean. The memory is allocated by the user
+        snFloat* varce = nullptr;     ///< disp
+        snFloat* scale = nullptr;     ///< coef γ
+        snFloat* schift = nullptr;    ///< coef β
+    };
+
+    /// set batchNorm of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[in] bnsz - data size
+    /// @param[in] bnData - data       
+    /// @return true - ok
+    SKYNET_API bool snSetBatchNormNode(skyNet,
                                         const char* nodeName,
-                                        snLSize wsz,
-                                        const snFloat* wData);
+                                        snLSize bnsz,
+                                        const batchNorm bnData);
 
-        /// get weight of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[out] wsz - output size
-        /// @param[out] wData - output data. First pass NULL, then pass it to the same 
-        /// @return true - ok
-        SKYNET_API bool snGetWeightNode(skyNet,
+    /// get batchNorm of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[out] bnsz - data size
+    /// @param[out] bnData - data         
+    /// @return true - ok
+    SKYNET_API bool snGetBatchNormNode(skyNet,
                                         const char* nodeName,
-                                        snLSize* wsz,
-                                        snFloat** wData);
-
-        /// batchNorm
-        struct batchNorm{
-            snFloat* mean = nullptr;      ///< mean. The memory is allocated by the user
-            snFloat* varce = nullptr;     ///< disp
-            snFloat* scale = nullptr;     ///< coef γ
-            snFloat* schift = nullptr;    ///< coef β
-        };
-
-        /// set batchNorm of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[in] bnsz - data size
-        /// @param[in] bnData - data       
-        /// @return true - ok
-        SKYNET_API bool snSetBatchNormNode(skyNet,
-                                           const char* nodeName,
-                                           snLSize bnsz,
-                                           const batchNorm bnData);
-
-        /// get batchNorm of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[out] bnsz - data size
-        /// @param[out] bnData - data         
-        /// @return true - ok
-        SKYNET_API bool snGetBatchNormNode(skyNet,
-                                           const char* nodeName,
-                                           snLSize* bnsz,
-                                           batchNorm* bnData);
+                                        snLSize* bnsz,
+                                        batchNorm* bnData);
                         
-        /// set input node (relevant for additional inputs)
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[in] isz - data size
-        /// @param[in] inData - data       
-        /// @return true - ok
-        SKYNET_API bool snSetInputNode(skyNet,
-                                       const char* nodeName,
-                                       snLSize isz,
-                                       const snFloat* inData);
+    /// set input node (relevant for additional inputs)
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[in] isz - data size
+    /// @param[in] inData - data       
+    /// @return true - ok
+    SKYNET_API bool snSetInputNode(skyNet,
+                                    const char* nodeName,
+                                    snLSize isz,
+                                    const snFloat* inData);
 
-        /// get output node (relevant for additional inputs)
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[out] osz - data size
-        /// @param[out] outData - data. First pass NULL, then pass it to the same 
-        /// @return true - ok
-        SKYNET_API bool snGetOutputNode(skyNet,
+    /// get output node (relevant for additional inputs)
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[out] osz - data size
+    /// @param[out] outData - data. First pass NULL, then pass it to the same 
+    /// @return true - ok
+    SKYNET_API bool snGetOutputNode(skyNet,
+                                    const char* nodeName,
+                                    snLSize* osz,
+                                    snFloat** outData);
+
+    /// set gradient node (relevant for additional outputs)
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[in] gsz - data size
+    /// @param[in] gData - data        
+    /// @return true - ok
+    SKYNET_API bool snSetGradientNode(skyNet,
                                         const char* nodeName,
-                                        snLSize* osz,
-                                        snFloat** outData);
+                                        snLSize gsz,
+                                        const snFloat* gData);
 
-        /// set gradient node (relevant for additional outputs)
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[in] gsz - data size
-        /// @param[in] gData - data        
-        /// @return true - ok
-        SKYNET_API bool snSetGradientNode(skyNet,
-                                          const char* nodeName,
-                                          snLSize gsz,
-                                          const snFloat* gData);
+    /// get gradient node (relevant for additional outputs)
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[out] gsz - data size
+    /// @param[out] gData - data. First pass NULL, then pass it to the same 
+    /// @return true - ok
+    SKYNET_API bool snGetGradientNode(skyNet,
+                                        const char* nodeName,
+                                        snLSize* gsz,
+                                        snFloat** gData);
 
-        /// get gradient node (relevant for additional outputs)
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[out] gsz - data size
-        /// @param[out] gData - data. First pass NULL, then pass it to the same 
-        /// @return true - ok
-        SKYNET_API bool snGetGradientNode(skyNet,
-                                          const char* nodeName,
-                                          snLSize* gsz,
-                                          snFloat** gData);
+    /// set params of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[in] jnParam - params of node in JSON. 
+    /// @return true - ok
+    SKYNET_API bool snSetParamNode(skyNet,
+                                    const char* nodeName,
+                                    const char* jnParam);
 
-        /// set params of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[in] jnParam - params of node in JSON. 
-        /// @return true - ok
-        SKYNET_API bool snSetParamNode(skyNet,
-                                       const char* nodeName,
-                                       const char* jnParam);
+    /// get params of node
+    /// @param[in] skyNet - object net
+    /// @param[in] nodeName - name node
+    /// @param[out] jnParam - params of node in JSON. The memory is allocated by the user 
+    /// @return true - ok
+    SKYNET_API bool snGetParamNode(skyNet,
+                                    const char* nodeName,
+                                    char* jnParam /*minsz 256*/);
 
-        /// get params of node
-        /// @param[in] skyNet - object net
-        /// @param[in] nodeName - name node
-        /// @param[out] jnParam - params of node in JSON. The memory is allocated by the user 
-        /// @return true - ok
-        SKYNET_API bool snGetParamNode(skyNet,
-                                       const char* nodeName,
-                                       char* jnParam /*minsz 256*/);
-
-        /// get architecture of net
-        /// @param[in] skyNet - object net
-        /// @param[out] jnNet - architecture of net in JSON. The memory is allocated by the user
-        /// @return true - ok
-        SKYNET_API bool snGetArchitecNet(skyNet,
-                                         char* jnNet /*minsz 2048*/);
+    /// get architecture of net
+    /// @param[in] skyNet - object net
+    /// @param[out] jnNet - architecture of net in JSON. The memory is allocated by the user
+    /// @return true - ok
+    SKYNET_API bool snGetArchitecNet(skyNet,
+                                        char* jnNet /*minsz 2048*/);
 
 
-        /// userCallBack for 'userLayer' node
-        /// @param[in] cbname - name user cback 
-        /// @param[in] node - name node 
-        /// @param[in] fwdBwd - current action forward(true) or backward(false)
-        /// @param[in] insz - input layer size - receive from prev node
-        /// @param[in] in - input layer - receive from prev node
-        /// @param[out] outsz - output layer size - send to next node
-        /// @param[out] out - output layer - send to next node
-        /// @param[in] ud - aux used data
-        typedef void(*snUserCBack)(const char* cbname,
-                                   const char* node,
-                                   bool fwdBwd,
-                                   snLSize insz,
-                                   snFloat* in,
-                                   snLSize* outsz,
-                                   snFloat** out,
-                                   snUData ud);
+    /// userCallBack for 'userLayer' node
+    /// @param[in] cbname - name user cback 
+    /// @param[in] node - name node 
+    /// @param[in] fwdBwd - current action forward(true) or backward(false)
+    /// @param[in] insz - input layer size - receive from prev node
+    /// @param[in] in - input layer - receive from prev node
+    /// @param[out] outsz - output layer size - send to next node
+    /// @param[out] out - output layer - send to next node
+    /// @param[in] ud - aux used data
+    typedef void(*snUserCBack)(const char* cbname,
+                                const char* node,
+                                bool fwdBwd,
+                                snLSize insz,
+                                snFloat* in,
+                                snLSize* outsz,
+                                snFloat** out,
+                                snUData ud);
 
-        /// add user callBack for 'userLayer' node
-        /// @param[in] skyNet - object net
-        /// @param[in] cbName - name callBack
-        /// @param[in] snUserCBack - callBack
-        /// @param[in] snUData - user data
-        /// @return true - ok
-        SKYNET_API bool snAddUserCallBack(skyNet, const char* cbName, snUserCBack, snUData = nullptr);
+    /// add user callBack for 'userLayer' node
+    /// @param[in] skyNet - object net
+    /// @param[in] cbName - name callBack
+    /// @param[in] snUserCBack - callBack
+    /// @param[in] snUData - user data
+    /// @return true - ok
+    SKYNET_API bool snAddUserCallBack(skyNet, const char* cbName, snUserCBack, snUData = nullptr);
 
-        /// save all weight's (and bnorm if exist) to file
-        /// @param[in] skyNet - object net
-        /// @param[in] filePath - path to file
-        /// @return true - ok
-        SKYNET_API bool snSaveAllWeightToFile(skyNet, const char* filePath);
+    /// save all weight's (and bnorm if exist) to file
+    /// @param[in] skyNet - object net
+    /// @param[in] filePath - path to file
+    /// @return true - ok
+    SKYNET_API bool snSaveAllWeightToFile(skyNet, const char* filePath);
 
-        /// load all weight's (and bnorm if exist) from file
-        /// @param[in] skyNet - object net
-        /// @param[in] filePath - path to file
-        /// @return true - ok
-        SKYNET_API bool snLoadAllWeightFromFile(skyNet, const char* filePath);
+    /// load all weight's (and bnorm if exist) from file
+    /// @param[in] skyNet - object net
+    /// @param[in] filePath - path to file
+    /// @return true - ok
+    SKYNET_API bool snLoadAllWeightFromFile(skyNet, const char* filePath);
 
-        /// free object net
-        /// @param[in] skyNet - object net
-        SKYNET_API void snFreeNet(skyNet);
+    /// free object net
+    /// @param[in] skyNet - object net
+    SKYNET_API void snFreeNet(skyNet);
 
-
-    }   // extern "C"
 }       // SN_API
+
+#if defined(__cplusplus)
+}
+#endif /* __cplusplus */
+
 #endif  // SKYNET_C_API_H_

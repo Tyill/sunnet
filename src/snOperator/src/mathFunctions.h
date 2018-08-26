@@ -26,12 +26,12 @@
 
 #include "snBase/snBase.h"
 
-void fwdBatchNorm(SN_Base::snSize insz,
+bool fwdBatchNorm(SN_Base::snSize insz,
                   SN_Base::snFloat* in,
                   SN_Base::snFloat* out,
                   SN_Base::batchNorm);
 
-void bwdBatchNorm(SN_Base::snSize insz, 
+bool bwdBatchNorm(SN_Base::snSize insz,
                   SN_Base::snFloat* gradIn,
                   SN_Base::snFloat* gradOut,
                   SN_Base::batchNorm);
