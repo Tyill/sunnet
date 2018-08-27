@@ -40,7 +40,7 @@ public:
 
 private:
 
-    enum class funcType{
+    enum funcType{
         summ = 0,
         diff = 1,
         mean = 2,

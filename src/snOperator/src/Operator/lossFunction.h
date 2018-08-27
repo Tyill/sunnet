@@ -31,13 +31,7 @@
 class LossFunction : SN_Base::OperatorBase{
 
 public:
-
-    enum class lossType{
-        softMaxACrossEntropy = 0,
-        binaryCrossEntropy = 1,
-        regressionOLS = 2,
-    };
-
+       
     LossFunction(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
     ~LossFunction() = default;
@@ -45,6 +39,12 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private:
+    enum lossType{
+        softMaxACrossEntropy = 0,
+        binaryCrossEntropy = 1,
+        regressionOLS = 2,
+    };
+
     lossType lossType_ = lossType::softMaxACrossEntropy;
        
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_; ///< вспом данные для расчета

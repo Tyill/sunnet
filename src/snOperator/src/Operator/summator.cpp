@@ -69,9 +69,9 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
                     return std::vector < std::string > {"noWay"};
                 }  
                 switch (funcType_){
-                case Summator::funcType::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
-                case Summator::funcType::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
-                case Summator::funcType::mean: (*baseOut_).mean(*neighbOpr[i]->getOutput()); break;
+                case Summator::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
+                case Summator::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
+                case Summator::mean: (*baseOut_).mean(*neighbOpr[i]->getOutput()); break;
                 }                
             }
         }
@@ -87,9 +87,9 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
                     return std::vector < std::string > {"noWay"};
                 }
                 switch (funcType_){
-                   case Summator::funcType::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
-                   case Summator::funcType::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
-                   case Summator::funcType::mean: (*baseGrad_).mean(*neighbOpr[i]->getGradient()); break;
+                   case Summator::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
+                   case Summator::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
+                   case Summator::mean: (*baseGrad_).mean(*neighbOpr[i]->getGradient()); break;
                 }
             }
         }

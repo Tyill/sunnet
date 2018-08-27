@@ -46,14 +46,6 @@ namespace rj = rapidjson;
 "NextNodes": ....,                      ///< имена след узлов через пробел
 },
 
-"AuxInputs":                            ///< вспом входы сети. Необязательно
-[
-{
-"NodeName":....,                        ///< имя узла. Дбыть уникальным в пределах ветви, без ' ' и '-'.
-"NextNodes": ....,                      ///< имена след узлов через пробел
-},
-]
-
 "Nodes":                                ///< узлы ветви
 [
 {
@@ -63,14 +55,6 @@ namespace rj = rapidjson;
 "OperatorParams": {"name":"value",}     ///< Необязательно. Список параметров оператора, параметры индивидуальны для каждого оператора. Если опустить, будут по умолч.
 },
 ],
-
-"AuxOutputs":                           ///< вспом выхода сети
-[
-{
-"NodeName":....,                        ///< имя узла. Дбыть уникальным в пределах ветви, без ' ' и '-'.
-"PrevNode": ....,                       ///< предыд узел. Мбыть только один!
-},
-]
 
 "EndNet":                               ///< выход сети
 {
@@ -97,10 +81,7 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
         if (!BeginNet.HasMember("NextNodes") || !BeginNet["NextNodes"].IsString()){
             err = "!BeginNet.HasMember('NextNodes') || !BeginNet['NextNodes'].IsString()"; return false;
         }
-    }
-    else{
-        err = "!jnDoc.HasMember('BeginNet')"; return false;
-    }
+    }   
 
     ///////////////
 
@@ -126,13 +107,15 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
         if (!Node.HasMember("NodeName") || !Node["NodeName"].IsString()){
             err = "!Node.HasMember('NodeName') || !Node['NodeName'].IsString()"; return false;
         }
+        
+        if (!Node.HasMember("OperatorName") || !Node["OperatorName"].IsString()){
+            err = "!Node.HasMember('OperatorName') || !Node['OperatorName'].IsString()"; return false;
+        }
+
+        if (Node["OperatorName"].GetString() == "Output") continue;
 
         if (!Node.HasMember("NextNodes") || !Node["NextNodes"].IsString()){
             err = "!Node.HasMember('NextNodes') || !Node['NextNodes'].IsString()"; return false;
-        }
-
-        if (!Node.HasMember("OperatorName") || !Node["OperatorName"].IsString()){
-            err = "!Node.HasMember('OperatorName') || !Node['OperatorName'].IsString()"; return false;
         }
     }
 
@@ -151,9 +134,7 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
             err = "!EndNet.HasMember('PrevNode') || !EndNet['PrevNode'].IsString()"; return false;
         }
     }
-    else{
-        err = "!jnDoc.HasMember('EndNet')"; return false;
-    }
+   
     ///////////////
         
     return true;
@@ -172,7 +153,8 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
         Node nd;
         nd.name = trim(node["NodeName"].GetString());
         nd.oprName = trim(node["OperatorName"].GetString());
-        nd.nextNodes = split(trim(node["NextNodes"].GetString()), " ");
+        if (nd.oprName != "Output")
+           nd.nextNodes = split(trim(node["NextNodes"].GetString()), " ");
 
         if (node.HasMember("OperatorParams")){
 
@@ -243,19 +225,27 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
 /// начало ветви
 bool jnGetBegin(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes, string& out_err){
 
-    auto BeginNet = jnDoc["BeginNet"].GetObject();
+    if (jnDoc.HasMember("BeginNet")){
 
-    Node nd;
-    nd.name = "BeginNet";
-    nd.oprName = "Input";
-    nd.nextNodes = split(trim(BeginNet["NextNodes"].GetString()), " ");
+        auto BeginNet = jnDoc["BeginNet"].GetObject();
 
-    if (nd.nextNodes.empty()){
-        out_err = "input.BeginNet['NextNode'].empty()";
-        return false;
+        Node nd;
+        nd.name = "BeginNet";
+        nd.oprName = "Input";
+        nd.nextNodes = split(trim(BeginNet["NextNodes"].GetString()), " ");
+
+        if (nd.nextNodes.empty()){
+            out_err = "input.BeginNet['NextNode'].empty()";
+            return false;
+        }
+
+        if (nd.nextNodes.size() > 1){
+            out_err = "input.BeginNet['NextNode'].size() > 1";
+            return false;
+        }
+
+        out_nodes["BeginNet"] = nd;
     }
-
-    out_nodes["BeginNet"] = nd;
 
     return true;
 }
@@ -263,17 +253,28 @@ bool jnGetBegin(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
 /// конец ветви
 bool jnGetEnd(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes, string& out_err){
 
-    Node nd;
-    nd.name = "EndNet";
-    nd.oprName = "Output";
-    
-    auto EndNet = jnDoc["EndNet"].GetObject();        
-    if (split(trim(EndNet["PrevNode"].GetString()), " ").size() > 1){
-        out_err = "outputBr.EndNet['PrevNode'].size() > 1";
-        return false;
-    }    
+    if (jnDoc.HasMember("EndNet")){
 
-    out_nodes["EndNet"] = nd;
+        Node nd;
+        nd.name = "EndNet";
+        nd.oprName = "Output";
+
+        auto EndNet = jnDoc["EndNet"].GetObject();
+
+        auto prevNodes = split(trim(EndNet["PrevNode"].GetString()), " ");
+
+        if (prevNodes.empty()){
+            out_err = "output.EndNet['PrevNode'].empty()";
+            return false;
+        }
+
+        if (prevNodes.size() > 1){
+            out_err = "output.EndNet['PrevNode'].size() > 1";
+            return false;
+        }
+
+        out_nodes["EndNet"] = nd;
+    }
 
     return true;
 }

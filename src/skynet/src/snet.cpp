@@ -178,6 +178,9 @@ SNet::SNet(const char* jnNet, char* out_err /*sz 256*/,
     nodes_ = net.nodes;
     operats_ = net.operats;
 
+    isBeginNet_ = operats_.find("BeginNet") != operats_.end();
+    isEndNet_ = operats_.find("EndNet") != operats_.end();
+
     engine_ = new SN_Eng::SNEngine(net, bind(&SNet::statusMess, this, std::placeholders::_1));
 }
 
@@ -197,7 +200,12 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
         return false;
 
     std::unique_lock<std::mutex> lk(mtxCmn_);
-        
+       
+    if (!isEndNet_){
+        statusMess("training error: 'EndNet' not found");
+        return false;
+    }
+
     // идем обратно    
     gradData_["EndNet"]->setData(targetData, osz);
 
@@ -222,24 +230,27 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
         statusMess("forward error: net not create");
         return false;
     }
-    
-    inData_["BeginNet"]->setData(iLayer, isz);
+   
+    if (isBeginNet_)
+       inData_["BeginNet"]->setData(iLayer, isz);
 
     operPrm_.action = snAction::forward;
     operPrm_.isLerning = isLern;
     engine_->forward(operPrm_);
 
-    Tensor* tnsOut = operats_["EndNet"]->getOutput();
+    if (isEndNet_){
+        Tensor* tnsOut = operats_["EndNet"]->getOutput();
 
-    auto& tnsOutSz = tnsOut->size();
-    if (tnsOutSz != osz){
-        statusMess("forward error: tnsOutSz != osz. Must be osz: " +
-            to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h));
-        return false;
+        auto& tnsOutSz = tnsOut->size();
+        if (tnsOutSz != osz){
+            statusMess("forward error: tnsOutSz != osz. Must be osz: " +
+                to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h));
+            return false;
+        }
+
+        memcpy(outData, tnsOut->getData(), tnsOutSz.size() * sizeof(snFloat));
     }
 
-    memcpy(outData, tnsOut->getData(), tnsOutSz.size() * sizeof(snFloat));
-        
     return true;
 }
 
@@ -247,29 +258,29 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
 bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    if (engine_){
-
-        auto outTensor = operats_["EndNet"]->getOutput();
-        
-        auto& tsz = outTensor->size();
-        if (tsz != gsz){
-            statusMess("forward error: tnsOutSz != gsz. Must be gsz: " +
-                to_string(tsz.w) + " " + to_string(tsz.h));
-            return false;
-        }
-        
-        gradData_["EndNet"]->setData(gradErr, outTensor->size());
-
-        operPrm_.lr = lr;
-        operPrm_.action = snAction::backward;
-        operPrm_.isAutoCalcError = false;
-        operPrm_.isLerning = true;
-        engine_->backward(operPrm_);
-    }
-    else{
+    if (!engine_){
         statusMess("backward error: net not create");
         return false;
     }
+
+    if (isEndNet_){
+        auto outTensor = operats_["EndNet"]->getOutput();
+
+        auto& tsz = outTensor->size();
+        if (tsz != gsz){
+            statusMess("backward error: tnsOutSz != gsz. Must be gsz: " +
+                to_string(tsz.w) + " " + to_string(tsz.h));
+            return false;
+        }
+
+        gradData_["EndNet"]->setData(gradErr, outTensor->size());
+    }
+
+    operPrm_.lr = lr;
+    operPrm_.action = snAction::backward;
+    operPrm_.isAutoCalcError = false;
+    operPrm_.isLerning = true;
+    engine_->backward(operPrm_);   
 
     return true;
 }

@@ -115,6 +115,8 @@ private:
 
     rapidjson::Document jnNet_;                                 ///< архитектура сети в JSON  
 
+    bool isBeginNet_ = false, isEndNet_ = false;
+
     SN_API::snUData udata_ = nullptr;
     SN_API::snStatusCBack stsCBack_ = nullptr;
    
