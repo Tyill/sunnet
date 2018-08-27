@@ -39,6 +39,13 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private:
-    SN_Base::Tensor inFwTns_, inBwTns_;                         ///< тензор с сосед слоя 
+
+    enum class funcType{
+        summ = 0,
+        diff = 1,
+        mean = 2,
+    };
+
+    funcType funcType_ = funcType::summ;
 
 };

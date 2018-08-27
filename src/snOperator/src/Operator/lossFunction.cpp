@@ -42,6 +42,8 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
             lossType_ = lossType::softMaxACrossEntropy;
         else if (stype == "binaryCrossEntropy")
             lossType_ = lossType::binaryCrossEntropy;
+        else if (stype == "regressionOLS")
+            lossType_ = lossType::regressionOLS;
         else
             ERROR_MESS("param 'loss' = " + stype + " indefined");
     }
@@ -108,7 +110,11 @@ void LossFunction::forward(Tensor* inTns){
             out += width;
         }
     }
-    case LossFunction::binaryCrossEntropy:{        
+    case LossFunction::binaryCrossEntropy:{
+
+        break;
+    }
+    case LossFunction::regressionOLS:{
 
         break;
     }
@@ -157,6 +163,11 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
         for (size_t i = 0; i < nsz; ++i)
             grad[i] = (smOut[i] - target[i]) / (smOut[i] * (1.F - smOut[i]));
     
+        break;
+    }
+
+    case LossFunction::regressionOLS:{
+
         break;
     }
     default:

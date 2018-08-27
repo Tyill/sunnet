@@ -49,37 +49,49 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
         }
     }
     else{
+        if (basePrms_.find("func") != basePrms_.end()){
+            if (basePrms_["func"] == "summ") funcType_ = funcType::summ;
+            else if (basePrms_["func"] == "diff") funcType_ = funcType::diff;
+            else if (basePrms_["func"] == "mean") funcType_ = funcType::mean;
+            else
+                ERROR_MESS("param 'func' indefined");
+        }
+
         if (operPrm.action == snAction::forward){
 
-            inFwTns_ = *neighbOpr[0]->getOutput();
+            *baseOut_ = *neighbOpr[0]->getOutput();
 
             size_t sz = neighbOpr.size();
             for (size_t i = 1; i < sz; ++i){
             
-                if (inFwTns_ != *neighbOpr[i]->getOutput()){
+                if (*baseOut_ != *neighbOpr[i]->getOutput()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
+                }  
+                switch (funcType_){
+                case Summator::funcType::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
+                case Summator::funcType::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
+                case Summator::funcType::mean: (*baseOut_).mean(*neighbOpr[i]->getOutput()); break;
                 }                
-                inFwTns_ += *neighbOpr[i]->getOutput();
             }
-
-            baseOut_->setData(inFwTns_.getData(), inFwTns_.size());
         }
         else{
 
-            inBwTns_ = *neighbOpr[0]->getGradient();
+            *baseGrad_ = *neighbOpr[0]->getGradient();
 
             size_t sz = neighbOpr.size();
             for (size_t i = 1; i < sz; ++i){
              
-                if (inBwTns_ != *neighbOpr[i]->getGradient()){
+                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
-                }                
-                inBwTns_ += *neighbOpr[i]->getGradient();
+                }
+                switch (funcType_){
+                   case Summator::funcType::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
+                   case Summator::funcType::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
+                   case Summator::funcType::mean: (*baseGrad_).mean(*neighbOpr[i]->getGradient()); break;
+                }
             }
-
-            baseGrad_->setData(inBwTns_.getData(), inBwTns_.size());
         }
     }
 

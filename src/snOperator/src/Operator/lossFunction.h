@@ -32,9 +32,10 @@ class LossFunction : SN_Base::OperatorBase{
 
 public:
 
-    enum lossType{
+    enum class lossType{
         softMaxACrossEntropy = 0,
         binaryCrossEntropy = 1,
+        regressionOLS = 2,
     };
 
     LossFunction(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);

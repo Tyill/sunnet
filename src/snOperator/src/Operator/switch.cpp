@@ -57,19 +57,17 @@ std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::ve
         }
         else{
 
-            inBwTns_ = *neighbOpr[0]->getGradient();
+            *baseGrad_ = *neighbOpr[0]->getGradient();
 
             size_t sz = neighbOpr.size();
             for (size_t i = 1; i < sz; ++i){
 
-                if (inBwTns_ != *neighbOpr[i]->getGradient()){
+                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                inBwTns_ += *neighbOpr[i]->getGradient();
-            }
-
-            baseGrad_->setData(inBwTns_.getData(), inBwTns_.size());
+                *baseGrad_ += *neighbOpr[i]->getGradient();
+            }           
         }       
     }
        
