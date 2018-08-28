@@ -40,12 +40,14 @@ public:
 
 private:
 
-    enum funcType{
+    enum class sType{
         summ = 0,
         diff = 1,
         mean = 2,
     };
 
-    funcType funcType_ = funcType::summ;
+    sType sType_ = sType::summ;
 
+
+    void mean(const SN_Base::Tensor* one, const SN_Base::Tensor* two, SN_Base::Tensor* out);
 };

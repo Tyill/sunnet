@@ -48,14 +48,10 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
         return std::vector < std::string > {"noWay"};
     }
 
-    if (operPrm.action == snAction::forward){
-        auto nb = neighbOpr[0]->getOutput();
-        baseOut_->setData(nb->getData(), nb->size());
-    }
-    else{
-        auto nb = neighbOpr[0]->getGradient();
-        baseGrad_->setData(nb->getData(), nb->size());
-    }
-
+    if (operPrm.action == snAction::forward)
+        *baseOut_ = *neighbOpr[0]->getOutput();    
+    else
+        *baseGrad_ = *neighbOpr[0]->getGradient();
+    
     return std::vector<std::string>();
 }

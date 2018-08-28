@@ -92,15 +92,25 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\"}"
         "},"*/
 
+
+
         "{"
         "\"NodeName\":\"F2\","
-        "\"NextNodes\":\"LS\","
+        "\"NextNodes\":\"Lk\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
         "\"freeze\":\"0\","
-        "\"weightInit\":\"uniform\","
-        "\"optimizer\":\"adam\","
+        "\"weightInit\":\"he\","
+        "\"lmbRegular\":\"0.0\","
+        "\"optimizer\":\"sgd\","
         "\"active\":\"relu\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"Lk\","
+        "\"NextNodes\":\"LS\","
+        "\"OperatorName\":\"Lock\","
+        "\"OperatorParams\":{\"state\":\"unlock\"}"
         "},"
 
         "{"
@@ -200,7 +210,7 @@ int main(int argc, _TCHAR* argv[])
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 100; ++k){
+    for (int k = 0; k < 1000; ++k){
 
         fill_n(targetLayer, classCnt * batchSz, 0.F);
         fill_n(outLayer, classCnt * batchSz, 0.F);
@@ -241,7 +251,7 @@ int main(int argc, _TCHAR* argv[])
             for (size_t r = 0; r < nr; ++r){
                 uchar* pt = img.ptr<uchar>(r);
                 for (size_t c = 0; c < nc; ++c)
-                    refData[r * nc + c] = (pt[c] - mean);
+                    refData[r * nc + c] = pt[c] > mean ? pt[c] - mean : 0;
             }
         }
 

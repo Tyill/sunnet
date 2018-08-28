@@ -85,7 +85,7 @@ void LossFunction::forward(Tensor* inTns){
     auto out = baseOut_->getData();
 
     switch (lossType_){
-    case LossFunction::softMaxACrossEntropy:{
+    case LossFunction::lossType::softMaxACrossEntropy:{
 
         if (auxParams_.find("sm_aux") == auxParams_.end())
             auxParams_["sm_aux"] = vector<snFloat>(tsz.w);
@@ -110,11 +110,11 @@ void LossFunction::forward(Tensor* inTns){
             out += width;
         }
     }
-    case LossFunction::binaryCrossEntropy:{
+    case LossFunction::lossType::binaryCrossEntropy:{
 
         break;
     }
-    case LossFunction::regressionOLS:{
+    case LossFunction::lossType::regressionOLS:{
 
         break;
     }
@@ -146,7 +146,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
     auto grad = baseGrad_->getData();   // градиент ошибки на входе в lossFunc
 
     switch (lossType_){
-    case LossFunction::softMaxACrossEntropy:{
+    case LossFunction::lossType::softMaxACrossEntropy:{
 
         // считаем ошибку для всех изобр
         size_t nsz = tsz.n * tsz.w;
@@ -156,7 +156,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::binaryCrossEntropy:{
+    case LossFunction::lossType::binaryCrossEntropy:{
 
         // считаем ошибку для всех изобр
         size_t nsz = tsz.n * tsz.w;
@@ -166,7 +166,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::regressionOLS:{
+    case LossFunction::lossType::regressionOLS:{
 
         break;
     }

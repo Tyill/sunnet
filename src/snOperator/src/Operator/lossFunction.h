@@ -39,7 +39,7 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private:
-    enum lossType{
+    enum class lossType{
         softMaxACrossEntropy = 0,
         binaryCrossEntropy = 1,
         regressionOLS = 2,

@@ -292,8 +292,8 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         if (!bwdFullyConnectedGW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight))
             ERROR_MESS("backward error")
 
-            // корректируем веса
-            snFloat* dWPrev = auxParams_["dWPrev"].data();
+        // корректируем веса
+        snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
 

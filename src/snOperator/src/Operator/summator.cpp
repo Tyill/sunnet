@@ -34,6 +34,14 @@ OperatorBase(net, name, node, prms){
 
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
+
+    if (basePrms_.find("type") != basePrms_.end()){
+        if (basePrms_["type"] == "summ") sType_ = sType::summ;
+        else if (basePrms_["type"] == "diff") sType_ = sType::diff;
+        else if (basePrms_["type"] == "mean") sType_ = sType::mean;
+        else
+            ERROR_MESS("param 'type' indefined");
+    }
 }
 
 std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -49,14 +57,7 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
         }
     }
     else{
-        if (basePrms_.find("func") != basePrms_.end()){
-            if (basePrms_["func"] == "summ") funcType_ = funcType::summ;
-            else if (basePrms_["func"] == "diff") funcType_ = funcType::diff;
-            else if (basePrms_["func"] == "mean") funcType_ = funcType::mean;
-            else
-                ERROR_MESS("param 'func' indefined");
-        }
-
+       
         if (operPrm.action == snAction::forward){
 
             *baseOut_ = *neighbOpr[0]->getOutput();
@@ -68,10 +69,10 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }  
-                switch (funcType_){
-                case Summator::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
-                case Summator::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
-                case Summator::mean: (*baseOut_).mean(*neighbOpr[i]->getOutput()); break;
+                switch (sType_){
+                case Summator::sType::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
+                case Summator::sType::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
+                case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput(), baseOut_); break;
                 }                
             }
         }
@@ -86,14 +87,26 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                switch (funcType_){
-                   case Summator::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
-                   case Summator::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
-                   case Summator::mean: (*baseGrad_).mean(*neighbOpr[i]->getGradient()); break;
+                switch (sType_){
+                case Summator::sType::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
+                case Summator::sType::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
+                case Summator::sType::mean: mean(baseGrad_, neighbOpr[i]->getGradient(), baseGrad_); break;
                 }
             }
         }
     }
 
     return std::vector<std::string>();
+}
+
+void Summator::mean(const Tensor* one, const Tensor* two, Tensor* out){
+   
+    snFloat* done = one->getData(),
+           * dtwo = two->getData(),
+           * dout = out->getData();
+
+    size_t sz = one->size().size();
+    for (size_t i = 0; i < sz; ++i){
+        dout[i] = (done[i] + dtwo[i]) / 2;
+    }
 }

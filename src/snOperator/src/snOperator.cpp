@@ -32,7 +32,6 @@
 #include "Operator/lossFunction.h"
 #include "Operator/lock.h"
 #include "Operator/summator.h"
-#include "Operator/resize.h"
 #include "Operator/userLayer.h"
 #include "Operator/switch.h"
 
@@ -51,7 +50,6 @@ namespace SN_Opr{
         else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(net, fname, node, prms);
         else if (fname == "Lock")           ret = (SN_Base::OperatorBase*)new Lock(net, fname, node, prms);
         else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(net, fname, node, prms);
-        else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
         else if (fname == "Switch")         ret = (SN_Base::OperatorBase*)new Switch(net, fname, node, prms);
         else if (fname == "UserLayer")      ret = (SN_Base::OperatorBase*)new UserLayer(net, fname, node, prms);
 
@@ -70,7 +68,6 @@ namespace SN_Opr{
             else if (fname == "Pooling")        delete (Pooling*)opr;
             else if (fname == "Lock")           delete (Lock*)opr;
             else if (fname == "Summator")       delete (Summator*)opr;
-            else if (fname == "Resize")         delete (Resize*)opr;
             else if (fname == "Switch")         delete (Switch*)opr;
             else if (fname == "UserLayer")      delete (UserLayer*)opr;
         }

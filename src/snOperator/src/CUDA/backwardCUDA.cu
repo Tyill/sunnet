@@ -214,7 +214,6 @@ bool bwdConvolutionG(size_t kernel, size_t fWidth, size_t fHeight, size_t stride
 
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
            wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
-           wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
            inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
            inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
            outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу

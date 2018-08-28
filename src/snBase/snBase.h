@@ -129,21 +129,7 @@ namespace SN_Base{
 
             return *this;
         }
-
-        Tensor& mean(const Tensor& other){
-
-            assert(other == *this);
-
-            auto od = other.getData();
-
-            size_t sz = this->size().size();
-            for (size_t i = 0; i < sz; ++i){
-                data_[i] = (data_[i] + od[i])/2;
-            }
-
-            return *this;
-        }
-
+                              
         snFloat* getData() const{
                 
             return data_;
