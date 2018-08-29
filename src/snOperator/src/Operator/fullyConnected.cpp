@@ -210,7 +210,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
         inSzMem_ = insz;
         updateConfig(insz);
     }
-
+   
     /// копируем со смещением для bias для каждого изобр
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
@@ -218,7 +218,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     for (size_t i = 0; i < insz.n; ++i){
         memcpy(pDtMem + i * stp + i + 1, pInTns + i * stp, ssz);
     }
-
+   
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData();
 
@@ -227,12 +227,12 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     case calcMode::CUDA: forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, auxRefParams_); break;
     case calcMode::OpenCL:  break;
     }
-        
+   
     /// batchNorm
     snSize outSz = baseOut_->size();
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(true, operPrm, outSz, out, out, baseBatchNorm_);
-
+    
     /// функция активации
     switch (activeType_){
     case activeType::sigmoid:   fv_sigmoid(out, kernel_ * insz.n); break;
@@ -241,7 +241,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     case activeType::elu:       fv_elu(out, kernel_ * insz.n); break;
     default: break;
     }
-
+   
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(true, operPrm, outSz, out, out, baseBatchNorm_);
@@ -260,7 +260,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (activeType_ != activeType::none){
 
         snFloat* out = baseOut_->getData();
-
+        
         // производная функции активации
         size_t osz = kernel_ * inSzMem_.n;
         switch (activeType_){
@@ -270,7 +270,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case activeType::elu:       df_elu(out, osz); break;
         default: break;
         }
-
+        
         // обновл градиент
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
     }
@@ -297,7 +297,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
-
+        
         switch (optimizerType_){
         case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
         case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
@@ -305,7 +305,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
         case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
         default: break;
-        }
+        } 
     }
     else{ // isFreeze
         switch (calcMode_){

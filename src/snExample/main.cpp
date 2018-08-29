@@ -102,7 +102,7 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\","
         "\"weightInit\":\"he\","
         "\"lmbRegular\":\"0.0\","
-        "\"optimizer\":\"sgd\","
+        "\"optimizer\":\"adam\","
         "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
@@ -146,7 +146,7 @@ bool loadImage(SN_API::skyNet& net, string& imgPath, int classCnt, vector<vector
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt; if (cnt > 1000) break;
+            ++cnt;// if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -184,7 +184,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.05;
+    int batchSz = 10000, classCnt = 10, w = 28, h = 28; float lr = 0.05;
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -260,7 +260,7 @@ int main(int argc, _TCHAR* argv[])
             &accurat);
 
         accuratSumm += accurat;
-       cout << k << " metrix " << accuratSumm / k << endl;
+    //   cout << k << " metrix " << accuratSumm / k << endl;
 
         
     }

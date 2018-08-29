@@ -22,23 +22,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <omp.h>
 #include "snBase/snBase.h"
-#include "snOperator/snOperator.h"
 
-#define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) SN_PRINTMESS(std::string("Profile ") + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
 
-#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
+/// Выбор дальнейшего пути
+class Switch : SN_Base::OperatorBase{
 
-void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
+public:
 
-void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
-    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+    Switch(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+
+    ~Switch() = default;
+                
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+           
+};

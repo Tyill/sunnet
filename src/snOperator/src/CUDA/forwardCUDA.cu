@@ -30,7 +30,6 @@
 #include "../stdafx.h"
 #include "SNOperator/src/mathFunctions.h"
 #include "SNOperator/src/Operator/fullyConnected.h"
-//#include <omp.h>
 
 using namespace std;
 using namespace SN_Base;
@@ -39,7 +38,7 @@ void FullyConnected::iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<
     
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
-    if (auxPrm.find("cuHandleFWD") == auxPrm.end()){
+    if (auxPrm.find("cublasHandle") == auxPrm.end()){
 
         cublasHandle_t cuHandle = nullptr;
         int sts = cublasCreate(&cuHandle);
@@ -47,7 +46,7 @@ void FullyConnected::iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<
             ERROR_MESS("fwdFullyConnected CUBLAS initialization error: sts " + to_string(sts));
             return;
         }
-        auxPrm["cuHandleFWD"] = cuHandle;
+        auxPrm["cublasHandle"] = cuHandle;
 
         snFloat* d_in = 0, *d_w = 0, *d_out = 0;
         cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)); auxPrm["d_in_FWD"] = d_in;
@@ -66,9 +65,9 @@ void FullyConnected::iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<
          
 void FullyConnected::freeParamCUDA(std::map<std::string, void*>& auxPrm){
     
-    if (auxPrm.find("cuHandleFWD") == auxPrm.end()) return;
+    if (auxPrm.find("cublasHandle") == auxPrm.end()) return;
       
-    cublasDestroy((cublasHandle_t)auxPrm["cuHandleFWD"]);
+    cublasDestroy((cublasHandle_t)auxPrm["cublasHandle"]);
 
     snFloat* d_in = (snFloat*)auxPrm["d_in_FWD"],
         *d_w = (snFloat*)auxPrm["d_w_FWD"],
@@ -81,11 +80,11 @@ void FullyConnected::freeParamCUDA(std::map<std::string, void*>& auxPrm){
 
 void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
       
-    if (auxPrm.find("cuHandleFWD") == auxPrm.end()) return;
+    if (auxPrm.find("cublasHandle") == auxPrm.end()) return;
 
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
    
-    cublasHandle_t cuHandle = (cublasHandle_t)auxPrm["cuHandleFWD"];
+    cublasHandle_t cuHandle = (cublasHandle_t)auxPrm["cublasHandle"];
 
     snFloat *d_in = (snFloat*)auxPrm["d_in_FWD"],
             *d_w = (snFloat*)auxPrm["d_w_FWD"], 
@@ -114,8 +113,9 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
         &beta,                         // β, коэф
         d_out,                         // Out, выходные данные - нейроны для след слоя
         kernel);                       // Out, шаг до след Y (Y21 - Y11) 
+    
+    cublasGetMatrix(bsz, kernel, sizeof(snFloat), d_out, bsz, output, bsz); 
    
-    cublasGetMatrix(bsz, kernel, sizeof(snFloat), d_out, bsz, output, bsz);   
 }
 //
 //bool fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
