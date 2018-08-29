@@ -64,3 +64,9 @@ enum class poolType{
     max = 0,
     avg = 1,
 };
+
+enum class calcMode{
+    CPU = 0,
+    CUDA = 1,
+    OpenCL = 2,
+};

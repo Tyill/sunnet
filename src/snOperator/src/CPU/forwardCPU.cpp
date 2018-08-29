@@ -22,19 +22,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#ifdef SN_CPU
 
 #include "../stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
-#include "SNOperator/src/mathFunctions.h"
+#include "snOperator/src/Operator/fullyConnected.h"
 #include <omp.h>  
 
 using namespace std;
 using namespace SN_Base;
 
 
-bool fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output){
-    
+void FullyConnected::forwardCPU(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output){
+  
     // Out = α * In * W + βC
     // In - матрица вход данных - значения с предыд слоя
     // W - матрица весов
@@ -53,8 +52,6 @@ bool fwdFullyConnected(size_t kernel, snSize insz, snFloat* input, snFloat* weig
         0.0,                           // β, коэф
         output,                        // Out, выходные данные - нейроны для след слоя
         kernel);                       // Out, шаг до след Y (Y21 - Y11) 
-
-    return true;
 }
 
 bool fwdConvolution(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
@@ -238,7 +235,7 @@ bool fwdPooling(int type, size_t kernel, snSize insz, snFloat* input,
     return true;
 }
 
-bool fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
+void batchNormForwardCPU(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
      
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
 
@@ -278,8 +275,32 @@ bool fwdBatchNorm(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
             cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
         }
     }
-    return true;
 }
 
+#ifndef SN_CUDA
 
-#endif //#ifdef SN_CPU
+void FullyConnected::iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, void*>& auxPrm){
+
+    ERROR_MESS("CUDA non compiler");
+}
+
+void FullyConnected::freeParamCUDA(std::map<std::string, void*>& auxPrm){
+
+    ERROR_MESS("CUDA non compiler");
+}
+
+void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
+
+    ERROR_MESS("CUDA non compiler");
+}
+
+void batchNormForwardCUDA(SN_Base::snSize insz,
+    SN_Base::snFloat* in,
+    SN_Base::snFloat* out,
+    SN_Base::batchNorm,
+    std::map<std::string, void*>&){
+
+    //  ERROR_MESS("CUDA non compiler");
+}
+
+#endif

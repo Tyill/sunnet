@@ -23,19 +23,18 @@
 // THE SOFTWARE.
 //
 
-#ifdef SN_CPU
-
 #include "../stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
-#include "SNOperator/src/structurs.h"
-#include "SNOperator/src/mathFunctions.h"
+#include "snOperator/src/structurs.h"
+#include "snOperator/src/mathFunctions.h"
+#include "snOperator/src/Operator/fullyConnected.h"
 #include <omp.h>  
 
 using namespace std;
 using namespace SN_Base;
 
 
-bool bwdFullyConnectedGW(size_t kernel, snFloat* weight,
+void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
     snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
@@ -77,11 +76,9 @@ bool bwdFullyConnectedGW(size_t kernel, snFloat* weight,
         0.0F,                          // β, доп коэф 
         gradOut,                       // GrOut, градиент для предыд слоя
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
-
-    return true;
 }
 
-bool bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
+void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
        
@@ -103,8 +100,6 @@ bool bwdFullyConnectedG(size_t kernel, snFloat* weight, snSize insz, snFloat* gr
         0.0F,                          // β, доп коэф 
         gradOut,                       // GrOut, градиент для предыд слоя
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
-
-    return true;
 }
 
 
@@ -119,7 +114,7 @@ bool bwdConvolutionGW(size_t kernel, size_t fWidth, size_t fHeight, size_t strid
            outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
            outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
 
-    size_t shareStepByN = insz.d + kernel + insz.d;          // для локализации памяти
+    size_t shareStepByN = insz.d + kernel + insz.d;      // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
     snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
@@ -372,7 +367,7 @@ bool bwdPooling(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloa
 }
    
 
-bool bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
+void batchNormBackwardCPU(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
     // https://kevinzakka.github.io/2016/09/14/batch_normalization/
 
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
@@ -416,8 +411,31 @@ bool bwdBatchNorm(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm)
         prm.schift[i] -= prm.dSchift[i] * prm.lr;
         prm.scale[i] -= prm.dScale[i] * prm.lr;
     }
-    return true;
+
 }
 
 
+#ifndef SN_CUDA
+
+void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
+    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
+
+    ERROR_MESS("CUDA non compiler");
+}
+
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
+
+    ERROR_MESS("CUDA non compiler");
+}
+
+void batchNormBackwardCUDA(SN_Base::snSize insz,
+    SN_Base::snFloat* gradIn,
+    SN_Base::snFloat* gradOut,
+    SN_Base::batchNorm,
+    std::map<std::string, void*>&){
+
+    //ERROR_MESS("CUDA non compiler");
+}
+
 #endif
+

@@ -42,6 +42,12 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
     load(prms);
 }
 
+FullyConnected::~FullyConnected(){
+
+    if (calcMode_ == calcMode::CUDA)
+        freeParamCUDA(auxRefParams_);
+}
+
 void FullyConnected::load(std::map<std::string, std::string>& prms){
     
     baseOut_ = new Tensor();
@@ -69,8 +75,19 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
     }
 
-    baseOut_->resize(snSize(kernel_));
 
+    if (prms.find("mode") != prms.end()){
+
+        string mode = prms["mode"];
+        if (mode == "CPU") calcMode_ = calcMode::CPU;
+        else if (mode == "CUDA") calcMode_ = calcMode::CUDA;
+        else if (mode == "OpenCL") calcMode_ = calcMode::OpenCL;
+        else
+            ERROR_MESS("param 'mode' = " + mode + " indefined");
+    }
+        
+    baseOut_->resize(snSize(kernel_));
+  
     // текущие параметры
     setInternPrm(prms);
   
@@ -204,19 +221,17 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData();
-    if (!fwdFullyConnected(kernel_, insz, pDtMem, baseWeight_->getData(), out))
-        ERROR_MESS("forward error")
 
+    switch (calcMode_){
+    case calcMode::CPU:  forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
+    case calcMode::CUDA: forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, auxRefParams_); break;
+    case calcMode::OpenCL:  break;
+    }
+        
     /// batchNorm
     snSize outSz = baseOut_->size();
-    if (batchNormType_ == batchNormType::beforeActive){
-        if (!operPrm.isLerning)
-            batchNormOnc(true, outSz, out, out, baseBatchNorm_);
-        else{
-            if (!fwdBatchNorm(outSz, out, out, baseBatchNorm_))
-                ERROR_MESS("fwd bnorm error")
-        }
-    }
+    if (batchNormType_ == batchNormType::beforeActive)
+        calcBatchNorm(true, operPrm, outSz, out, out, baseBatchNorm_);
 
     /// функция активации
     switch (activeType_){
@@ -228,14 +243,8 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive){
-        if (!operPrm.isLerning)
-            batchNormOnc(true, outSz, out, out, baseBatchNorm_);
-        else{
-            if (!fwdBatchNorm(outSz, out, out, baseBatchNorm_))
-                ERROR_MESS("fwd bnorm error")
-        }
-    }
+    if (batchNormType_ == batchNormType::postActive)
+        calcBatchNorm(true, operPrm, outSz, out, out, baseBatchNorm_);
 }
 
 void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -244,15 +253,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
     /// batchNorm
     snSize gsz = inTns->size();
-    if (batchNormType_ == batchNormType::postActive){
-        if (!operPrm.isLerning)
-            batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
-        else{
-            if (!bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_))
-                ERROR_MESS("bwd bnorm error")
-        }
-    }
-
+    if (batchNormType_ == batchNormType::postActive)
+        calcBatchNorm(false, operPrm, gsz, gradIn, gradIn, baseBatchNorm_);
+      
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
 
@@ -273,15 +276,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive){
-        if (!operPrm.isLerning)
-            batchNormOnc(false, gsz, gradIn, gradIn, baseBatchNorm_);
-        else{
-            if (!bwdBatchNorm(gsz, gradIn, gradIn, baseBatchNorm_))
-                ERROR_MESS("bwd bnorm error")
-        }
-    }
-
+    if (batchNormType_ == batchNormType::beforeActive)
+        calcBatchNorm(false, operPrm, gsz, gradIn, gradIn, baseBatchNorm_);
+      
     // расчет вых градиента и коррекции весов
     snFloat* gradOut = baseGrad_->getData();
     snFloat* weight = baseWeight_->getData();
@@ -289,8 +286,12 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (!isFreeze_){
 
         snFloat* dWeight = auxParams_["dWeight"].data();
-        if (!bwdFullyConnectedGW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight))
-            ERROR_MESS("backward error")
+       
+        switch (calcMode_){
+        case calcMode::CPU:  backwardCPU_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA: backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, auxRefParams_); break;
+        case calcMode::OpenCL:  break;
+        }
 
         // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -307,35 +308,56 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         }
     }
     else{ // isFreeze
-        if (!bwdFullyConnectedG(kernel_, weight, inSzMem_, gradIn, gradOut))
-            ERROR_MESS("backward error")
+        switch (calcMode_){
+        case calcMode::CPU:  backwardCPU_G(kernel_, weight, inSzMem_, gradIn, gradOut); break;
+        case calcMode::CUDA: backwardCUDA_G(kernel_, weight, inSzMem_, gradIn, gradOut, auxRefParams_); break;
+        case calcMode::OpenCL:  break;
+        }
     }
 }
 
-void FullyConnected::batchNormOnc(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
+void FullyConnected::calcBatchNorm(bool fwBw, const operationParam& operPrm, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
 
-    size_t sz = insz.w * insz.h * insz.d, bsz = insz.n;
+    if (!operPrm.isLerning){
+        size_t sz = insz.w * insz.h * insz.d, bsz = insz.n;
 
-    if (fwBw){
-      
-        /// norm = (in - mean) / varce
-        /// y = ^x * γ + β
-        for (size_t j = 0; j < bsz; ++j){
+        if (fwBw){
 
-            snFloat* cin = in + j * sz, *cout = out + j * sz, *norm = prm.norm + j * sz;
-            for (size_t i = 0; i < sz; ++i){
-                norm[i] = (cin[i] - prm.mean[i]) / prm.varce[i];
-                cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
+            /// norm = (in - mean) / varce
+            /// y = ^x * γ + β
+            for (size_t j = 0; j < bsz; ++j){
+
+                snFloat* cin = in + j * sz, *cout = out + j * sz, *norm = prm.norm + j * sz;
+                for (size_t i = 0; i < sz; ++i){
+                    norm[i] = (cin[i] - prm.mean[i]) / prm.varce[i];
+                    cout[i] = norm[i] * prm.scale[i] + prm.schift[i];
+                }
+            }
+        }
+        else{
+            /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+            for (size_t j = 0; j < bsz; ++j){
+
+                snFloat* igr = in + j * sz, *ogr = out + j * sz, *norm = prm.norm + j * sz;
+                for (size_t i = 0; i < sz; ++i)
+                    ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
             }
         }
     }
-    else{
-        /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
-        for (size_t j = 0; j < bsz; ++j){
-
-            snFloat* igr = in + j * sz, *ogr = out + j * sz, *norm = prm.norm + j * sz;
-            for (size_t i = 0; i < sz; ++i)
-                ogr[i] = prm.scale[i] * (igr[i] * bsz - prm.dSchift[i] - norm[i] * prm.dScale[i]) / (prm.varce[i] * bsz);
+    else{ // !isLerning
+        if (fwBw){
+            switch (calcMode_){
+            case calcMode::CPU:  batchNormForwardCPU(insz, in, out, baseBatchNorm_); break;
+            case calcMode::CUDA: batchNormForwardCUDA(insz, in, out, baseBatchNorm_, auxRefParams_); break;
+            case calcMode::OpenCL:  break;
+            }
+        }
+        else{
+            switch (calcMode_){
+            case calcMode::CPU:  batchNormBackwardCPU(insz, in, out, baseBatchNorm_); break;
+            case calcMode::CUDA: batchNormBackwardCUDA(insz, in, out, baseBatchNorm_, auxRefParams_); break;
+            case calcMode::OpenCL:  break;
+            }
         }
     }
 }
@@ -366,7 +388,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     
     baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));
     baseGrad_->resize(newsz);
-        
+           
     // вспом массивы
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
@@ -376,6 +398,9 @@ void FullyConnected::updateConfig(const snSize& newsz){
         auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
         auxParams_["bn_onc"].resize(newsz.n, 1.F);          baseBatchNorm_.onc = auxParams_["bn_onc"].data();
     }
+    
+    if (calcMode_ == calcMode::CUDA)
+       iniParamCUDA(newsz, kernel_, auxRefParams_);
 } 
 
 

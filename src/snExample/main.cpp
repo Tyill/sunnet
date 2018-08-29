@@ -96,23 +96,17 @@ bool createNet(SN_API::skyNet& net){
 
         "{"
         "\"NodeName\":\"F2\","
-        "\"NextNodes\":\"Lk\","
+        "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
         "\"freeze\":\"0\","
         "\"weightInit\":\"he\","
         "\"lmbRegular\":\"0.0\","
         "\"optimizer\":\"sgd\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
-
-        "{"
-        "\"NodeName\":\"Lk\","
-        "\"NextNodes\":\"LS\","
-        "\"OperatorName\":\"Lock\","
-        "\"OperatorParams\":{\"state\":\"unlock\"}"
-        "},"
-
+              
         "{"
         "\"NodeName\":\"LS\","
         "\"NextNodes\":\"EndNet\","

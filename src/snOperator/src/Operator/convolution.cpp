@@ -379,10 +379,10 @@ void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFl
             pIn += stepN;
         }
 
-        if (fwBw)
+        /*if (fwBw)
             ok = fwdBatchNorm(sz, share, share, prm);
         else
-            ok = bwdBatchNorm(sz, share, share, prm);
+            ok = bwdBatchNorm(sz, share, share, prm);*/
 
         pSh = share;
         snFloat* pOut = out + stepD * i;
