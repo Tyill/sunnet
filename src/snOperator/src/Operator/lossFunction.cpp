@@ -134,13 +134,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
     snSize grsz = baseGrad_->size();
     if (grsz != tsz)
         baseGrad_->resize(tsz);
-
-    // градиент уже задан сверху? расчит ошибку не надо
-    if (!operPrm.isAutoCalcError){
-        baseGrad_->setData(inTns->getData(), grsz);
-        return;
-    }
-
+        
     auto smOut = baseOut_->getData();    // результат после forward
     auto target = inTns->getData();         // задан целевой результат
     auto grad = baseGrad_->getData();   // градиент ошибки на входе в lossFunc

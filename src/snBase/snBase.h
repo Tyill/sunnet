@@ -172,13 +172,12 @@ namespace SN_Base{
     /// параметры тек действия
     struct operationParam{
 
-        bool isAutoCalcError; ///< расчит ошибку автоматич
         bool isLerning;       ///< обучение
         snAction action;      ///< режим работы
         snFloat lr;           ///< коэф скорости обучения
         
         operationParam(bool isAutoCalcError_ = false, bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
-            isAutoCalcError(isAutoCalcError_), isLerning(isLerning_), action(action_), lr(lr_){}
+           isLerning(isLerning_), action(action_), lr(lr_){}
     };
     
     /// нормализация слоя по батчу

@@ -211,7 +211,6 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
 
     operPrm_.lr = lr;
     operPrm_.action = snAction::backward;
-    operPrm_.isAutoCalcError = true;
     operPrm_.isLerning = true;
     engine_->backward(operPrm_);
 
@@ -278,7 +277,6 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
 
     operPrm_.lr = lr;
     operPrm_.action = snAction::backward;
-    operPrm_.isAutoCalcError = false;
     operPrm_.isLerning = true;
     engine_->backward(operPrm_);   
 

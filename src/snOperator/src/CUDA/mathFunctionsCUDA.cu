@@ -22,34 +22,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
 
-#include "snBase/snBase.h"
+#ifdef SN_CUDA
 
-/// батч нормализация прямой проход CPU    
-void batchNormForwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+#include "../stdafx.h"
+#include "SNOperator/src/mathFunctions.h"
 
-/// батч нормализация обратный проход CPU
-void batchNormBackwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+using namespace std;
+using namespace SN_Base;
+     
 
-/// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+void batchNormForwardCUDA(void* hcuBLAS, snSize insz, snFloat* in, snFloat* out, batchNorm prm, map<string, snFloat*>& auxPrm){
 
-/// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+   
+
+}
+
+void batchNormBackwardCUDA(void* hcuBLAS, snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm, map<string, snFloat*>&){
+
+}
+
+#endif 

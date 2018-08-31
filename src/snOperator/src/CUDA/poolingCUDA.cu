@@ -22,34 +22,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
 
-#include "snBase/snBase.h"
+#ifdef SN_CUDA
 
-/// батч нормализация прямой проход CPU    
-void batchNormForwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+#include "../stdafx.h"
+#include "SNOperator/src/Operator/pooling.h"
 
-/// батч нормализация обратный проход CPU
-void batchNormBackwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+using namespace std;
+using namespace SN_Base;
+          
 
-/// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+void Pooling::iniParamCUDA(snSize insz, size_t kernel, map<string, snFloat*>& auxPrm){
 
-/// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+   
+}
+
+void Pooling::freeParamCUDA(map<string, snFloat*>& gpuPrm){
+    
+    for (auto p : gpuPrm)
+        cudaFree(p.second);
+}
+
+void Pooling::forwardCUDA(int type, size_t kernel, snSize insz, snFloat* input,
+    snSize outsz, snFloat* output, size_t* outputInx, map<string, snFloat*>& auxPrm){
+
+   
+}
+
+void Pooling::backwardCUDA(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn,
+    snSize insz, snFloat* gradOut, map<string, snFloat*>& auxPrm){
+
+ 
+}
+
+
+
+
+#endif 

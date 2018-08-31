@@ -63,20 +63,20 @@ bool createNet(SN_API::skyNet& net){
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"F2\""
+        "\"NextNodes\":\"C1\""
         "},"
 
         "\"Nodes\":"
         "["
-
-       /* "{"
+        
+        "{"
         "\"NodeName\":\"C1\","
-        "\"NextNodes\":\"P1\","
+        "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"28\", \"batchNorm\":\"none\","
         "\"freeze\":\"0\"}"
         "},"
-
+        /*
         "{"
         "\"NodeName\":\"P1\","
         "\"NextNodes\":\"F1\","
@@ -146,7 +146,7 @@ bool loadImage(SN_API::skyNet& net, string& imgPath, int classCnt, vector<vector
                 imgName[i].push_back(p.filename());
             }
             ++it;
-            ++cnt;// if (cnt > 1000) break;
+            ++cnt; //if (cnt > 1000) break;
         }
 
         imgCntDir[i] = cnt;
@@ -260,7 +260,7 @@ int main(int argc, _TCHAR* argv[])
             &accurat);
 
         accuratSumm += accurat;
-    //   cout << k << " metrix " << accuratSumm / k << endl;
+      cout << k << " metrix " << accuratSumm / k << endl;
 
         
     }

@@ -26,30 +26,15 @@
 
 #include "snBase/snBase.h"
 
-/// батч нормализация прямой проход CPU    
-void batchNormForwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
 
-/// батч нормализация обратный проход CPU
-void batchNormBackwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+/// РїРѕР»СЊР·-Р№ СЃР»РѕР№
+class UserLayer : SN_Base::OperatorBase{
 
-/// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+public:
 
-/// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+    UserLayer(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+
+    ~UserLayer() = default;
+                
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+};

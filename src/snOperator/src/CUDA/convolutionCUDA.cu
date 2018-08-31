@@ -22,34 +22,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
 
-#include "snBase/snBase.h"
+#ifdef SN_CUDA
 
-/// батч нормализация прямой проход CPU    
-void batchNormForwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+#include "../stdafx.h"
+#include "SNOperator/src/Operator/convolution.h"
 
-/// батч нормализация обратный проход CPU
-void batchNormBackwardCPU(SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+using namespace std;
+using namespace SN_Base;
+          
 
-/// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+void Convolution::iniParamCUDA(snSize insz, size_t kernel, map<string, snFloat*>& gpuPrm){
 
-/// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+}
+
+void Convolution::freeParamCUDA(map<std::string, snFloat*>& gpuPrm){
+
+    for (auto p : gpuPrm)
+        cudaFree(p.second);
+}
+
+void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, map<string, snFloat*>& auxPrm){
+
+ 
+}
+
+void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, snFloat*>&){
+
+
+}
+
+void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, snFloat*>&){
+
+
+}
+
+#endif 

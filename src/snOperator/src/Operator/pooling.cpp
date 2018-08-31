@@ -68,6 +68,16 @@ void Pooling::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("param 'pool' = " + atype + " indefined");
     }
 
+    if (prms.find("mode") != prms.end()){
+
+        string mode = prms["mode"];
+        if (mode == "CPU") calcMode_ = calcMode::CPU;
+        else if (mode == "CUDA") calcMode_ = calcMode::CUDA;
+        else if (mode == "OpenCL") calcMode_ = calcMode::OpenCL;
+        else
+            ERROR_MESS("param 'mode' = " + mode + " indefined");
+    }
+
     basePrms_ = prms;
 }
 
@@ -106,9 +116,12 @@ void Pooling::forward(SN_Base::Tensor* inTns){
 
     /// расчет выходных значений
     snFloat* out = baseOut_->getData();
-    if (!fwdPooling((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data()))
-        ERROR_MESS("forward error")
-       
+   
+    switch (calcMode_){
+    case calcMode::CPU:  forwardCPU((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data()); break;
+    case calcMode::CUDA: forwardCUDA((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::OpenCL:  break;
+    }       
 }
 
 void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -118,9 +131,12 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
     snFloat* pGrOutExp = !isPadding_ ? baseGrad_->getData() : auxParams_["outGradExp"].data();
 
     /// расчет вых градиента
-    if (!bwdPooling((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp))
-        ERROR_MESS("backward error")
-
+    switch (calcMode_){
+    case calcMode::CPU:  backwardCPU((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp); break;
+    case calcMode::CUDA: backwardCUDA((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp, gpuParams_); break;
+    case calcMode::OpenCL:  break;
+    }
+   
     if (isPadding_)
         paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
 }

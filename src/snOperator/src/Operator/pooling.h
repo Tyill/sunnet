@@ -29,25 +29,6 @@
 #include"SNOperator/src/mathFunctions.h"
 
 
-/// прямой проход
-bool fwdPooling(int type,   ///< тип: max, avr..
-              size_t kernel,   ///< размер маски
-       SN_Base::snSize insz,   ///< вход значения размер 
-    SN_Base::snFloat* input,   ///< вход значения
-      SN_Base::snSize outsz,   ///< выход значения размер 
-   SN_Base::snFloat* output,   ///< выход значения
-          size_t* outputInx);  ///< выход значения индекс ненулевого элемента
-
-/// обратный проход
-bool bwdPooling(int type,   ///< тип: max, avr..
-              size_t kernel,   ///< размер маски
-      SN_Base::snSize outsz,   ///< выход значения размер 
-          size_t* outputInx,   ///< выход значения индекс ненулевого элемента
-   SN_Base::snFloat* gradIn,   ///< входной градиент
-       SN_Base::snSize insz,   ///< вход значения размер 
-  SN_Base::snFloat* gradOut);  ///< выходной градиент
-
-
 /// объединяющий слой
 class Pooling : SN_Base::OperatorBase{
 
@@ -76,7 +57,11 @@ private:
     size_t paddingH_ = 0, paddingW_ = 0;                              ///< доп отступ по краям для свертки
     bool isPadding_ = false;
 
+    calcMode calcMode_ = calcMode::CPU;                               ///< режим расчета
+
+
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
+    std::map<std::string, SN_Base::snFloat*> gpuParams_;              ///< вспом для CUDA и OpenCL
 
     void load(std::map<std::string, std::string>& prms);
         
@@ -87,6 +72,53 @@ private:
     void forward(SN_Base::Tensor* inTns);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 
+    /// CPU ///////////////////////////
 
+    /// прямой проход
+    void forwardCPU(int type,     ///< тип: max, avr..
+        size_t kernel,            ///< размер маски
+        SN_Base::snSize insz,     ///< вход значения размер 
+        SN_Base::snFloat* input,  ///< вход значения
+        SN_Base::snSize outsz,    ///< выход значения размер 
+        SN_Base::snFloat* output, ///< выход значения
+        size_t* outputInx);       ///< выход значения индекс ненулевого элемента
+
+    /// обратный проход
+    void backwardCPU(int type,      ///< тип: max, avr..
+        size_t kernel,              ///< размер маски
+        SN_Base::snSize outsz,      ///< выход значения размер 
+        size_t* outputInx,          ///< выход значения индекс ненулевого элемента
+        SN_Base::snFloat* gradIn,   ///< входной градиент
+        SN_Base::snSize insz,       ///< вход значения размер 
+        SN_Base::snFloat* gradOut); ///< выходной градиент
+
+
+    /// CUDA ///////////////////////////
+
+    /// иниц вспом параметров CUDA          
+    void iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+
+    /// освоб вспом параметров CUDA          
+    void freeParamCUDA(std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+
+    /// прямой проход
+    void forwardCUDA(int type,    ///< тип: max, avr..
+        size_t kernel,            ///< размер маски
+        SN_Base::snSize insz,     ///< вход значения размер 
+        SN_Base::snFloat* input,  ///< вход значения
+        SN_Base::snSize outsz,    ///< выход значения размер 
+        SN_Base::snFloat* output, ///< выход значения
+        size_t* outputInx,        ///< выход значения индекс ненулевого элемента
+        std::map<std::string, SN_Base::snFloat*>&); ///< вспом
+
+    /// обратный проход
+    void backwardCUDA(int type,    ///< тип: max, avr..
+        size_t kernel,             ///< размер маски
+        SN_Base::snSize outsz,     ///< выход значения размер 
+        size_t* outputInx,         ///< выход значения индекс ненулевого элемента
+        SN_Base::snFloat* gradIn,  ///< входной градиент
+        SN_Base::snSize insz,      ///< вход значения размер 
+        SN_Base::snFloat* gradOut, ///< выходной градиент
+    std::map<std::string, SN_Base::snFloat*>&); ///< вспом
  
 };

@@ -27,43 +27,7 @@
 #include "snBase/snBase.h"
 #include"SNOperator/src/structurs.h"
 #include"SNOperator/src/mathFunctions.h"
-
-/// прямой проход
-bool fwdConvolution(size_t kernel,   ///< колво вых слоев
-                  size_t fWidth,     ///< ширина маски
-                 size_t fHeight,     ///< высота маски
-                    size_t stride,   ///< шаг движения маски
-         SN_Base::snFloat* weight,   ///< веса
-             SN_Base::snSize insz,   ///< вход значения размер 
-          SN_Base::snFloat* input,   ///< вход значения
-            SN_Base::snSize outsz,   ///< выход значения размер 
-         SN_Base::snFloat* output);  ///< выход знач (скрытых нейронов) для след слоя
-
-/// обратный проход. Расчет град-в и весов
-bool bwdConvolutionGW(size_t kernel,   ///< колво вых слоев
-                  size_t fWidth,     ///< ширина маски
-                 size_t fHeight,     ///< высота маски
-                    size_t stride,   ///< шаг движения маски
-         SN_Base::snFloat* weight,   ///< веса
-             SN_Base::snSize insz,   ///< вход значения размер 
-          SN_Base::snFloat* input,   ///< вход значения 
-            SN_Base::snSize outsz,   ///< выход значения размер 
-         SN_Base::snFloat* gradIn,   ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,   ///< выход градиент ошибки для след слоя
-     SN_Base::snFloat* dWeightOut);  ///< дельта изменения весов
-
-/// обратный проход. Расчет град-в
-bool bwdConvolutionG(size_t kernel,   ///< колво вых слоев
-                     size_t fWidth,     ///< ширина маски
-                    size_t fHeight,     ///< высота маски
-                     size_t stride,   ///< шаг движения маски
-          SN_Base::snFloat* weight,   ///< веса
-              SN_Base::snSize insz,   ///< вход значения размер 
-           SN_Base::snFloat* input,   ///< вход значения 
-             SN_Base::snSize outsz,   ///< выход значения размер 
-          SN_Base::snFloat* gradIn,   ///< вход градиент ошибки с пред слоя
-         SN_Base::snFloat* gradOut);   ///< выход градиент ошибки для след слоя
-     
+    
 
 /// сверточный слой
 class Convolution : SN_Base::OperatorBase{
@@ -72,7 +36,7 @@ public:
 
     Convolution(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Convolution() = default;
+    ~Convolution();
 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
         
@@ -100,23 +64,110 @@ private:
           
     bool isFreeze_ = false;                                     ///< не менять веса
 
+    calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
+
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
-        
+    std::map<std::string, SN_Base::snFloat*> gpuParams_;              ///< вспом для CUDA и OpenCL
+
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
     
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
-    void calcBatchNorm(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
-
-    void calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
-
+    void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
+       
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
        
+    /// CPU ///////////////////////////
+
+    /// прямой проход
+    void forwardCPU(size_t kernel,   ///< колво вых слоев
+        size_t fWidth,               ///< ширина маски
+        size_t fHeight,              ///< высота маски
+        size_t stride,               ///< шаг движения маски
+        SN_Base::snFloat* weight,    ///< веса
+        SN_Base::snSize insz,        ///< вход значения размер 
+        SN_Base::snFloat* input,     ///< вход значения
+        SN_Base::snSize outsz,       ///< выход значения размер 
+        SN_Base::snFloat* output);   ///< выход знач (скрытых нейронов) для след слоя
+
+    /// обратный проход. Расчет град-в и весов
+    void backwardCPU_GW(size_t kernel, ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
+        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
+        SN_Base::snFloat* dWeightOut); ///< дельта изменения весов
+
+    /// обратный проход. Расчет град-в
+    void backwardCPU_G(size_t kernel,  ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
+        SN_Base::snFloat* gradOut);    ///< выход градиент ошибки для след слоя
+
+
+
+    /// CUDA ///////////////////////////
+    
+    /// иниц вспом параметров CUDA          
+    void iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+
+    /// освоб вспом параметров CUDA          
+    void freeParamCUDA(std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+
+    /// прямой проход
+    void forwardCUDA(size_t kernel,   ///< колво вых слоев
+        size_t fWidth,               ///< ширина маски
+        size_t fHeight,              ///< высота маски
+        size_t stride,               ///< шаг движения маски
+        SN_Base::snFloat* weight,    ///< веса
+        SN_Base::snSize insz,        ///< вход значения размер 
+        SN_Base::snFloat* input,     ///< вход значения
+        SN_Base::snSize outsz,       ///< выход значения размер 
+        SN_Base::snFloat* output,    ///< выход знач (скрытых нейронов) для след слоя
+        std::map<std::string, SN_Base::snFloat*>&); ///< вспом  
+
+    /// обратный проход. Расчет град-в и весов
+    void backwardCUDA_GW(size_t kernel, ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
+        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
+        SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
+        std::map<std::string, SN_Base::snFloat*>&);  ///< вспом 
+
+    /// обратный проход. Расчет град-в
+    void backwardCUDA_G(size_t kernel,  ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
+        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
+        std::map<std::string, SN_Base::snFloat*>&);  ///< вспом 
 };

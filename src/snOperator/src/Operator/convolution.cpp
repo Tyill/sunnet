@@ -42,6 +42,12 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
     load(prms);
 }
 
+Convolution::~Convolution(){
+
+    if (calcMode_ == calcMode::CUDA)
+        freeParamCUDA(gpuParams_);
+}
+
 void Convolution::load(std::map<std::string, std::string>& prms){
 
     baseOut_ = new Tensor();
@@ -82,6 +88,16 @@ void Convolution::load(std::map<std::string, std::string>& prms){
         else if (bnType == "postActive") batchNormType_ = batchNormType::postActive;
         else
             ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
+    }
+
+    if (prms.find("mode") != prms.end()){
+
+        string mode = prms["mode"];
+        if (mode == "CPU") calcMode_ = calcMode::CPU;
+        else if (mode == "CUDA") calcMode_ = calcMode::CUDA;
+        else if (mode == "OpenCL") calcMode_ = calcMode::OpenCL;
+        else
+            ERROR_MESS("param 'mode' = " + mode + " indefined");
     }
 
     // вспом массивы
@@ -217,16 +233,17 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
-    if (!fwdConvolution(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out))
-        ERROR_MESS("forward error")
+
+    switch (calcMode_){
+    case calcMode::CPU:  forwardCPU(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out); break;
+    case calcMode::CUDA: forwardCUDA(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out, gpuParams_); break;
+    case calcMode::OpenCL:  break;
+    }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive){
-        if (!operPrm.isLerning)
-            calcBatchNormOnc(true, outsz, out, out, baseBatchNorm_);
-        else
-            calcBatchNorm(true, outsz, out, out, baseBatchNorm_);
-    }
+    if (batchNormType_ == batchNormType::beforeActive)
+        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+       
 
     /// функция активации
     switch (activeType_){
@@ -238,12 +255,9 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive){
-        if (!operPrm.isLerning)
-            calcBatchNormOnc(true, outsz, out, out, baseBatchNorm_);
-        else
-            calcBatchNorm(true, outsz, out, out, baseBatchNorm_);
-    }
+    if (batchNormType_ == batchNormType::postActive)
+        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -251,13 +265,9 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     snFloat* gradIn = inTns->getData();
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive){
-        if (!operPrm.isLerning)
-            calcBatchNormOnc(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
-        else
-            calcBatchNorm(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
-    }
-
+    if (batchNormType_ == batchNormType::postActive)
+        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    
     // проходим через ф-ю активации, если есть
     if (activeType_ != activeType::none){
 
@@ -278,13 +288,9 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive){
-        if (!operPrm.isLerning)
-            calcBatchNormOnc(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
-        else
-            calcBatchNorm(false, inTns->size(), gradIn, gradIn, baseBatchNorm_);
-    }
-
+    if (batchNormType_ == batchNormType::beforeActive)
+        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+    
     // расчет вых градиента и коррекции весов
     bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
     snFloat* pGrOutExp = isSame ? baseGrad_->getData() : auxParams_["outGradExp"].data();
@@ -293,9 +299,12 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
-        if (!bwdConvolutionGW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-            baseOut_->size(), gradIn, pGrOutExp, dWeight))
-            ERROR_MESS("backward error")
+        
+        switch (calcMode_){
+        case calcMode::CPU:  backwardCPU_GW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight); break;
+        case calcMode::CUDA: backwardCUDA_GW(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight, gpuParams_); break;
+        case calcMode::OpenCL:  break;
+        }
 
         // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -312,9 +321,11 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         }
     }
     else{ // isFreeze
-        if (!bwdConvolutionG(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(),
-            baseOut_->size(), gradIn, pGrOutExp))
-            ERROR_MESS("backward error")
+        switch (calcMode_){
+        case calcMode::CPU:  backwardCPU_G(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp); break;
+        case calcMode::CUDA: backwardCUDA_G(kernel_, fWidth_, fHeight_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, gpuParams_); break;
+        case calcMode::OpenCL:  break;
+        }
     }
 
     if (!isSame)
@@ -359,92 +370,76 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
     }
 }
 
-void Convolution::calcBatchNorm(bool fwBw, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
-
-    /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
-
-    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d;
-
-    bool ok = false;
-    snFloat* share = (snFloat*)calloc(stepD * insz.n, sizeof(snFloat));
-    snSize sz(insz.w, insz.h, 1, insz.n);
-    for (size_t i = 0; i < insz.d; ++i){
-
-        snFloat* pSh = share;
-        snFloat* pIn = in + stepD * i;
-        for (size_t j = 0; j < insz.n; ++j){
-
-            memcpy(pSh, pIn, stepD * sizeof(snFloat));
-            pSh += stepD;
-            pIn += stepN;
-        }
-
-        /*if (fwBw)
-            ok = fwdBatchNorm(sz, share, share, prm);
-        else
-            ok = bwdBatchNorm(sz, share, share, prm);*/
-
-        pSh = share;
-        snFloat* pOut = out + stepD * i;
-        for (size_t j = 0; j < insz.n; ++j){
-            memcpy(pOut, pSh, stepD * sizeof(snFloat));
-            pSh += stepD;
-            pOut += stepN;
-        }
-
-        prm.offset(stepD);
-        prm.norm += stepD * insz.n;
-    }
-    free(share);
-
-    prm.offset(-int(stepD * insz.d));
-    prm.norm -= stepD * insz.d * insz.n;
-
-    if (!ok)
-        ERROR_MESS((fwBw ? "fwd" : "bwd") + " bnorm error")       
-}
-
-void Convolution::calcBatchNormOnc(bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm){
+void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
 
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
-    if (fwBw){
+
+    if (!isLern){
 
         for (size_t i = 0; i < insz.d; ++i){
 
-            /// norm = (in - mean) / varce
             /// y = ^x * γ + β
             for (size_t j = 0; j < bsz; ++j){
 
                 snFloat* cin = in + stepN * j + stepD * i,
-                    *cout = out + stepN * j + stepD * i,
-                    *norm = prm.norm + stepN * j + stepD * i;
-                for (size_t k = 0; k < stepD; ++k){
-                    norm[k] = (cin[k] - prm.mean[k]) / prm.varce[k];
-                    cout[k] = norm[k] * prm.scale[k] + prm.schift[k];
-                }
+                    *cout = out + stepN * j + stepD * i;
+                for (size_t k = 0; k < stepD; ++k)
+                    cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
             }
             prm.offset(stepD);
         }
+
+        prm.offset(-int(stepD * insz.d));
     }
     else{
+
+        snFloat* share = (snFloat*)calloc(stepD * bsz, sizeof(snFloat));
+        snSize sz(insz.w, insz.h, 1, insz.n);
+
         for (size_t i = 0; i < insz.d; ++i){
 
-            /// ∂f/∂x = (m⋅γ⋅∂f/∂y − γ⋅∂f/∂β − ^x⋅γ⋅∂f/∂γ) / m⋅σ2
+            snFloat* pSh = share;
+            snFloat* pIn = in + stepD * i;
             for (size_t j = 0; j < bsz; ++j){
 
-                snFloat* igr = in + stepN * j + stepD * i,
-                    *ogr = out + stepN * j + stepD * i,
-                    *norm = prm.norm + stepN * j + stepD * i;
-                for (size_t k = 0; k < stepD; ++k)
-					ogr[k] = prm.scale[k] * (igr[k] * bsz - prm.dSchift[k] - norm[k] * prm.dScale[k]) / (prm.varce[k] * bsz);
+                memcpy(pSh, pIn, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pIn += stepN;
             }
+
+            if (fwBw){
+                switch (calcMode_){
+                case calcMode::CPU:  batchNormForwardCPU(sz, share, share, baseBatchNorm_); break;
+                case calcMode::CUDA: batchNormForwardCUDA(nullptr, sz, share, share, baseBatchNorm_, gpuParams_); break;
+                case calcMode::OpenCL:  break;
+                }
+            }             
+            else{
+                switch (calcMode_){
+                case calcMode::CPU:  batchNormBackwardCPU(sz, share, share, baseBatchNorm_); break;
+                case calcMode::CUDA: batchNormBackwardCUDA(nullptr, sz, share, share, baseBatchNorm_, gpuParams_); break;
+                case calcMode::OpenCL:  break;
+                }
+            }               
+
+            pSh = share;
+            snFloat* pOut = out + stepD * i;
+            for (size_t j = 0; j < bsz; ++j){
+                memcpy(pOut, pSh, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pOut += stepN;
+            }
+
             prm.offset(stepD);
+            prm.norm += stepD * bsz;
         }
-    }
-    
-    prm.offset(-int(stepD * insz.d));
+        free(share);
+
+        prm.offset(-int(stepD * insz.d));
+        prm.norm -= stepD * insz.d * bsz;
+    }         
 }
 
 void Convolution::updateConfig(const snSize& newsz){
