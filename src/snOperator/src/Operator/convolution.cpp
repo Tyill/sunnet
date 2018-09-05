@@ -515,6 +515,9 @@ void Convolution::updateConfig(const snSize& newsz){
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  
+
+    if (calcMode_ == calcMode::CUDA)
+        iniParamCUDA(inDataExpSz_, outSz, fWidth_, fHeight_, gpuParams_);
 } 
 
 

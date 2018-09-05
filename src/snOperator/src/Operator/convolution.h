@@ -127,7 +127,7 @@ private:
     /// CUDA ///////////////////////////
     
     /// иниц вспом параметров CUDA          
-    void iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+    void iniParamCUDA(SN_Base::snSize insz, SN_Base::snSize outsz, size_t fWidth, size_t fHeight, std::map<std::string, SN_Base::snFloat*>& gpuPrm);
 
     /// освоб вспом параметров CUDA          
     void freeParamCUDA(std::map<std::string, SN_Base::snFloat*>& gpuPrm);
