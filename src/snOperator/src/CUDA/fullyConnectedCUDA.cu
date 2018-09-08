@@ -33,83 +33,83 @@
 using namespace std;
 using namespace SN_Base;
           
-void FullyConnected::iniParamCUDA(void** hcuBLAS, snSize insz, size_t kernel, map<string, snFloat*>& auxPrm){
+void FullyConnected::iniParamCUDA(snSize insz, size_t kernel, map<string, void*>& gpuPrm){
     
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
-    if (!*hcuBLAS){
-
+    if (gpuPrm.find("hcuBLAS") == gpuPrm.end()){
+        
         cublasHandle_t cuHandle = nullptr;
         int sts = cublasCreate(&cuHandle);
         if (sts != CUBLAS_STATUS_SUCCESS){
             ERROR_MESS("fwdFullyConnected CUBLAS initialization error: sts " + to_string(sts));
             return;
         }
-        *hcuBLAS = cuHandle;
+        gpuPrm["hcuBLAS"] = cuHandle;
                             
         snFloat* d_in_fwd = 0, *d_w_fwd = 0, *d_out_fwd = 0;
-        cudaMalloc(reinterpret_cast<void**>(&d_in_fwd),     bsz * ida * sizeof(snFloat)); auxPrm["d_in_fwd"]  = d_in_fwd;
-        cudaMalloc(reinterpret_cast<void**>(&d_w_fwd),   ida * kernel * sizeof(snFloat)); auxPrm["d_w_fwd"]   = d_w_fwd;
-        cudaMalloc(reinterpret_cast<void**>(&d_out_fwd), bsz * kernel * sizeof(snFloat)); auxPrm["d_out_fwd"] = d_out_fwd;
+        cudaMalloc(reinterpret_cast<void**>(&d_in_fwd),     bsz * ida * sizeof(snFloat)); gpuPrm["d_in_fwd"]  = d_in_fwd;
+        cudaMalloc(reinterpret_cast<void**>(&d_w_fwd),   ida * kernel * sizeof(snFloat)); gpuPrm["d_w_fwd"]   = d_w_fwd;
+        cudaMalloc(reinterpret_cast<void**>(&d_out_fwd), bsz * kernel * sizeof(snFloat)); gpuPrm["d_out_fwd"] = d_out_fwd;
          
         if (batchNormType_ != batchNormType::none){
             snFloat* d_in_bn = 0, *d_out_bn = 0, *d_norm_bn = 0, *d_mean_bn = 0,
                 *d_varce_bn = 0, *d_scale_bn = 0, *d_dScale_bn = 0, *d_schift_bn = 0, *d_dSchift_bn = 0, *d_onc_bn = 0;
 
-            cudaMalloc(reinterpret_cast<void**>(&d_in_bn),   bsz * kernel * sizeof(snFloat)); auxPrm["d_in_bn"]      = d_in_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_out_bn),  bsz * kernel * sizeof(snFloat)); auxPrm["d_out_bn"]     = d_out_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_norm_bn), bsz * kernel * sizeof(snFloat)); auxPrm["d_norm_bn"]    = d_norm_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_mean_bn),       kernel * sizeof(snFloat)); auxPrm["d_mean_bn"]    = d_mean_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_varce_bn),      kernel * sizeof(snFloat)); auxPrm["d_varce_bn"]   = d_varce_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_scale_bn),      kernel * sizeof(snFloat)); auxPrm["d_scale_bn"]   = d_scale_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_dScale_bn),     kernel * sizeof(snFloat)); auxPrm["d_dScale_bn"]  = d_dScale_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_schift_bn),     kernel * sizeof(snFloat)); auxPrm["d_schift_bn"]  = d_schift_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_dSchift_bn),    kernel * sizeof(snFloat)); auxPrm["d_dSchift_bn"] = d_dSchift_bn;
-            cudaMalloc(reinterpret_cast<void**>(&d_onc_bn),           bsz * sizeof(snFloat)); auxPrm["d_onc_bn"]     = d_onc_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_in_bn),   bsz * kernel * sizeof(snFloat)); gpuPrm["d_in_bn"]      = d_in_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_out_bn),  bsz * kernel * sizeof(snFloat)); gpuPrm["d_out_bn"]     = d_out_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_norm_bn), bsz * kernel * sizeof(snFloat)); gpuPrm["d_norm_bn"]    = d_norm_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_mean_bn),       kernel * sizeof(snFloat)); gpuPrm["d_mean_bn"]    = d_mean_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_varce_bn),      kernel * sizeof(snFloat)); gpuPrm["d_varce_bn"]   = d_varce_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_scale_bn),      kernel * sizeof(snFloat)); gpuPrm["d_scale_bn"]   = d_scale_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_dScale_bn),     kernel * sizeof(snFloat)); gpuPrm["d_dScale_bn"]  = d_dScale_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_schift_bn),     kernel * sizeof(snFloat)); gpuPrm["d_schift_bn"]  = d_schift_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_dSchift_bn),    kernel * sizeof(snFloat)); gpuPrm["d_dSchift_bn"] = d_dSchift_bn;
+            cudaMalloc(reinterpret_cast<void**>(&d_onc_bn),           bsz * sizeof(snFloat)); gpuPrm["d_onc_bn"]     = d_onc_bn;
         }
     }
     else{
-        snFloat* d_in_fwd = (snFloat*)auxPrm["d_in_fwd"],
-               * d_w_fwd = (snFloat*)auxPrm["d_w_fwd"],
-               * d_out_fwd = (snFloat*)auxPrm["d_out_fwd"];            
+        snFloat* d_in_fwd  = (snFloat*)gpuPrm["d_in_fwd"],
+               * d_w_fwd   = (snFloat*)gpuPrm["d_w_fwd"],
+               * d_out_fwd = (snFloat*)gpuPrm["d_out_fwd"];            
 
-        cudaFree(d_in_fwd);  cudaMalloc(reinterpret_cast<void**>(&d_in_fwd),     bsz * ida * sizeof(snFloat)); auxPrm["d_in_fwd"]  = d_in_fwd;
-        cudaFree(d_w_fwd);   cudaMalloc(reinterpret_cast<void**>(&d_w_fwd),   ida * kernel * sizeof(snFloat)); auxPrm["d_w_fwd"]   = d_w_fwd;
-        cudaFree(d_out_fwd); cudaMalloc(reinterpret_cast<void**>(&d_out_fwd), bsz * kernel * sizeof(snFloat)); auxPrm["d_out_fwd"] = d_out_fwd;
+        cudaFree(d_in_fwd);  cudaMalloc(reinterpret_cast<void**>(&d_in_fwd),     bsz * ida * sizeof(snFloat)); gpuPrm["d_in_fwd"]  = d_in_fwd;
+        cudaFree(d_w_fwd);   cudaMalloc(reinterpret_cast<void**>(&d_w_fwd),   ida * kernel * sizeof(snFloat)); gpuPrm["d_w_fwd"]   = d_w_fwd;
+        cudaFree(d_out_fwd); cudaMalloc(reinterpret_cast<void**>(&d_out_fwd), bsz * kernel * sizeof(snFloat)); gpuPrm["d_out_fwd"] = d_out_fwd;
 
         if (batchNormType_ != batchNormType::none){
-            snFloat* d_in_bn   = (snFloat*)auxPrm["d_in_bn"],
-                   * d_out_bn  = (snFloat*)auxPrm["d_out_bn"],
-                   * d_norm_bn = (snFloat*)auxPrm["d_norm_bn"],
-                   * d_onc_bn  = (snFloat*)auxPrm["d_onc_bn"];
+            snFloat* d_in_bn   = (snFloat*)gpuPrm["d_in_bn"],
+                   * d_out_bn  = (snFloat*)gpuPrm["d_out_bn"],
+                   * d_norm_bn = (snFloat*)gpuPrm["d_norm_bn"],
+                   * d_onc_bn  = (snFloat*)gpuPrm["d_onc_bn"];
 
-            cudaFree(d_in_bn);   cudaMalloc(reinterpret_cast<void**>(&d_in_bn),   bsz * kernel * sizeof(snFloat)); auxPrm["d_in_bn"]   = d_in_bn;
-            cudaFree(d_out_bn);  cudaMalloc(reinterpret_cast<void**>(&d_out_bn),  bsz * kernel * sizeof(snFloat)); auxPrm["d_out_bn"]  = d_out_bn;
-            cudaFree(d_norm_bn); cudaMalloc(reinterpret_cast<void**>(&d_norm_bn), bsz * kernel * sizeof(snFloat)); auxPrm["d_norm_bn"] = d_norm_bn;
-            cudaFree(d_onc_bn);  cudaMalloc(reinterpret_cast<void**>(&d_onc_bn),           bsz * sizeof(snFloat)); auxPrm["d_onc_bn"]  = d_onc_bn;
+            cudaFree(d_in_bn);   cudaMalloc(reinterpret_cast<void**>(&d_in_bn),   bsz * kernel * sizeof(snFloat)); gpuPrm["d_in_bn"]   = d_in_bn;
+            cudaFree(d_out_bn);  cudaMalloc(reinterpret_cast<void**>(&d_out_bn),  bsz * kernel * sizeof(snFloat)); gpuPrm["d_out_bn"]  = d_out_bn;
+            cudaFree(d_norm_bn); cudaMalloc(reinterpret_cast<void**>(&d_norm_bn), bsz * kernel * sizeof(snFloat)); gpuPrm["d_norm_bn"] = d_norm_bn;
+            cudaFree(d_onc_bn);  cudaMalloc(reinterpret_cast<void**>(&d_onc_bn),           bsz * sizeof(snFloat)); gpuPrm["d_onc_bn"]  = d_onc_bn;
         } 
     }
 }
          
-void FullyConnected::freeParamCUDA(void* hcuBLAS, map<string, snFloat*>& auxPrm){
+void FullyConnected::freeParamCUDA(map<string, void*>& gpuPrm){
     
-    if (!hcuBLAS) return;
-      
-    cublasDestroy((cublasHandle_t)hcuBLAS);
+    if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
-    for (auto p : auxPrm)
-        cudaFree(p.second);
+    cublasDestroy((cublasHandle_t)gpuPrm["hcuBLAS"]);
+
+    for (auto p : gpuPrm)
+        if (p.first != "hcuBLAS")  cudaFree(p.second);
 }
 
-void FullyConnected::forwardCUDA(void* hcuBLAS, size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, map<string, snFloat*>& auxPrm){
+void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, map<string, void*>& gpuPrm){
       
-    if (!hcuBLAS) return;
+    if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
    
-    snFloat *d_in = (snFloat*)auxPrm["d_in_FWD"],
-            *d_w = (snFloat*)auxPrm["d_w_FWD"], 
-            *d_out = (snFloat*)auxPrm["d_out_FWD"];
+    snFloat *d_in  = (snFloat*)gpuPrm["d_in_FWD"],
+            *d_w   = (snFloat*)gpuPrm["d_w_FWD"], 
+            *d_out = (snFloat*)gpuPrm["d_out_FWD"];
    
     cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz);
     
@@ -120,7 +120,7 @@ void FullyConnected::forwardCUDA(void* hcuBLAS, size_t kernel, snSize insz, snFl
     // W - матрица весов
     // Out - матрица выход данных
     float alpha = 1.0f, beta = 0.0f;
-    cublasSgemm((cublasHandle_t)hcuBLAS,
+    cublasSgemm((cublasHandle_t)gpuPrm["hcuBLAS"],
         CUBLAS_OP_N,
         CUBLAS_OP_N,
         kernel,                        // W, столбцов, кол-во скрытых нейронов 
@@ -139,13 +139,13 @@ void FullyConnected::forwardCUDA(void* hcuBLAS, size_t kernel, snSize insz, snFl
    
 }
 
-void FullyConnected::backwardCUDA_GW(void* hcuBLAS, size_t kernel, snFloat* weight,
-    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, map<string, snFloat*>&){
+void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
+    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, map<string, void*>&){
 
 
 }
 
-void FullyConnected::backwardCUDA_G(void* hcuBLAS, size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, snFloat*>&){
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
 
 
 }

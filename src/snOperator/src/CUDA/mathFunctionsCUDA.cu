@@ -34,13 +34,13 @@ using namespace std;
 using namespace SN_Base;
      
 
-void batchNormForwardCUDA(void* hcuBLAS, snSize insz, snFloat* in, snFloat* out, batchNorm prm, map<string, snFloat*>& auxPrm){
+void batchNormForwardCUDA(snSize insz, snFloat* in, snFloat* out, batchNorm prm, map<string, void*>& gpuPrm){
 
    
 
 }
 
-void batchNormBackwardCUDA(void* hcuBLAS, snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm, map<string, snFloat*>&){
+void batchNormBackwardCUDA(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm, map<string, void*>& gpuPrm){
 
 }
 

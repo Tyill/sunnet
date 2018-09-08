@@ -27,7 +27,6 @@
 #include "snBase/snBase.h"
 #include"SNOperator/src/structurs.h"
 #include"SNOperator/src/mathFunctions.h"
-    
 
 /// сверточный слой
 class Convolution : SN_Base::OperatorBase{
@@ -71,7 +70,7 @@ private:
                      opt_lmbRegular_ = 0.001F;
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
-    std::map<std::string, SN_Base::snFloat*> gpuParams_;              ///< вспом для CUDA и OpenCL
+    std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
 
     void load(std::map<std::string, std::string>& prms);
 
@@ -125,12 +124,12 @@ private:
 
 
     /// CUDA ///////////////////////////
-    
+
     /// иниц вспом параметров CUDA          
-    void iniParamCUDA(SN_Base::snSize insz, SN_Base::snSize outsz, size_t fWidth, size_t fHeight, std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+    void iniParamCUDA(SN_Base::snSize insz, SN_Base::snSize outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров CUDA          
-    void freeParamCUDA(std::map<std::string, SN_Base::snFloat*>& gpuPrm);
+    void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
 
     /// прямой проход
     void forwardCUDA(size_t kernel,   ///< колво вых слоев
@@ -142,7 +141,7 @@ private:
         SN_Base::snFloat* input,     ///< вход значения
         SN_Base::snSize outsz,       ///< выход значения размер 
         SN_Base::snFloat* output,    ///< выход знач (скрытых нейронов) для след слоя
-        std::map<std::string, SN_Base::snFloat*>&); ///< вспом  
+        std::map<std::string, void*>&); ///< вспом  
 
     /// обратный проход. Расчет град-в и весов
     void backwardCUDA_GW(size_t kernel, ///< колво вых слоев
@@ -156,7 +155,7 @@ private:
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
-        std::map<std::string, SN_Base::snFloat*>&);  ///< вспом 
+        std::map<std::string, void*>&);  ///< вспом 
 
     /// обратный проход. Расчет град-в
     void backwardCUDA_G(size_t kernel,  ///< колво вых слоев
@@ -169,5 +168,5 @@ private:
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        std::map<std::string, SN_Base::snFloat*>&);  ///< вспом 
+        std::map<std::string, void*>&);  ///< вспом 
 };

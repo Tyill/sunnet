@@ -45,7 +45,7 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 FullyConnected::~FullyConnected(){
 
     if (calcMode_ == calcMode::CUDA)
-        freeParamCUDA(hcuBLAS_, gpuParams_);
+        freeParamCUDA(gpuParams_);
 }
 
 void FullyConnected::load(std::map<std::string, std::string>& prms){
@@ -224,7 +224,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
 
     switch (calcMode_){
     case calcMode::CPU:  forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
-    case calcMode::CUDA: forwardCUDA(hcuBLAS_, kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
+    case calcMode::CUDA: forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
     case calcMode::OpenCL:  break;
     }
    
@@ -289,7 +289,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
        
         switch (calcMode_){
         case calcMode::CPU:  backwardCPU_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight); break;
-        case calcMode::CUDA: backwardCUDA_GW(hcuBLAS_, kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::CUDA: backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
         case calcMode::OpenCL:  break;
         }
 
@@ -310,7 +310,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     else{ // isFreeze
         switch (calcMode_){
         case calcMode::CPU:  backwardCPU_G(kernel_, weight, inSzMem_, gradIn, gradOut); break;
-        case calcMode::CUDA: backwardCUDA_G(hcuBLAS_, kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
+        case calcMode::CUDA: backwardCUDA_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
         case calcMode::OpenCL:  break;
         }
     }
@@ -333,14 +333,14 @@ void FullyConnected::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, s
         if (fwBw){
             switch (calcMode_){
             case calcMode::CPU:  batchNormForwardCPU(insz, in, out, baseBatchNorm_); break;
-            case calcMode::CUDA: batchNormForwardCUDA(hcuBLAS_, insz, in, out, baseBatchNorm_, gpuParams_); break;
+            case calcMode::CUDA: batchNormForwardCUDA(insz, in, out, baseBatchNorm_, gpuParams_); break;
             case calcMode::OpenCL:  break;
             }
         }
         else{
             switch (calcMode_){
             case calcMode::CPU:  batchNormBackwardCPU(insz, in, out, baseBatchNorm_); break;
-            case calcMode::CUDA: batchNormBackwardCUDA(hcuBLAS_, insz, in, out, baseBatchNorm_, gpuParams_); break;
+            case calcMode::CUDA: batchNormBackwardCUDA(insz, in, out, baseBatchNorm_, gpuParams_); break;
             case calcMode::OpenCL:  break;
             }
         }
@@ -385,7 +385,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     }
     
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(&hcuBLAS_, newsz, kernel_, gpuParams_);
+        iniParamCUDA(newsz, kernel_, gpuParams_);
 } 
 
 

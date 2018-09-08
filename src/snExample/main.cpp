@@ -71,12 +71,22 @@ bool createNet(SN_API::skyNet& net){
         
         "{"
         "\"NodeName\":\"C1\","
-        "\"NextNodes\":\"F2\","
+        "\"NextNodes\":\"C2\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"28\", \"batchNorm\":\"none\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
         "\"freeze\":\"0\"}"
         "},"
+
+        "{"
+        "\"NodeName\":\"C2\","
+        "\"NextNodes\":\"F2\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"25\", \"batchNorm\":\"none\","
+        "\"mode\":\"CUDA\","
+        "\"freeze\":\"0\"}"
+        "},"
+        
         /*
         "{"
         "\"NodeName\":\"P1\","
@@ -185,7 +195,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.05;
+    int batchSz = 96, classCnt = 10, w = 28, h = 84, d = 1; float lr = 0.05; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -198,7 +208,7 @@ int main(int argc, _TCHAR* argv[])
         return -1;
     }
 
-    SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * batchSz];
+    SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * d * batchSz];
     SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
     SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
 
@@ -214,7 +224,7 @@ int main(int argc, _TCHAR* argv[])
 
         // выбираем случайно изобр из тренир выборки
 
-        for (int i = 0; i < batchSz; ++i){
+        for (int i = 0; i < d * batchSz; ++i){
 
             // директория
             int ndir = rand() % classCnt;
@@ -232,9 +242,11 @@ int main(int argc, _TCHAR* argv[])
                 images[nm] = img;
             }
 
+            cv::resize(img, img, cv::Size(w, h));
+
             float* refData = inLayer + i * w * h;
 
-            float* refTarget = targetLayer + i * classCnt;
+            float* refTarget = targetLayer + i/d * classCnt;
             refTarget[ndir] = 1.F;
 
             //refTarget[0] = (ndir == 0) ? 1.F : 0.F;
@@ -253,7 +265,7 @@ int main(int argc, _TCHAR* argv[])
         float accurat = 0;
         SN_API::snTraining(snet,
             lr,
-            SN_API::snLSize(w, h, 1, batchSz),
+            SN_API::snLSize(w, h, d, batchSz),
             inLayer,
             SN_API::snLSize(classCnt, 1, 1, batchSz),
             outLayer,

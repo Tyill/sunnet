@@ -39,17 +39,15 @@ void batchNormBackwardCPU(SN_Base::snSize insz,
     SN_Base::batchNorm);
 
 /// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
+void batchNormForwardCUDA(SN_Base::snSize insz,
     SN_Base::snFloat* in,
     SN_Base::snFloat* out,
     SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+    std::map<std::string, void*>&);
 
 /// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(void* hcuBLAS, 
-    SN_Base::snSize insz,
+void batchNormBackwardCUDA(SN_Base::snSize insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,
     SN_Base::batchNorm,
-    std::map<std::string, SN_Base::snFloat*>&);
+    std::map<std::string, void*>&);
