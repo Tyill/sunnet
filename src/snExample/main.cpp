@@ -134,9 +134,33 @@ bool createNet(SN_API::skyNet& net){
         "}";
 
 
-    char err[256]; err[0] = '\0';
-    net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
+   // char err[256]; err[0] = '\0';
+  //  net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
     
+    std::ifstream ifs;
+    ifs.open("c:\\C++\\VTD\\s20302_Isolation\\res\\cnn\\struct.txt", std::ifstream::in);
+
+    if (!ifs.good()){
+        statusMess("isolFinder::createNet error open file: ", nullptr);
+        return false;
+    }
+    int tt = 0;
+    ifs >> tt;
+    ifs >> tt;
+
+    int cp = ifs.tellg();
+    ifs.seekg(0, ifs.end);
+    size_t length = ifs.tellg();
+    ifs.seekg(cp, ifs.beg);
+
+    string jnNet; jnNet.resize(length);
+    ifs.read((char*)jnNet.data(), length);
+
+    // создаем сеть
+    char err[256]; err[0] = '\0';
+    net = SN_API::snCreateNet(jnNet.c_str(), err, statusMess);
+
+
     return string(err) == "";
 }
 
@@ -195,7 +219,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 96, classCnt = 10, w = 28, h = 84, d = 1; float lr = 0.05; //28
+    int batchSz = 10, classCnt = 8, w = 512, h = 512, d = 3; float lr = 0.05; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;

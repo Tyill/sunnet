@@ -330,20 +330,10 @@ void FullyConnected::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, s
         }                
     }
     else{ // isLerning
-        if (fwBw){
-            switch (calcMode_){
-            case calcMode::CPU:  batchNormForwardCPU(insz, in, out, baseBatchNorm_); break;
-            case calcMode::CUDA: batchNormForwardCUDA(insz, in, out, baseBatchNorm_, gpuParams_); break;
-            case calcMode::OpenCL:  break;
-            }
-        }
-        else{
-            switch (calcMode_){
-            case calcMode::CPU:  batchNormBackwardCPU(insz, in, out, baseBatchNorm_); break;
-            case calcMode::CUDA: batchNormBackwardCUDA(insz, in, out, baseBatchNorm_, gpuParams_); break;
-            case calcMode::OpenCL:  break;
-            }
-        }
+        if (fwBw)
+           batchNormForward(insz, in, out, baseBatchNorm_);         
+        else
+           batchNormBackward(insz, in, out, baseBatchNorm_);        
     }
 }
 

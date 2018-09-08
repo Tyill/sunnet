@@ -27,27 +27,13 @@
 #include "snBase/snBase.h"
 
 /// батч нормализация прямой проход CPU    
-void batchNormForwardCPU(SN_Base::snSize insz,
+void batchNormForward(SN_Base::snSize insz,
     SN_Base::snFloat* in,
     SN_Base::snFloat* out,
     SN_Base::batchNorm);
 
 /// батч нормализация обратный проход CPU
-void batchNormBackwardCPU(SN_Base::snSize insz,
+void batchNormBackward(SN_Base::snSize insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,
     SN_Base::batchNorm);
-
-/// батч нормализация прямой проход CUDA    
-void batchNormForwardCUDA(SN_Base::snSize insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm,
-    std::map<std::string, void*>&);
-
-/// батч нормализация обратный проход CUDA
-void batchNormBackwardCUDA(SN_Base::snSize insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm,
-    std::map<std::string, void*>&);

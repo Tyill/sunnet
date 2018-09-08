@@ -409,21 +409,11 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
                 pIn += stepN;
             }
 
-            if (fwBw){
-                switch (calcMode_){
-                case calcMode::CPU:  batchNormForwardCPU(sz, share, share, baseBatchNorm_); break;
-                case calcMode::CUDA: batchNormForwardCUDA(sz, share, share, baseBatchNorm_, gpuParams_); break;
-                case calcMode::OpenCL:  break;
-                }
-            }             
-            else{
-                switch (calcMode_){
-                case calcMode::CPU:  batchNormBackwardCPU(sz, share, share, baseBatchNorm_); break;
-                case calcMode::CUDA: batchNormBackwardCUDA(sz, share, share, baseBatchNorm_, gpuParams_); break;
-                case calcMode::OpenCL:  break;
-                }
-            }               
-
+            if (fwBw)
+               batchNormForward(sz, share, share, baseBatchNorm_);                  
+            else
+               batchNormBackward(sz, share, share, baseBatchNorm_);
+              
             pSh = share;
             snFloat* pOut = out + stepD * i;
             for (size_t j = 0; j < bsz; ++j){
