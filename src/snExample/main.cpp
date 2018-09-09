@@ -63,15 +63,24 @@ bool createNet(SN_API::skyNet& net){
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"C1\""
+        "\"NextNodes\":\"F2\""
         "},"
 
         "\"Nodes\":"
         "["
         
-        "{"
+       /* "{"
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"C2\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"5\", \"batchNorm\":\"none\","
+        "\"mode\":\"CUDA\","
+        "\"freeze\":\"0\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"C2\","
+        "\"NextNodes\":\"C3\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
@@ -79,13 +88,13 @@ bool createNet(SN_API::skyNet& net){
         "},"
 
         "{"
-        "\"NodeName\":\"C2\","
+        "\"NodeName\":\"C3\","
         "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"25\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
         "\"freeze\":\"0\"}"
-        "},"
+        "},"*/
         
         /*
         "{"
@@ -107,14 +116,25 @@ bool createNet(SN_API::skyNet& net){
 
         "{"
         "\"NodeName\":\"F2\","
+        "\"NextNodes\":\"F3\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"100\","
+        "\"freeze\":\"0\","
+        "\"weightInit\":\"he\","        
+        "\"optimizer\":\"adam\","
+        "\"mode\":\"CUDA\","
+        "\"active\":\"relu\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F3\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
         "\"freeze\":\"0\","
-        "\"weightInit\":\"he\","
-        "\"lmbRegular\":\"0.0\","
+        "\"weightInit\":\"he\","        
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CPU\","
+        "\"mode\":\"CUDA\","
         "\"active\":\"relu\"}"
         "},"
               
@@ -134,31 +154,31 @@ bool createNet(SN_API::skyNet& net){
         "}";
 
 
-   // char err[256]; err[0] = '\0';
-  //  net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
-    
-    std::ifstream ifs;
-    ifs.open("c:\\C++\\VTD\\s20302_Isolation\\res\\cnn\\struct.txt", std::ifstream::in);
-
-    if (!ifs.good()){
-        statusMess("isolFinder::createNet error open file: ", nullptr);
-        return false;
-    }
-    int tt = 0;
-    ifs >> tt;
-    ifs >> tt;
-
-    int cp = ifs.tellg();
-    ifs.seekg(0, ifs.end);
-    size_t length = ifs.tellg();
-    ifs.seekg(cp, ifs.beg);
-
-    string jnNet; jnNet.resize(length);
-    ifs.read((char*)jnNet.data(), length);
-
-    // создаем сеть
     char err[256]; err[0] = '\0';
-    net = SN_API::snCreateNet(jnNet.c_str(), err, statusMess);
+    net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
+    
+    //std::ifstream ifs;
+    //ifs.open("c:\\C++\\VTD\\s20302_Isolation\\res\\cnn\\struct.txt", std::ifstream::in);
+
+    //if (!ifs.good()){
+    //    statusMess("isolFinder::createNet error open file: ", nullptr);
+    //    return false;
+    //}
+    //int tt = 0;
+    //ifs >> tt;
+    //ifs >> tt;
+
+    //int cp = ifs.tellg();
+    //ifs.seekg(0, ifs.end);
+    //size_t length = ifs.tellg();
+    //ifs.seekg(cp, ifs.beg);
+
+    //string jnNet; jnNet.resize(length);
+    //ifs.read((char*)jnNet.data(), length);
+
+    //// создаем сеть
+    //char err[256]; err[0] = '\0';
+    //net = SN_API::snCreateNet(jnNet.c_str(), err, statusMess);
 
 
     return string(err) == "";
@@ -219,7 +239,7 @@ int main(int argc, _TCHAR* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 10, classCnt = 8, w = 512, h = 512, d = 3; float lr = 0.05; //28
+    int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 1; float lr = 0.05; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;

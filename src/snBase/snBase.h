@@ -176,7 +176,7 @@ namespace SN_Base{
         snAction action;      ///< режим работы
         snFloat lr;           ///< коэф скорости обучения
         
-        operationParam(bool isAutoCalcError_ = false, bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
+        operationParam(bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
            isLerning(isLerning_), action(action_), lr(lr_){}
     };
     
@@ -314,8 +314,8 @@ namespace SN_Base{
     /// узел в символьной структуре НС 
     struct Node{
 
-        std::string name;                             ///< название узла - дбыть уникальным в пределах ветки, без ' ' и '-'. "Begin", "End", "TCP" зарезервированы как начало, конец сети и передача в др ветвь.                                                                                                         
-        std::string oprName;                          ///< оператор узла, который выполняется в узле. !Один оператор на узел. Дбыть реализован в FNOperator.dll
+        std::string name;                             ///< название узла - дбыть уникальным в пределах ветки, без ' ' и '-'. "Begin", "End" зарезервированы как начало, конец сети                                                                                                     
+        std::string oprName;                          ///< оператор узла, который выполняется в узле. !Один оператор на узел. 
         std::map<std::string, std::string> oprPrms;   ///< параметры оператора (задает польз-ль при создании ветви)
         std::vector<std::string> prevNodes;           ///< предыдущие узлы (множест число, тк узел мбыть собирательным из неск веток)
         std::vector<std::string> nextNodes;           ///< все возможные след узлы (множест число, тк мбыть разделение на неск параллель нитей), название след узлов (через пробел) возвращает ф-я оператора узла на тек итерации. Если ничего не вернула, идет на все

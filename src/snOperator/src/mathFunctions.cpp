@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 
-#include "../stdafx.h"
+#include "stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/mathFunctions.h"
 

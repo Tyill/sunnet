@@ -26,7 +26,7 @@
 #include "../stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/Operator/convolution.h"
-#include <omp.h>  
+#include <omp.h>
 
 using namespace std;
 using namespace SN_Base;
@@ -190,7 +190,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
             }
         }
     }
-
+   
     if (insz.n > 1){
         for (size_t i = 0; i < insz.n; ++i){
             snFloat* wBuff = wgThr + wStepByN * i;
@@ -202,7 +202,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
 
         free(wgThr);
     }
-
+   
     free(share);   
 }
 

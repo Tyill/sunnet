@@ -26,13 +26,13 @@
 
 #include "snBase/snBase.h"
 
-/// батч нормализация прямой проход CPU    
+/// Р±Р°С‚С‡ РЅРѕСЂРјР°Р»РёР·Р°С†РёСЏ РїСЂСЏРјРѕР№ РїСЂРѕС…РѕРґ CPU    
 void batchNormForward(SN_Base::snSize insz,
     SN_Base::snFloat* in,
     SN_Base::snFloat* out,
     SN_Base::batchNorm);
 
-/// батч нормализация обратный проход CPU
+/// Р±Р°С‚С‡ РЅРѕСЂРјР°Р»РёР·Р°С†РёСЏ РѕР±СЂР°С‚РЅС‹Р№ РїСЂРѕС…РѕРґ CPU
 void batchNormBackward(SN_Base::snSize insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,
