@@ -50,11 +50,11 @@ void FullyConnected::iniParamCUDA(snSize insz, size_t kernel, map<string, void*>
         gpuPrm["hcuBLAS"] = cuHandle;
                             
         snFloat* d_in = 0, *d_w = 0, *d_out = 0, *d_grout = 0, *d_dw = 0;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));     gpuPrm["d_in"] = d_in;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));   gpuPrm["d_w"] = d_w;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat))); gpuPrm["d_out"] = d_out;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida) * sizeof(snFloat)));  gpuPrm["d_grout"] = d_grout;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));  gpuPrm["d_dw"] = d_dw;
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
     }
     else{
         snFloat* d_in    = (snFloat*)gpuPrm["d_in"],
@@ -63,11 +63,11 @@ void FullyConnected::iniParamCUDA(snSize insz, size_t kernel, map<string, void*>
                * d_out   = (snFloat*)gpuPrm["d_out"],
                * d_grout = (snFloat*)gpuPrm["d_grout"];            
 
-        cuCHECK(cudaFree(d_in));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));     gpuPrm["d_in"] = d_in;
-        cuCHECK(cudaFree(d_w));     cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));   gpuPrm["d_w"] = d_w;
-        cuCHECK(cudaFree(d_out));   cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat))); gpuPrm["d_out"] = d_out;
-        cuCHECK(cudaFree(d_grout)); cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida) * sizeof(snFloat)));  gpuPrm["d_grout"] = d_grout;
-        cuCHECK(cudaFree(d_dw));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));  gpuPrm["d_dw"] = d_dw;
+        cuCHECK(cudaFree(d_in));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
+        cuCHECK(cudaFree(d_w));     cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
+        cuCHECK(cudaFree(d_out));   cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
+        cuCHECK(cudaFree(d_grout)); cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
+        cuCHECK(cudaFree(d_dw));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
     }
 }
          
@@ -85,6 +85,8 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
         
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
+    cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
+
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
    
     snFloat *d_in  = (snFloat*)gpuPrm["d_in"],
@@ -100,7 +102,7 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
     // W - матрица весов
     // Out - матрица выход данных
     float alpha = 1.0f, beta = 0.0f;
-    cuCHECK(cublasSgemm((cublasHandle_t)gpuPrm["hcuBLAS"],
+    cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_N,
         kernel,                        // W, столбцов, кол-во скрытых нейронов 
@@ -123,6 +125,8 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
        
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
+    cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
+
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
@@ -140,7 +144,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     // In - матрица вход данных с предыд слоя
     // GrIn - матрица градиентов со след слоя
     float alpha = 1.0F / insz.n, beta = 0.0f;
-    cuCHECK(cublasSgemm((cublasHandle_t)gpuPrm["hcuBLAS"],
+    cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_T,
         kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
@@ -158,161 +162,69 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     cuCHECK(cublasGetMatrix(ida, kernel, sizeof(snFloat), d_dw, ida, dWOut, ida));
 
      
-    cuCHECK(cublasSetMatrix(ida, kernel, sizeof(snFloat), weight, ida, d_w, ida));
+    cuCHECK(cublasSetMatrix(ida - 1, kernel, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
     //// Градиент для предыд слоя
     //// GrOut = αGrIn * W^T + βGrOut
     //// GrIn - матрица градиентов со след слоя
     //// W - веса
-    cuCHECK(cublasSgemm((cublasHandle_t)gpuPrm["hcuBLAS"],
+    alpha = 1.F;
+    cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_T,
         CUBLAS_OP_N,
-        ida , // m
-        bsz,     // n
-        kernel,  // k
-        &alpha,                  
-        d_grin,                  
-        kernel,                  
-        d_w,
-        kernel,
-        &beta,
-        d_grout,                     
-        ida));
-        
-    vector<float> buff(bsz * ida);
-
-    cuCHECK(cublasGetMatrix(bsz, ida, sizeof(snFloat), d_grout, bsz, buff.data(), bsz));
+        ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
+        bsz,                     // W, строк, кол-во изобр в батче    
+        kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
+        &alpha,                  // α, коэф                                  
+        d_w,                     // W - веса
+        kernel,                  // W - шаг до след
+        d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
+        kernel,                  // GrIn, шаг до след 
+        &beta,                   // β, коэф                 
+        d_grout,                 // GrOut, выходной градиент для пред слоя                                   
+        ida - 1));               // GrOut, шаг до след
+      
+    cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
     
-    for (int i = 0; i < bsz; ++i){
+}
 
-        memcpy(gradOut + i * (ida - 1), buff.data() + i * ida + 1, (ida - 1) * sizeof(float));
-    }
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
+
+    if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
+
+    cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
+
+    size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
+
+    snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
+           * d_w = (snFloat*)gpuPrm["d_w"],
+           * d_grout = (snFloat*)gpuPrm["d_grout"];
+
+    cuCHECK(cublasSetMatrix(bsz, kernel, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
+
+    cuCHECK(cublasSetMatrix(ida - 1, kernel, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
     //// Градиент для предыд слоя
     //// GrOut = αGrIn * W^T + βGrOut
     //// GrIn - матрица градиентов со след слоя
     //// W - веса
-    //cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
-    //    CBLAS_TRANSPOSE::CblasNoTrans,
-    //    CBLAS_TRANSPOSE::CblasTrans,
-    //    insz.n,                        // GrIn, строк, размер батча     
-    //    ida - 1,                      // W, столбцов, кол-во вх значений 
-    //    kernel,                        // GrIn, столбцов. W, строк, кол-во скрытых нейронов                 
-    //    1.0F,                          // α, коэф 
-    //    gradIn,                        // GrIn, градиент пришедший со след слоя
-    //    kernel,                        // GrIn, шаг до след X (X21 - X11) 
-    //    weight + kernel,               // W, веса
-    //    kernel,                        // W, шаг до след W (W21 - W11) 
-    //    0.0F,                          // β, доп коэф 
-    //    gradOut,                       // GrOut, градиент для предыд слоя
-    //    ida - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
+    float alpha = 1.0F, beta = 0.0f;
+    cuCHECK(cublasSgemm(hcuBLAS,
+        CUBLAS_OP_T,
+        CUBLAS_OP_N,
+        ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
+        bsz,                     // W, строк, кол-во изобр в батче    
+        kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
+        &alpha,                  // α, коэф                                  
+        d_w,                     // W - веса
+        kernel,                  // W - шаг до след
+        d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
+        kernel,                  // GrIn, шаг до след 
+        &beta,                   // β, коэф                 
+        d_grout,                 // GrOut, выходной градиент для пред слоя                                   
+        ida - 1));               // GrOut, шаг до след
 
-    bool ok = false;
-
- /*   backwardCPU_GW(kernel, weight,
-        insz, input, gradIn, gradOut, dWOut);*/
+    cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
 }
-
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
-
-
-}
-
-
 
 #endif 
-
-
-// SN_CUDA
-
-//
-//#define m 3 // a - mxk matrix
-//#define n 4 // b - kxn matrix
-//#define k 5 // c - mxn matrix
-//
-//
-//
-//cudaError_t cudaStat; // cudaMalloc status
-//cublasStatus_t stat; // CUBLAS functions status
-//cublasHandle_t handle; // CUBLAS context   
-//
-//float* a = (float*)malloc(m*k* sizeof(float)); // host memory for a
-//float* b = (float*)malloc(k*n* sizeof(float)); // host memory for b
-//float* c = (float*)malloc(m*n* sizeof(float)); // host memory for c
-//
-//// define an mxk matrix a column by column
-//printf("a:\n");
-//int ind = 0;                             // a:
-//for (int i = 0; i < m; ++i){                   // 0  1  2  3  4
-//    for (int j = 0; j < k; ++j){               // 5  6  7  8  9
-//        a[j + i * k] = (float)++ind;           // 10 11 12 13 14
-//        printf(" %5.0f", a[j + i * k]);
-//    }
-//    printf("\n");
-//}
-//
-//// define a kxn matrix b column by column   
-//printf("b:\n");
-//ind = 1;                                 // b: 
-//for (int i = 0; i < k; ++i){                   // 1  2  3  4
-//    for (int j = 0; j < n; ++j){               // 5  6  7  8
-//        b[j + i * n] = (float)++ind;           // 9  10 11 12
-//        printf(" %5.0f", b[j + i * n]);       // 13 14 15 16
-//    }                                          // 17 18 19 20 
-//    printf("\n");
-//}
-//
-//// on the device
-//float * d_a; // d_a - a on the device
-//float * d_b; // d_b - b on the device
-//float * d_c; // d_c - c on the device
-//cudaStat = cudaMalloc((void **)& d_a, m*k* sizeof(*a)); // device
-//
-//// memory alloc for a
-//cudaStat = cudaMalloc((void **)& d_b, k*n* sizeof(*b)); // device
-//
-//// memory alloc for b
-//cudaStat = cudaMalloc((void **)& d_c, m*n* sizeof(*c)); // device
-//
-//// memory alloc for c
-//stat = cublasCreate(&handle); // initialize CUBLAS context
-//
-//// copy matrices from the host to the device
-//stat = cublasSetMatrix(m, k, sizeof(*a), a, m, d_a, m); //a -> d_a
-//stat = cublasSetMatrix(k, n, sizeof(*b), b, k, d_b, k); //b -> d_b
-//stat = cublasSetMatrix(m, n, sizeof(*c), c, m, d_c, m); //c -> d_c
-//
-//// a - mxk matrix
-//// b - kxn matrix
-//// c - mxn matrix
-//
-//float al = 1.0f;   // al =1
-//float bet = 0.0f;  // bet =1
-//stat = cublasSgemm(handle,
-//    CUBLAS_OP_N,
-//    CUBLAS_OP_N,
-//    n,   // строки 1й
-//    m,   // столбцы 2й
-//    k,   // столбцы 1й
-//    &al,
-//    d_b,
-//    n,
-//    d_a,
-//    k,
-//    &bet,
-//    d_c,
-//    n);
-//
-//stat = cublasGetMatrix(m, n, sizeof(*c), d_c, m, c, m); // cp d_c - >c
-//printf("c after Sgemm :\n");
-//for (int i = 0; i < m; i++){
-//    for (int j = 0; j < n; j++){
-//        printf(" %7.0f", c[j + i * n]);
-//    }
-//    printf("\n");
-//}
-//
-//bool ff = false;
-//#undef m
-//#undef n
-//#undef k

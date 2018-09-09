@@ -63,7 +63,7 @@ bool createNet(SN_API::skyNet& net){
 
         "\"BeginNet\":"
         "{"
-        "\"NextNodes\":\"F2\""
+        "\"NextNodes\":\"F1\""
         "},"
 
         "\"Nodes\":"
@@ -112,11 +112,34 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\"}"
         "},"*/
 
+        "{"
+        "\"NodeName\":\"F1\","
+        "\"NextNodes\":\"F2\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"500\","
+        "\"freeze\":\"0\","
+        "\"weightInit\":\"he\","
+        "\"optimizer\":\"adam\","
+        "\"mode\":\"CUDA\","
+        "\"active\":\"relu\"}"
+        "},"
 
 
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"F3\","
+        "\"OperatorName\":\"FullyConnected\","
+        "\"OperatorParams\":{\"kernel\":\"300\","
+        "\"freeze\":\"1\","
+        "\"weightInit\":\"he\","
+        "\"optimizer\":\"adam\","
+        "\"mode\":\"CUDA\","
+        "\"active\":\"relu\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"F3\","
+        "\"NextNodes\":\"F4\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"100\","
         "\"freeze\":\"0\","
@@ -127,7 +150,7 @@ bool createNet(SN_API::skyNet& net){
         "},"
 
         "{"
-        "\"NodeName\":\"F3\","
+        "\"NodeName\":\"F4\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
