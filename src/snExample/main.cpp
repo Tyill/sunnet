@@ -120,7 +120,7 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\","
         "\"weightInit\":\"he\","
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CUDA\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
 
@@ -133,7 +133,7 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"1\","
         "\"weightInit\":\"he\","
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CUDA\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
 
@@ -145,7 +145,7 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\","
         "\"weightInit\":\"he\","        
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CUDA\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
 
@@ -157,7 +157,7 @@ bool createNet(SN_API::skyNet& net){
         "\"freeze\":\"0\","
         "\"weightInit\":\"he\","        
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CUDA\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
               
@@ -257,6 +257,7 @@ int main(int argc, _TCHAR* argv[])
         return -1;
     }
 
+    
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";

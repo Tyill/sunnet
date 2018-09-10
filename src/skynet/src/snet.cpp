@@ -189,7 +189,7 @@ SNet::~SNet(){
     if (engine_) delete engine_;
 
     for (auto o : operats_)
-        SN_Opr::freeOperator(o.second, o.first);
+        SN_Opr::freeOperator(o.second, o.second->name());
 }
 
 /// тренинг

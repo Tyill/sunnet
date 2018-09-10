@@ -25,7 +25,6 @@
 
 #ifdef SN_CUDA
 
-#include "Lib/OpenBLAS/cblas.h"
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include "../stdafx.h"

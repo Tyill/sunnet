@@ -31,7 +31,7 @@
 using namespace std;
 using namespace SN_Base;
 
-void Pooling::forwardCPU(int type, size_t kernel, snSize insz, snFloat* input,
+void Pooling::forwardCPU(poolType type, size_t kernel, snSize insz, snFloat* input,
     snSize outsz, snFloat* output, size_t* outputInx){
 
     size_t inStepByD = insz.w * insz.h,           // шаг вх слоя по входу
@@ -46,7 +46,7 @@ void Pooling::forwardCPU(int type, size_t kernel, snSize insz, snFloat* input,
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
     memset(outputInx, 0, outStepByN * insz.n * sizeof(snFloat));
 
-    if (type == 0){ // max
+    if (type == poolType::max){ // max
 
         // по батчу
 #pragma omp parallel for
@@ -138,7 +138,7 @@ void Pooling::forwardCPU(int type, size_t kernel, snSize insz, snFloat* input,
     free(shareF);
 }
 
-void Pooling::backwardCPU(int type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
+void Pooling::backwardCPU(poolType type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
         inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
@@ -148,7 +148,7 @@ void Pooling::backwardCPU(int type, size_t kernel, snSize outsz, size_t* outputI
 
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
-    if (type == 0){ // max
+    if (type == poolType::max){ // max
 
         // по батчу
 #pragma omp parallel for
@@ -222,16 +222,49 @@ void Pooling::backwardCPU(int type, size_t kernel, snSize outsz, size_t* outputI
 
 #ifndef SN_CUDA
 
-void Pooling::forwardCUDA(int type, size_t kernel, snSize insz, snFloat* input,
-    snSize outsz, snFloat* output, size_t* outputInx, std::map<std::string, snFloat*>&){
+/// иниц вспом параметров CUDA          
+void Pooling::iniParamCUDA(snSize insz, snSize outsz, size_t kernel, map<string, void*>& gpuPrm){
+    ERROR_MESS("CUDA non compiler");
+}
 
+/// освоб вспом параметров CUDA          
+void Pooling::freeParamCUDA(map<string, void*>& gpuPrm){
+    ERROR_MESS("CUDA non compiler");
+}
+
+void Pooling::forwardCUDA(poolType type, size_t kernel, snSize insz, snFloat* input,
+    snSize outsz, snFloat* output, size_t* outputInx, std::map<std::string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
     
-void Pooling::backwardCUDA(int type, size_t kernel, snSize insz, snFloat* input,
-    snSize outsz, snFloat* output, size_t* outputInx, std::map<std::string, snFloat*>&){
-
+void Pooling::backwardCUDA(poolType type, size_t kernel, snSize outsz, size_t* outputInx, 
+    snFloat* gradIn, snSize insz, snFloat* gradOut, std::map<std::string, void*>&){
     ERROR_MESS("CUDA non compiler");
+}
+
+#endif
+
+
+#ifndef SN_OpenCL
+
+/// иниц вспом параметров OpenCL         
+void Pooling::iniParamOCL(snSize insz, snSize outsz, size_t kernel, map<string, void*>& gpuPrm){
+    ERROR_MESS("CUDA non compiler");
+}
+
+/// освоб вспом параметров OpenCL          
+void Pooling::freeParamOCL(map<string, void*>& gpuPrm){
+    ERROR_MESS("CUDA non compiler");
+}
+
+void Pooling::forwardOCL(poolType type, size_t kernel, snSize insz, snFloat* input,
+    snSize outsz, snFloat* output, size_t* outputInx, std::map<std::string, void*>&){
+    ERROR_MESS("OpenCL non compiler");
+}
+
+void Pooling::backwardOCL(poolType type, size_t kernel, snSize outsz, size_t* outputInx,
+    snFloat* gradIn, snSize insz, snFloat* gradOut, std::map<std::string, void*>&){
+    ERROR_MESS("OpenCL non compiler");
 }
 
 #endif

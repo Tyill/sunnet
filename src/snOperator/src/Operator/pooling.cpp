@@ -118,9 +118,9 @@ void Pooling::forward(SN_Base::Tensor* inTns){
     snFloat* out = baseOut_->getData();
    
     switch (calcMode_){
-    case calcMode::CPU:  forwardCPU((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data()); break;
-    case calcMode::CUDA: forwardCUDA((int)poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
-    case calcMode::OpenCL:  break;
+    case calcMode::CPU:    forwardCPU(poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data()); break;
+    case calcMode::CUDA:   forwardCUDA(poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(poolType_, kernel_, insz, pDtMem, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
     }       
 }
 
@@ -132,9 +132,9 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     /// расчет вых градиента
     switch (calcMode_){
-    case calcMode::CPU:  backwardCPU((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp); break;
-    case calcMode::CUDA: backwardCUDA((int)poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp, gpuParams_); break;
-    case calcMode::OpenCL:  break;
+    case calcMode::CPU:    backwardCPU(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp); break;
+    case calcMode::CUDA:   backwardCUDA(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp, gpuParams_); break;
+    case calcMode::OpenCL: backwardOCL(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, pGrOutExp, gpuParams_); break;
     }
    
     if (isPadding_)

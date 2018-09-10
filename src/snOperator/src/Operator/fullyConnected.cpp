@@ -43,9 +43,11 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 }
 
 FullyConnected::~FullyConnected(){
-
+    
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
+    else  if (calcMode_ == calcMode::OpenCL)
+        freeParamOCL(gpuParams_);
 }
 
 void FullyConnected::load(std::map<std::string, std::string>& prms){
@@ -164,6 +166,9 @@ bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
     if (prms.find("freeze") != prms.end())
         isFreeze_ = prms["freeze"] == "1";
     
+    if (prms.find("dropOut") != prms.end())
+        dropOut_ = stof(prms["dropOut"]);
+
     return true;
 }
 
@@ -223,13 +228,17 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     snFloat* out = baseOut_->getData();
 
     switch (calcMode_){
-    case calcMode::CPU:  forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
-    case calcMode::CUDA: forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
-    case calcMode::OpenCL:  break;
+    case calcMode::CPU:    forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
     }
-   
-    /// batchNorm
+
+    /// dropOut
     snSize outSz = baseOut_->size();
+    if (dropOut_ > 0.F)
+        calcDropOut(operPrm.isLerning, dropOut_, outSz, out);
+    
+    /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
@@ -288,9 +297,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* dWeight = auxParams_["dWeight"].data();
        
         switch (calcMode_){
-        case calcMode::CPU:  backwardCPU_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight); break;
-        case calcMode::CUDA: backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
-        case calcMode::OpenCL:  break;
+        case calcMode::CPU:    backwardCPU_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
 
         // корректируем веса
@@ -309,10 +318,26 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:  backwardCPU_G(kernel_, weight, inSzMem_, gradIn, gradOut); break;
-        case calcMode::CUDA: backwardCUDA_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
-        case calcMode::OpenCL:  break;
+        case calcMode::CPU:    backwardCPU_G(kernel_, weight, inSzMem_, gradIn, gradOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
         }
+    }
+}
+
+void FullyConnected::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
+        
+    if (isLern){
+        size_t sz = outsz.size() * dropOut_;
+        vector<int> rnd(sz);
+        rnd_uniform(rnd.data(), sz, 0, outsz.size());
+
+        for (auto i : rnd) out[i] = 0;
+    }
+    else{
+        size_t sz = outsz.size();
+        for (size_t i = 0; i < sz; ++i) 
+            out[i] *= (1.F - dropOut_);
     }
 }
 
@@ -376,6 +401,8 @@ void FullyConnected::updateConfig(const snSize& newsz){
     
     if (calcMode_ == calcMode::CUDA)
         iniParamCUDA(newsz, kernel_, gpuParams_);
+    else if (calcMode_ == calcMode::OpenCL)
+        iniParamOCL(newsz, kernel_, gpuParams_);
 } 
 
 

@@ -25,7 +25,6 @@
 
 #ifdef SN_CUDA
 
-#include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include "../stdafx.h"
 #include "SNOperator/src/Operator/convolution.h"
@@ -40,19 +39,20 @@ using namespace SN_Base;
 void Convolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
 
     if (gpuPrm.find("cu_deviceProps") == gpuPrm.end()){
-        gpuPrm["cu_deviceProps"] = (snFloat*)new cudaDeviceProp();
-
-        cudaDeviceProp* cu_deviceProps = (cudaDeviceProp*)gpuPrm["cu_deviceProps"];
+       
+        cudaDeviceProp* cu_deviceProps = new cudaDeviceProp();
 
         cudaGetDeviceProperties(cu_deviceProps, 0);
         if (cu_deviceProps->major < 2){
             ERROR_MESS("%s requires SM >= 2.0");
+            delete cu_deviceProps;
             return;
         }
+        gpuPrm["cu_deviceProps"] = cu_deviceProps;
 
         snFloat *d_in = 0, *d_w = 0, *d_out = 0, *d_grout = 0, *d_dw = 0;
-        cuCHECK(cudaMalloc((void **)&d_in, insz.size() * sizeof(snFloat)));                                         gpuPrm["d_in"] = (snFloat*)d_in; 
-        cuCHECK(cudaMalloc((void **)&d_w, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));            gpuPrm["d_w"] = (snFloat*)d_w;
+        cuCHECK(cudaMalloc((void **)&d_in, insz.size() * sizeof(snFloat)));                                         gpuPrm["d_in"] = d_in; 
+        cuCHECK(cudaMalloc((void **)&d_w, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));            gpuPrm["d_w"] = d_w;
         cuCHECK(cudaMalloc((void **)&d_out, outsz.size() * sizeof(snFloat)));                                       gpuPrm["d_out"] = d_out;
         cuCHECK(cudaMalloc((void **)&d_grout, insz.size() * sizeof(snFloat)));                                      gpuPrm["d_grout"] = d_grout;
         cuCHECK(cudaMalloc((void **)&d_dw, (fWidth * fHeight * insz.d + 1) * outsz.d * outsz.n * sizeof(snFloat))); gpuPrm["d_dw"] = d_dw;        
@@ -64,8 +64,8 @@ void Convolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t 
                 *d_grout = (snFloat*)gpuPrm["d_grout"],
                 *d_dw =    (snFloat*)gpuPrm["d_dw"];
 
-        cuCHECK(cudaFree(d_in));    cuCHECK(cudaMalloc((void **)&d_in, insz.size() * sizeof(snFloat)));                                         gpuPrm["d_in"] = (snFloat*)d_in;
-        cuCHECK(cudaFree(d_w));     cuCHECK(cudaMalloc((void **)&d_w, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));            gpuPrm["d_w"] = (snFloat*)d_w;
+        cuCHECK(cudaFree(d_in));    cuCHECK(cudaMalloc((void **)&d_in, insz.size() * sizeof(snFloat)));                                         gpuPrm["d_in"] = d_in;
+        cuCHECK(cudaFree(d_w));     cuCHECK(cudaMalloc((void **)&d_w, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));            gpuPrm["d_w"] = d_w;
         cuCHECK(cudaFree(d_out));   cuCHECK(cudaMalloc((void **)&d_out, outsz.size() * sizeof(snFloat)));                                       gpuPrm["d_out"] = d_out;
         cuCHECK(cudaFree(d_grout)); cuCHECK(cudaMalloc((void **)&d_grout, insz.size() * sizeof(snFloat)));                                      gpuPrm["d_grout"] = d_grout;
         cuCHECK(cudaFree(d_dw));    cuCHECK(cudaMalloc((void **)&d_dw, (fWidth * fHeight * insz.d + 1) * outsz.d * outsz.n * sizeof(snFloat))); gpuPrm["d_dw"] = d_dw;

@@ -215,12 +215,12 @@ namespace SN_Base{
         /// @param prms - параметры ф-и. Ключ - имя параметра. (задает польз-ль когда создает сеть - JSON структуру сети).
         OperatorBase(void* Net_, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms) :
             Net(Net_), name_(name), node_(node), basePrms_(prms){}
-        ~OperatorBase(){        
+        virtual ~OperatorBase(){
             if (baseInput_) delete baseInput_;
             if (baseWeight_) delete baseWeight_;
             if (baseGrad_) delete baseGrad_;
             if (baseOut_) delete baseOut_;
-        }
+        } 
     public:
         
         /// обратная ссылка на родит-й объект сети
