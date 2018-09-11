@@ -382,7 +382,7 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
 void Convolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
     
     if (isLern){
-        size_t sz = outsz.size() * dropOut_;
+        size_t sz = outsz.size() * dropOut;
         vector<int> rnd(sz);
         rnd_uniform(rnd.data(), sz, 0, outsz.size());
 
@@ -391,7 +391,7 @@ void Convolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Ba
     else{
         size_t sz = outsz.size();
         for (size_t i = 0; i < sz; ++i)
-            out[i] *= (1.F - dropOut_);
+            out[i] *= (1.F - dropOut);
     }
 }
 

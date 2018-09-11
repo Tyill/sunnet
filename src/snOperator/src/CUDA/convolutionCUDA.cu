@@ -74,12 +74,12 @@ void Convolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t 
 
 void Convolution::freeParamCUDA(map<std::string, void*>& gpuPrm){
 
-    for (auto p : gpuPrm){
-        if (p.first != "cu_deviceProps")
-            cudaFree(p.second);
-        else
-            delete p.second;
-    }
+    if (gpuPrm.find("cu_deviceProps") == gpuPrm.end()) return;
+
+    delete (cudaDeviceProp*)gpuPrm["cu_deviceProps"];
+
+    for (auto p : gpuPrm)
+        if (p.first != "cu_deviceProps") cudaFree(p.second);
 }
 
 __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t stride,
