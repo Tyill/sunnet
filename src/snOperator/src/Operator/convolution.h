@@ -47,7 +47,8 @@ private:
         
     size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
     size_t fWidth_ = 3;                                         ///< длина слоя свертки
-    size_t fHeight_ = 3;                                        ///< высота слоя свертки    
+    size_t fHeight_ = 3;                                        ///< высота слоя свертки   
+    size_t fDilate_ = 1;                                        ///< расширение слоя свертки    
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
     size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
 
@@ -90,20 +91,22 @@ private:
     /// CPU ///////////////////////////
 
     /// прямой проход
-    void forwardCPU(size_t kernel,   ///< колво вых слоев
-        size_t fWidth,               ///< ширина маски
-        size_t fHeight,              ///< высота маски
-        size_t stride,               ///< шаг движения маски
-        SN_Base::snFloat* weight,    ///< веса
-        SN_Base::snSize insz,        ///< вход значения размер 
-        SN_Base::snFloat* input,     ///< вход значения
-        SN_Base::snSize outsz,       ///< выход значения размер 
-        SN_Base::snFloat* output);   ///< выход знач (скрытых нейронов) для след слоя
+    void forwardCPU(size_t kernel,     ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* output);     ///< выход знач (скрытых нейронов) для след слоя
 
     /// обратный проход. Расчет град-в и весов
     void backwardCPU_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -117,6 +120,7 @@ private:
     void backwardCPU_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -136,21 +140,23 @@ private:
     void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
 
     /// прямой проход CUDA
-    void forwardCUDA(size_t kernel,   ///< колво вых слоев
-        size_t fWidth,               ///< ширина маски
-        size_t fHeight,              ///< высота маски
-        size_t stride,               ///< шаг движения маски
-        SN_Base::snFloat* weight,    ///< веса
-        SN_Base::snSize insz,        ///< вход значения размер 
-        SN_Base::snFloat* input,     ///< вход значения
-        SN_Base::snSize outsz,       ///< выход значения размер 
-        SN_Base::snFloat* output,    ///< выход знач (скрытых нейронов) для след слоя
+    void forwardCUDA(size_t kernel,    ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
         std::map<std::string, void*>&); ///< вспом  
 
     /// обратный проход CUDA. Расчет град-в и весов
     void backwardCUDA_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -165,6 +171,7 @@ private:
     void backwardCUDA_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -184,21 +191,23 @@ private:
     void freeParamOCL(std::map<std::string, void*>& gpuPrm);
 
     /// прямой проход OpenCL
-    void forwardOCL(size_t kernel,   ///< колво вых слоев
-        size_t fWidth,               ///< ширина маски
-        size_t fHeight,              ///< высота маски
-        size_t stride,               ///< шаг движения маски
-        SN_Base::snFloat* weight,    ///< веса
-        SN_Base::snSize insz,        ///< вход значения размер 
-        SN_Base::snFloat* input,     ///< вход значения
-        SN_Base::snSize outsz,       ///< выход значения размер 
-        SN_Base::snFloat* output,    ///< выход знач (скрытых нейронов) для след слоя
+    void forwardOCL(size_t kernel,     ///< колво вых слоев
+        size_t fWidth,                 ///< ширина маски
+        size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
+        size_t stride,                 ///< шаг движения маски
+        SN_Base::snFloat* weight,      ///< веса
+        SN_Base::snSize insz,          ///< вход значения размер 
+        SN_Base::snFloat* input,       ///< вход значения
+        SN_Base::snSize outsz,         ///< выход значения размер 
+        SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
         std::map<std::string, void*>&); ///< вспом  
 
     /// обратный проход OpenCL. Расчет град-в и весов
     void backwardOCL_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -213,6 +222,7 @@ private:
     void backwardOCL_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
+        size_t fDilate,                ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 

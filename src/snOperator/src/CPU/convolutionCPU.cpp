@@ -32,7 +32,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
    
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -65,7 +65,7 @@ void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pIn = input + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
 
                 for (size_t d = 0; d < insz.d; ++d){
@@ -104,7 +104,7 @@ void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_
     free(share); 
 }
 
-void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -154,7 +154,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pIn = input + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
                 snFloat* pdW = wBuff + cx + cy * fWidth;
 
@@ -181,7 +181,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
                     pdW += 1;
                 }
 
-                snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
 
                 for (size_t d = 0; d < insz.d; ++d){
                     *pGrOut += goutBuff[d];
@@ -206,7 +206,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
     free(share); 
 }
 
-void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -247,7 +247,7 @@ void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, si
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pIn = input + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
 
                 for (size_t d = 0; d < insz.d; ++d){
@@ -269,7 +269,7 @@ void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, si
                     pW += 1;           // bias;
                 }
 
-                snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
 
                 for (size_t d = 0; d < insz.d; ++d){
                     *pGrOut += goutBuff[d];
@@ -295,18 +295,18 @@ void Convolution::freeParamCUDA(map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 
 }
 
-void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
@@ -325,18 +325,18 @@ void Convolution::freeParamOCL(map<string, void*>& gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Convolution::forwardOCL(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::forwardOCL(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Convolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 
 }
 
-void Convolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }

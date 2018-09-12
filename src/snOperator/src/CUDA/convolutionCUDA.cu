@@ -82,7 +82,7 @@ void Convolution::freeParamCUDA(map<std::string, void*>& gpuPrm){
         if (p.first != "cu_deviceProps") cudaFree(p.second);
 }
 
-__global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t stride,
+__global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -120,7 +120,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t stride,
 
                     size_t cx = c % fWidth, cy = c / fWidth;
 
-                    csum += input[cx + posW + (cy + posH) * insz.w] * weight[cx + cy * fWidth];
+                    csum += input[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] * weight[cx + cy * fWidth];
                 }
                 output[ox + oy * outsz.w] += csum;
 
@@ -134,7 +134,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t stride,
     }
 }
 
-void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, map<string, void*>& gpuPrm){
 
     // вход данные
@@ -152,13 +152,13 @@ void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
   
-    cuConvFwd <<< dimGrid, dimBlock >> >(fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_out);
+    cuConvFwd <<< dimGrid, dimBlock >>>(fWidth, fHeight, dilate, stride, d_w, insz, d_in, outsz, d_out);
     
     // результ
     cuCHECK(cudaMemcpy(output, d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));  
 }
 
-__global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
+__global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -197,7 +197,7 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
                 if (oz == 0){
                     for (size_t c = 0; c < wStepByD; ++c){
                         size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;                       
+                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
                     }
                 }
 
@@ -207,7 +207,8 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,
-                        si = cx + posW + (cy + posH) * insz.w, sw = cx + cy * fWidth;
+                        si = (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w,
+                        sw = cx + cy * fWidth;
 
                     gradOut[si] += grIn * weight[sw];
 
@@ -247,7 +248,7 @@ __global__ void cuConvWeightMean(size_t kernel, size_t fWidth, size_t fHeight, s
     }   
 }
 
-void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>& gpuPrm){
        
     // вход данные
@@ -270,7 +271,7 @@ void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, 
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
    
-    cuConvBwd_GW <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_grin, d_grout, d_dw);
+    cuConvBwd_GW <<< dimGrid, dimBlock >>> (fWidth, fHeight, dilate, stride, d_w, insz, d_in, outsz, d_grin, d_grout, d_dw);
 
     cuConvWeightMean <<< 1, 32 >>> (kernel, fWidth, fHeight, insz, d_dw);
    
@@ -280,7 +281,7 @@ void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, 
 
 }
 
-__global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
+__global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -312,7 +313,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
                 if (oz == 0){
                     for (size_t c = 0; c < wStepByD; ++c){
                         size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
+                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
                     }
                 }
 
@@ -321,7 +322,8 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,
-                        si = cx + posW + (cy + posH) * insz.w, sw = cx + cy * fWidth;
+                        si = (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w,
+                        sw = cx + cy * fWidth;
 
                     gradOut[si] += grIn * weight[sw];
                 }
@@ -336,7 +338,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
     }
 }
 
-void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
 
     // вход данные
@@ -354,7 +356,7 @@ void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, s
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
 
-    cuConvBwd_G <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, outsz, d_grin, d_grout);
+    cuConvBwd_G <<< dimGrid, dimBlock >>> (fWidth, fHeight, dilate, stride, d_w, insz, outsz, d_grin, d_grout);
        
     // результ
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
