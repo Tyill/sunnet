@@ -85,85 +85,69 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
         inStepByN = inStepByD * insz.d,    // шаг вх слоя по батчу
         kernelSz = kernel * kernel;     
 
-    // gridDim.x - кол-во вх слоев
-    // gridDim.y - кол-во вых слоев
-    // gridDim.z - размер батча
+    // gridDim.x - кол-во вх/вых слоев
+    // gridDim.y - размер батча
+        
+    input += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    outputInx += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
-    input += blockIdx.x * inStepByD + blockIdx.z * inStepByN;
-    output += blockIdx.y * outStepByD + blockIdx.z * outStepByN;
-    
     if (type == poolType::max){ // max
+              
+        unsigned int oy = threadIdx.y;
+        while (oy < outsz.h){
 
-        unsigned int oz = threadIdx.z;
-        while (oz < outsz.d){
-
-            unsigned int oy = threadIdx.y;
-            while (oy < outsz.h){
-
-                unsigned int ox = threadIdx.x;
-                while (ox < outsz.w){
+            unsigned int ox = threadIdx.x;
+            while (ox < outsz.w){
                                        
-                    size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * kernel, posH = oy * kernel;
 
-                    // ядро свертки   
-                    snFloat valMax = 0, idx = 0;
+                // ядро свертки   
+                snFloat valMax = 0; size_t idx = 0;
 #pragma unroll
-                    for (size_t c = 0; c < kernelSz; ++c){
+                for (size_t c = 0; c < kernelSz; ++c){
 
-                        size_t cx = c % kernel, cy = c / kernel;
+                    size_t cx = c % kernel, cy = c / kernel;
                                                 
-                        snFloat val = input[cx + posW + (cy + posH) * insz.w];
-                        if (val > valMax){
-                            valMax = val;
-                            idx = c;
-                        }
+                    snFloat val = input[cx + posW + (cy + posH) * insz.w];
+                    if (val > valMax){
+                        valMax = val;
+                        idx = c;
                     }
-                    output[ox + oy * outsz.w] = valMax;
-                    outputInx[ox + oy * outsz.w] = idx;
-
-                    ox += blockDim.x;
                 }
-                oy += blockDim.y;
+                output[ox + oy * outsz.w] = valMax;
+                outputInx[ox + oy * outsz.w] = idx;
+
+                ox += blockDim.x;
             }
-            input += inStepByD;
-            output += outStepByD;
-            outputInx += outStepByD;
-            ++oz;
-        }
+            oy += blockDim.y;
+        }           
     }
     else{ // mean
+               
+        unsigned int oy = threadIdx.y;
+        while (oy < outsz.h){
 
-        unsigned int oz = 0;
-        while (oz < insz.d){
-
-            unsigned int oy = threadIdx.y;
-            while (oy < outsz.h){
-
-                unsigned int ox = threadIdx.x;
-                while (ox < outsz.w){
+            unsigned int ox = threadIdx.x;
+            while (ox < outsz.w){
                                         
-                    size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * kernel, posH = oy * kernel;
 
-                    // ядро свертки   
-                    snFloat valMean = 0;
+                // ядро свертки   
+                snFloat valMean = 0;
 #pragma unroll
-                    for (size_t c = 0; c < kernelSz; ++c){
+                for (size_t c = 0; c < kernelSz; ++c){
 
-                        size_t cx = c % kernel, cy = c / kernel;
+                    size_t cx = c % kernel, cy = c / kernel;
 
-                        valMean += input[cx + posW + (cy + posH) * insz.w];
-                    }
-                    output[ox + oy * outsz.w] = valMean / kernelSz;
-                    
-
-                    ox += blockDim.x;
+                    valMean += input[cx + posW + (cy + posH) * insz.w];
                 }
-                oy += blockDim.y;
+                output[ox + oy * outsz.w] = valMean / kernelSz;
+                   
+                ox += blockDim.x;
             }
-            input += inStepByD;
-            output += outStepByD;
-            ++oz;
-        }
+            oy += blockDim.y;
+        }           
     }
 }
 
@@ -180,7 +164,7 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, snSize insz, snFloat* in
 
     // выполнение     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(outsz.d, outsz.n);
+    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
     cuPoolFwd <<< dimGrid, dimBlock >>>(type, kernel, insz, d_in, outsz, d_out, d_idx);
 
@@ -191,59 +175,65 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, snSize insz, snFloat* in
 
 __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
-    size_t outStepByD = outsz.w * outsz.h,  // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d,  // шаг вых слоя по батчу
-        inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d;     // шаг вх слоя по батчу
-
-    // gridDim.x - кол-во вх слоев
+    size_t outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d,  // шаг вых слоя по батчу
+           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
+           kernelSz = kernel * kernel;
+    
+    // gridDim.x - кол-во вх/вых слоев
     // gridDim.y - размер батча
 
-    gradIn += blockIdx.y * outStepByN;
+    gradIn += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
     gradOut += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
-
+   
     if (type == poolType::max){ // max
+        
+        outputInx += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
-        //unsigned int oz = 0;
-        //while (oz < outsz.d){
+        unsigned int oy = threadIdx.y;
+        while (oy < outsz.h){
 
-        //    unsigned int oy = threadIdx.y;
-        //    while (oy < outsz.h){
+            unsigned int ox = threadIdx.x;
+            while (ox < outsz.w){
 
-        //        unsigned int ox = threadIdx.x;
-        //        while (ox < outsz.w){
-
-        //            size_t posW = ox * stride, posH = oy * stride;
-
-        //            if (oz == 0){
-        //                for (size_t c = 0; c < wStepByD; ++c){
-        //                    size_t cx = c % fWidth, cy = c / fWidth;
-        //                    gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
-        //                }
-        //            }
-
-        //            // ядро свертки   
-        //            snFloat grIn = gradIn[ox + oy * outsz.w];
-        //            for (size_t c = 0; c < wStepByD; ++c){
-
-        //                size_t cx = c % fWidth, cy = c / fWidth,
-        //                    si = cx + posW + (cy + posH) * insz.w, sw = cx + cy * fWidth;
-
-        //                gradOut[si] += grIn * weight[sw];
-        //            }
-
-        //            ox += blockDim.x;
-        //        }
-        //        oy += blockDim.y;
-        //    }
-        //    gradIn += outStepByD;
-        //    ++oz;
-        //}
+                size_t posW = ox * kernel, posH = oy * kernel;
+#pragma unroll
+                for (size_t c = 0; c < kernelSz; ++c){
+                    size_t cx = c % kernel, cy = c / kernel;
+                    gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
+                }
+                                
+                size_t c = outputInx[ox + oy * outsz.w], cx = c % kernel, cy = c / kernel;
+                                      
+                gradOut[cx + posW + (cy + posH) * insz.w] = gradIn[ox + oy * outsz.w];
+                
+                ox += blockDim.x;
+            }
+            oy += blockDim.y;
+        }
     }
     else{ // mean
 
+        unsigned int oy = threadIdx.y;
+        while (oy < outsz.h){
 
+            unsigned int ox = threadIdx.x;
+            while (ox < outsz.w){
 
+                size_t posW = ox * kernel, posH = oy * kernel;
+
+                snFloat mean = gradIn[ox + oy * outsz.w] / kernel;
+#pragma unroll
+                for (size_t c = 0; c < kernelSz; ++c){
+                    size_t cx = c % kernel, cy = c / kernel;
+                    gradOut[(cx + posW) + (cy + posH) * insz.w] = mean;
+                }
+                                
+                ox += blockDim.x;
+            }
+            oy += blockDim.y;
+        }
     }
 }
 
@@ -254,7 +244,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, snSize outsz, size_t* o
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"];
     cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
 
-    snFloat* d_idx = (snFloat*)gpuPrm["d_idx"];
+    size_t* d_idx = (size_t*)gpuPrm["d_idx"];
     cuCHECK(cudaMemcpy(d_idx, outputInx, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
     
     // выход
@@ -262,9 +252,9 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, snSize outsz, size_t* o
    
     // выполнение     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(insz.d, outsz.n);
+    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
-//    cuPoolBwd <<< dimGrid, dimBlock >>>(type, kernel, outsz, d_grin, insz, d_grout);
+    cuPoolBwd <<< dimGrid, dimBlock >>>(type, kernel, outsz, d_idx, d_grin, insz, d_grout);
 
     // результ
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));

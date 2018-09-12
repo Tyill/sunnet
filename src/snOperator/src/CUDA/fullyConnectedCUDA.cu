@@ -86,7 +86,7 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
 
     cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
 
-    size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
+    int ida = int(insz.w * insz.h * insz.d + 1), bsz = int(insz.n), krn = int(kernel);
    
     snFloat *d_in  = (snFloat*)gpuPrm["d_in"],
             *d_w   = (snFloat*)gpuPrm["d_w"], 
@@ -94,7 +94,7 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
    
     cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz));
     
-    cuCHECK(cublasSetMatrix(ida, kernel, sizeof(snFloat), weight, ida, d_w, ida));
+    cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, d_w, ida));
    
     // Out = α * W * In + βC
     // In - матрица вход данных - значения с предыд слоя
@@ -104,19 +104,19 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_N,
-        kernel,                        // W, столбцов, кол-во скрытых нейронов 
+        krn,                           // W, столбцов, кол-во скрытых нейронов 
         bsz,                           // In, строк, кол-во изобр в батче
         ida,                           // In, столбцов, В М - строк, кол-во вх нейронов - размер одного изображения из батча. (+1 - X0)                   
         &alpha,                        // α, коэф
         d_w,                           // W, веса
-        kernel,                        // W, шаг до след W (W21 - W11)
+        krn,                           // W, шаг до след W (W21 - W11)
         d_in,                          // In, вх данные - нейроны пришедшие с предыд слоя
         ida,                           // In, шаг до след X (X21 - X11)  
         &beta,                         // β, коэф
         d_out,                         // Out, выходные данные - нейроны для след слоя
-        kernel));                      // Out, шаг до след Y (Y21 - Y11) 
+        krn));                         // Out, шаг до след Y (Y21 - Y11) 
     
-    cuCHECK(cublasGetMatrix(bsz, kernel, sizeof(snFloat), d_out, bsz, output, bsz));    
+    cuCHECK(cublasGetMatrix(bsz, krn, sizeof(snFloat), d_out, bsz, output, bsz));
 }
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
@@ -126,7 +126,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
 
     cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
 
-    size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
+    int ida = int(insz.w * insz.h * insz.d + 1), bsz = int(insz.n), krn = int(kernel);
 
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
            * d_in = (snFloat*)gpuPrm["d_in"],
@@ -136,7 +136,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
 
     cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz));
       
-    cuCHECK(cublasSetMatrix(bsz, kernel, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
+    cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
 
     // Градиент по весам
     // dW = αIn^T * GrIn + βdW
@@ -146,22 +146,21 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_T,
-        kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
+        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
         ida,                     // In, столбцов, кол-во вх значений (+1 - X0)      
         bsz,                     // In, строк, кол-во изобр в батче
         &alpha,                  // α, коэф                 
         d_grin,                  // GrIn - градиент пришедший со след слоя
-        kernel,                  // GrIn - шаг до след
+        krn,                     // GrIn - шаг до след
         d_in,                    // In, вх данные - нейроны пришедшие с предыд слоя
         ida,                     // In, шаг до след X (X21 - X11)  
         &beta,                   // β, коэф                 
         d_dw,                    // dW, выходные данные - градиент по весам                 
-        kernel));                // dW, шаг до след
+        krn));                   // dW, шаг до след
 
-    cuCHECK(cublasGetMatrix(ida, kernel, sizeof(snFloat), d_dw, ida, dWOut, ida));
-
-     
-    cuCHECK(cublasSetMatrix(ida - 1, kernel, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
+    cuCHECK(cublasGetMatrix(ida, krn, sizeof(snFloat), d_dw, ida, dWOut, ida));
+         
+    cuCHECK(cublasSetMatrix(ida - 1, krn, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
     //// Градиент для предыд слоя
     //// GrOut = αGrIn * W^T + βGrOut
@@ -173,12 +172,12 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
         CUBLAS_OP_N,
         ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
         bsz,                     // W, строк, кол-во изобр в батче    
-        kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
+        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
         &alpha,                  // α, коэф                                  
         d_w,                     // W - веса
-        kernel,                  // W - шаг до след
+        krn,                     // W - шаг до след
         d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
-        kernel,                  // GrIn, шаг до след 
+        krn,                     // GrIn, шаг до след 
         &beta,                   // β, коэф                 
         d_grout,                 // GrOut, выходной градиент для пред слоя                                   
         ida - 1));               // GrOut, шаг до след
@@ -193,15 +192,15 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz,
 
     cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
 
-    size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
+    int ida = int(insz.w * insz.h * insz.d + 1), bsz = int(insz.n), krn = int(kernel);
 
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
            * d_w = (snFloat*)gpuPrm["d_w"],
            * d_grout = (snFloat*)gpuPrm["d_grout"];
 
-    cuCHECK(cublasSetMatrix(bsz, kernel, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
+    cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
 
-    cuCHECK(cublasSetMatrix(ida - 1, kernel, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
+    cuCHECK(cublasSetMatrix(ida - 1, krn, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
     //// Градиент для предыд слоя
     //// GrOut = αGrIn * W^T + βGrOut
@@ -213,12 +212,12 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz,
         CUBLAS_OP_N,
         ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
         bsz,                     // W, строк, кол-во изобр в батче    
-        kernel,                  // GrIn, столбцов, кол-во скрытых нейронов 
+        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
         &alpha,                  // α, коэф                                  
         d_w,                     // W - веса
-        kernel,                  // W - шаг до след
+        krn,                     // W - шаг до след
         d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
-        kernel,                  // GrIn, шаг до след 
+        krn,                     // GrIn, шаг до след 
         &beta,                   // β, коэф                 
         d_grout,                 // GrOut, выходной градиент для пред слоя                                   
         ida - 1));               // GrOut, шаг до след

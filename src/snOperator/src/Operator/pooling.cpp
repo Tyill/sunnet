@@ -214,4 +214,9 @@ void Pooling::updateConfig(const snSize& newsz){
 
     if (isPadding_)
         auxParams_["outGradExp"].resize(inDataExpSz_.size(), 0);
+
+    if (calcMode_ == calcMode::CUDA)
+        iniParamCUDA(inDataExpSz_, outSz, kernel_, gpuParams_);
+    else if (calcMode_ == calcMode::OpenCL)
+        iniParamOCL(inDataExpSz_, outSz, kernel_, gpuParams_);
 }

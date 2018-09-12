@@ -150,7 +150,7 @@ void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size
  
     // выполнение     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(outsz.d, outsz.n);
+    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
   
     cuConvFwd <<< dimGrid, dimBlock >> >(fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_out);
     
@@ -268,7 +268,7 @@ void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, 
 
     // выполнение   
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(insz.d, outsz.n);
+    dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
    
     cuConvBwd_GW <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_grin, d_grout, d_dw);
 
@@ -277,6 +277,7 @@ void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, 
     // результ
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
     cuCHECK(cudaMemcpy(dWeightOut, d_dw, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyDeviceToHost));
+
 }
 
 __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
@@ -351,7 +352,7 @@ void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, s
 
     // выполнение   
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(insz.d, outsz.n);
+    dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
 
     cuConvBwd_G <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, outsz, d_grin, d_grout);
        

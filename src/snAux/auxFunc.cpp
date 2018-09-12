@@ -99,7 +99,7 @@ namespace SN_Aux{
 
     bool createSubDirectory(const std::string& strDirs){
 
-        int sz = strDirs.size(), ret = 0;
+        size_t sz = strDirs.size(); int ret = 0;
         string strTmp = "";
         for (int i = 0; i < sz; ++i) {
             char ch = strDirs[i];

@@ -382,9 +382,9 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
 void Convolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
     
     if (isLern){
-        size_t sz = outsz.size() * dropOut;
+        size_t sz = size_t(outsz.size() * dropOut);
         vector<int> rnd(sz);
-        rnd_uniform(rnd.data(), sz, 0, outsz.size());
+        rnd_uniformInt(rnd.data(), sz, 0, int(outsz.size()));
 
         for (auto i : rnd) out[i] = 0;
     }
@@ -413,7 +413,7 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
                 for (size_t k = 0; k < stepD; ++k)
                     cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
             }
-            prm.offset(stepD);
+            prm.offset(int(stepD));
         }
 
         prm.offset(-int(stepD * insz.d));
@@ -447,7 +447,7 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
                 pOut += stepN;
             }
 
-            prm.offset(stepD);
+            prm.offset(int(stepD));
             prm.norm += stepD * bsz;
         }
         free(share);

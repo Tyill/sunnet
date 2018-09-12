@@ -22,14 +22,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
 
 #include <random>
 #include <ctime>
 #include "snBase/snBase.h"
 
-void rnd_uniformReal(SN_Base::snFloat* ioVal, size_t sz, SN_Base::snFloat min, SN_Base::snFloat max);
+using namespace std;
+using namespace SN_Base;
 
-void rnd_uniformInt(int* ioVal, size_t sz, int min, int max);
 
-void rnd_gaussian(SN_Base::snFloat* ioVal, size_t sz, SN_Base::snFloat mean, SN_Base::snFloat sigma);
+void rnd_uniformReal(snFloat* ioVal, size_t sz, snFloat min, snFloat max) {
+    std::uniform_real_distribution<snFloat> dst(min, max);
+
+    std::mt19937 rnd_generator(clock());
+    for (size_t i = 0; i < sz; ++i)
+        ioVal[i] = dst(rnd_generator);
+}
+
+void rnd_uniformInt(int* ioVal, size_t sz, int min, int max) {
+    std::uniform_int_distribution<int> dst(min, max);
+
+    std::mt19937 rnd_generator(clock());
+    for (size_t i = 0; i < sz; ++i)
+        ioVal[i] = dst(rnd_generator);
+}
+
+void rnd_gaussian(snFloat* ioVal, size_t sz, snFloat mean, snFloat sigma) {
+
+    std::mt19937 rnd_generator(clock());
+    std::normal_distribution<snFloat> dst(mean, sigma);
+    for (size_t i = 0; i < sz; ++i)
+        ioVal[i] = dst(rnd_generator);
+}

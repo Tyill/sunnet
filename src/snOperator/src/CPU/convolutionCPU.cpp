@@ -106,7 +106,7 @@ void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_
 
 void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
-  
+    
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
         wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
         wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
@@ -119,10 +119,10 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
     snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
-
+    
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
-
+    
     // по батчу  
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
@@ -203,7 +203,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
         free(wgThr);
     }
    
-    free(share);   
+    free(share); 
 }
 
 void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,

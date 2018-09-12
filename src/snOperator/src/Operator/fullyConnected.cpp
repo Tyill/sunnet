@@ -328,9 +328,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 void FullyConnected::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
         
     if (isLern){
-        size_t sz = outsz.size() * dropOut;
+        size_t sz = size_t(outsz.size() * dropOut);
         vector<int> rnd(sz);
-        rnd_uniform(rnd.data(), sz, 0, outsz.size());
+        rnd_uniformInt(rnd.data(), sz, 0, int(outsz.size()));
 
         for (auto i : rnd) out[i] = 0;
     }
