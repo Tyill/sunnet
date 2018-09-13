@@ -37,4 +37,5 @@ public:
     ~UserLayer() = default;
                 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+
 };

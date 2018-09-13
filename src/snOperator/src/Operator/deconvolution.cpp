@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "convolution.h"
+#include "deconvolution.h"
 #include "snAux/auxFunc.h"
 #include "SNOperator/src/weightInit.h"
 #include "SNOperator/src/activeFunctions.h"
@@ -36,13 +36,13 @@ using namespace SN_Base;
 
 /// сверточный слой
 
-Convolution::Convolution(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+Deconvolution::Deconvolution(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
     OperatorBase(net, name, node, prms){
         
     load(prms);
 }
 
-Convolution::~Convolution(){
+Deconvolution::~Deconvolution(){
 
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
@@ -50,7 +50,7 @@ Convolution::~Convolution(){
         freeParamOCL(gpuParams_);
 }
 
-void Convolution::load(std::map<std::string, std::string>& prms){
+void Deconvolution::load(std::map<std::string, std::string>& prms){
 
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
@@ -123,7 +123,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     setInternPrm(prms);
 }
 
-bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
+bool Deconvolution::setInternPrm(std::map<std::string, std::string>& prms){
 
     basePrms_ = prms;
 
@@ -183,7 +183,7 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
     return true;
 }
 
-bool Convolution::setBatchNorm(const batchNorm& bn){
+bool Deconvolution::setBatchNorm(const batchNorm& bn){
 
     size_t osz = bn.sz.size();
 
@@ -202,7 +202,7 @@ bool Convolution::setBatchNorm(const batchNorm& bn){
     return true;
 }
 
-std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
+std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
     if (neighbOpr.size() > 1){
         ERROR_MESS("neighbOpr.size() > 1");
@@ -217,7 +217,7 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
     return std::vector<std::string>();
 }
 
-void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snSize insz = inTns->size();
 
@@ -270,7 +270,7 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     
 }
 
-void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
     
     snFloat* gradIn = inTns->getData();
 
@@ -342,7 +342,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
 }
 
-void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){
+void Deconvolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){
 
     /// копируем со смещением padding для каждого изобр
     
@@ -380,7 +380,7 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
     }
 }
 
-void Convolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
+void Deconvolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
     
     if (isLern){
         size_t sz = size_t(outsz.size() * dropOut);
@@ -396,7 +396,7 @@ void Convolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Ba
     }
 }
 
-void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
+void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
 
@@ -458,7 +458,7 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
     }         
 }
 
-void Convolution::updateConfig(const snSize& newsz){
+void Deconvolution::updateConfig(const snSize& newsz){
     
     size_t stp = fWidth_ * fHeight_ * newsz.d, ntp = (stp + 1) * kernel_;
         

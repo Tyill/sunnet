@@ -25,86 +25,85 @@
 
 #include "../stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
-#include "snOperator/src/Operator/convolution.h"
+#include "snOperator/src/Operator/deconvolution.h"
 #include <omp.h>
 
 using namespace std;
 using namespace SN_Base;
 
 
-void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
    
-    size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
-           wStepByK = wStepByD * insz.d,       // шаг весов по выходу
-           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-           inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
-           outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
-           outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
+    size_t wStepByD = fWidth * fHeight,               // шаг весов по входу
+        wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
+        wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
+        inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
+        inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
+        outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
+        outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
 
-    size_t shareStepByN = insz.d + kernel;     // для локализации памяти
+    size_t shareStepByN = insz.d + outsz.d;          // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
-    
-    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-        
-    // по батчу
+
+    memset(output, 0, outStepByN * outsz.n * sizeof(snFloat));
+
+    // по батчу  
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* outBuff = share + insz.d + shareStepByN * n;
-        
-        for (size_t p = 0; p < outStepByD; ++p){
-        
-            size_t ox = p % outsz.w, oy = p / outsz.w,
-                posW = ox * stride, posH = oy * stride;
 
-            memset(outBuff, 0, kernel * sizeof(snFloat));
+        for (size_t p = 0; p < inStepByD; ++p){
+
+            size_t ix = p % insz.w, iy = p / insz.w,
+                posW = ix * stride, posH = iy * stride;
+
+            snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
+
+            // по всем вх слоям
+            for (size_t d = 0; d < insz.d; ++d){
+                inBuff[d] = *pIn;
+                pIn += inStepByD;
+            }
 
             // ядро свертки
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pIn = input + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
+                                
+                memset(outBuff, 0, outsz.d * sizeof(snFloat));
 
+                // по всем вх слоям
                 for (size_t d = 0; d < insz.d; ++d){
-                    inBuff[d] = *pIn;
-                    pIn += inStepByD;
-                }
-                            
-                // по всем вых слоям
-                for (size_t k = 0; k < kernel; ++k){
-                                        
-                    // по всем вх слоям
-                    snFloat cout = 0;
-                    for (size_t d = 0; d < insz.d; ++d){
-                        cout += inBuff[d] * (*pW);
+
+                    // по всем вых слоям
+                    snFloat in = inBuff[d];
+                    for (size_t k = 0; k < kernel; ++k){
+                        outBuff[k] += in * (*pW);
                         pW += wStepByD;
                     }
                     pW += 1;           // bias;
-                    outBuff[k] += cout;
+                }
+
+                snFloat* pOut = output + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * outsz.w + n * outStepByN;
+
+                for (size_t k = 0; k < kernel; ++k){
+                    *pOut += outBuff[k];
+                    pOut += outStepByD;
                 }
             }
-
-            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-            snFloat* pW = weight + wStepByK;
-
-            // по всем вых слоям
-            for (size_t k = 0; k < kernel; ++k){
-               
-                *pOut += outBuff[k] + *(pW + k); // + bias
-               
-                pW += wStepByK;
-                pOut += outStepByD;
-            }
-        }        
+        }
     }
 
-    free(share); 
+    free(share);
+
+
 }
 
-void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
@@ -128,25 +127,25 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
     for (int n = 0; n < insz.n; ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
-        snFloat* ginBuff = share + insz.d + shareStepByN * n;
-        snFloat* goutBuff = share + insz.d + kernel + shareStepByN * n;
+        snFloat* goutBuff = share + insz.d + shareStepByN * n;
+        snFloat* ginBuff = share + insz.d + kernel + shareStepByN * n;
         snFloat* wBuff = wgThr + wStepByN * n;
 
-        for (size_t p = 0; p < outStepByD; ++p){
+        for (size_t p = 0; p < inStepByD; ++p){
 
-            size_t ox = p % outsz.w, oy = p / outsz.w,
-                posW = ox * stride, posH = oy * stride;
+            size_t ix = p % insz.w, iy = p / insz.w,
+                posW = ix * stride, posH = iy * stride;
 
-            snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pGrOut = gradOut + ix + iy * outsz.w + n * outStepByN;
             snFloat* pdW = wBuff + wStepByK;
 
             // по всем вых слоям
             for (size_t k = 0; k < kernel; ++k){
-                ginBuff[k] = *pGrIn;
+                goutBuff[k] = *pGrOut;
 
-                *(pdW + k) += *pGrIn;      // + bias
+                *(pdW + k) += *pGrOut;      // + bias
 
-                pGrIn += outStepByD;
+                pGrOut += inStepByD;
                 pdW += wStepByK;
             }
 
@@ -206,68 +205,71 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
     free(share); 
 }
 
-void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
-    size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
-        wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
-        wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
-        inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
+    size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
+        wStepByK = wStepByD * insz.d,       // шаг весов по выходу
+        inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
+        inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
+        outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
+        outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
 
-    size_t shareStepByN = kernel + insz.d;          // для локализации памяти
+    size_t shareStepByN = outsz.d + insz.d;     // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
-    // по батчу  
+    // по батчу
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
 
-        snFloat* ginBuff = share + shareStepByN * n;
-        snFloat* goutBuff = share + kernel + shareStepByN * n;
+        snFloat* grinBuff = share + shareStepByN * n;
+        snFloat* groutBuff = share + outsz.d + shareStepByN * n;
 
-        for (size_t p = 0; p < outStepByD; ++p){
+        for (size_t p = 0; p < inStepByD; ++p){
 
-            size_t ox = p % outsz.w, oy = p / outsz.w,
-                posW = ox * stride, posH = oy * stride;
+            size_t ix = p % insz.w, iy = p / insz.w,
+                posW = ix * stride, posH = iy * stride;
 
-            snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
-
-            // по всем вых слоям
-            for (size_t k = 0; k < kernel; ++k){
-                ginBuff[k] = *pGrIn;
-                pGrIn += outStepByD;
-            }
+            memset(groutBuff, 0, insz.d * sizeof(snFloat));
 
             // ядро свертки
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
+                snFloat* pGrIn = gradIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * outsz.w + n * outStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
-                              
-                memset(goutBuff, 0, insz.d * sizeof(snFloat));
 
-                // по всем вых слоям
                 for (size_t k = 0; k < kernel; ++k){
+                    grinBuff[k] = *pGrIn;
+                    pGrIn += outStepByD;
+                }
 
-                    // по всем вх слоям
-                    snFloat gin = ginBuff[k];
-                    for (size_t d = 0; d < insz.d; ++d){
-                        goutBuff[d] += gin * (*pW);
+                // по всем вх слоям
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    // по всем вых слоям
+                    snFloat cout = 0;
+                    for (size_t k = 0; k < kernel; ++k){
+                        cout += grinBuff[k] * (*pW);
                         pW += wStepByD;
                     }
                     pW += 1;           // bias;
+                    groutBuff[d] += cout;
                 }
+            }
 
-                snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
+            snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
+            snFloat* pW = weight + wStepByK;
 
-                for (size_t d = 0; d < insz.d; ++d){
-                    *pGrOut += goutBuff[d];
-                    pGrOut += inStepByD;
-                }
+            // по всем вх слоям
+            for (size_t d = 0; d < insz.d; ++d){
+
+                *pOut += groutBuff[d] + *(pW + d); // + bias
+
+                pW += wStepByK;
+                pOut += inStepByD;
             }
         }
     }
@@ -279,27 +281,27 @@ void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, si
 #ifndef SN_CUDA
 
 /// иниц вспом параметров CUDA          
-void Convolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
+void Deconvolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 /// освоб вспом параметров CUDA          
-void Convolution::freeParamCUDA(map<string, void*>& gpuPrm){
+void Deconvolution::freeParamCUDA(map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Convolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 
 }
 
-void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
@@ -309,27 +311,27 @@ void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, s
 #ifndef SN_OpenCL
 
 /// иниц вспом параметров CUDA          
-void Convolution::iniParamOCL(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
+void Deconvolution::iniParamOCL(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 /// освоб вспом параметров CUDA          
-void Convolution::freeParamOCL(map<string, void*>& gpuPrm){
+void Deconvolution::freeParamOCL(map<string, void*>& gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Convolution::forwardOCL(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::forwardOCL(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Convolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 
 }
 
-void Convolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
+void Deconvolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }

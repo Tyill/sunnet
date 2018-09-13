@@ -26,6 +26,7 @@
 #include "snBase/snBase.h"
 #include "Operator/fullyConnected.h"
 #include "Operator/convolution.h"
+#include "Operator/deconvolution.h"
 #include "Operator/pooling.h"
 #include "Operator/input.h"
 #include "Operator/output.h"
@@ -47,6 +48,7 @@ namespace SN_Opr{
         else if (fname == "FullyConnected") ret = (SN_Base::OperatorBase*)new FullyConnected(net, fname, node, prms);
         else if (fname == "LossFunction")   ret = (SN_Base::OperatorBase*)new LossFunction(net, fname, node, prms);
         else if (fname == "Convolution")    ret = (SN_Base::OperatorBase*)new Convolution(net, fname, node, prms);
+        else if (fname == "Deconvolution")  ret = (SN_Base::OperatorBase*)new Deconvolution(net, fname, node, prms);
         else if (fname == "Pooling")        ret = (SN_Base::OperatorBase*)new Pooling(net, fname, node, prms);
         else if (fname == "Lock")           ret = (SN_Base::OperatorBase*)new Lock(net, fname, node, prms);
         else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(net, fname, node, prms);
@@ -65,6 +67,7 @@ namespace SN_Opr{
             else if (fname == "FullyConnected") delete (FullyConnected*)opr;
             else if (fname == "LossFunction")   delete (LossFunction*)opr;
             else if (fname == "Convolution")    delete (Convolution*)opr;
+            else if (fname == "Deconvolution")  delete (Deconvolution*)opr;
             else if (fname == "Pooling")        delete (Pooling*)opr;
             else if (fname == "Lock")           delete (Lock*)opr;
             else if (fname == "Summator")       delete (Summator*)opr;

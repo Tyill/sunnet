@@ -73,7 +73,7 @@ bool createNet(SN_API::skyNet& net){
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"5\", \"batchNorm\":\"none\","
+        "\"OperatorParams\":{\"kernel\":\"1\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
         "\"freeze\":\"0\"}"
         "},"

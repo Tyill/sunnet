@@ -28,14 +28,14 @@
 #include"SNOperator/src/structurs.h"
 #include"SNOperator/src/mathFunctions.h"
 
-/// сверточный слой
-class Convolution : SN_Base::OperatorBase{
+/// сверточный слой с повышением размерности
+class Deconvolution : SN_Base::OperatorBase{
 
 public:
 
-    Convolution(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Deconvolution(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Convolution();
+    ~Deconvolution();
 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
         
