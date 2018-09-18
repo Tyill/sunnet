@@ -82,7 +82,9 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     setIntParam("stride", false, false, stride_);
     setIntParam("dilate", false, false, dilate_);
 
-
+    if (prms.find("gpuClearMem") != prms.end())
+        gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
+   
     if (prms.find("batchNorm") != prms.end()){
 
         string bnType = prms["batchNorm"];
@@ -204,48 +206,71 @@ bool Convolution::setBatchNorm(const batchNorm& bn){
 
 std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
-
-    if (operPrm.action == snAction::forward)
+    if (operPrm.action == snAction::forward){
+        
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+    
         forward(neighbOpr[0]->getOutput(), operPrm);
-    else
-        backward(neighbOpr[0]->getGradient(), operPrm);
+    }
+    else{
+        if (neighbOpr.size() == 1){
+            backward(neighbOpr[0]->getGradient(), operPrm);
+        }
+        else{
+            gradInMem_ = *neighbOpr[0]->getGradient();
+            for (size_t i = 1; i < neighbOpr.size(); ++i){
 
+                if (gradInMem_ != *neighbOpr[i]->getGradient()){
+                    ERROR_MESS("operators size is not equals");
+                    return std::vector < std::string > {"noWay"};
+                }
+                gradInMem_ += *neighbOpr[i]->getGradient();
+            }           
+            backward(&gradInMem_, operPrm);
+
+            gradInMem_.tfree();
+        }
+    }
+       
     return std::vector<std::string>();
 }
 
 void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snSize insz = inTns->size();
+    baseInput_ = inTns;
 
     /// размер вх данных изменился?
     if (insz != inSzMem_){
         inSzMem_ = insz;
-        updateConfig(insz);
+        updateConfig(insz, inDataExpSz_);
     }
 
-    /// копируем со смещением padding для каждого изобр
-    snFloat* pInTns = inTns->getData();
-    snFloat* pDtMem = inDataExp_.data();
-
-    if ((paddingW_ == 0) && (paddingH_ == 0))
-        memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
-    else
-        paddingOffs(false, insz, pDtMem, pInTns);
-
+    /// копируем со смещением padding для каждого изобр   
+    snFloat* in = baseInput_->getData();
+    bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
+    if (!isSame){
+        inTnsExp_.resize(inDataExpSz_);       
+        paddingOffs(false, insz, inTnsExp_.getData(), baseInput_->getData());
+        in = inTnsExp_.getData();
+    }
+    
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
 
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, outsz, out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, outsz, out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, outsz, out, gpuParams_); break;
     }
 
+    if (!operPrm.isLerning && !isSame)
+        inTnsExp_.tfree();
+       
     /// dropOut
     if (dropOut_ > 0.F)
         calcDropOut(operPrm.isLerning, dropOut_, outsz, out);
@@ -253,8 +278,8 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-       
-
+    
+    
     /// функция активации
     switch (activeType_){
     case activeType::sigmoid:   fv_sigmoid(out, outsz.size()); break;
@@ -263,17 +288,16 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     case activeType::elu:       fv_elu(out, outsz.size()); break;
     default: break;
     }
-
+    
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-    
+         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
     
     snFloat* gradIn = inTns->getData();
-
+ 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
@@ -302,20 +326,29 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // расчет вых градиента и коррекции весов
+    snFloat* gradOut = baseGrad_->getData();
+
     bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
-    snFloat* pGrOutExp = isSame ? baseGrad_->getData() : auxParams_["outGradExp"].data();
-   
+    if (!isSame){
+        gradOutExp_.resize(inDataExpSz_);
+        gradOut = gradOutExp_.getData();
+    }
+
     snFloat* weight = baseWeight_->getData();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
+        snFloat* in = baseInput_->getData();
+        if (!isSame)
+            in = inTnsExp_.getData();
+        
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
-
+               
         // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
@@ -332,14 +365,17 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp); break;
-        case calcMode::CUDA:   backwardCUDA_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut, gpuParams_); break;
         }
     }
 
-    if (!isSame)
-        paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
+    if (!isSame){
+        paddingOffs(true, inSzMem_, gradOut, baseGrad_->getData());
+        gradOutExp_.tfree();
+        inTnsExp_.tfree();
+    }
 }
 
 void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){
@@ -458,7 +494,7 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
     }         
 }
 
-void Convolution::updateConfig(const snSize& newsz){
+void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     
     size_t stp = fWidth_ * fHeight_ * newsz.d, ntp = (stp + 1) * kernel_;
         
@@ -502,17 +538,12 @@ void Convolution::updateConfig(const snSize& newsz){
         ERROR_MESS("not correct param 'stride' or 'fHeight'");
 
 
-    inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
-    inDataExp_.resize(inDataExpSz_.size());
-
-    memset(inDataExp_.data(), 0, inDataExpSz_.size() * sizeof(snFloat));
-
+    expSz = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
+      
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
         
     // вспом массивы
-    if (inDataExpSz_ != newsz)
-        auxParams_["outGradExp"].resize(inDataExpSz_.size(), 0);
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
@@ -533,9 +564,9 @@ void Convolution::updateConfig(const snSize& newsz){
     }  
 
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(inDataExpSz_, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamCUDA(expSz, outSz, fWidth_, fHeight_, gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(inDataExpSz_, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamOCL(expSz, outSz, fWidth_, fHeight_, gpuParams_);
 } 
 
 

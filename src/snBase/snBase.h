@@ -149,11 +149,13 @@ namespace SN_Base{
 
         void resize(const snSize& nsz){
 
-            size_t nnsz = nsz.size();
+            size_t nnsz = nsz.size(), csz = sz_.size();
             assert(nnsz > 0);
 
-            if (sz_.size() < nnsz)
+            if (csz < nnsz){
                 data_ = (snFloat*)realloc(data_, nnsz * sizeof(snFloat));
+                memset(data_ + csz, 0, (nnsz - csz) * sizeof(snFloat));
+            }
             
             sz_ = nsz;
         }
@@ -161,6 +163,12 @@ namespace SN_Base{
         snSize size() const{
 
             return sz_;
+        }
+
+        void tfree(){
+            if (data_) free(data_);
+            data_ = nullptr;
+            sz_ = snSize(0, 0, 0, 0, 0);
         }
 
     private:

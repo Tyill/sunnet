@@ -39,36 +39,29 @@ OperatorBase(net, name, node, prms){
 
 std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
       
-  
-    if ((operPrm.action == snAction::forward) && neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
-  
+      
     if (operPrm.action == snAction::forward){
-        auto nb = neighbOpr[0]->getOutput();
-        baseOut_->setData(nb->getData(), nb->size());       
+
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        *baseOut_ = *neighbOpr[0]->getOutput();
     }
     else{
-        if (neighbOpr.size() == 1){
+       
+        *baseGrad_ = *neighbOpr[0]->getGradient();
 
-            auto nb = neighbOpr[0]->getGradient();
-            baseGrad_->setData(nb->getData(), nb->size());
-        }
-        else{
+        size_t sz = neighbOpr.size();
+        for (size_t i = 1; i < sz; ++i){
 
-            *baseGrad_ = *neighbOpr[0]->getGradient();
-
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i){
-
-                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
-                    ERROR_MESS("operators size is not equals");
-                    return std::vector < std::string > {"noWay"};
-                }
-                *baseGrad_ += *neighbOpr[i]->getGradient();
-            }           
-        }       
+            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }
+            *baseGrad_ += *neighbOpr[i]->getGradient();
+        }           
     }
        
     vector<string> nw;

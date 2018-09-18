@@ -61,6 +61,7 @@ bool createNet(SN_API::skyNet& net){
 
     ss << "{"
 
+
         "\"BeginNet\":"
         "{"
         "\"NextNodes\":\"C1\""
@@ -68,54 +69,57 @@ bool createNet(SN_API::skyNet& net){
 
         "\"Nodes\":"
         "["
-        
+
         "{"
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"1\", \"batchNorm\":\"none\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
+        "\"gpuClearMem\":\"1\","
+        "\"padding\":\"1\","
         "\"freeze\":\"0\"}"
-        "},"
-                     
+        "},"        
         
         "{"
         "\"NodeName\":\"P1\","
         "\"NextNodes\":\"F1\","
         "\"OperatorName\":\"Pooling\","
         "\"OperatorParams\":{"
-        "\"mode\":\"CPU\","
+        "\"mode\":\"CUDA\","
+        "\"gpuClearMem\":\"1\","
         "\"freeze\":\"0\"}"
-        "},"
+        "},"        
 
-        
         "{"
         "\"NodeName\":\"F1\","
         "\"NextNodes\":\"F2\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"128\", \"batchNorm\":\"none\","
+        "\"gpuClearMem\":\"1\","
+        "\"mode\":\"CUDA\","
         "\"freeze\":\"0\"}"
         "},"
-
         
+
         "{"
         "\"NodeName\":\"F2\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
         "\"OperatorParams\":{\"kernel\":\"10\","
         "\"freeze\":\"0\","
-        "\"weightInit\":\"he\","        
+        "\"weightInit\":\"he\","
         "\"optimizer\":\"adam\","
-        "\"mode\":\"CUDA\","
+        "\"mode\":\"CPU\","
         "\"active\":\"relu\"}"
         "},"
-              
+
         "{"
         "\"NodeName\":\"LS\","
         "\"NextNodes\":\"EndNet\","
         "\"OperatorName\":\"LossFunction\","
-         "\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
-       // "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
+        "\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
+        // "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
         "}"
 
         "],"
@@ -124,6 +128,7 @@ bool createNet(SN_API::skyNet& net){
         "\"PrevNode\":\"LS\""               ///< Предыд узел ветви.
         "}"
         "}";
+
 
 
     char err[256]; err[0] = '\0';
@@ -209,10 +214,11 @@ int main(int argc, _TCHAR* argv[])
     
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
+    //string imgPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\";
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 1; float lr = 0.05; //28
+    int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 1; float lr = 0.001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -268,14 +274,12 @@ int main(int argc, _TCHAR* argv[])
 
             //refTarget[0] = (ndir == 0) ? 1.F : 0.F;
 
-            double minVal = 0, maxVal = 0;
             double mean = cv::mean(img)[0];
-            cv::minMaxLoc(img, &minVal, &maxVal);
             size_t nr = img.rows, nc = img.cols;
             for (size_t r = 0; r < nr; ++r){
                 uchar* pt = img.ptr<uchar>(r);
                 for (size_t c = 0; c < nc; ++c)
-                    refData[r * nc + c] = pt[c] > mean ? pt[c] - mean : 0;
+                    refData[r * nc + c] = pt[c] - mean;
             }
         }
 

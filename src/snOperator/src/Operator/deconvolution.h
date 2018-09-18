@@ -48,7 +48,6 @@ private:
     size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
     size_t fWidth_ = 3;                                         ///< длина слоя свертки
     size_t fHeight_ = 3;                                        ///< высота слоя свертки   
-    size_t dilate_ = 1;                                         ///< расширение слоя свертки    
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
     size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
 
@@ -59,8 +58,8 @@ private:
     weightInitType weightInitType_ = weightInitType::he;        ///< тип инициализации весов
     batchNormType batchNormType_ = batchNormType::none;         ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
-    SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
-    std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
+    //SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
+    //std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
           
     bool isFreeze_ = false;                                     ///< не менять веса
 
@@ -71,6 +70,8 @@ private:
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;
+
+    SN_Base::Tensor gradInMem_;
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
     std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL

@@ -47,15 +47,17 @@ void FullyConnected::iniParamCUDA(snSize insz, size_t kernel, map<string, void*>
         cuCHECK(cublasCreate(&cuHandle));
 
         gpuPrm["hcuBLAS"] = cuHandle;
-                            
-        snFloat* d_in = 0, *d_w = 0, *d_out = 0, *d_grout = 0, *d_dw = 0;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
-        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
+          
+        if (!gpuClearMem_){
+            snFloat* d_in = 0, *d_w = 0, *d_out = 0, *d_grout = 0, *d_dw = 0;
+            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
+            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
+            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
+            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
+            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
+        }
     }
-    else{
+    else if (!gpuClearMem_){
         snFloat* d_in    = (snFloat*)gpuPrm["d_in"],
                * d_w     = (snFloat*)gpuPrm["d_w"],
                * d_dw    = (snFloat*)gpuPrm["d_dw"],
@@ -76,8 +78,10 @@ void FullyConnected::freeParamCUDA(map<string, void*>& gpuPrm){
 
     cublasDestroy((cublasHandle_t)gpuPrm["hcuBLAS"]);
 
-    for (auto p : gpuPrm)
-        if (p.first != "hcuBLAS")  cudaFree(p.second);
+    if (!gpuClearMem_){
+        for (auto p : gpuPrm)
+            if (p.first != "hcuBLAS")  cudaFree(p.second);
+    }
 }
 
 void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, map<string, void*>& gpuPrm){
@@ -92,6 +96,12 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
             *d_w   = (snFloat*)gpuPrm["d_w"], 
             *d_out = (snFloat*)gpuPrm["d_out"];
    
+    if (gpuClearMem_){
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));
+    }
+
     cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz));
     
     cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, d_w, ida));
@@ -117,6 +127,12 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
         krn));                         // Out, шаг до след Y (Y21 - Y11) 
     
     cuCHECK(cublasGetMatrix(bsz, krn, sizeof(snFloat), d_out, bsz, output, bsz));
+
+    if (gpuClearMem_){
+        cuCHECK(cudaFree(d_in));
+        cuCHECK(cudaFree(d_w));
+        cuCHECK(cudaFree(d_out));
+    }
 }
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
@@ -133,6 +149,14 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
            * d_w = (snFloat*)gpuPrm["d_w"],
            * d_dw = (snFloat*)gpuPrm["d_dw"],
            * d_grout = (snFloat*)gpuPrm["d_grout"];
+
+    if (gpuClearMem_){
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grin), bsz * kernel * sizeof(snFloat)));    
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       
+    }
 
     cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, d_in, bsz));
       
@@ -183,7 +207,14 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
         ida - 1));               // GrOut, шаг до след
       
     cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
-    
+ 
+    if (gpuClearMem_){
+        cuCHECK(cudaFree(d_in));
+        cuCHECK(cudaFree(d_w));
+        cuCHECK(cudaFree(d_grin));
+        cuCHECK(cudaFree(d_grout));
+        cuCHECK(cudaFree(d_dw));
+    }
 }
 
 void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
@@ -197,6 +228,12 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz,
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
            * d_w = (snFloat*)gpuPrm["d_w"],
            * d_grout = (snFloat*)gpuPrm["d_grout"];
+
+    if (gpuClearMem_){
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grin), bsz * kernel * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat)));
+    }
 
     cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
 
@@ -223,6 +260,12 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz,
         ida - 1));               // GrOut, шаг до след
 
     cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
+
+    if (gpuClearMem_){
+        cuCHECK(cudaFree(d_w));
+        cuCHECK(cudaFree(d_grin));
+        cuCHECK(cudaFree(d_grout));
+    }
 }
 
 #endif 

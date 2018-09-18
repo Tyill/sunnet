@@ -121,6 +121,46 @@ bool SNet::checkCrossRef(std::map<std::string, SN_Base::Node>& nodes, std::strin
                 return false;
             }
         }
+
+        vector<string> prevNodes = n.second.prevNodes;
+        while (!prevNodes.empty()){
+        
+            string pnd = prevNodes.back();
+            prevNodes.pop_back();
+
+            if (!nodes[pnd].prevNodes.empty()){
+
+                for (auto n : nodes[pnd].prevNodes){
+                    prevNodes.push_back(n);
+                }
+            }
+            else if (nodes[pnd].oprName != "Input"){
+                err = "Error createNet: node '" + pnd + "' - not found begin node 'Input'";
+                statusMess(err);
+                return false;
+            }
+            else continue;            
+        }
+
+        vector<string> nextNodes = n.second.nextNodes;
+        while (!nextNodes.empty()){
+
+            string nnd = nextNodes.back();
+            nextNodes.pop_back();
+
+            if (!nodes[nnd].nextNodes.empty()){
+
+                for (auto n : nodes[nnd].nextNodes){
+                    nextNodes.push_back(n);
+                }
+            }
+            else if (nodes[nnd].oprName != "Output"){
+                err = "Error createNet: node '" + nnd + "' - not found end node 'Output'";
+                statusMess(err);
+                return false;
+            }
+            else continue;
+        }
     }
 
     return true;

@@ -80,9 +80,7 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
         setIntParam("padding", true, false, paddingSet_);
 
     setIntParam("stride", false, false, stride_);
-    setIntParam("dilate", false, false, dilate_);
-
-
+  
     if (prms.find("batchNorm") != prms.end()){
 
         string bnType = prms["batchNorm"];
@@ -204,17 +202,32 @@ bool Deconvolution::setBatchNorm(const batchNorm& bn){
 
 std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
+    if (operPrm.action == snAction::forward){
 
-    if (operPrm.action == snAction::forward)
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+
         forward(neighbOpr[0]->getOutput(), operPrm);
-    else
-        backward(neighbOpr[0]->getGradient(), operPrm);
+    }
+    else{
+        if (neighbOpr.size() == 1){
+            backward(neighbOpr[0]->getGradient(), operPrm);
+        }
+        else{
+            gradInMem_ = *neighbOpr[0]->getGradient();
+            for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-    return std::vector<std::string>();
+                if (gradInMem_ != *neighbOpr[i]->getGradient()){
+                    ERROR_MESS("operators size is not equals");
+                    return std::vector < std::string > {"noWay"};
+                }
+                gradInMem_ += *neighbOpr[i]->getGradient();
+            }
+            backward(&gradInMem_, operPrm);
+        }
+    }
 }
 
 void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -482,26 +495,16 @@ void Deconvolution::updateConfig(const snSize& newsz){
         outSz.w = newsz.w;
         outSz.h = newsz.h;
 
-        paddingW_ = (newsz.w * (stride_ - 1) + fWidth_ + (fWidth_ - 1) * (dilate_ - 1) - stride_) / 2;
-        paddingH_ = (newsz.h * (stride_ - 1) + fHeight_ + (fHeight_ - 1) * (dilate_ - 1) - stride_) / 2;
+        paddingW_ = ((newsz.w - 1) * stride_ - newsz.w + fWidth_) / 2;
+        paddingH_ = ((newsz.h - 1) * stride_ - newsz.h + fHeight_) / 2;
     }
     else{
         paddingW_ = paddingH_ = paddingSet_;
-
-        outSz.w = (newsz.w + paddingW_ * 2 - fWidth_ - (fWidth_ - 1) * (dilate_ - 1)) / stride_ + 1;
-        outSz.h = (newsz.h + paddingH_ * 2 - fHeight_ - (fHeight_ - 1) * (dilate_ - 1)) / stride_ + 1;
+              
+        outSz.w = (newsz.w - 1) * stride_ - paddingW_ * 2 + fWidth_;
+        outSz.h = (newsz.h - 1) * stride_ - paddingH_ * 2 + fHeight_;       
     }
-
-    // проверка коррект
-    size_t res = (newsz.w + paddingW_ * 2 - fWidth_ - (fWidth_ - 1) * (dilate_ - 1)) % stride_;
-    if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'fWidth'");
-
-    res = (newsz.h + paddingH_ * 2 - fHeight_ - (fHeight_ - 1) * (dilate_ - 1)) % stride_;
-    if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'fHeight'");
-
-
+       
     inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
     inDataExp_.resize(inDataExpSz_.size());
 

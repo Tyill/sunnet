@@ -77,7 +77,9 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
     }
 
-
+    if (prms.find("gpuClearMem") != prms.end())
+        gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
+       
     if (prms.find("mode") != prms.end()){
 
         string mode = prms["mode"];
@@ -193,16 +195,35 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
 
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
+    if (operPrm.action == snAction::forward){
+
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        forward(neighbOpr[0]->getOutput(), operPrm);
+    }
+    else{
+        if (neighbOpr.size() == 1){
+            backward(neighbOpr[0]->getGradient(), operPrm);
+        }
+        else{
+            gradInMem_ = *neighbOpr[0]->getGradient();
+            for (size_t i = 1; i < neighbOpr.size(); ++i){
+
+                if (gradInMem_ != *neighbOpr[i]->getGradient()){
+                    ERROR_MESS("operators size is not equals");
+                    return std::vector < std::string > {"noWay"};
+                }
+                gradInMem_ += *neighbOpr[i]->getGradient();
+            }
+            backward(&gradInMem_, operPrm);
+        
+            gradInMem_.tfree();
+        }
     }
 
-    if (operPrm.action == snAction::forward)
-        forward(neighbOpr[0]->getOutput(), operPrm);
-    else
-        backward(neighbOpr[0]->getGradient(), operPrm);         
-   
     return std::vector<std::string>();
 }
 
@@ -217,16 +238,17 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     }
    
     /// копируем со смещением для bias для каждого изобр
+    baseInput_ = inTns;    
+    size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
+        
     snFloat* pInTns = inTns->getData();
     snFloat* pDtMem = inDataExp_.data();
-    size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
-    for (size_t i = 0; i < insz.n; ++i){
+    for (size_t i = 0; i < insz.n; ++i)
         memcpy(pDtMem + i * stp + i + 1, pInTns + i * stp, ssz);
-    }
-   
+       
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData();
-
+        
     switch (calcMode_){
     case calcMode::CPU:    forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
     case calcMode::CUDA:   forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
@@ -291,9 +313,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     // расчет вых градиента и коррекции весов
     snFloat* gradOut = baseGrad_->getData();
     snFloat* weight = baseWeight_->getData();
-
+       
     if (!isFreeze_){
-
+                
         snFloat* dWeight = auxParams_["dWeight"].data();
        
         switch (calcMode_){
@@ -301,7 +323,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
         case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
-
+                
         // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
@@ -314,7 +336,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
         case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
         default: break;
-        } 
+        }      
     }
     else{ // isFreeze
         switch (calcMode_){
@@ -322,7 +344,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case calcMode::CUDA:   backwardCUDA_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
         case calcMode::OpenCL: backwardOCL_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
         }
-    }
+    }   
 }
 
 void FullyConnected::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
@@ -365,12 +387,10 @@ void FullyConnected::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, s
 void FullyConnected::updateConfig(const snSize& newsz){
     
     size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
-
+    
     inDataExp_.resize((stp + 1) * newsz.n);
-    snFloat* pDtMem = inDataExp_.data();
-    for (size_t i = 0; i < newsz.n; ++i){
-        pDtMem[i * stp + i] = 1.0F;
-    }
+    for (size_t i = 0; i < newsz.n; ++i)
+        inDataExp_[i * stp + i] = 1.0F;
 
     // имеющиеся веса оставляем как есть, остаток инициализируем
     size_t wcsz = baseWeight_->size().size();

@@ -35,13 +35,13 @@ using namespace SN_Base;
 void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
    
-    size_t wStepByD = fWidth * fHeight,               // шаг весов по входу
-        wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
-        wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
-        inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
+    size_t wStepByD = fWidth * fHeight,              // шаг весов по входу
+           wStepByK = wStepByD * kernel,             // шаг весов по выходу
+           wStepByN = (wStepByK + 1) * insz.d,       // шаг весов по батчу
+           inStepByD = insz.w * insz.h,              // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,           // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,           // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d;        // шаг вых слоя по батчу
 
     size_t shareStepByN = insz.d + outsz.d;          // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
@@ -106,29 +106,29 @@ void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, siz
 void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
-    size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
-        wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
-        wStepByN = (wStepByK + 1) * kernel,           // шаг весов по батчу
-        inStepByD = insz.w * insz.h,                  // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,               // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,               // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d;            // шаг вых слоя по батчу
+    size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
+           wStepByK = wStepByD * kernel,       // шаг весов по выходу
+           wStepByN = (wStepByK + 1) * insz.d, // шаг весов по батчу
+           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
 
-    size_t shareStepByN = insz.d + kernel + insz.d;      // для локализации памяти
+    size_t shareStepByN = insz.d + outsz.d + insz.d;     // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
     snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
-    
+
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
-    
-    // по батчу  
+
+    // по батчу
 #pragma omp parallel for
     for (int n = 0; n < insz.n; ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
-        snFloat* goutBuff = share + insz.d + shareStepByN * n;
-        snFloat* ginBuff = share + insz.d + kernel + shareStepByN * n;
+        snFloat* grinBuff = share + insz.d + shareStepByN * n;
+        snFloat* groutBuff = share + insz.d + outsz.d + shareStepByN * n;
         snFloat* wBuff = wgThr + wStepByN * n;
 
         for (size_t p = 0; p < inStepByD; ++p){
@@ -136,60 +136,61 @@ void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight,
             size_t ix = p % insz.w, iy = p / insz.w,
                 posW = ix * stride, posH = iy * stride;
 
-            snFloat* pGrOut = gradOut + ix + iy * outsz.w + n * outStepByN;
-            snFloat* pdW = wBuff + wStepByK;
-
-            // по всем вых слоям
-            for (size_t k = 0; k < kernel; ++k){
-                goutBuff[k] = *pGrOut;
-
-                *(pdW + k) += *pGrOut;      // + bias
-
-                pGrOut += inStepByD;
-                pdW += wStepByK;
+            snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
+            
+            for (size_t d = 0; d < insz.d; ++d){
+                inBuff[d] = *pIn;                             
+                pIn += inStepByD;
             }
+
+            memset(groutBuff, 0, insz.d * sizeof(snFloat));
 
             // ядро свертки
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pIn = input + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
+                snFloat* pGrIn = gradIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * outsz.w + n * outStepByN;
                 snFloat* pW = weight + cx + cy * fWidth;
                 snFloat* pdW = wBuff + cx + cy * fWidth;
 
-                for (size_t d = 0; d < insz.d; ++d){
-                    inBuff[d] = *pIn;
-                    pIn += inStepByD;
+                for (size_t k = 0; k < kernel; ++k){
+                    grinBuff[k] = *pGrIn;
+                    pGrIn += outStepByD;
                 }
 
-                memset(goutBuff, 0, insz.d * sizeof(snFloat));
+                // по всем вх слоям
+                for (size_t d = 0; d < insz.d; ++d){
 
-                // по всем вых слоям
-                for (size_t k = 0; k < kernel; ++k){
-
-                    // по всем вх слоям
-                    snFloat gin = ginBuff[k];
-                    for (size_t d = 0; d < insz.d; ++d){
-                        goutBuff[d] += gin * (*pW);
+                    // по всем вых слоям
+                    snFloat cin = inBuff[d], cout = 0;
+                    for (size_t k = 0; k < kernel; ++k){
+                        cout += grinBuff[k] * (*pW);
                         pW += wStepByD;
 
-                        *pdW += gin * inBuff[d];
+                        *pdW += grinBuff[k] * cin;
                         pdW += wStepByD;
                     }
-                    pW += 1;           // bias;
-                    pdW += 1;
-                }
 
-                snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
-
-                for (size_t d = 0; d < insz.d; ++d){
-                    *pGrOut += goutBuff[d];
-                    pGrOut += inStepByD;
+                    pW += 1;             // bias
+                    pdW += 1;         
+                    groutBuff[d] += cout;
                 }
+            }
+
+            snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
+            snFloat* pW = weight + wStepByK;
+
+            // по всем вх слоям
+            for (size_t d = 0; d < insz.d; ++d){
+
+                *pOut += groutBuff[d] + *(pW + d); // + bias (no change)
+
+                pW += wStepByK;
+                pOut += inStepByD;
             }
         }
     }
-   
+       
     if (insz.n > 1){
         for (size_t i = 0; i < insz.n; ++i){
             snFloat* wBuff = wgThr + wStepByN * i;
@@ -209,11 +210,11 @@ void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, 
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
-        wStepByK = wStepByD * insz.d,       // шаг весов по выходу
-        inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
+           wStepByK = wStepByD * kernel,       // шаг весов по выходу
+           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
+           inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
+           outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
+           outStepByN = outStepByD * outsz.d;  // шаг вых слоя по батчу
 
     size_t shareStepByN = outsz.d + insz.d;     // для локализации памяти
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
@@ -266,7 +267,7 @@ void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, 
             // по всем вх слоям
             for (size_t d = 0; d < insz.d; ++d){
 
-                *pOut += groutBuff[d] + *(pW + d); // + bias
+                *pOut += groutBuff[d] + *(pW + d); // + bias (no change)
 
                 pW += wStepByK;
                 pOut += inStepByD;

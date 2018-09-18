@@ -47,14 +47,10 @@ OperatorBase(net, name, node, prms){
 std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
     if (neighbOpr.size() == 1){
-        if (operPrm.action == snAction::forward){
-            auto nb = neighbOpr[0]->getOutput();
-            baseOut_->setData(nb->getData(), nb->size());
-        }
-        else{
-            auto nb = neighbOpr[0]->getGradient();
-            baseGrad_->setData(nb->getData(), nb->size());
-        }
+        if (operPrm.action == snAction::forward)
+            *baseOut_ = *neighbOpr[0]->getOutput();
+        else
+            *baseGrad_ = *neighbOpr[0]->getGradient();           
     }
     else{
        
@@ -87,11 +83,7 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                switch (sType_){
-                case Summator::sType::summ: *baseGrad_ += *neighbOpr[i]->getGradient(); break;
-                case Summator::sType::diff: *baseGrad_ -= *neighbOpr[i]->getGradient(); break;
-                case Summator::sType::mean: mean(baseGrad_, neighbOpr[i]->getGradient(), baseGrad_); break;
-                }
+                *baseGrad_ += *neighbOpr[i]->getGradient();                
             }
         }
     }

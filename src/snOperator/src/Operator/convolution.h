@@ -59,10 +59,14 @@ private:
     weightInitType weightInitType_ = weightInitType::he;        ///< тип инициализации весов
     batchNormType batchNormType_ = batchNormType::none;         ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
-    SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
-    std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
-          
+    SN_Base::snSize inDataExpSz_;                               ///< размер вх данных расширен
+   
+    SN_Base::Tensor gradInMem_;                                 ///< вх тензор запомнен
+    SN_Base::Tensor inTnsExp_;
+    SN_Base::Tensor gradOutExp_;
+   
     bool isFreeze_ = false;                                     ///< не менять веса
+    bool gpuClearMem_ = false;                                  ///< очищать память GPU
 
     calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
 
@@ -75,9 +79,11 @@ private:
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
     std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
 
+   
+
     void load(std::map<std::string, std::string>& prms);
 
-    void updateConfig(const SN_Base::snSize& newSz);
+    void updateConfig(const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
     
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
@@ -123,8 +129,7 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize insz,          ///< вход значения размер         
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut);    ///< выход градиент ошибки для след слоя
@@ -174,8 +179,7 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize insz,          ///< вход значения размер        
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
@@ -225,8 +229,7 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
+        SN_Base::snSize insz,          ///< вход значения размер        
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя

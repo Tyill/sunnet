@@ -51,10 +51,13 @@ private:
     weightInitType weightInitType_ = weightInitType::he;      ///< тип инициализации весов
     batchNormType batchNormType_ = batchNormType::none;       ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                 ///< размер вх данных запомнен
-    std::vector<SN_Base::snFloat> inDataExp_;                 ///< вход данные расширен
-                                                           
+    std::vector<SN_Base::snFloat> inDataExp_;                 ///< вход данные расширен     
+    
+    SN_Base::Tensor gradInMem_;                               ///< вх тензор запомнен
+    
     bool isFreeze_ = false;                                   ///< не менять веса
-                                                           
+    bool gpuClearMem_ = false;                                ///< освобождать память
+
     calcMode calcMode_ = calcMode::CPU;                       ///< режим расчета
 
     SN_Base::snFloat dropOut_ = 0.F;                          ///< случ отключение нейронов
@@ -68,6 +71,7 @@ private:
     std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
 
     
+
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);

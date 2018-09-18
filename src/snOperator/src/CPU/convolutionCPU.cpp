@@ -207,7 +207,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
 }
 
 void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut){
+    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,                  // шаг весов по входу
         wStepByK = wStepByD * insz.d,                 // шаг весов по выходу
@@ -300,7 +300,7 @@ void Convolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, 
 }
 
 void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -330,7 +330,7 @@ void Convolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, s
 }
 
 void Convolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t fDilate, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }
 

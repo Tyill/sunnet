@@ -48,14 +48,17 @@ private:
     poolType poolType_ = poolType::max;                               ///< тип
                                                                       
     SN_Base::snSize inSzMem_;                                         ///< размер вх данных
-
+    SN_Base::snSize inDataExpSz_;                                     ///< размер вх данных
     std::vector<size_t> outInx_;                                      ///< индекс выбран эл-та (если maxPool)
 
-    SN_Base::snSize inDataExpSz_;                                     ///< размер вх данных
-    std::vector<SN_Base::snFloat> inDataExp_;                         ///< вход данные расширен
+    SN_Base::Tensor gradInMem_;                                       ///< вх тензор запомнен
+    SN_Base::Tensor inTnsExp_;
+    SN_Base::Tensor gradOutExp_;
 
     size_t paddingH_ = 0, paddingW_ = 0;                              ///< доп отступ по краям для свертки
     bool isPadding_ = false;
+    
+    bool gpuClearMem_ = false;                                        ///< освобождать память
 
     calcMode calcMode_ = calcMode::CPU;                               ///< режим расчета
 

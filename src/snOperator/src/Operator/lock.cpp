@@ -48,10 +48,32 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
         return std::vector < std::string > {"noWay"};
     }
 
-    if (operPrm.action == snAction::forward)
-        *baseOut_ = *neighbOpr[0]->getOutput();    
-    else
-        *baseGrad_ = *neighbOpr[0]->getGradient();
-    
+        
+    if (operPrm.action == snAction::forward){
+
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        *baseOut_ = *neighbOpr[0]->getOutput();
+    }
+    else{
+        if (neighbOpr.size() == 1){
+            *baseGrad_ = *neighbOpr[0]->getGradient();
+        }
+        else{
+            *baseGrad_ = *neighbOpr[0]->getGradient();
+            for (size_t i = 1; i < neighbOpr.size(); ++i){
+
+                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+                    ERROR_MESS("operators size is not equals");
+                    return std::vector < std::string > {"noWay"};
+                }
+                *baseGrad_ += *neighbOpr[i]->getGradient();
+            }            
+        }
+    }
+
     return std::vector<std::string>();
 }
