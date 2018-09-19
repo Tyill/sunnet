@@ -73,12 +73,7 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
     setIntParam("kernel", false, true, kernel_);
     setIntParam("fWidth", false, false, fWidth_);
     setIntParam("fHeight", false, false, fHeight_);
-    
-    if ((prms.find("padding") != prms.end()) && (prms["padding"] == "-1"))
-        isPaddingSame_ = true;
-    else
-        setIntParam("padding", true, false, paddingSet_);
-
+  
     setIntParam("stride", false, false, stride_);
   
     if (prms.find("batchNorm") != prms.end()){
@@ -102,7 +97,6 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
     }
 
     // вспом массивы
-    auxParams_["outGradExp"] = vector<snFloat>();
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();    
@@ -226,13 +220,18 @@ std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const 
                 gradInMem_ += *neighbOpr[i]->getGradient();
             }
             backward(&gradInMem_, operPrm);
+
+            gradInMem_.tfree();
         }
     }
+
+    return std::vector<std::string>();
 }
 
 void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snSize insz = inTns->size();
+    baseInput_ = inTns;
 
     /// размер вх данных изменился?
     if (insz != inSzMem_){
@@ -242,21 +241,15 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
 
     /// копируем со смещением padding для каждого изобр
     snFloat* pInTns = inTns->getData();
-    snFloat* pDtMem = inDataExp_.data();
-
-    if ((paddingW_ == 0) && (paddingH_ == 0))
-        memcpy(pDtMem, pInTns, insz.size() * sizeof(snFloat));
-    else
-        paddingOffs(false, insz, pDtMem, pInTns);
-
+   
     /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
 
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), outsz, out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out, gpuParams_); break;
     }
 
     /// dropOut
@@ -315,18 +308,20 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // расчет вых градиента и коррекции весов
-    bool isSame = (paddingW_ == 0) && (paddingH_ == 0);
-    snFloat* pGrOutExp = isSame ? baseGrad_->getData() : auxParams_["outGradExp"].data();
-   
+    snFloat* grOut = baseGrad_->getData();   
     snFloat* weight = baseWeight_->getData();
+    snFloat* in = baseInput_->getData();
+    snFloat* out = baseOut_->getData();
+
+    snSize insz = baseInput_->size(), outsz = baseOut_->size();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
         }
 
         // корректируем веса
@@ -345,52 +340,11 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp); break;
-        case calcMode::CUDA:   backwardCUDA_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, dilate_, stride_, weight, inDataExpSz_, inDataExp_.data(), baseOut_->size(), gradIn, pGrOutExp, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
         }
-    }
-
-    if (!isSame)
-        paddingOffs(true, inSzMem_, pGrOutExp, baseGrad_->getData());
-}
-
-void Deconvolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFloat* out){
-
-    /// копируем со смещением padding для каждого изобр
-    
-    size_t paddW = paddingW_, paddH = paddingH_,
-        sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
-    if (in2out){
-        in += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                in += (stW + paddW * 2) * paddH * 2;
-
-            in += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                out[j] = in[j];
-            in += paddW + stW;
-
-            out += stW;
-        }
-    }
-    else{
-        in += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                in += (stW + paddW * 2) * paddH * 2;
-
-            in += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                in[j] = out[j];
-            in += paddW + stW;
-
-            out += stW;
-        }
-    }
+    }        
 }
 
 void Deconvolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
@@ -473,13 +427,13 @@ void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, sn
 
 void Deconvolution::updateConfig(const snSize& newsz){
     
-    size_t stp = fWidth_ * fHeight_ * newsz.d, ntp = (stp + 1) * kernel_;
+    size_t stp = fWidth_ * fHeight_ * kernel_, ntp = (stp + 1) * newsz.d;
         
     // имеющиеся веса оставляем как есть, остаток инициализируем
     size_t wcsz = baseWeight_->size().size();
     if (ntp > wcsz){
                 
-        baseWeight_->resize(snSize(kernel_, stp + 1));
+        baseWeight_->resize(snSize(newsz.d, stp + 1));
         snFloat* wd = baseWeight_->getData();
         switch (weightInitType_){
         case weightInitType::uniform: wi_uniform(wd + wcsz, ntp - wcsz); break;
@@ -490,32 +444,15 @@ void Deconvolution::updateConfig(const snSize& newsz){
     }
         
     snSize outSz(0, 0, kernel_, newsz.n);
-          
-    if (isPaddingSame_){
-        outSz.w = newsz.w;
-        outSz.h = newsz.h;
-
-        paddingW_ = ((newsz.w - 1) * stride_ - newsz.w + fWidth_) / 2;
-        paddingH_ = ((newsz.h - 1) * stride_ - newsz.h + fHeight_) / 2;
-    }
-    else{
-        paddingW_ = paddingH_ = paddingSet_;
-              
-        outSz.w = (newsz.w - 1) * stride_ - paddingW_ * 2 + fWidth_;
-        outSz.h = (newsz.h - 1) * stride_ - paddingH_ * 2 + fHeight_;       
-    }
-       
-    inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
-    inDataExp_.resize(inDataExpSz_.size());
-
-    memset(inDataExp_.data(), 0, inDataExpSz_.size() * sizeof(snFloat));
-
+        
+   
+    outSz.w = (newsz.w - 1) * stride_ + fWidth_;
+    outSz.h = (newsz.h - 1) * stride_ + fHeight_;
+    
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
         
     // вспом массивы
-    if (inDataExpSz_ != newsz)
-        auxParams_["outGradExp"].resize(inDataExpSz_.size(), 0);
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
@@ -536,9 +473,9 @@ void Deconvolution::updateConfig(const snSize& newsz){
     }  
 
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(inDataExpSz_, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamCUDA(newsz, outSz, fWidth_, fHeight_, gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(inDataExpSz_, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamOCL(newsz, outSz, fWidth_, fHeight_, gpuParams_);
 } 
 
 

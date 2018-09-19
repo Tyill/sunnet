@@ -49,19 +49,16 @@ private:
     size_t fWidth_ = 3;                                         ///< длина слоя свертки
     size_t fHeight_ = 3;                                        ///< высота слоя свертки   
     size_t stride_ = 1;                                         ///< шаг перемещения свертки
-    size_t paddingSet_ = 0, paddingH_ = 0, paddingW_ = 0;       ///< доп отступ по краям для свертки
-
-    bool isPaddingSame_ = false;
-
+       
     activeType activeType_ = activeType::relu;                  ///< тип ф-ии активации
     optimizerType optimizerType_ = optimizerType::adam;         ///< тип оптимизатора весов
     weightInitType weightInitType_ = weightInitType::he;        ///< тип инициализации весов
     batchNormType batchNormType_ = batchNormType::none;         ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
-    //SN_Base::snSize inDataExpSz_;                               ///< размер вх данных
-    //std::vector<SN_Base::snFloat> inDataExp_;                   ///< вход данные расширен
-          
+           
     bool isFreeze_ = false;                                     ///< не менять веса
+
+    SN_Base::Tensor gradInMem_;
 
     calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
 
@@ -70,18 +67,14 @@ private:
     SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;
-
-    SN_Base::Tensor gradInMem_;
-
+  
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
     std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
 
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
-    
-    void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
-
+   
     void calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
 
     void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
@@ -95,7 +88,6 @@ private:
     void forwardCPU(size_t kernel,     ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -107,7 +99,6 @@ private:
     void backwardCPU_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -121,11 +112,9 @@ private:
     void backwardCPU_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut);    ///< выход градиент ошибки для след слоя
@@ -144,7 +133,6 @@ private:
     void forwardCUDA(size_t kernel,    ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -157,7 +145,6 @@ private:
     void backwardCUDA_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -172,11 +159,9 @@ private:
     void backwardCUDA_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
@@ -195,7 +180,6 @@ private:
     void forwardOCL(size_t kernel,     ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -208,7 +192,6 @@ private:
     void backwardOCL_GW(size_t kernel, ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
@@ -223,11 +206,9 @@ private:
     void backwardOCL_G(size_t kernel,  ///< колво вых слоев
         size_t fWidth,                 ///< ширина маски
         size_t fHeight,                ///< высота маски
-        size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
         SN_Base::snSize insz,          ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
         SN_Base::snSize outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя

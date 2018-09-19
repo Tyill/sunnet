@@ -43,6 +43,7 @@ private:
         softMaxACrossEntropy = 0,
         binaryCrossEntropy = 1,
         regressionOLS = 2,
+        userLoss = 3,
     };
 
     lossType lossType_ = lossType::softMaxACrossEntropy;

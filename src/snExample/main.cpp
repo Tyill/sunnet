@@ -72,54 +72,89 @@ bool createNet(SN_API::skyNet& net){
 
         "{"
         "\"NodeName\":\"C1\","
+        "\"NextNodes\":\"C2\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
+        "\"mode\":\"CUDA\","
+        "\"padding\":\"0\","
+        "\"freeze\":\"0\"}"
+        "},"   
+
+        "{"
+        "\"NodeName\":\"C2\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
         "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
         "\"mode\":\"CUDA\","
-        "\"gpuClearMem\":\"1\","
-        "\"padding\":\"1\","
-        "\"freeze\":\"0\"}"
-        "},"        
-        
-        "{"
-        "\"NodeName\":\"P1\","
-        "\"NextNodes\":\"F1\","
-        "\"OperatorName\":\"Pooling\","
-        "\"OperatorParams\":{"
-        "\"mode\":\"CUDA\","
-        "\"gpuClearMem\":\"1\","
-        "\"freeze\":\"0\"}"
-        "},"        
-
-        "{"
-        "\"NodeName\":\"F1\","
-        "\"NextNodes\":\"F2\","
-        "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"128\", \"batchNorm\":\"none\","
-        "\"gpuClearMem\":\"1\","
-        "\"mode\":\"CUDA\","
+        "\"padding\":\"0\","
         "\"freeze\":\"0\"}"
         "},"
         
+        "{"
+        "\"NodeName\":\"P1\","
+        "\"NextNodes\":\"C3\","
+        "\"OperatorName\":\"Pooling\","
+        "\"OperatorParams\":{"
+        "\"mode\":\"CUDA\","
+        "\"freeze\":\"0\"}"
+        "},"        
 
         "{"
-        "\"NodeName\":\"F2\","
-        "\"NextNodes\":\"LS\","
-        "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"10\","
-        "\"freeze\":\"0\","
-        "\"weightInit\":\"he\","
-        "\"optimizer\":\"adam\","
+        "\"NodeName\":\"C3\","
+        "\"NextNodes\":\"C4\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
+        "\"mode\":\"CUDA\","
+        "\"padding\":\"0\","
+        "\"freeze\":\"0\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"C4\","
+        "\"NextNodes\":\"P2\","
+        "\"OperatorName\":\"Convolution\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
+        "\"mode\":\"CUDA\","
+        "\"padding\":\"0\","
+        "\"freeze\":\"0\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"P2\","
+        "\"NextNodes\":\"U1\","
+        "\"OperatorName\":\"Pooling\","
+        "\"OperatorParams\":{"
+        "\"mode\":\"CUDA\","
+        "\"freeze\":\"0\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"U1\","
+        "\"NextNodes\":\"U2\","
+        "\"OperatorName\":\"Deconvolution\","
+        "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
         "\"mode\":\"CPU\","
-        "\"active\":\"relu\"}"
+        "\"stride\":\"2\","
+        "\"freeze\":\"0\"}"
+        "},"
+
+        "{"
+        "\"NodeName\":\"U2\","
+        "\"NextNodes\":\"LS\","
+        "\"OperatorName\":\"Deconvolution\","
+        "\"OperatorParams\":{\"kernel\":\"1\", \"batchNorm\":\"none\","
+        "\"mode\":\"CPU\","
+        "\"stride\":\"2\","
+        "\"active\":\"sigmoid\","
+        "\"freeze\":\"0\"}"
         "},"
 
         "{"
         "\"NodeName\":\"LS\","
         "\"NextNodes\":\"EndNet\","
         "\"OperatorName\":\"LossFunction\","
-        "\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
-        // "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
+        //"\"OperatorParams\":{\"loss\":\"softMaxToCrossEntropy\"}"
+        "\"OperatorParams\":{\"loss\":\"binaryCrossEntropy\"}"
         "}"
 
         "],"
@@ -214,11 +249,12 @@ int main(int argc, _TCHAR* argv[])
     
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
-    //string imgPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\";
-    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
+    string imgPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\";
+    string imgTargPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\label\\";
+    //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 1; float lr = 0.001; //28
+    int batchSz = 1, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -232,16 +268,16 @@ int main(int argc, _TCHAR* argv[])
     }
 
     SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * d * batchSz];
-    SN_API::snFloat* targetLayer = new SN_API::snFloat[classCnt * batchSz];
-    SN_API::snFloat* outLayer = new SN_API::snFloat[classCnt * batchSz];
+    SN_API::snFloat* targetLayer = new SN_API::snFloat[w1 * h1 * d * batchSz];
+    SN_API::snFloat* outLayer = new SN_API::snFloat[w1 * h1 * d * batchSz];
 
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 1000; ++k){
+    for (int k = 0; k < 10000; ++k){
 
-        fill_n(targetLayer, classCnt * batchSz, 0.F);
-        fill_n(outLayer, classCnt * batchSz, 0.F);
+        fill_n(targetLayer, w1 * h1 * d * batchSz, 0.F);
+        fill_n(outLayer, w1 * h1 * d * batchSz, 0.F);
 
         Sleep(1); srand(clock());
 
@@ -268,12 +304,7 @@ int main(int argc, _TCHAR* argv[])
             cv::resize(img, img, cv::Size(w, h));
 
             float* refData = inLayer + i * w * h;
-
-            float* refTarget = targetLayer + i/d * classCnt;
-            refTarget[ndir] = 1.F;
-
-            //refTarget[0] = (ndir == 0) ? 1.F : 0.F;
-
+           
             double mean = cv::mean(img)[0];
             size_t nr = img.rows, nc = img.cols;
             for (size_t r = 0; r < nr; ++r){
@@ -281,6 +312,22 @@ int main(int argc, _TCHAR* argv[])
                 for (size_t c = 0; c < nc; ++c)
                     refData[r * nc + c] = pt[c] - mean;
             }
+
+
+            /// 
+            img = cv::imread(imgTargPath + nm, CV_LOAD_IMAGE_UNCHANGED);
+
+            cv::resize(img, img, cv::Size(w1, h1));
+
+            refData = targetLayer + i * w1 * h1;
+            mean = cv::mean(img)[0];
+            nr = img.rows, nc = img.cols;
+            for (size_t r = 0; r < nr; ++r){
+                uchar* pt = img.ptr<uchar>(r);
+                for (size_t c = 0; c < nc; ++c)
+                    refData[r * nc + c] = pt[c]/255.;
+            }
+
         }
 
         float accurat = 0;
@@ -288,13 +335,13 @@ int main(int argc, _TCHAR* argv[])
             lr,
             SN_API::snLSize(w, h, d, batchSz),
             inLayer,
-            SN_API::snLSize(classCnt, 1, 1, batchSz),
+            SN_API::snLSize(w1, h1, d, batchSz),
             outLayer,
             targetLayer,
             &accurat);
 
-        accuratSumm += accurat;
-      cout << k << " metrix " << accuratSumm / k << endl;
+        accuratSumm += accurat;     
+        cout << k << " metrix " << accuratSumm / k << endl;
 
         
     }

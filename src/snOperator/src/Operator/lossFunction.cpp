@@ -44,6 +44,8 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
             lossType_ = lossType::binaryCrossEntropy;
         else if (stype == "regressionOLS")
             lossType_ = lossType::regressionOLS;
+        else if (stype == "userLoss")
+            lossType_ = lossType::userLoss;
         else
             ERROR_MESS("param 'loss' = " + stype + " indefined");
     }
@@ -67,6 +69,13 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
         return std::vector < std::string > {"noWay"};
     }
 
+    if (lossType_ == LossFunction::lossType::userLoss){
+        if (basePrms_.find("cbackName") == basePrms_.end()){
+            ERROR_MESS("not set param 'cbackName'");
+            return std::vector < std::string > {"noWay"};
+        }
+    }
+
     if (operPrm.action == snAction::forward)
         forward(neighbOpr[0]->getOutput());
     else
@@ -88,11 +97,11 @@ void LossFunction::forward(Tensor* inTns){
     case LossFunction::lossType::softMaxACrossEntropy:{
 
         if (auxParams_.find("sm_aux") == auxParams_.end())
-            auxParams_["sm_aux"] = vector<snFloat>(tsz.w);
+            auxParams_["sm_aux"] = vector<snFloat>(tsz.w * tsz.h * tsz.d);
 
         // прогоняем через softMax каждое изобр отдельно
         snFloat* aux = auxParams_["sm_aux"].data();
-        size_t nsz = tsz.n, width = tsz.w;
+        size_t nsz = tsz.n, width = tsz.w * tsz.h * tsz.d;
         for (size_t i = 0; i < nsz; ++i){
 
             snFloat maxv = *std::max_element(out, out + width);
@@ -118,6 +127,23 @@ void LossFunction::forward(Tensor* inTns){
 
         break;
     }
+    case LossFunction::lossType::userLoss:{
+               
+        snSize outSz;
+        snFloat* outData = nullptr;
+        g_userCBack(this, basePrms_["cbackName"], node_,
+           true, inTns->size(), inTns->getData(), outSz, &outData);
+
+        if (outData){
+            baseOut_->setData(outData, outSz);
+            free(outData);
+        }
+        else
+            ERROR_MESS("not set 'outData' in userCBack");
+
+        break;
+    }
+
     break;
     default:
         ERROR_MESS("param 'loss' indefined");
@@ -143,7 +169,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
     case LossFunction::lossType::softMaxACrossEntropy:{
 
         // считаем ошибку для всех изобр
-        size_t nsz = tsz.n * tsz.w;
+        size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
             grad[i] = smOut[i] - target[i];
 
@@ -153,7 +179,7 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
     case LossFunction::lossType::binaryCrossEntropy:{
 
         // считаем ошибку для всех изобр
-        size_t nsz = tsz.n * tsz.w;
+        size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
             grad[i] = (smOut[i] - target[i]) / (smOut[i] * (1.F - smOut[i]));
     
@@ -164,6 +190,25 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
 
         break;
     }
+
+    case LossFunction::lossType::userLoss:{
+
+        snSize outSz;
+        snFloat* outData = nullptr;
+        g_userCBack(this, basePrms_["cbackName"], node_,
+            false, inTns->size(), inTns->getData(), outSz, &outData);
+
+        if (outData){
+            baseGrad_->setData(outData, outSz);
+            free(outData);
+        }
+        else
+            ERROR_MESS("not set 'outData' in userCBack");
+
+        break;
+    }
+
+
     default:
         ERROR_MESS("param 'lossType' indefined");
         break;

@@ -203,6 +203,7 @@ public:
          void resetPrestart(){
 
              preStart_ = false;
+             cvrFinish_.notify_all();
          }
 
          bool isRun(){

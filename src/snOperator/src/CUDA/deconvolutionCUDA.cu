@@ -82,7 +82,7 @@ void Deconvolution::freeParamCUDA(map<std::string, void*>& gpuPrm){
         if (p.first != "cu_deviceProps") cudaFree(p.second);
 }
 
-__global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+__global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -120,7 +120,7 @@ __global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t
 
                     size_t cx = c % fWidth, cy = c / fWidth;
 
-                    csum += input[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] * weight[cx + cy * fWidth];
+                    csum += input[(cx + posW) + (cy + posH) * insz.w] * weight[cx + cy * fWidth];
                 }
                 output[ox + oy * outsz.w] += csum;
 
@@ -134,7 +134,7 @@ __global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t
     }
 }
 
-void Deconvolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+void Deconvolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, map<string, void*>& gpuPrm){
 
     // вход данные
@@ -152,13 +152,13 @@ void Deconvolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, si
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
   
-    cuDeconvFwd <<< dimGrid, dimBlock >>>(fWidth, fHeight, dilate, stride, d_w, insz, d_in, outsz, d_out);
+    cuDeconvFwd <<< dimGrid, dimBlock >>>(fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_out);
     
     // результ
     cuCHECK(cudaMemcpy(output, d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));  
 }
 
-__global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+__global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -197,7 +197,7 @@ __global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, siz
                 if (oz == 0){
                     for (size_t c = 0; c < wStepByD; ++c){
                         size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
+                        gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
                     }
                 }
 
@@ -207,7 +207,7 @@ __global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, siz
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,
-                        si = (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w,
+                        si = (cx + posW) + (cy + posH) * insz.w,
                         sw = cx + cy * fWidth;
 
                     gradOut[si] += grIn * weight[sw];
@@ -248,7 +248,7 @@ __global__ void cuDeconvWeightMean(size_t kernel, size_t fWidth, size_t fHeight,
     }   
 }
 
-void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>& gpuPrm){
        
     // вход данные
@@ -271,7 +271,7 @@ void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
    
-    cuDeconvBwd_GW <<< dimGrid, dimBlock >>> (fWidth, fHeight, dilate, stride, d_w, insz, d_in, outsz, d_grin, d_grout, d_dw);
+    cuDeconvBwd_GW <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, d_in, outsz, d_grin, d_grout, d_dw);
 
     cuDeconvWeightMean <<< 1, 32 >>> (kernel, fWidth, fHeight, insz, d_dw);
    
@@ -281,7 +281,7 @@ void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight
 
 }
 
-__global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
+__global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
     snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
@@ -313,7 +313,7 @@ __global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size
                 if (oz == 0){
                     for (size_t c = 0; c < wStepByD; ++c){
                         size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
+                        gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
                     }
                 }
 
@@ -322,7 +322,7 @@ __global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,
-                        si = (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w,
+                        si = (cx + posW) + (cy + posH) * insz.w,
                         sw = cx + cy * fWidth;
 
                     gradOut[si] += grIn * weight[sw];
@@ -338,8 +338,8 @@ __global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size
     }
 }
 
-void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t dilate, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
+void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
+    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
 
     // вход данные
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"];
@@ -356,7 +356,7 @@ void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight,
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
 
-    cuDeconvBwd_G <<< dimGrid, dimBlock >>> (fWidth, fHeight, dilate, stride, d_w, insz, outsz, d_grin, d_grout);
+    cuDeconvBwd_G <<< dimGrid, dimBlock >>> (fWidth, fHeight, stride, d_w, insz, outsz, d_grin, d_grout);
        
     // результ
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));

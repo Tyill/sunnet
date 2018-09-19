@@ -61,17 +61,19 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
     }
 
     snSize outSz;
-    snFloat* outData = outTns->getData();
+    snFloat* outData = nullptr; 
 
     g_userCBack(this, basePrms_["cbackName"], node_,
         isAct, inTns->size(), inTns->getData(), outSz, &outData);
     
     if (outData)
-       outTns->resize(outSz);
+        outTns->setData(outData, outSz);
     else{
         ERROR_MESS("not set 'outData' in userCBack");
         return std::vector < std::string > {"noWay"};
     }
+
+    free(outData);
 
     return std::vector<std::string>();
 }

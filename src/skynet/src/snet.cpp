@@ -283,7 +283,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
         auto& tnsOutSz = tnsOut->size();
         if (tnsOutSz != osz){
             statusMess("forward error: tnsOutSz != osz. Must be osz: " +
-                to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h));
+                to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h) + " " + to_string(tnsOutSz.d) + " " + to_string(tnsOutSz.n));
             return false;
         }
 
@@ -308,7 +308,7 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
         auto& tsz = outTensor->size();
         if (tsz != gsz){
             statusMess("backward error: tnsOutSz != gsz. Must be gsz: " +
-                to_string(tsz.w) + " " + to_string(tsz.h));
+                to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d) + " " + to_string(tsz.n));
             return false;
         }
 
@@ -329,27 +329,14 @@ SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
     snFloat* targetData = targetTens->getData();
     snFloat* outData = outTens->getData();
     
-    size_t accCnt = 0, bsz = outTens->size().n, osz = outTens->size().w;
-    for (int i = 0; i < bsz; ++i){
+    size_t accCnt = 0, osz = outTens->size().size();
+    for (size_t i = 0; i < osz; ++i){
 
-        float* refTarget = targetData + i * osz;
-        float* refOutput = outData + i * osz;
-
-        if (osz > 1){
-            int maxOutInx = distance(refOutput, max_element(refOutput, refOutput + osz)),
-                maxTargInx = distance(refTarget, max_element(refTarget, refTarget + osz));
-
-            if (maxTargInx == maxOutInx)
-                ++accCnt;
-        }
-        else{
-
-            if (abs(refOutput[0] - refTarget[0]) < 0.1)
-                ++accCnt;
-        }        
+        if (abs(outData[i] - targetData[i]) < 0.1)
+            ++accCnt; 
     }
 
-    return (accCnt * 1.F) / bsz;
+    return (accCnt * 1.F) / osz;
 }
 
 /// задать веса узла сети
@@ -459,7 +446,7 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
 
     if (tsz != gsz){
         statusMess("setGradientNode error: tsz != dsz. Must be dsz: " +
-            to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d));
+            to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d) + " " + to_string(tsz.n));
         return false;
     }
 
