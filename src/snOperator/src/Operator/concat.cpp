@@ -22,33 +22,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
+#include "../stdafx.h"
+#include "concat.h"
+#include "snAux/auxFunc.h"
 
-#include "snBase/snBase.h"
+using namespace std;
+using namespace SN_Base;
 
 
-/// Обрезка данных
-class Crop : SN_Base::OperatorBase{
+/// Соединение слоев
+Concat::Concat(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
+OperatorBase(net, name, node, prms){
 
-public:
+    baseOut_ = new Tensor();
+    baseGrad_ = new Tensor();
 
-    Crop(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    /*if (basePrms_.find("roi") != basePrms_.end()){
 
-    ~Crop() = default;
-                
-    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+        auto nsz = SN_Aux::split(basePrms_["roi"], " ");
 
-private: 
+        if (nsz.size() != 4)
+            ERROR_MESS("'roi' param no correct. Must be four arguments: x y w h");
+    }
+    else
+        ERROR_MESS("no set param 'roi'");*/
+}
 
-    struct roi{
-        size_t x, y, w, h;
+std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
+      
+    if (operPrm.action == snAction::forward){
 
-        roi(size_t x_ = 0, size_t y_ = 0, size_t w_ = 0, size_t h_ = 0) :
-            x(x_), y(y_), w(w_), h(h_){}
-    };
+    }
+    else{ // backward
 
-    roi roi_;
-    SN_Base::snSize baseSz_;
-
-    void copyTo(bool inToOut, size_t w, size_t h, const roi& roi, SN_Base::snFloat* in, SN_Base::snFloat* out);
-};
+    }
+    
+    return vector<string>();
+}

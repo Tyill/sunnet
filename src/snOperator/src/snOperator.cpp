@@ -35,6 +35,8 @@
 #include "Operator/summator.h"
 #include "Operator/userLayer.h"
 #include "Operator/switch.h"
+#include "Operator/crop.h"
+#include "Operator/concat.h"
 
 namespace SN_Opr{
 
@@ -54,6 +56,8 @@ namespace SN_Opr{
         else if (fname == "Summator")       ret = (SN_Base::OperatorBase*)new Summator(net, fname, node, prms);
         else if (fname == "Switch")         ret = (SN_Base::OperatorBase*)new Switch(net, fname, node, prms);
         else if (fname == "UserLayer")      ret = (SN_Base::OperatorBase*)new UserLayer(net, fname, node, prms);
+        else if (fname == "Crop")           ret = (SN_Base::OperatorBase*)new Crop(net, fname, node, prms);
+        else if (fname == "Concat")         ret = (SN_Base::OperatorBase*)new Concat(net, fname, node, prms);
 
         return ret;
     }
@@ -73,6 +77,8 @@ namespace SN_Opr{
             else if (fname == "Summator")       delete (Summator*)opr;
             else if (fname == "Switch")         delete (Switch*)opr;
             else if (fname == "UserLayer")      delete (UserLayer*)opr;
+            else if (fname == "Crop")           delete (Crop*)opr;
+            else if (fname == "Concat")         delete (Concat*)opr;
         }
     }
 }

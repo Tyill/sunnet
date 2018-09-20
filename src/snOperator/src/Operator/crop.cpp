@@ -36,10 +36,19 @@ OperatorBase(net, name, node, prms){
 
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
+
+    if (basePrms_.find("roi") != basePrms_.end()){
+
+        auto nsz = SN_Aux::split(basePrms_["roi"], " ");
+
+        if (nsz.size() != 4)
+            ERROR_MESS("'roi' param no correct. Must be four arguments: x y w h");
+    }
+    else
+        ERROR_MESS("no set param 'roi'");
 }
 
 std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-      
       
     if (operPrm.action == snAction::forward){
 
@@ -49,67 +58,85 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
         }
 
         *baseOut_ = *neighbOpr[0]->getOutput();
+                   
+        auto nsz = SN_Aux::split(basePrms_["roi"], " ");
 
-        if (basePrms_.find("roi") != basePrms_.end()){
-           
-            auto nsz = SN_Aux::split(basePrms_["roi"], " ");
-
-            if (nsz.size() != 4){
-                ERROR_MESS("'roi' no correct. Must be four arguments: x y w h");
-                return vector<string>();
-            }
-
-            snSize sz = baseOut_->size();
-
-            size_t x = max<size_t>(0, min<size_t>(stoi(nsz[0]), sz.w - 1)),
-                   y = max<size_t>(0, min<size_t>(stoi(nsz[1]), sz.h - 1)),
-                   w = max<size_t>(0, min<size_t>(stoi(nsz[2]), sz.w - x)),
-                   h = max<size_t>(0, min<size_t>(stoi(nsz[3]), sz.h - y));
-          
-
-
-            for (size_t i = 0; i < sz.n; ++i){
-                copyOffs
-            }
-          
+        if (nsz.size() != 4){
+            ERROR_MESS("'roi' param no correct. Must be four arguments: x y w h");
+            vector < string > {"noWay"};
         }
-        else
-            ERROR_MESS("no set param 'roi'");
 
+        baseSz_ = baseOut_->size();
+      
+        size_t x = max<size_t>(0, min<size_t>(stoi(nsz[0]), baseSz_.w - 1)),
+               y = max<size_t>(0, min<size_t>(stoi(nsz[1]), baseSz_.h - 1)),
+               w = max<size_t>(0, min<size_t>(stoi(nsz[2]), baseSz_.w - x)),
+               h = max<size_t>(0, min<size_t>(stoi(nsz[3]), baseSz_.h - y));
+        
+        roi_ = roi(x, y, w, h);
+
+        Tensor tmpTns(snSize(w, h, baseSz_.d, baseSz_.n));
+
+        snFloat* src = baseOut_->getData(),
+               * dst = tmpTns.getData();
+
+        size_t sz = baseSz_.d * baseSz_.n, bstp = baseSz_.w * baseSz_.h, nstp = w * h;       
+        for (size_t i = 0; i < sz; ++i)
+            copyTo(true, baseSz_.w, baseSz_.h, roi_, src + bstp * i, dst + nstp * i);
+
+        *baseOut_ = tmpTns; 
     }
-    else{
+    else{ // backward
        
         *baseGrad_ = *neighbOpr[0]->getGradient();
 
-        size_t sz = neighbOpr.size();
-        for (size_t i = 1; i < sz; ++i){
+        for (size_t i = 1; i < neighbOpr.size(); ++i){
 
             if (*baseGrad_ != *neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
             *baseGrad_ += *neighbOpr[i]->getGradient();
-        }           
-    }
-       
-    vector<string> nw;
-    if (basePrms_.find("nextWay") != basePrms_.end()){
-        nw = SN_Aux::split(basePrms_["nextWay"], " ");
-    }
+        }
+                
+        Tensor tmpTns(baseSz_);
 
-    return nw;
+        snFloat* dst = tmpTns.getData(),
+               * src = baseGrad_->getData();
+
+        snSize csz = baseGrad_->size();
+
+        size_t sz = baseSz_.d * baseSz_.n, bstp = baseSz_.w * baseSz_.h, nstp = csz.w * csz.h;
+        for (size_t i = 0; i < sz; ++i)
+            copyTo(false, baseSz_.w, baseSz_.h, roi_, dst + bstp * i, src + nstp * i);
+
+        *baseGrad_ = tmpTns;
+    }
+    
+    return vector<string>();
 }
 
-void Crop::copyOffs(size_t w, size_t h, roi roi, snFloat* in, snFloat* out){
-    
+void Crop::copyTo(bool inToOut, size_t w, size_t h, const roi& roi, snFloat* in, snFloat* out){
+
     in += roi.x + roi.y * w;
-    for (size_t i = 0; i < roi.h; ++i){
-             
-        for (size_t j = 0; j < roi.w; ++j)     // быстрее чем memcpy
-            out[j] = in[j];
-       
-        in += w * i;
-        out += roi.w * i;
-    }
+
+    if (inToOut)
+        for (size_t i = 0; i < roi.h; ++i){
+
+            for (size_t j = 0; j < roi.w; ++j)
+                out[j] = in[j];
+
+            in += w * i;
+            out += roi.w * i;
+        }
+    else
+        for (size_t i = 0; i < roi.h; ++i){
+
+            for (size_t j = 0; j < roi.w; ++j)
+                in[j] = out[j];
+
+            in += w * i;
+            out += roi.w * i;
+        }
 }
 

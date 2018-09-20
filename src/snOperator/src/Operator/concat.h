@@ -27,28 +27,20 @@
 #include "snBase/snBase.h"
 
 
-/// Обрезка данных
-class Crop : SN_Base::OperatorBase{
+/// Соединение слоев
+class Concat : SN_Base::OperatorBase{
 
 public:
 
-    Crop(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+    Concat(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Crop() = default;
+    ~Concat() = default;
                 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private: 
 
-    struct roi{
-        size_t x, y, w, h;
-
-        roi(size_t x_ = 0, size_t y_ = 0, size_t w_ = 0, size_t h_ = 0) :
-            x(x_), y(y_), w(w_), h(h_){}
-    };
-
-    roi roi_;
+    
     SN_Base::snSize baseSz_;
 
-    void copyTo(bool inToOut, size_t w, size_t h, const roi& roi, SN_Base::snFloat* in, SN_Base::snFloat* out);
 };
