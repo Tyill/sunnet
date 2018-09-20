@@ -42,12 +42,6 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
     if ((basePrms_.find("state") == basePrms_.end()) || 
         (basePrms_["state"] != "unlock"))
         return std::vector < std::string > {"noWay"};
-
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
-
         
     if (operPrm.action == snAction::forward){
 

@@ -86,25 +86,25 @@ private:
     /// CPU ///////////////////////////
     
     /// прямой проход CPU
-    void forwardCPU(size_t kernel,        ///< размер скрыт слоя
-        SN_Base::snSize insz,                 ///< вход значения размер 
+    void forwardCPU(size_t kernel,            ///< размер скрыт слоя
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения
         SN_Base::snFloat* weight,             ///< веса
         SN_Base::snFloat* output);            ///< выход знач (скрытых нейронов) для след слоя
                
     /// обратный проход CPU. Расчет град-в и весов
-    void backwardCPU_GW(size_t kernel,    ///< размер скрыт слоя
+    void backwardCPU_GW(size_t kernel,        ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,            ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut);        ///< дельта изменения весов  
                
     /// обратный проход CPU. Расчет град-в
-    void backwardCPU_G(size_t kernel,     ///< размер скрыт слоя
+    void backwardCPU_G(size_t kernel,         ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut);           ///< выход градиент ошибки для след слоя
      
@@ -112,14 +112,14 @@ private:
     /// CUDA ///////////////////////////
  
     /// иниц вспом параметров CUDA         
-    void iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров CUDA         
     void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
 
     /// прямой проход CUDA                   
     void forwardCUDA(size_t kernel,           ///< размер скрыт слоя
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения
         SN_Base::snFloat* weight,             ///< веса
         SN_Base::snFloat* output,             ///< выход знач (скрытых нейронов) для след слоя           
@@ -128,7 +128,7 @@ private:
     /// обратный проход CUDA. Расчет град-в и весов
     void backwardCUDA_GW(size_t kernel,       ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,            ///< выход градиент ошибки для след слоя
@@ -138,7 +138,7 @@ private:
     /// обратный проход CUDA. Расчет град-в
     void backwardCUDA_G(size_t kernel,        ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,            ///< выход градиент ошибки для след слоя
         std::map<std::string, void*>&);       ///< вспом 
@@ -147,23 +147,23 @@ private:
     /// OpenCL ///////////////////////////
 
     /// иниц вспом параметров OpenCL        
-    void iniParamOCL(SN_Base::snSize insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров OpenCL        
     void freeParamOCL(std::map<std::string, void*>& gpuPrm);
 
     /// прямой проход OpenCL                 
-    void forwardOCL(size_t kernel,           ///< размер скрыт слоя
-        SN_Base::snSize insz,                 ///< вход значения размер 
+    void forwardOCL(size_t kernel,            ///< размер скрыт слоя
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения
         SN_Base::snFloat* weight,             ///< веса
         SN_Base::snFloat* output,             ///< выход знач (скрытых нейронов) для след слоя           
         std::map<std::string, void*>&);       ///< вспом 
 
     /// обратный проход OpenCL. Расчет град-в и весов
-    void backwardOCL_GW(size_t kernel,       ///< размер скрыт слоя
+    void backwardOCL_GW(size_t kernel,        ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,              ///< вход значения 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,            ///< выход градиент ошибки для след слоя
@@ -171,9 +171,9 @@ private:
         std::map<std::string, void*>&);       ///< вспом 
 
     /// обратный проход OpenCL. Расчет град-в
-    void backwardOCL_G(size_t kernel,        ///< размер скрыт слоя
+    void backwardOCL_G(size_t kernel,         ///< размер скрыт слоя
         SN_Base::snFloat* weight,             ///< веса
-        SN_Base::snSize insz,                 ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* gradIn,             ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,            ///< выход градиент ошибки для след слоя
         std::map<std::string, void*>&);       ///< вспом 

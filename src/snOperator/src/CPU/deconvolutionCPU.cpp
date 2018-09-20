@@ -33,7 +33,7 @@ using namespace SN_Base;
 
 
 void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
    
     size_t wStepByD = fWidth * fHeight,              // шаг весов по входу
            wStepByK = wStepByD * kernel,             // шаг весов по выходу
@@ -104,7 +104,7 @@ void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, siz
 }
 
 void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
            wStepByK = wStepByD * kernel,       // шаг весов по выходу
@@ -212,7 +212,7 @@ void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight,
 }
 
 void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut){
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
            wStepByK = wStepByD * kernel,       // шаг весов по выходу
@@ -287,7 +287,7 @@ void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, 
 #ifndef SN_CUDA
 
 /// иниц вспом параметров CUDA          
-void Deconvolution::iniParamCUDA(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
+void Deconvolution::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -297,18 +297,18 @@ void Deconvolution::freeParamCUDA(map<string, void*>& gpuPrm){
 }
 
 void Deconvolution::forwardCUDA(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Deconvolution::backwardCUDA_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 
 }
 
 void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -317,7 +317,7 @@ void Deconvolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight,
 #ifndef SN_OpenCL
 
 /// иниц вспом параметров CUDA          
-void Deconvolution::iniParamOCL(snSize insz, snSize outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
+void Deconvolution::iniParamOCL(const snSize& insz, const snSize& outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
@@ -327,18 +327,18 @@ void Deconvolution::freeParamOCL(map<string, void*>& gpuPrm){
 }
 
 void Deconvolution::forwardOCL(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Deconvolution::backwardOCL_GW(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 
 }
 
 void Deconvolution::backwardOCL_G(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
-    snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }
 

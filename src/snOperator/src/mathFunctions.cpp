@@ -31,7 +31,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-void batchNormForward(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
+void batchNormForward(const SN_Base::snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
   
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
 
@@ -74,7 +74,7 @@ void batchNormForward(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
    
 }
 
-void batchNormBackward(snSize insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
+void batchNormBackward(const SN_Base::snSize& insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm){
     // https://kevinzakka.github.io/2016/09/14/batch_normalization/
 
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;

@@ -32,7 +32,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-void FullyConnected::forwardCPU(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output){
+void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output){
 
     // Out = α * In * W + βC
     // In - матрица вход данных - значения с предыд слоя
@@ -55,7 +55,7 @@ void FullyConnected::forwardCPU(size_t kernel, snSize insz, snFloat* input, snFl
 }
 
 void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
-    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
+    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
 
@@ -98,7 +98,7 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
         imSz - 1);                     // GrOut, шаг до след Y (Y21 - Y11) 
 }
 
-void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut){
+void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
 
@@ -125,7 +125,7 @@ void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, snSize insz, 
 
 #ifndef SN_CUDA
 
-void FullyConnected::iniParamCUDA(SN_Base::snSize insz, size_t kernel, std::map<std::string, void*>& auxPrm){
+void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -133,16 +133,16 @@ void FullyConnected::freeParamCUDA(std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
+void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
-    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
+    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -152,7 +152,7 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz,
 
 #ifndef SN_OpenCL
 
-void FullyConnected::iniParamOCL(SN_Base::snSize insz, size_t kernel, std::map<std::string, void*>& auxPrm){
+void FullyConnected::iniParamOCL(const SN_Base::snSize& insz, size_t kernel, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
@@ -160,16 +160,16 @@ void FullyConnected::freeParamOCL(std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void FullyConnected::forwardOCL(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
+void FullyConnected::forwardOCL(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void FullyConnected::backwardOCL_GW(size_t kernel, snFloat* weight,
-    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
+    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void FullyConnected::backwardOCL_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
+void FullyConnected::backwardOCL_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
     ERROR_MESS("OpenCL non compiler");
 }
 

@@ -86,6 +86,9 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
     }
 
+    if (prms.find("gpuClearMem") != prms.end())
+        gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
+
     if (prms.find("mode") != prms.end()){
 
         string mode = prms["mode"];

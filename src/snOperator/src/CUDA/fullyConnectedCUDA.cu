@@ -37,7 +37,7 @@ using namespace SN_Base;
 #define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
 #endif
 
-void FullyConnected::iniParamCUDA(snSize insz, size_t kernel, map<string, void*>& gpuPrm){
+void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, map<string, void*>& gpuPrm){
     
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
@@ -84,7 +84,7 @@ void FullyConnected::freeParamCUDA(map<string, void*>& gpuPrm){
     }
 }
 
-void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snFloat* weight, snFloat* output, map<string, void*>& gpuPrm){
+void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, map<string, void*>& gpuPrm){
         
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
@@ -136,7 +136,7 @@ void FullyConnected::forwardCUDA(size_t kernel, snSize insz, snFloat* input, snF
 }
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
-    snSize insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, map<string, void*>& gpuPrm){
+    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, map<string, void*>& gpuPrm){
        
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
@@ -217,7 +217,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     }
 }
 
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, snSize insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
 
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 

@@ -99,7 +99,7 @@ private:
         
     SN_Base::Node inNet_;                                       ///< вход сети
     SN_Base::Node outNet_;                                      ///< выход сети
-    std::map<std::string, SN_Base::Node> nodes_;                ///< все узлы сети(ветки)
+    std::map<std::string, SN_Base::Node> nodes_;                ///< все узлы сети
     std::map<std::string, SN_Base::OperatorBase*> operats_;     ///< все операторы. ключ - название узла
 
     std::mutex mtxCmn_;

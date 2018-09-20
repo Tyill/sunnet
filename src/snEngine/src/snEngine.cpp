@@ -220,7 +220,7 @@ namespace SN_Eng{
                 string firts = n;
                 while (nodes[firts].prevNodes.size() == 1){
 
-                    string prev = nodes[firts].prevNodes[0];
+                    string& prev = nodes[firts].prevNodes[0];
                     auto& nn = nodes[prev].nextNodes;
                     if (nn.size() > 1) break;            ///< развилка?
                     
@@ -277,7 +277,7 @@ namespace SN_Eng{
                 string firts = n;
                 while (nodes[firts].nextNodes.size() == 1){
                     
-                    string nxt = nodes[firts].nextNodes[0];
+                    string& nxt = nodes[firts].nextNodes[0];
                     auto& pn = nodes[nxt].prevNodes;
                     if (pn.size() > 1) break;        ///< развилка?
 

@@ -36,7 +36,7 @@ using namespace SN_Base;
 #define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
 #endif
 
-void Pooling::iniParamCUDA(snSize insz, snSize outsz, size_t kernel, map<string, void*>& gpuPrm){
+void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, map<string, void*>& gpuPrm){
 
     if (gpuPrm.find("cu_deviceProps") == gpuPrm.end()){
 
@@ -154,8 +154,8 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
     }
 }
 
-void Pooling::forwardCUDA(poolType type, size_t kernel, snSize insz, snFloat* input,
-    snSize outsz, snFloat* output, size_t* outputInx, map<string, void*>& gpuPrm){
+void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+    const snSize& outsz, snFloat* output, size_t* outputInx, map<string, void*>& gpuPrm){
 
     snFloat* d_in = (snFloat*)gpuPrm["d_in"],
            * d_out = (snFloat*)gpuPrm["d_out"];
@@ -251,8 +251,8 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
     }
 }
 
-void Pooling::backwardCUDA(poolType type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn,
-    snSize insz, snFloat* gradOut, map<string, void*>& gpuPrm){
+void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* gradIn,
+    const snSize& insz, snFloat* gradOut, map<string, void*>& gpuPrm){
 
     snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
            * d_grout = (snFloat*)gpuPrm["d_in"];

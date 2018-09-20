@@ -26,14 +26,27 @@
 
 #include "snBase/snBase.h"
 
-/// батч нормализация прямой проход CPU    
-void batchNormForward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
 
-/// батч нормализация обратный проход CPU
-void batchNormBackward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+/// Обрезка данных
+class Crop : SN_Base::OperatorBase{
+
+public:
+
+    Crop(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
+
+    ~Crop() = default;
+                
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
+
+private: 
+
+    struct roi{
+        size_t x, y, w, h;
+
+        roi(size_t x_ = 0, size_t y_ = 0, size_t w_ = 0, size_t h_ = 0) :
+            x(x_), y(y_), w(w_), h(h_){}
+    };
+
+
+    void copyOffs(size_t w, size_t h, roi roi, snFloat* in, snFloat* out);
+};

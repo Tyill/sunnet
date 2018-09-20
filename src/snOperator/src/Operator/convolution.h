@@ -103,9 +103,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* output);     ///< выход знач (скрытых нейронов) для след слоя
 
     /// обратный проход. Расчет град-в и весов
@@ -115,9 +115,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения 
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut); ///< дельта изменения весов
@@ -129,8 +129,8 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер         
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер         
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut);    ///< выход градиент ошибки для след слоя
 
@@ -139,7 +139,7 @@ private:
     /// CUDA ///////////////////////////
 
     /// иниц вспом параметров CUDA          
-    void iniParamCUDA(SN_Base::snSize insz, SN_Base::snSize outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров CUDA          
     void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
@@ -151,9 +151,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
         std::map<std::string, void*>&); ///< вспом  
 
@@ -164,9 +164,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,          ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения 
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,         ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
@@ -179,8 +179,8 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер        
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер        
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         std::map<std::string, void*>&);  ///< вспом 
@@ -189,7 +189,7 @@ private:
     /// OpenCL ///////////////////////////
 
     /// иниц вспом параметров OpenCL          
-    void iniParamOCL(SN_Base::snSize insz, SN_Base::snSize outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров OpenCL          
     void freeParamOCL(std::map<std::string, void*>& gpuPrm);
@@ -201,9 +201,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
         std::map<std::string, void*>&); ///< вспом  
 
@@ -214,9 +214,9 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер 
         SN_Base::snFloat* input,       ///< вход значения 
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
@@ -229,8 +229,8 @@ private:
         size_t dilate,                 ///< прореживание маски
         size_t stride,                 ///< шаг движения маски
         SN_Base::snFloat* weight,      ///< веса
-        SN_Base::snSize insz,          ///< вход значения размер        
-        SN_Base::snSize outsz,         ///< выход значения размер 
+        const SN_Base::snSize& insz,   ///< вход значения размер        
+        const SN_Base::snSize& outsz,  ///< выход значения размер 
         SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
         SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
         std::map<std::string, void*>&);  ///< вспом 

@@ -133,7 +133,8 @@ bool createNet(SN_API::skyNet& net){
         "\"NextNodes\":\"U2\","
         "\"OperatorName\":\"Deconvolution\","
         "\"OperatorParams\":{\"kernel\":\"15\", \"batchNorm\":\"none\","
-        "\"mode\":\"CPU\","
+        "\"mode\":\"CUDA\","
+        "\"gpuClearMem\":\"0\","
         "\"stride\":\"2\","
         "\"freeze\":\"0\"}"
         "},"
@@ -143,7 +144,7 @@ bool createNet(SN_API::skyNet& net){
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"Deconvolution\","
         "\"OperatorParams\":{\"kernel\":\"1\", \"batchNorm\":\"none\","
-        "\"mode\":\"CPU\","
+        "\"mode\":\"CUDA\","
         "\"stride\":\"2\","
         "\"active\":\"sigmoid\","
         "\"freeze\":\"0\"}"
@@ -249,12 +250,12 @@ int main(int argc, _TCHAR* argv[])
     
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
-    string imgPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\";
-    string imgTargPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\label\\";
+    string imgPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\";
+    string imgTargPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\label\\";
     //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 1, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
+    int batchSz = 10, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;

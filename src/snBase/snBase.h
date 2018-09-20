@@ -84,6 +84,10 @@ namespace SN_Base{
         ~Tensor(){            
             if (data_) free(data_);
         }
+
+        Tensor(const Tensor& other){
+            setData(other.getData(), other.size());
+        }
         
         friend bool operator==(const Tensor& left, const Tensor& right){
                         
