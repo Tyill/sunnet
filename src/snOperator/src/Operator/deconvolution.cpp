@@ -213,18 +213,16 @@ std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const 
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            gradInMem_ = *neighbOpr[0]->getGradient();
+            Tensor tns = *neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (gradInMem_ != *neighbOpr[i]->getGradient()){
+                if (tns != *neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                gradInMem_ += *neighbOpr[i]->getGradient();
+                tns += *neighbOpr[i]->getGradient();
             }
-            backward(&gradInMem_, operPrm);
-
-            gradInMem_.tfree();
+            backward(&tns, operPrm);
         }
     }
 
@@ -257,7 +255,7 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
 
     /// dropOut
     if (dropOut_ > 0.F)
-        calcDropOut(operPrm.isLerning, dropOut_, outsz, out);
+        dropOut(operPrm.isLerning, dropOut_, outsz, out);
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
@@ -348,22 +346,6 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
         }
     }        
-}
-
-void Deconvolution::calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
-    
-    if (isLern){
-        size_t sz = size_t(outsz.size() * dropOut);
-        vector<int> rnd(sz);
-        rnd_uniformInt(rnd.data(), sz, 0, int(outsz.size()));
-
-        for (auto i : rnd) out[i] = 0;
-    }
-    else{
-        size_t sz = outsz.size();
-        for (size_t i = 0; i < sz; ++i)
-            out[i] *= (1.F - dropOut);
-    }
 }
 
 void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){

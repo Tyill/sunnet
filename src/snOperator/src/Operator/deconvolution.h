@@ -58,9 +58,7 @@ private:
            
     bool isFreeze_ = false;                                     ///< не менять веса
     bool gpuClearMem_ = false;                                  ///< очищать память GPU
-
-    SN_Base::Tensor gradInMem_;
-
+      
     calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
 
     SN_Base::snFloat dropOut_ = 0.F;                            ///< случ отключение нейронов
@@ -75,8 +73,6 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
-   
-    void calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
 
     void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
        

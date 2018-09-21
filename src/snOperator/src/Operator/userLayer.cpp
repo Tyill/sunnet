@@ -37,35 +37,51 @@ OperatorBase(net, name, node, prms){
 }
 
 std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vector<OperatorBase*>& neighbOpr){
-        
-    if (neighbOpr.size() > 1){
-        ERROR_MESS("neighbOpr.size() > 1");
-        return std::vector < std::string > {"noWay"};
-    }
-
+       
+    
     if (basePrms_.find("cbackName") == basePrms_.end()){
         ERROR_MESS("not set param 'cbackName'");
         return std::vector < std::string > {"noWay"};
     }
 
-    Tensor* inTns = nullptr,* outTns = nullptr;
-    bool isAct = true;
-    if (opr.action == SN_Base::snAction::forward){
-        inTns = neighbOpr[0]->getOutput();
-        outTns = baseOut_;
-    }
-    else{
-        inTns = neighbOpr[0]->getGradient();
-        outTns = baseGrad_;
-        isAct = false;
-    }
+    Tensor* outTns = nullptr;
 
     snSize outSz;
-    snFloat* outData = nullptr; 
+    snFloat* outData = nullptr;
 
-    g_userCBack(this, basePrms_["cbackName"], node_,
-        isAct, inTns->size(), inTns->getData(), outSz, &outData);
-    
+    if (opr.action == SN_Base::snAction::forward){
+
+        if (neighbOpr.size() > 1){
+            ERROR_MESS("neighbOpr.size() > 1");
+            return std::vector < std::string > {"noWay"};
+        }
+
+        Tensor* tns = neighbOpr[0]->getOutput();
+        
+        outTns = baseOut_;
+
+        g_userCBack(this, basePrms_["cbackName"], node_,
+            true, tns->size(), tns->getData(), outSz, &outData);
+    }
+    else{
+
+        Tensor tns = *neighbOpr[0]->getGradient();
+        for (size_t i = 1; i < neighbOpr.size(); ++i){
+
+            if (tns != *neighbOpr[i]->getGradient()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }
+            tns += *neighbOpr[i]->getGradient();
+        }
+     
+        outTns = baseGrad_;
+
+        g_userCBack(this, basePrms_["cbackName"], node_,
+            false, tns.size(), tns.getData(), outSz, &outData);
+    }
+
+   
     if (outData)
         outTns->setData(outData, outSz);
     else{

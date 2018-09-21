@@ -36,21 +36,34 @@ OperatorBase(net, name, node, prms){
 
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
-
-    /*if (basePrms_.find("roi") != basePrms_.end()){
-
-        auto nsz = SN_Aux::split(basePrms_["roi"], " ");
-
-        if (nsz.size() != 4)
-            ERROR_MESS("'roi' param no correct. Must be four arguments: x y w h");
-    }
-    else
-        ERROR_MESS("no set param 'roi'");*/
+       
 }
 
 std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
       
     if (operPrm.action == snAction::forward){
+
+       Tensor out = *neighbOpr[0]->getOutput();
+
+       snSize csz = out.size();
+       for (size_t i = 1; i < neighbOpr.size(); ++i){
+
+           snSize nbsz = neighbOpr[i]->getOutput()->size();
+
+           if ((csz.w != nbsz.w) || (csz.h != nbsz.h) || (csz.n != nbsz.n)){
+               ERROR_MESS("operators size is not equals");
+               return std::vector < std::string > {"noWay"};
+           }
+
+           out.resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
+
+        /*   for (size_t j = 0; j < csz.n; ++j){
+               memcpy(out.getData() + csz.w * csz.h * csz.d * j,
+                      neighbOpr[i]->getOutput()->getData() + nbsz.w * nbsz.h * nbsz.d * j,
+                        );
+           }
+           csz.d += nbsz.d;*/
+       }
 
     }
     else{ // backward

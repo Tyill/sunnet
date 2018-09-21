@@ -101,7 +101,7 @@ namespace SN_Aux{
 
         size_t sz = strDirs.size(); int ret = 0;
         string strTmp = "";
-        for (int i = 0; i < sz; ++i) {
+        for (size_t i = 0; i < sz; ++i) {
             char ch = strDirs[i];
             if (ch != '\\' && ch != '/') strTmp += ch;
             else {

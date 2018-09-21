@@ -75,16 +75,14 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
         
         roi_ = roi(x, y, w, h);
 
-        Tensor tmpTns(snSize(w, h, baseSz_.d, baseSz_.n));
+        Tensor tns(snSize(w, h, baseSz_.d, baseSz_.n));
 
         snFloat* src = baseOut_->getData(),
-               * dst = tmpTns.getData();
+               * dst = tns.getData();
 
-        size_t sz = baseSz_.d * baseSz_.n, bstp = baseSz_.w * baseSz_.h, nstp = w * h;       
-        for (size_t i = 0; i < sz; ++i)
-            copyTo(true, baseSz_.w, baseSz_.h, roi_, src + bstp * i, dst + nstp * i);
+        copyTo(true, roi_, baseSz_, src, dst);
 
-        *baseOut_ = tmpTns; 
+        *baseOut_ = tns;
     }
     else{ // backward
        
@@ -99,44 +97,54 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
             *baseGrad_ += *neighbOpr[i]->getGradient();
         }
                 
-        Tensor tmpTns(baseSz_);
+        Tensor tns(baseSz_);
 
-        snFloat* dst = tmpTns.getData(),
+        snFloat* dst = tns.getData(),
                * src = baseGrad_->getData();
+                
+        copyTo(false, roi_, baseSz_, dst, src);
 
-        snSize csz = baseGrad_->size();
-
-        size_t sz = baseSz_.d * baseSz_.n, bstp = baseSz_.w * baseSz_.h, nstp = csz.w * csz.h;
-        for (size_t i = 0; i < sz; ++i)
-            copyTo(false, baseSz_.w, baseSz_.h, roi_, dst + bstp * i, src + nstp * i);
-
-        *baseGrad_ = tmpTns;
+        *baseGrad_ = tns;
     }
     
     return vector<string>();
 }
 
-void Crop::copyTo(bool inToOut, size_t w, size_t h, const roi& roi, snFloat* in, snFloat* out){
+void Crop::copyTo(bool inToOut, const roi& roi, const snSize& srcSz, snFloat* in, snFloat* out){
+       
+    size_t bsz = srcSz.d * srcSz.n, srcStp = srcSz.w * srcSz.h, dstStp = roi.w * roi.h;
 
-    in += roi.x + roi.y * w;
+    if (inToOut){
+        for (size_t i = 0; i < bsz; ++i){
+            
+            snFloat* pIn = in + roi.x + roi.y * srcSz.w + srcStp * i;
+            snFloat* pOut = out + dstStp * i;
 
-    if (inToOut)
-        for (size_t i = 0; i < roi.h; ++i){
+            for (size_t j = 0; j < roi.h; ++j){
+                            
+                for (size_t k = 0; k < roi.w; ++k)
+                    pOut[k] = pIn[k];  
 
-            for (size_t j = 0; j < roi.w; ++j)
-                out[j] = in[j];
-
-            in += w * i;
-            out += roi.w * i;
+                pIn += srcSz.w;
+                pOut += roi.w;
+            }
         }
-    else
-        for (size_t i = 0; i < roi.h; ++i){
+    }
+    else{
+        for (size_t i = 0; i < bsz; ++i){
 
-            for (size_t j = 0; j < roi.w; ++j)
-                in[j] = out[j];
+            snFloat* pIn = in + roi.x + roi.y * srcSz.w + srcStp * i;
+            snFloat* pOut = out + dstStp * i;
 
-            in += w * i;
-            out += roi.w * i;
+            for (size_t j = 0; j < roi.h; ++j){
+                                
+                for (size_t k = 0; k < roi.w; ++k)
+                    pIn[k] = pOut[k];    
+
+                pIn += srcSz.w;
+                pOut += roi.w;
+            }            
         }
+    }
 }
 

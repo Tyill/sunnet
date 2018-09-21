@@ -61,7 +61,6 @@ private:
     SN_Base::snSize inSzMem_;                                   ///< размер вх данных
     SN_Base::snSize inDataExpSz_;                               ///< размер вх данных расширен
    
-    SN_Base::Tensor gradInMem_;                                 ///< вх тензор запомнен
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
    
@@ -86,9 +85,7 @@ private:
     void updateConfig(const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
     
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
-
-    void calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
-
+      
     void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
        
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);

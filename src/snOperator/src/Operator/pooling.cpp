@@ -100,18 +100,16 @@ std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::v
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            gradInMem_ = *neighbOpr[0]->getGradient();
+            Tensor tns = *neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (gradInMem_ != *neighbOpr[i]->getGradient()){
+                if (tns != *neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                gradInMem_ += *neighbOpr[i]->getGradient();
+                tns += *neighbOpr[i]->getGradient();
             }
-            backward(&gradInMem_, operPrm);
-
-            gradInMem_.tfree();
+            backward(&tns, operPrm);
         }
     }
     return std::vector<std::string>();
@@ -174,7 +172,7 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 }
 
 void Pooling::paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out){
-    
+
     /// копируем со смещением padding для каждого изобр
 
     size_t paddW = paddingW_, paddH = paddingH_,

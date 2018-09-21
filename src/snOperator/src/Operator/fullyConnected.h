@@ -52,8 +52,7 @@ private:
     batchNormType batchNormType_ = batchNormType::none;       ///< тип batchNorm 
     SN_Base::snSize inSzMem_;                                 ///< размер вх данных запомнен
     std::vector<SN_Base::snFloat> inDataExp_;                 ///< вход данные расширен     
-    
-    SN_Base::Tensor gradInMem_;                               ///< вх тензор запомнен
+   
     
     bool isFreeze_ = false;                                   ///< не менять веса
     bool gpuClearMem_ = false;                                ///< освобождать память
@@ -75,9 +74,7 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
-    
-    void calcDropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
-
+   
     void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
 
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);

@@ -50,5 +50,5 @@ private:
     roi roi_;
     SN_Base::snSize baseSz_;
 
-    void copyTo(bool inToOut, size_t w, size_t h, const roi& roi, SN_Base::snFloat* in, SN_Base::snFloat* out);
+    void copyTo(bool inToOut, const roi& roi, const SN_Base::snSize& srcSz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 };

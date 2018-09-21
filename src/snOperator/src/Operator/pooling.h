@@ -51,7 +51,6 @@ private:
     SN_Base::snSize inDataExpSz_;                                     ///< размер вх данных
     std::vector<size_t> outInx_;                                      ///< индекс выбран эл-та (если maxPool)
 
-    SN_Base::Tensor gradInMem_;                                       ///< вх тензор запомнен
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
 
@@ -69,7 +68,7 @@ private:
     void load(std::map<std::string, std::string>& prms);
         
     void updateConfig(const SN_Base::snSize& newSz);
-
+      
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
     void forward(SN_Base::Tensor* inTns);

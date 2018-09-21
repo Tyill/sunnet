@@ -37,3 +37,5 @@ void batchNormBackward(const SN_Base::snSize& insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,
     SN_Base::batchNorm);
+
+void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
