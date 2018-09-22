@@ -1,7 +1,6 @@
 ﻿// FNExample.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
 #include <windows.h>
 #include <string>
 #include <iostream>
@@ -12,7 +11,8 @@
 #include <map>
 #include <filesystem>
 
-#include "skynet/skynet.h"
+#include "../cpp/snNet.h"
+#include "../cpp/snOperator.h"
 #include "snAux/auxFunc.h"
 #include "Lib/OpenBLAS/cblas.h"
 #include "snBase\snBase.h"
@@ -55,7 +55,7 @@ vector<string> split(string text, const char* sep)
     return res;
 }
 
-bool createNet(SN_API::skyNet& net){
+SN_API::Net createNet(){
 
     stringstream ss;
 
@@ -165,10 +165,8 @@ bool createNet(SN_API::skyNet& net){
         "}"
         "}";
 
-
-
-    char err[256]; err[0] = '\0';
-    net = SN_API::snCreateNet(ss.str().c_str(), err, statusMess);
+                   
+    return SN_API::Net(ss.str().c_str());
     
     //std::ifstream ifs;
     //ifs.open("c:\\C++\\VTD\\s20302_Isolation\\res\\cnn\\struct.txt", std::ifstream::in);
@@ -193,11 +191,9 @@ bool createNet(SN_API::skyNet& net){
     //char err[256]; err[0] = '\0';
     //net = SN_API::snCreateNet(jnNet.c_str(), err, statusMess);
 
-
-    return string(err) == "";
 }
 
-bool loadImage(SN_API::skyNet& net, string& imgPath, int classCnt, vector<vector<string>>& imgName, vector<int>& imgCntDir, map<string, cv::Mat>& images){
+bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, vector<int>& imgCntDir, map<string, cv::Mat>& images){
 
     for (int i = 0; i < classCnt; ++i){
 
@@ -238,10 +234,10 @@ void showImg(){
     */
 }
 
-int main(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
-    SN_API::skyNet snet = nullptr;
-    if (!createNet(snet)){
+    SN_API::Net snet = createNet();
+    if (!snet.getLastErrorStr().empty()){
         statusMess("createNet error", nullptr);
         cin.get();
         return -1;
@@ -250,19 +246,19 @@ int main(int argc, _TCHAR* argv[])
     
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
-    string imgPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\";
-    string imgTargPath = "c:\\C++\\VTD\\skyNet\\test\\unet\\membrane\\train\\label\\";
+    string imgPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\";
+    string imgTargPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\label\\";
     //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 10, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
+    int batchSz = 1, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
 
     //  readWeight(snet);
 
-    if (!loadImage(snet, imgPath, classCnt, imgName, imgCntDir, images)){
+    if (!loadImage(imgPath, classCnt, imgName, imgCntDir, images)){
         statusMess("loadImage error", nullptr);
         cin.get();
         return -1;
@@ -332,14 +328,11 @@ int main(int argc, _TCHAR* argv[])
         }
 
         float accurat = 0;
-        SN_API::snTraining(snet,
-            lr,
-            SN_API::snLSize(w, h, d, batchSz),
-            inLayer,
-            SN_API::snLSize(w1, h1, d, batchSz),
-            outLayer,
-            targetLayer,
-            &accurat);
+        snet.training(lr,
+            SN_API::Tensor(SN_API::snLSize(w, h, d, batchSz), inLayer),
+            SN_API::Tensor(SN_API::snLSize(w1, h1, d, batchSz), outLayer),
+            SN_API::Tensor(SN_API::snLSize(w1, h1, d, batchSz), targetLayer),
+            accurat);
 
         accuratSumm += accurat;     
         cout << k << " metrix " << accuratSumm / k << endl;

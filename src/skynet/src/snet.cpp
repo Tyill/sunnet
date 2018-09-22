@@ -45,11 +45,16 @@ void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const st
     (static_cast<SNet*>(opr->Net))->userCBack(cbname, node, fwBw, insz, in, outsz, out);
 }
 
-
-
 void SNet::statusMess(const string& mess){
 
+    lastError_ = mess;
     if (stsCBack_) stsCBack_(mess.c_str(), udata_);
+}
+
+void SNet::getLastErrorStr(char* out_err){
+
+    if (out_err)
+        strcpy(out_err, lastError_.c_str());
 }
 
 void SNet::userCBack(const std::string& cbname, const std::string& node, bool fwBw, const snSize& insz, snFloat* in, snSize& outsz, snFloat** out){
@@ -64,7 +69,7 @@ void SNet::userCBack(const std::string& cbname, const std::string& node, bool fw
         outsz.w = outlsz.w;
         outsz.h = outlsz.h;
         outsz.d = outlsz.ch;
-        outsz.n = outlsz.bch;
+        outsz.n = outlsz.bsz;
     }
     else
         statusMess("userCBack error: not found cbname '" + cbname + "'");

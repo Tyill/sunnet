@@ -32,41 +32,7 @@
 #include "../src/skynet/skyNet.h"
 
 namespace SN_API{
-       
-    /* 
-    The input node receives the user data, and transmits further along the chain.
-    */
-    class Input{
-
-    public:
-
-        Input(skyNet net, const std::string& name) :
-            net_(net), name_(name){ }
-
-        ~Input(){};
-
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
-    };
-
-    /*
-    The output node of the network only receives the resulting data.
-    */
-    class Output{
-
-    public:
-
-        Output(skyNet net, const std::string& name) :
-            net_(net), name_(name){ }
-
-        ~Output(){};
-
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
-    };
-
+         
     /*
     Fully connected layer
     */
@@ -89,29 +55,16 @@ namespace SN_API{
             bool freeze = false;                       ///< Do not change weights. Optional parameter
             bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
 
-            params(uint32_t kernel_, calcMode mode_){
+            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
                 kernel = kernel;
                 mode = mode_;
             }
         };
 
-        FullyConnected(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        FullyConnected(const params& prm) : prm_(prm){};
 
         ~FullyConnected(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-                       
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+              
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -133,9 +86,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "FullyConnected";
+        }
+
+    private:       
         params prm_;
     };
 
@@ -166,29 +121,16 @@ namespace SN_API{
             bool freeze = false;                       ///< Do not change weights. Optional parameter
             bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
 
-            params(uint32_t kernel_, calcMode mode_){
+            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
                 kernel = kernel;
                 mode = mode_;
             }
         };
 
-        Convolution(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Convolution(const params& prm) : prm_(prm){};
 
         ~Convolution(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+             
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -215,9 +157,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Convolution";
+        }
+
+    private:        
         params prm_;
     };
 
@@ -246,29 +190,16 @@ namespace SN_API{
             bool freeze = false;                       ///< Do not change weights. Optional parameter
             bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
 
-            params(uint32_t kernel_, calcMode mode_){
+            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
                 kernel = kernel;
                 mode = mode_;
             }
         };
 
-        Deconvolution(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Deconvolution(const params& prm) : prm_(prm){};
 
         ~Deconvolution(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+  
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -293,9 +224,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Deconvolution";
+        }
+
+    private:       
         params prm_;
     };
 
@@ -312,29 +245,16 @@ namespace SN_API{
             calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter
             bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
 
-            params(uint32_t kernel_, calcMode mode_){
+            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
                 kernel = kernel;
                 mode = mode_;
             }
         };
 
-        Pooling(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Pooling(const params& prm) : prm_(prm){};
 
         ~Pooling(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+                
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -347,9 +267,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Pooling";
+        }
+
+    private:      
         params prm_;
     };
 
@@ -358,7 +280,7 @@ namespace SN_API{
     It is designed for the ability to dynamically disconnect the parallel
     branches of the network during operation.
     */
-    class Look{
+    class Lock{
 
     public:
 
@@ -370,23 +292,10 @@ namespace SN_API{
             }
         };
 
-        Look(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Lock(const params& prm) : prm_(prm){};
 
-        ~Look(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+        ~Lock(){};
+               
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -396,9 +305,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Lock";
+        }
+
+    private:        
         params prm_;
     };
 
@@ -417,23 +328,10 @@ namespace SN_API{
             }
         };
 
-        Switch(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Switch(const params& prm) : prm_(prm){};
 
         ~Switch(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+        
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -443,9 +341,11 @@ namespace SN_API{
             return ss.str();
         }
 
+        std::string name(){
+            return "Switch";
+        }
+
     private:
-        std::string name_;
-        skyNet net_ = nullptr;
         params prm_;
     };
 
@@ -465,23 +365,10 @@ namespace SN_API{
             }
         };
 
-        Summator(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Summator(const params& prm) : prm_(prm){};
 
         ~Summator(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+             
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -491,9 +378,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Summator";
+        }
+
+    private:      
         params prm_;
     };
 
@@ -511,23 +400,10 @@ namespace SN_API{
             }
         };
 
-        Concat(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Concat(const params& prm) : prm_(prm){};
 
         ~Concat(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+              
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -537,9 +413,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "Concat";
+        }
+
+    private:        
         params prm_;
     };
 
@@ -563,23 +441,10 @@ namespace SN_API{
             }
         };
 
-        Crop(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        Crop(const params& prm) : prm_(prm){};
 
         ~Crop(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+               
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -588,10 +453,12 @@ namespace SN_API{
 
             return ss.str();
         }
+        
+        std::string name(){
+            return "Crop";
+        }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+    private:       
         params prm_;
     };
 
@@ -611,23 +478,10 @@ namespace SN_API{
             }
         };
 
-        UserLayer(skyNet net, const std::string& name, const params& prm) :
-            net_(net), name_(name), prm_(prm){ }
+        UserLayer(const params& prm) : prm_(prm){};
 
         ~UserLayer(){};
-
-        bool setParams(const params& prm){
-
-            prm_ = prm;
-
-            return snSetParamNode(net_, name_.c_str(), getParamsJn().c_str());
-        };
-
-        params getParams(){
-
-            return prm_;
-        };
-
+              
         std::string getParamsJn(){
 
             std::stringstream ss;
@@ -637,9 +491,11 @@ namespace SN_API{
             return ss.str();
         }
 
-    private:
-        std::string name_;
-        skyNet net_ = nullptr;
+        std::string name(){
+            return "UserLayer";
+        }
+
+    private:     
         params prm_;
     };
 

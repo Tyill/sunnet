@@ -46,9 +46,9 @@ typedef float snFloat;
 /// data layer size
 struct snLSize{
 
-    size_t w, h, ch, bch; ///< width, height, channels, batch
-    snLSize(size_t w_ = 1, size_t h_ = 1, size_t ch_ = 1, size_t bch_ = 1) :
-        w(w_), h(h_), ch(ch_), bch(bch_){};
+    size_t w, h, ch, bsz; ///< width, height, channels, batch size
+    snLSize(size_t w_ = 1, size_t h_ = 1, size_t ch_ = 1, size_t bsz_ = 1) :
+        w(w_), h(h_), ch(ch_), bsz(bsz_){};
 };
 
 /// object net
@@ -67,6 +67,11 @@ SKYNET_API skyNet snCreateNet(const char* jnNet,
     char* out_err /*sz 256*/,
     snStatusCBack = nullptr,
     snUData = nullptr);
+
+/// get last error
+/// @param[in] skyNet - object net
+/// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+SKYNET_API void snGetLastErrorStr(skyNet, char* out_err);
 
 /// training - a cycle forward-back with auto-correction of weights
 /// @param[in] skyNet - object net
@@ -277,7 +282,6 @@ SKYNET_API bool snLoadAllWeightFromFile(skyNet, const char* filePath);
 /// free object net
 /// @param[in] skyNet - object net
 SKYNET_API void snFreeNet(skyNet);
-
 
 #if defined(__cplusplus)
 }}

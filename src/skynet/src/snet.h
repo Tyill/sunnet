@@ -38,6 +38,8 @@ public:
     SNet(const char* jnNet, char* out_err /*sz 256*/, SN_API::snStatusCBack = nullptr, SN_API::snUData = nullptr);
     ~SNet();
         
+    void getLastErrorStr(char* out_err);
+
     /// тренинг
     bool training(SN_Base::snFloat lr, const SN_Base::snSize& isz, const SN_Base::snFloat* iLayer,
         const SN_Base::snSize& osz, SN_Base::snFloat* outData, const SN_Base::snFloat* targetData, SN_Base::snFloat* outAccurate);
@@ -119,6 +121,8 @@ private:
 
     SN_API::snUData udata_ = nullptr;
     SN_API::snStatusCBack stsCBack_ = nullptr;
+
+    std::string lastError_;
    
     /// парсинг структуры сети
     bool jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std::string& out_err);

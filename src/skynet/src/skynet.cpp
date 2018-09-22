@@ -53,6 +53,15 @@ namespace SN_API{
         return net;
     }
     
+    /// get last error
+    /// @param[in] skyNet - object net
+    /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+    void snGetLastErrorStr(skyNet fn, char* out_err){
+
+        if (!fn || !out_err) return;
+
+        static_cast<SNet*>(fn)->getLastErrorStr(out_err);
+    }
 
     /// training - a cycle forward-back with auto-correction of weights
     /// @param[in] skyNet - object net
@@ -80,8 +89,8 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
-        SN_Base::snSize tnsz(osz.w, osz.h, osz.ch, osz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bsz);
+        SN_Base::snSize tnsz(osz.w, osz.h, osz.ch, osz.bsz);
 
         if ((bsz.size() == 0) || (tnsz.size() == 0)){
             static_cast<SNet*>(fn)->statusMess("SN error: (isz == 0) || (osz == 0)");
@@ -113,8 +122,8 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
-        SN_Base::snSize onsz(osz.w, osz.h, osz.ch, osz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bsz);
+        SN_Base::snSize onsz(osz.w, osz.h, osz.ch, osz.bsz);
 
         if ((bsz.size() == 0) || (onsz.size() == 0)){
             static_cast<SNet*>(fn)->statusMess("SN error: (isz == 0) || (osz == 0)");
@@ -142,7 +151,7 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize gnsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
+        SN_Base::snSize gnsz(gsz.w, gsz.h, gsz.ch, gsz.bsz);
 
         if (gnsz.size() == 0){
             static_cast<SNet*>(fn)->statusMess("SN error: gsz == 0");
@@ -167,7 +176,7 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize bsz(wsz.w, wsz.h, wsz.ch, wsz.bch);
+        SN_Base::snSize bsz(wsz.w, wsz.h, wsz.ch, wsz.bsz);
 
         if (bsz.size() == 0){
             static_cast<SNet*>(fn)->statusMess("SN error: wsz == 0");
@@ -198,7 +207,7 @@ namespace SN_API{
         wsz->w = bsz.w;
         wsz->h = bsz.h;
         wsz->ch = bsz.d;
-        wsz->bch = bsz.n;
+        wsz->bsz = bsz.n;
                 
         return true;
     }
@@ -285,7 +294,7 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bch);
+        SN_Base::snSize bsz(isz.w, isz.h, isz.ch, isz.bsz);
 
         if (bsz.size() == 0){
             static_cast<SNet*>(fn)->statusMess("SN error: isz == 0");
@@ -319,7 +328,7 @@ namespace SN_API{
         osz->w = bsz.w;
         osz->h = bsz.h;
         osz->ch = bsz.d;
-        osz->bch = bsz.n;
+        osz->bsz = bsz.n;
 
         return true;
 
@@ -343,7 +352,7 @@ namespace SN_API{
             return false;
         }
 
-        SN_Base::snSize bsz(gsz.w, gsz.h, gsz.ch, gsz.bch);
+        SN_Base::snSize bsz(gsz.w, gsz.h, gsz.ch, gsz.bsz);
 
         if (bsz.size() == 0){
             static_cast<SNet*>(fn)->statusMess("SN error: gsz == 0");
@@ -377,7 +386,7 @@ namespace SN_API{
         gsz->w = bsz.w;
         gsz->h = bsz.h;
         gsz->ch = bsz.d;
-        gsz->bch = bsz.n;
+        gsz->bsz = bsz.n;
 
         return true;
     }
