@@ -39,51 +39,45 @@ namespace SN_API{
     class FullyConnected{
 
     public:
+        
+        FullyConnected(uint32_t kernel,                           ///< Number of hidden neurons. !Required parameter [0..)
+                       calcMode mode = calcMode::CPU,             ///< Сalculation mode. Optional parameter           
+                       active act = active::relu,                 ///< Activation function type. Optional parameter
+                       weightInit wini = weightInit::he,          ///< Type of initialization of weights. Optional parameter
+                       batchNormType bnorm = batchNormType::none, ///< Type of batch norm. Optional parameter
+                       snFloat batchNormLr = 0.001,               ///< Learning rate for batch norm coef. Optional parameter [0..)
+                       optimizer opt = optimizer::adam,           ///< Optimizer of weights. Optional parameter
+                       snFloat decayMomentDW = 0.9,               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+                       snFloat decayMomentWGr = 0.99,             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+                       snFloat lmbRegular = 0.001,                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+                       snFloat dropOut = 0.0,                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
+                       bool freeze = false,                       ///< Do not change weights. Optional parameter
+                       bool gpuClearMem = false)                  ///< Clear memory GPU. Optional parameter
+        {
+            std::stringstream ss;
+            ss << "{\"kernel\":\"" << kernel << "\","
+                "\"active\":\"" << activeStr(act) << "\","
+                "\"weightInit\"" << weightInitStr(wini) << "\","
+                "\"batchNorm\"" << batchNormTypeStr(bnorm) << "\","
+                "\"batchNormLr\":\"" << batchNormLr << "\","
+                "\"optimizer\":\"" << optimizerStr(opt) << "\","
+                "\"decayMomentDW\":\"" << decayMomentDW << "\","
+                "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
+                "\"lmbRegular\":\"" << lmbRegular << "\","
+                "\"dropOut\":\"" << dropOut << "\","
+                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
+                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "}";
 
-        struct params{
-            uint32_t kernel = 1;                       ///< Number of hidden neurons. !Required parameter [0..)
-            active act = active::relu;                 ///< Activation function type. Optional parameter
-            weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-            batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
-            snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
-            optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
-            snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-            snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-            snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-            snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
-            calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter
-            bool freeze = false;                       ///< Do not change weights. Optional parameter
-            bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
-
-            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
-                kernel = kernel;
-                mode = mode_;
-            }
+            prm_ = ss.str();
         };
-
-        FullyConnected(const params& prm) : prm_(prm){};
 
         ~FullyConnected(){};
               
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"kernel\":\""         << prm_.kernel << "\","
-                   "\"active\":\""         << activeStr(prm_.act) << "\","
-                   "\"weightInit\""        << weightInitStr(prm_.wini) << "\","
-                   "\"batchNorm\""         << batchNormTypeStr(prm_.bnorm) << "\","
-                   "\"batchNormLr\":\""    << prm_.batchNormLr << "\","
-                   "\"optimizer\":\""      << optimizerStr(prm_.opt) << "\","
-                   "\"decayMomentDW\":\""  << prm_.decayMomentDW << "\","
-                   "\"decayMomentWGr\":\"" << prm_.decayMomentWGr << "\","
-                   "\"lmbRegular\":\""     << prm_.lmbRegular << "\","
-                   "\"dropOut\":\""        << prm_.dropOut << "\","
-                   "\"mode\":\""           << calcModeStr(prm_.mode) << "\","
-                   "\"freeze\":\""         << (prm_.freeze ? 1 : 0) << "\","
-                   "\"gpuClearMem\":\""    << (prm_.gpuClearMem ? 1 : 0) << "\""
-                  "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -91,7 +85,7 @@ namespace SN_API{
         }
 
     private:       
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -100,61 +94,55 @@ namespace SN_API{
     class Convolution{
 
     public:
-
-        struct params{
-            uint32_t kernel = 1;                       ///< Number of output layers. !Required parameter [0..)
-            uint32_t fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
-            uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-            uint32_t padding = 0;                      ///< Padding around the edges. Optional parameter
-            uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
-            uint32_t dilate = 1;                       ///< Expansion mask (> 0). Optional parameter(> 0)
-            active act = active::relu;                 ///< Activation function type. Optional parameter
-            weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-            batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
-            snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
-            optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
-            snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-            snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-            snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-            snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
-            calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter
-            bool freeze = false;                       ///< Do not change weights. Optional parameter
-            bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
-
-            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
-                kernel = kernel;
-                mode = mode_;
-            }
-        };
-
-        Convolution(const params& prm) : prm_(prm){};
-
-        ~Convolution(){};
-             
-        std::string getParamsJn(){
-
+        
+        Convolution(uint32_t kernel,                   ///< Number of output layers. !Required parameter [0..)
+            calcMode mode = calcMode::CPU,             ///< Сalculation mode. Optional parameter
+            uint32_t fWidth = 3,                       ///< Width of mask. Optional parameter(> 0)
+            uint32_t fHeight = 3,                      ///< Height of mask. Optional parameter(> 0)
+            uint32_t padding = 0,                      ///< Padding around the edges. Optional parameter
+            uint32_t stride = 1,                       ///< Mask movement step. Optional parameter(> 0)
+            uint32_t dilate = 1,                       ///< Expansion mask (> 0). Optional parameter(> 0)
+            active act = active::relu,                 ///< Activation function type. Optional parameter
+            weightInit wini = weightInit::he,          ///< Type of initialization of weights. Optional parameter
+            batchNormType bnorm = batchNormType::none, ///< Type of batch norm. Optional parameter
+            snFloat batchNormLr = 0.001,               ///< Learning rate for batch norm coef. Optional parameter [0..)
+            optimizer opt = optimizer::adam,           ///< Optimizer of weights. Optional parameter
+            snFloat decayMomentDW = 0.9,               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+            snFloat decayMomentWGr = 0.99,             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+            snFloat lmbRegular = 0.001,                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+            snFloat dropOut = 0.0,                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
+            bool freeze = false,                       ///< Do not change weights. Optional parameter
+            bool gpuClearMem = false){                 ///< Clear memory GPU. Optional parameter
+                    
             std::stringstream ss;
-            ss << "{\"kernel\":\"" << prm_.kernel << "\","
-                "\"fWidth\":\"" << prm_.fWidth << "\","
-                "\"fHeight\":\"" << prm_.fHeight << "\","
-                "\"padding\":\"" << prm_.padding << "\","
-                "\"stride\":\"" << prm_.stride << "\","
-                "\"dilate\":\"" << prm_.dilate << "\","
-                "\"active\":\"" << activeStr(prm_.act) << "\","
-                "\"weightInit\"" << weightInitStr(prm_.wini) << "\","
-                "\"batchNorm\"" << batchNormTypeStr(prm_.bnorm) << "\","
-                "\"batchNormLr\":\"" << prm_.batchNormLr << "\","
-                "\"optimizer\":\"" << optimizerStr(prm_.opt) << "\","
-                "\"decayMomentDW\":\"" << prm_.decayMomentDW << "\","
-                "\"decayMomentWGr\":\"" << prm_.decayMomentWGr << "\","
-                "\"lmbRegular\":\"" << prm_.lmbRegular << "\","
-                "\"dropOut\":\"" << prm_.dropOut << "\","
-                "\"mode\":\"" << calcModeStr(prm_.mode) << "\","
-                "\"freeze\":\"" << (prm_.freeze ? 1 : 0) << "\","
-                "\"gpuClearMem\":\"" << (prm_.gpuClearMem ? 1 : 0) << "\""
+            ss << "{\"kernel\":\"" << kernel << "\","
+                "\"fWidth\":\"" << fWidth << "\","
+                "\"fHeight\":\"" << fHeight << "\","
+                "\"padding\":\"" << padding << "\","
+                "\"stride\":\"" << stride << "\","
+                "\"dilate\":\"" << dilate << "\","
+                "\"active\":\"" << activeStr(act) << "\","
+                "\"weightInit\"" << weightInitStr(wini) << "\","
+                "\"batchNorm\"" << batchNormTypeStr(bnorm) << "\","
+                "\"batchNormLr\":\"" << batchNormLr << "\","
+                "\"optimizer\":\"" << optimizerStr(opt) << "\","
+                "\"decayMomentDW\":\"" << decayMomentDW << "\","
+                "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
+                "\"lmbRegular\":\"" << lmbRegular << "\","
+                "\"dropOut\":\"" << dropOut << "\","
+                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
+                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
                 "}";
 
-            return ss.str();
+            prm_ = ss.str();
+        };
+
+        ~Convolution(){};            
+      
+        std::string getParamsJn(){
+
+            return prm_;
         }
 
         std::string name(){
@@ -162,7 +150,7 @@ namespace SN_API{
         }
 
     private:        
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -172,56 +160,50 @@ namespace SN_API{
 
     public:
 
-        struct params{
-            uint32_t kernel = 1;                       ///< Number of output layers. !Required parameter [0..)
-            uint32_t fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
-            uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-            uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
-            active act = active::relu;                 ///< Activation function type. Optional parameter
-            weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-            batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
-            snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
-            optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
-            snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-            snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-            snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-            snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
-            calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter
-            bool freeze = false;                       ///< Do not change weights. Optional parameter
-            bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
+        Deconvolution(uint32_t kernel,                 ///< Number of output layers. !Required parameter [0..)
+            calcMode mode = calcMode::CPU,             ///< Сalculation mode. Optional parameter
+            uint32_t fWidth = 3,                       ///< Width of mask. Optional parameter(> 0)
+            uint32_t fHeight = 3,                      ///< Height of mask. Optional parameter(> 0)
+            uint32_t stride = 1,                       ///< Mask movement step. Optional parameter(> 0)
+            active act = active::relu,                 ///< Activation function type. Optional parameter
+            weightInit wini = weightInit::he,          ///< Type of initialization of weights. Optional parameter
+            batchNormType bnorm = batchNormType::none, ///< Type of batch norm. Optional parameter
+            snFloat batchNormLr = 0.001,               ///< Learning rate for batch norm coef. Optional parameter [0..)
+            optimizer opt = optimizer::adam,           ///< Optimizer of weights. Optional parameter
+            snFloat decayMomentDW = 0.9,               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+            snFloat decayMomentWGr = 0.99,             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+            snFloat lmbRegular = 0.001,                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+            snFloat dropOut = 0.0,                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
+            bool freeze = false,                       ///< Do not change weights. Optional parameter
+            bool gpuClearMem = false){                 ///< Clear memory GPU. Optional parameter
 
-            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
-                kernel = kernel;
-                mode = mode_;
-            }
-        };
+            std::stringstream ss;
+            ss << "{\"kernel\":\"" << kernel << "\","
+                "\"fWidth\":\"" << fWidth << "\","
+                "\"fHeight\":\"" << fHeight << "\","
+                "\"stride\":\"" << stride << "\","
+                "\"active\":\"" << activeStr(act) << "\","
+                "\"weightInit\"" << weightInitStr(wini) << "\","
+                "\"batchNorm\"" << batchNormTypeStr(bnorm) << "\","
+                "\"batchNormLr\":\"" << batchNormLr << "\","
+                "\"optimizer\":\"" << optimizerStr(opt) << "\","
+                "\"decayMomentDW\":\"" << decayMomentDW << "\","
+                "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
+                "\"lmbRegular\":\"" << lmbRegular << "\","
+                "\"dropOut\":\"" << dropOut << "\","
+                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
+                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "}";
 
-        Deconvolution(const params& prm) : prm_(prm){};
+            prm_ = ss.str();
+            };
 
         ~Deconvolution(){};
   
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"kernel\":\"" << prm_.kernel << "\","
-                "\"fWidth\":\"" << prm_.fWidth << "\","
-                "\"fHeight\":\"" << prm_.fHeight << "\","
-                "\"stride\":\"" << prm_.stride << "\","
-                "\"active\":\"" << activeStr(prm_.act) << "\","
-                "\"weightInit\"" << weightInitStr(prm_.wini) << "\","
-                "\"batchNorm\"" << batchNormTypeStr(prm_.bnorm) << "\","
-                "\"batchNormLr\":\"" << prm_.batchNormLr << "\","
-                "\"optimizer\":\"" << optimizerStr(prm_.opt) << "\","
-                "\"decayMomentDW\":\"" << prm_.decayMomentDW << "\","
-                "\"decayMomentWGr\":\"" << prm_.decayMomentWGr << "\","
-                "\"lmbRegular\":\"" << prm_.lmbRegular << "\","
-                "\"dropOut\":\"" << prm_.dropOut << "\","
-                "\"mode\":\"" << calcModeStr(prm_.mode) << "\","
-                "\"freeze\":\"" << (prm_.freeze ? 1 : 0) << "\","
-                "\"gpuClearMem\":\"" << (prm_.gpuClearMem ? 1 : 0) << "\""
-                "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -229,7 +211,7 @@ namespace SN_API{
         }
 
     private:       
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -238,33 +220,27 @@ namespace SN_API{
     class Pooling{
 
     public:
+               
+        Pooling(uint32_t kernel = 2,          ///< Square Mask Size. Optional parameter (> 0) 
+            calcMode mode = calcMode::CPU,    ///< Сalculation mode. Optional parameter
+            poolType pool = poolType::max,    ///< Operator Type. Optional parameter 
+            bool gpuClearMem = false){        ///< Clear memory GPU. Optional parameter
 
-        struct params{
-            uint32_t kernel = 1;                       ///< Square Mask Size. Optional parameter (> 0) 
-            poolType pool = poolType::max;             ///< Operator Type. Optional parameter 
-            calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter
-            bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
+            std::stringstream ss;
+            ss << "{\"kernel\":\"" << kernel << "\","
+                "\"pool\":\"" << poolTypeStr(pool) << "\","
+                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "}";
 
-            params(uint32_t kernel_, calcMode mode_ = calcMode::CPU){
-                kernel = kernel;
-                mode = mode_;
-            }
-        };
-
-        Pooling(const params& prm) : prm_(prm){};
+            prm_ = ss.str();
+        }
 
         ~Pooling(){};
                 
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"kernel\":\"" << prm_.kernel << "\","
-                "\"pool\":\"" << poolTypeStr(prm_.pool) << "\","
-                "\"mode\":\"" << calcModeStr(prm_.mode) << "\","
-                "\"gpuClearMem\":\"" << (prm_.gpuClearMem ? 1 : 0) << "\""
-                "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -272,7 +248,7 @@ namespace SN_API{
         }
 
     private:      
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -283,26 +259,21 @@ namespace SN_API{
     class Lock{
 
     public:
+               
+        Lock(lockType lock){     ///< Blocking activity. Optional parameter
+        
+            std::stringstream ss;
+            ss << "{\"state\":\"" << lockTypeStr(lock) << "\""
+                "}";
 
-        struct params{
-            lockType lock = lockType::unlock;          ///< Blocking activity. Optional parameter
-           
-            params(lockType lock_ = lockType::unlock){
-                lock = lock_;
-            }
+            prm_ = ss.str();
         };
-
-        Lock(const params& prm) : prm_(prm){};
 
         ~Lock(){};
                
         std::string getParamsJn(){
-
-            std::stringstream ss;
-            ss << "{\"state\":\"" << lockTypeStr(prm_.lock) << "\""
-                  "}";
-
-            return ss.str();
+                      
+            return prm_;
         }
 
         std::string name(){
@@ -310,7 +281,7 @@ namespace SN_API{
         }
 
     private:        
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -321,24 +292,21 @@ namespace SN_API{
 
     public:
 
-        struct params{
-            std::string nextWay;
-            params(std::string nextWay_ = ""){
-                nextWay = nextWay_;
-            }
-        };
+       
+        Switch(std::string nextWay = ""){
+        
+            std::stringstream ss;
+            ss << "{\"nextWay\":\"" << nextWay << "\""
+                "}";
 
-        Switch(const params& prm) : prm_(prm){};
+            prm_ = ss.str();
+        };
 
         ~Switch(){};
         
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"nextWay\":\"" << prm_.nextWay << "\""
-                "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -346,7 +314,7 @@ namespace SN_API{
         }
 
     private:
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -357,25 +325,21 @@ namespace SN_API{
     class Summator{
 
     public:
+         
+        Summator(summatorType summType = summatorType::summ){
+          
+            std::stringstream ss;
+            ss << "{\"type\":\"" << summatorTypeStr(summType) << "\""
+                "}";
 
-        struct params{
-            summatorType summType;
-            params(summatorType summType_ = summatorType::summ){
-                summType = summType_;
-            }
+            prm_ = ss.str();
         };
-
-        Summator(const params& prm) : prm_(prm){};
 
         ~Summator(){};
              
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"type\":\"" << summatorTypeStr(prm_.summType) << "\""
-                "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -383,7 +347,7 @@ namespace SN_API{
         }
 
     private:      
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -430,28 +394,22 @@ namespace SN_API{
 
         struct rect{
             uint32_t x, y, w, h;
+        };        
+
+        Crop(rect rct){
+          
+            std::stringstream ss;
+            ss << "{\"roi\":\"" << rct.x << " " << rct.y << " " << rct.w << " " << rct.h << "\""
+                "}";
+
+            prm_ = ss.str();
         };
-
-        struct params{
-
-            rect rct;
-
-            params(rect rct_){
-                rct = rct_;
-            }
-        };
-
-        Crop(const params& prm) : prm_(prm){};
 
         ~Crop(){};
                
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"roi\":\"" << prm_.rct.x << " " << prm_.rct.y << " " << prm_.rct.w << " " << prm_.rct.h << "\""
-                   "}";
-
-            return ss.str();
+            return prm_;
         }
         
         std::string name(){
@@ -459,7 +417,7 @@ namespace SN_API{
         }
 
     private:       
-        params prm_;
+        std::string prm_;
     };
 
     /*
@@ -468,27 +426,21 @@ namespace SN_API{
     class UserLayer{
 
     public:
-           
-        struct params{
+       
+        UserLayer(std::string cbackName){
+            
+            std::stringstream ss;
+            ss << "{\"cbackName\":\"" << cbackName << "\""
+                "}";
 
-            std::string cbackName;
-
-            params(const std::string& cbackName_){
-                cbackName = cbackName_;
-            }
+            prm_ = ss.str();
         };
-
-        UserLayer(const params& prm) : prm_(prm){};
 
         ~UserLayer(){};
               
         std::string getParamsJn(){
 
-            std::stringstream ss;
-            ss << "{\"cbackName\":\"" << prm_.cbackName << "\""
-                "}";
-
-            return ss.str();
+            return prm_;
         }
 
         std::string name(){
@@ -496,7 +448,7 @@ namespace SN_API{
         }
 
     private:     
-        params prm_;
+        std::string prm_;
     };
 
 }

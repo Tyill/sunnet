@@ -106,7 +106,6 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     }
 
     // вспом массивы
-    auxParams_["outGradExp"] = vector<snFloat>();
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();    

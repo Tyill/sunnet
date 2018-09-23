@@ -123,6 +123,7 @@ __global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t stride,
 
                 // ядро свертки   
                 snFloat in = input[ox + oy * insz.w];
+#pragma unroll
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,
@@ -239,74 +240,6 @@ __global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
         gradIn += outStepByD;
         ++oz;
     }
-
-
-//
-//    size_t wStepByD = fWidth * fHeight,        // шаг весов по входу
-//           wStepByK = wStepByD * insz.d + 1,   // шаг весов по выходу
-//           wStepByN = wStepByK * outsz.d,      // шаг весов по батчу
-//           outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
-//           outStepByN = outStepByD * outsz.d,  // шаг вых слоя по батчу
-//           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-//           inStepByN = inStepByD * insz.d;     // шаг вх слоя по батчу
-//
-//    // gridDim.x - кол-во вх слоев
-//    // gridDim.y - размер батча
-//        
-//    input += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
-//    weight += blockIdx.x * wStepByD;
-//    dWeightOut += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-//    gradIn += blockIdx.y * outStepByN;
-//    gradOut += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
-//
-//   
-//    unsigned int oz = 0;
-//    while (oz < outsz.d){
-//       
-//        memset(dWeightOut, 0, wStepByD * sizeof(snFloat));
-//        if (blockIdx.x == 0)
-//            dWeightOut[wStepByD * insz.d] = 0;
-//
-//        unsigned int oy = threadIdx.y;
-//        while (oy < outsz.h){
-//                       
-//            unsigned int ox = threadIdx.x;
-//            while (ox < outsz.w){
-//
-//                size_t posW = ox * stride, posH = oy * stride;
-//              
-//                if (oz == 0){
-//                    for (size_t c = 0; c < wStepByD; ++c){
-//                        size_t cx = c % fWidth, cy = c / fWidth;
-//                        gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
-//                    }
-//                }
-//
-//                // ядро свертки   
-//                snFloat grIn = gradIn[ox + oy * outsz.w];
-//#pragma unroll
-//                for (size_t c = 0; c < wStepByD; ++c){
-//
-//                    size_t cx = c % fWidth, cy = c / fWidth,
-//                        si = (cx + posW) + (cy + posH) * insz.w,
-//                        sw = cx + cy * fWidth;
-//
-//                    gradOut[si] += grIn * weight[sw];
-//
-//                    dWeightOut[sw] += grIn * input[si];                    
-//                }        
-//                if (blockIdx.x == 0)
-//                    dWeightOut[wStepByD * insz.d] += grIn; // bias
-//                
-//                ox += blockDim.x;
-//            }
-//            oy += blockDim.y;
-//        }
-//        weight += wStepByK;
-//        dWeightOut += wStepByK;
-//        gradIn += outStepByD;
-//        ++oz;
-//    }
 }
 
 // усреднение весов по батчу

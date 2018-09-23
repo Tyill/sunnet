@@ -349,6 +349,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t
 
                 // ядро свертки   
                 snFloat grIn = gradIn[ox + oy * outsz.w];
+#pragma unroll
                 for (size_t c = 0; c < wStepByD; ++c){
 
                     size_t cx = c % fWidth, cy = c / fWidth,

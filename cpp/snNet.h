@@ -29,11 +29,13 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 #include "../src/skynet/skyNet.h"
 #include "snTensor.h"
 
 namespace SN_API{
       
+   
     class Net{
                
     public:
@@ -71,6 +73,25 @@ namespace SN_API{
             return this;
         }
 
+        template<typename T>
+        bool updateNode(const std::string& name, const T& nd){
+
+            bool ok = false;
+            if (net_)
+                ok = snSetParamNode(net_, name.c_str(), nd.getParamsJn());
+            else{
+                for (auto& nd : nodes_){
+                    if (nd.name == name){
+                        nd.params = nd.getParamsJn();
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+
+            return ok;
+        }
+
         bool forward(bool isLern, Tensor& inTns, Tensor& outTns){
 
             if (!net_ && !createNet()) return false;
@@ -93,7 +114,7 @@ namespace SN_API{
                 outTns.size(), outTns.data(),
                 targetTns.data(), &outAccurate);
         }
-        
+              
         bool setWeightNode(const std::string& name, Tensor& weight){
 
             if (!net_) return false;
@@ -131,7 +152,15 @@ namespace SN_API{
             return snLoadAllWeightFromFile(net_, path.c_str());
         }
 
-        std::string getNetJson(){
+        bool addUserCBack(const std::string& name, snUserCBack cback, snUData udata){
+
+            if (net_)
+                snAddUserCallBack(net_, name.c_str(), cback, udata);
+            else
+                ucb_.push_back(uCBack{ name, cback, udata });
+        }
+
+        std::string getNetJN(){
 
             char arch[2048]; arch[0] = '\0';
             if (net_)
@@ -149,7 +178,14 @@ namespace SN_API{
             std::string nextNodes;
         };
 
+        struct uCBack{
+            std::string name;
+            snUserCBack cback;
+            snUData udata;           
+        };
+
         std::vector<node> nodes_;
+        std::vector<uCBack> ucb_;
 
         skyNet net_ = nullptr;
 
@@ -198,6 +234,11 @@ namespace SN_API{
             char err[256];
             net_ = snCreateNet(ss.str().c_str(), err);
                        
+            if (!net_){
+                for (auto& cb : ucb_)
+                    snAddUserCallBack(net_, cb.name.c_str(), cb.cback, cb.udata);
+            }
+
             return net_ != nullptr;
         }
 
