@@ -238,12 +238,7 @@ bool jnGetBegin(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
             out_err = "input.BeginNet['NextNode'].empty()";
             return false;
         }
-
-        if (nd.nextNodes.size() > 1){
-            out_err = "input.BeginNet['NextNode'].size() > 1";
-            return false;
-        }
-
+                
         out_nodes["BeginNet"] = nd;
     }
 

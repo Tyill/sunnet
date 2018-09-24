@@ -89,7 +89,10 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
         else
             ERROR_MESS("param 'mode' = " + mode + " indefined");
     }
-        
+       
+    if (prms.find("gpuDeviceId") != prms.end())
+        gpuDeviceId_ = stoi(prms["gpuDeviceId"]);
+
     baseOut_->resize(snSize(kernel_));
   
     // текущие параметры

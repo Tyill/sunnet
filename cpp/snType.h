@@ -156,5 +156,35 @@ namespace SN_API{
             default:                 return "summ";
         }
     }
+        
+    enum class lossType{
+        softMaxACrossEntropy = 0,
+        binaryCrossEntropy = 1,
+        regressionOLS = 2,
+        userLoss = 3,
+    };
+    std::string lossTypeStr(lossType stp){
 
+        switch (stp){
+        case lossType::softMaxACrossEntropy: return "softMaxACrossEntropy";
+        case lossType::binaryCrossEntropy: return "binaryCrossEntropy";
+        case lossType::regressionOLS: return "regressionOLS";
+        case lossType::userLoss: return "userLoss";
+        default:  return "userLoss";
+        }
+    }
+
+    struct diap{
+
+        uint32_t begin, end;
+        diap(uint32_t begin_, uint32_t end_) :
+            begin(begin_), end(end_){}
+    };
+
+    struct rect{
+        uint32_t x, y, w, h;
+
+        rect(uint32_t x_, uint32_t y_, uint32_t w_, uint32_t h_) :
+            x(x_), y(y_), w(w_), h(h_){}
+    };
 }

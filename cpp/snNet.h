@@ -56,21 +56,21 @@ namespace SN_API{
 
         std::string getLastErrorStr(){
 
-            char err[256]; err[0] = '\0';
-            if (net_)
-                snGetLastErrorStr(net_, err);
-            else
-                strcpy(err, "net not create");
+            if (net_){
+               char err[256]; err[0] = '\0';
+               snGetLastErrorStr(net_, err);
+               err_ = err;
+            }
 
-            return err;
+            return err_;
         }
 
         template<typename T> 
-        Net& addNode(const std::string& name, const T& nd, const std::string& nxtNodes){
+        Net& addNode(const std::string& name, T& nd, const std::string& nextNodes){
                         
-            nodes_.push_back(node{ name, nd.name(), nd.getParamsJn(), nxtNodes });
+            nodes_.push_back(node{ name, nd.name(), nd.getParamsJn(), nextNodes });
             
-            return this;
+            return *this;
         }
 
         template<typename T>
@@ -171,6 +171,8 @@ namespace SN_API{
 
     private:
 
+        std::string err_;
+
         struct node{
             std::string name;
             std::string opr;
@@ -193,13 +195,26 @@ namespace SN_API{
 
         bool createNet(){
 
+            if (net_) return true;
+
             if (nodes_.empty()) return false;
+
+            std::string beginNode = nodes_.front().name,
+                        prevEndNode = nodes_.back().name;
+
+            for (auto& nd : nodes_){
+                if (nd.name == "Input") beginNode = nd.nextNodes;
+                if (nd.nextNodes == "Output"){
+                    prevEndNode = nd.name;
+                    nd.nextNodes = "EndNet";
+                }
+            }
 
             std::stringstream ss;
             ss << "{"
                 "\"BeginNet\":"
                 "{"
-                "\"NextNodes\":\"" + nodes_.front().name + "\""
+                "\"NextNodes\":\"" + beginNode + "\""
                 "},"
 
                 "\"Nodes\":"
@@ -210,12 +225,12 @@ namespace SN_API{
 
                 auto& nd = nodes_[i];
 
-                std::string nn = nd.nextNodes;
-                if (nn.empty()) nn = "EndNet";
-                
+                if ((nd.name == "Input") || (nd.name == "Output"))
+                    continue;
+                                
                 ss << "{"
                     "\"NodeName\":\"" + nd.name + "\","
-                    "\"NextNodes\":\"" + nn + "\","
+                    "\"NextNodes\":\"" + nd.nextNodes + "\","
                     "\"OperatorName\":\"" + nd.opr + "\","
                     "\"OperatorParams\":" + nd.params + ""
                     "}";
@@ -227,25 +242,27 @@ namespace SN_API{
 
                 "\"EndNet\":"                         
                 "{"
-                "\"PrevNode\":\"" + nodes_.back().name + "\""
+                "\"PrevNode\":\"" + prevEndNode + "\""
                 "}"
                 "}";
-            
-            char err[256];
-            net_ = snCreateNet(ss.str().c_str(), err);
-                       
-            if (!net_){
-                for (auto& cb : ucb_)
-                    snAddUserCallBack(net_, cb.name.c_str(), cb.cback, cb.udata);
-            }
-
-            return net_ != nullptr;
+           
+           
+            return createNet(ss.str().c_str());
         }
 
         bool createNet(const std::string& jnNet){
-                       
+            
+            if (net_) return true;
+
             char err[256]; err[0] = '\0';
             net_ = snCreateNet(jnNet.c_str(), err);
+
+            err_ = err;
+
+            if (net_){
+                for (auto& cb : ucb_)
+                    snAddUserCallBack(net_, cb.name.c_str(), cb.cback, cb.udata);
+            }
 
             return net_ != nullptr;
         }

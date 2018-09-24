@@ -38,7 +38,8 @@ using namespace SN_Base;
 #endif
 
 void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, map<string, void*>& gpuPrm){
-    
+    cudaSetDevice(gpuDeviceId_);
+
     size_t ida = insz.w * insz.h * insz.d + 1, bsz = insz.n;
 
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()){
@@ -73,7 +74,8 @@ void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, map<string,
 }
          
 void FullyConnected::freeParamCUDA(map<string, void*>& gpuPrm){
-    
+    cudaSetDevice(gpuDeviceId_);
+
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
     cublasDestroy((cublasHandle_t)gpuPrm["hcuBLAS"]);
@@ -85,7 +87,8 @@ void FullyConnected::freeParamCUDA(map<string, void*>& gpuPrm){
 }
 
 void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, map<string, void*>& gpuPrm){
-        
+    cudaSetDevice(gpuDeviceId_);
+
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
     cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
@@ -137,7 +140,8 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* inp
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, map<string, void*>& gpuPrm){
-       
+    cudaSetDevice(gpuDeviceId_);
+
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 
     cublasHandle_t hcuBLAS = (cublasHandle_t)gpuPrm["hcuBLAS"];
@@ -218,6 +222,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
 }
 
 void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
+    cudaSetDevice(gpuDeviceId_);
 
     if (gpuPrm.find("hcuBLAS") == gpuPrm.end()) return;
 

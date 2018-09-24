@@ -59,6 +59,8 @@ private:
     
     bool gpuClearMem_ = false;                                        ///< освобождать память
 
+    uint32_t gpuDeviceId_ = 0;                                        ///< gpu id
+
     calcMode calcMode_ = calcMode::CPU;                               ///< режим расчета
 
 

@@ -37,6 +37,7 @@
 #include "Operator/switch.h"
 #include "Operator/crop.h"
 #include "Operator/concat.h"
+#include "Operator/resize.h"
 
 namespace SN_Opr{
 
@@ -58,6 +59,7 @@ namespace SN_Opr{
         else if (fname == "UserLayer")      ret = (SN_Base::OperatorBase*)new UserLayer(net, fname, node, prms);
         else if (fname == "Crop")           ret = (SN_Base::OperatorBase*)new Crop(net, fname, node, prms);
         else if (fname == "Concat")         ret = (SN_Base::OperatorBase*)new Concat(net, fname, node, prms);
+        else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
 
         return ret;
     }
@@ -79,6 +81,7 @@ namespace SN_Opr{
             else if (fname == "UserLayer")      delete (UserLayer*)opr;
             else if (fname == "Crop")           delete (Crop*)opr;
             else if (fname == "Concat")         delete (Concat*)opr;
+            else if (fname == "Resize")         delete (Resize*)opr;
         }
     }
 }

@@ -89,6 +89,9 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
     if (prms.find("gpuClearMem") != prms.end())
         gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
 
+    if (prms.find("gpuDeviceId") != prms.end())
+        gpuDeviceId_ = stoi(prms["gpuDeviceId"]);
+
     if (prms.find("mode") != prms.end()){
 
         string mode = prms["mode"];

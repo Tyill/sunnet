@@ -37,37 +37,89 @@ OperatorBase(net, name, node, prms){
     baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
        
+    if (basePrms_.find("sequence") == basePrms_.end())
+        ERROR_MESS("non set param 'sequence'");    
 }
 
 std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
       
     if (operPrm.action == snAction::forward){
+                       
+        auto seq = SN_Aux::split(basePrms_["sequence"], " ");
 
-       Tensor out = *neighbOpr[0]->getOutput();
+        OperatorBase* neighb = nullptr;
+        for (size_t j = 0; j < neighbOpr.size(); ++j){
+            if (neighbOpr[j]->node() == seq[0]){
+                neighb = neighbOpr[j];
+                break;
+            }
+        }
 
-       snSize csz = out.size();
-       for (size_t i = 1; i < neighbOpr.size(); ++i){
+        if (!neighb){
+            ERROR_MESS("not found neighbor '" + seq[0] + "'");
+            return vector<string>{"noWay"};
+        }
 
-           snSize nbsz = neighbOpr[i]->getOutput()->size();
+        *baseOut_ = *neighb->getOutput();
 
-           if ((csz.w != nbsz.w) || (csz.h != nbsz.h) || (csz.n != nbsz.n)){
-               ERROR_MESS("operators size is not equals");
-               return std::vector < std::string > {"noWay"};
-           }
+        size_t ssz = seq.size();
+        for (size_t i = 1; i < ssz; ++i){
 
-           out.resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
+            OperatorBase* neighb = nullptr;
+            for (size_t j = 0; j < neighbOpr.size(); ++j){
+                if (neighbOpr[j]->node() == seq[i]){
+                    neighb = neighbOpr[j];
+                    break;
+                }
+            }
 
-        /*   for (size_t j = 0; j < csz.n; ++j){
-               memcpy(out.getData() + csz.w * csz.h * csz.d * j,
-                      neighbOpr[i]->getOutput()->getData() + nbsz.w * nbsz.h * nbsz.d * j,
-                        );
-           }
-           csz.d += nbsz.d;*/
-       }
+            if (!neighb){
+                ERROR_MESS("not found neighbor '" + seq[i] + "'");
+                return vector<string>{"noWay"};
+            }
 
+            snSize csz = baseOut_->size();
+
+            snSize nbsz = neighb->getOutput()->size();
+
+            if ((csz.w != nbsz.w) || (csz.h != nbsz.h) || (csz.n != nbsz.n)){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }
+
+            Tensor buff = *baseOut_;
+
+            baseOut_->resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
+
+            size_t sz = csz.w * csz.h * (csz.d + nbsz.d),
+                 cstp = csz.w * csz.h * csz.d,
+                 nstp = nbsz.w * nbsz.h * nbsz.d;
+            for (size_t j = 0; j < csz.n; ++j){
+
+                snFloat* dst = baseOut_->getData() + sz * j,
+                    *src = buff.getData() + cstp * j;
+
+                memcpy(dst, src, cstp * sizeof(snFloat));
+
+
+                dst += cstp;
+                src = neighb->getOutput()->getData() + nstp * j;
+
+                memcpy(dst, src, nstp * sizeof(snFloat));
+            }
+        }
     }
     else{ // backward
+              
+        *baseGrad_ = *neighbOpr[0]->getGradient();
+        for (size_t i = 1; i < neighbOpr.size(); ++i){
 
+            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }
+            *baseGrad_ += *neighbOpr[i]->getGradient();
+        }
     }
     
     return vector<string>();

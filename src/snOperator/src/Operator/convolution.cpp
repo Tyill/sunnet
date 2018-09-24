@@ -85,6 +85,9 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     if (prms.find("gpuClearMem") != prms.end())
         gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
    
+    if (prms.find("gpuDeviceId") != prms.end())
+        gpuDeviceId_ = stoi(prms["gpuDeviceId"]);
+
     if (prms.find("batchNorm") != prms.end()){
 
         string bnType = prms["batchNorm"];

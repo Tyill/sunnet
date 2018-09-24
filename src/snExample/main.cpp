@@ -236,22 +236,45 @@ void showImg(){
 
 int main(int argc, char* argv[])
 {
-    SN_API::Net snet = createNet();
-    if (!snet.getLastErrorStr().empty()){
+    SN_API::Net snet;// = createNet();
+    
+    snet.addNode("Input", SN_API::Input(), "C1 C3 C5")
+        .addNode("C1", SN_API::Convolution(20), "C2")
+        .addNode("C2", SN_API::Convolution(40), "P1")
+        .addNode("P1", SN_API::Pooling(2), "R1")
+        .addNode("R1", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(0, 40)), "Ct")
+
+        .addNode("C3", SN_API::Convolution(20), "C4")
+        .addNode("C4", SN_API::Convolution(40), "P2")
+        .addNode("P2", SN_API::Pooling(), "R2")
+        .addNode("R2", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(40, 80)), "Ct")
+
+        .addNode("C5", SN_API::Convolution(20), "C6")
+        .addNode("C6", SN_API::Convolution(40), "P3")
+        .addNode("P3", SN_API::Pooling(2), "R3")
+        .addNode("R3", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(80, 120)), "Ct")
+
+        .addNode("Ct", SN_API::Concat("R1 R2 R3"), "FC1")
+        .addNode("FC1", SN_API::FullyConnected(1024), "FC2")
+        .addNode("FC2", SN_API::FullyConnected(10), "LS")
+        .addNode("LS", SN_API::LossFunction(SN_API::lossType::softMaxACrossEntropy), "Output");
+
+
+  /*  if (!snet.getLastErrorStr().empty()){
         statusMess("createNet error", nullptr);
         cin.get();
         return -1;
-    }
+    }*/
 
     
   // SN_API::snLoadAllWeightFromFile(snet, "c:\\\C++\\ww\\w.dat");
 
-    string imgPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\";
-    string imgTargPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\label\\";
-    //string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
+   // string imgPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\";
+   // string imgTargPath = "c:\\C++\\skyNet\\test\\unet\\membrane\\train\\label\\";
+    string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 1, classCnt = 10, w = 256, h = 256, w1 = 247, h1 = 247, d = 1; float lr = 0.001; //28
+    int batchSz = 100, classCnt = 10, w = 28, h = 28, w1 = 10, h1 = 1, d = 1; float lr = 0.0001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -308,23 +331,11 @@ int main(int argc, char* argv[])
                 uchar* pt = img.ptr<uchar>(r);
                 for (size_t c = 0; c < nc; ++c)
                     refData[r * nc + c] = pt[c] - mean;
-            }
+            } 
 
+            float* tarData = targetLayer + i * w1 * h1;
 
-            /// 
-            img = cv::imread(imgTargPath + nm, CV_LOAD_IMAGE_UNCHANGED);
-
-            cv::resize(img, img, cv::Size(w1, h1));
-
-            refData = targetLayer + i * w1 * h1;
-            mean = cv::mean(img)[0];
-            nr = img.rows, nc = img.cols;
-            for (size_t r = 0; r < nr; ++r){
-                uchar* pt = img.ptr<uchar>(r);
-                for (size_t c = 0; c < nc; ++c)
-                    refData[r * nc + c] = pt[c]/255.;
-            }
-
+            tarData[ndir] = 1;
         }
 
         float accurat = 0;

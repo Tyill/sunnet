@@ -59,6 +59,8 @@ private:
     bool isFreeze_ = false;                                     ///< не менять веса
     bool gpuClearMem_ = false;                                  ///< очищать память GPU
       
+    uint32_t gpuDeviceId_ = 0;                                  ///< gpu id
+
     calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
 
     SN_Base::snFloat dropOut_ = 0.F;                            ///< случ отключение нейронов
