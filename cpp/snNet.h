@@ -162,10 +162,11 @@ namespace SN_API{
 
         std::string getNetJN(){
 
-            char arch[2048]; arch[0] = '\0';
-            if (net_)
-                snGetArchitecNet(net_, arch);
+            if (!net_ && !createNet()) return "";
 
+            char* arch = nullptr;
+            snGetArchitecNet(net_, &arch);
+                      
             return arch;
         }
 

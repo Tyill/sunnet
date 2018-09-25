@@ -236,28 +236,30 @@ void showImg(){
 
 int main(int argc, char* argv[])
 {
-    SN_API::Net snet;// = createNet();
+    namespace sn = SN_API;
+
+    sn::Net snet;
     
-    snet.addNode("Input", SN_API::Input(), "C1 C3 C5")
-        .addNode("C1", SN_API::Convolution(20), "C2")
-        .addNode("C2", SN_API::Convolution(40), "P1")
-        .addNode("P1", SN_API::Pooling(2), "R1")
-        .addNode("R1", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(0, 40)), "Ct")
+    snet.addNode("Input", sn::Input(), "C1 C3 C5")
+        .addNode("C1", sn::Convolution(20, sn::calcMode::CUDA), "C2")
+        .addNode("C2", sn::Convolution(40, sn::calcMode::CUDA), "P1")
+        .addNode("P1", sn::Pooling(), "R1")
+        .addNode("R1", sn::Resize(SN_API::diap(0, 40), sn::diap(0, 40)), "Ct")
 
-        .addNode("C3", SN_API::Convolution(20), "C4")
-        .addNode("C4", SN_API::Convolution(40), "P2")
-        .addNode("P2", SN_API::Pooling(), "R2")
-        .addNode("R2", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(40, 80)), "Ct")
+        .addNode("C3", sn::Convolution(20, sn::calcMode::CUDA), "C4")
+        .addNode("C4", sn::Convolution(40, sn::calcMode::CUDA), "P2")
+        .addNode("P2", sn::Pooling(), "R2")
+        .addNode("R2", sn::Resize(sn::diap(0, 40), sn::diap(40, 80)), "Ct")
 
-        .addNode("C5", SN_API::Convolution(20), "C6")
-        .addNode("C6", SN_API::Convolution(40), "P3")
-        .addNode("P3", SN_API::Pooling(2), "R3")
-        .addNode("R3", SN_API::Resize(SN_API::diap(0, 40), SN_API::diap(80, 120)), "Ct")
+        .addNode("C5", sn::Convolution(20, sn::calcMode::CUDA), "C6")
+        .addNode("C6", sn::Convolution(40, sn::calcMode::CUDA), "P3")
+        .addNode("P3", sn::Pooling(), "R3")
+        .addNode("R3", sn::Resize(sn::diap(0, 40), sn::diap(80, 120)), "Ct")
 
-        .addNode("Ct", SN_API::Concat("R1 R2 R3"), "FC1")
-        .addNode("FC1", SN_API::FullyConnected(1024), "FC2")
-        .addNode("FC2", SN_API::FullyConnected(10), "LS")
-        .addNode("LS", SN_API::LossFunction(SN_API::lossType::softMaxACrossEntropy), "Output");
+        .addNode("Ct", sn::Concat("R1 R2 R3"), "FC1")
+        .addNode("FC1", sn::FullyConnected(1024, sn::calcMode::CUDA), "FC2")
+        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 
   /*  if (!snet.getLastErrorStr().empty()){
@@ -274,13 +276,11 @@ int main(int argc, char* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28, w1 = 10, h1 = 1, d = 1; float lr = 0.0001; //28
+    int batchSz = 100, classCnt = 10, w = 28, h = 28, w1 = 10, h1 = 1, d = 1; float lr = 0.001; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
-
-    //  readWeight(snet);
-
+       
     if (!loadImage(imgPath, classCnt, imgName, imgCntDir, images)){
         statusMess("loadImage error", nullptr);
         cin.get();
@@ -340,13 +340,13 @@ int main(int argc, char* argv[])
 
         float accurat = 0;
         snet.training(lr,
-            SN_API::Tensor(SN_API::snLSize(w, h, d, batchSz), inLayer),
-            SN_API::Tensor(SN_API::snLSize(w1, h1, d, batchSz), outLayer),
-            SN_API::Tensor(SN_API::snLSize(w1, h1, d, batchSz), targetLayer),
+            sn::Tensor(sn::snLSize(w, h, d, batchSz), inLayer),
+            sn::Tensor(sn::snLSize(w1, h1, d, batchSz), outLayer),
+            sn::Tensor(sn::snLSize(w1, h1, d, batchSz), targetLayer),
             accurat);
 
         accuratSumm += accurat;     
-        cout << k << " metrix " << accuratSumm / k << endl;
+        cout << k << " metrix " << accuratSumm / k << " " << snet.getLastErrorStr() << endl;
 
         
     }

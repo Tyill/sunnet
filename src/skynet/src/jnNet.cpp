@@ -334,7 +334,7 @@ bool SNet::setParamNode(const char* nodeName, const char* jnParam){
 }
 
 /// вернуть параметры узла
-bool SNet::getParamNode(const char* nodeName, char* jnParam /*minsz 256*/){
+bool SNet::getParamNode(const char* nodeName, char** jnParam){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
     if (operats_.find(nodeName) == operats_.end()){
@@ -354,7 +354,9 @@ bool SNet::getParamNode(const char* nodeName, char* jnParam /*minsz 256*/){
             rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
             node["OperatorParams"].Accept(writer);
                     
-            strcpy(jnParam, sb.GetString());
+            *jnParam = (char*)realloc(*jnParam, sb.GetSize() + 1);
+
+            strcpy(*jnParam, sb.GetString());
             return true;
         }
     }
@@ -363,10 +365,16 @@ bool SNet::getParamNode(const char* nodeName, char* jnParam /*minsz 256*/){
 }
 
 /// вернуть архитектуру сети
-bool SNet::getArchitecNet(char* jnArchitecNet /*minsz 2048*/){
+bool SNet::getArchitecNet(char** jnArchitecNet){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
-    strcpy(jnArchitecNet, jnNet_.GetString());
+    rapidjson::StringBuffer sb;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+    jnNet_.Accept(writer);
+    
+    *jnArchitecNet = (char*)realloc(*jnArchitecNet, sb.GetSize() + 1);
+       
+    strcpy(*jnArchitecNet, sb.GetString());
 
     return true;
 }

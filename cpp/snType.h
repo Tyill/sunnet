@@ -158,7 +158,7 @@ namespace SN_API{
     }
         
     enum class lossType{
-        softMaxACrossEntropy = 0,
+        softMaxToCrossEntropy = 0,
         binaryCrossEntropy = 1,
         regressionOLS = 2,
         userLoss = 3,
@@ -166,7 +166,7 @@ namespace SN_API{
     std::string lossTypeStr(lossType stp){
 
         switch (stp){
-        case lossType::softMaxACrossEntropy: return "softMaxACrossEntropy";
+        case lossType::softMaxToCrossEntropy: return "softMaxToCrossEntropy";
         case lossType::binaryCrossEntropy: return "binaryCrossEntropy";
         case lossType::regressionOLS: return "regressionOLS";
         case lossType::userLoss: return "userLoss";

@@ -411,13 +411,13 @@ namespace SN_API{
     /// get params of node
     /// @param[in] skyNet - object net
     /// @param[in] nodeName - name node
-    /// @param[out] jnParam - params of node in JSON. The memory is allocated by the user 
+    /// @param[out] jnParam - params of node in JSON
     /// @return true - ok
-    bool snGetParamNode(skyNet fn, const char* nodeName, char* jnParam /*minsz 256*/){
+    bool snGetParamNode(skyNet fn, const char* nodeName, char** jnParam){
 
         if (!fn) return false;
 
-        if (!nodeName || !jnParam){
+        if (!nodeName){
             static_cast<SNet*>(fn)->statusMess("SN error: !nodeName || !jnParam");
             return false;
         }
@@ -427,9 +427,9 @@ namespace SN_API{
 
     /// get architecture of net
     /// @param[in] skyNet - object net
-    /// @param[out] jnNet - architecture of net in JSON. The memory is allocated by the user
+    /// @param[out] jnNet - architecture of net in JSON
     /// @return true - ok
-    bool snGetArchitecNet(skyNet fn, char* jnArchitecNet /*minsz 2048*/){
+    bool snGetArchitecNet(skyNet fn, char** jnArchitecNet){
 
         if (!fn) return false;
 

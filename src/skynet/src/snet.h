@@ -78,10 +78,10 @@ public:
     bool setParamNode(const char* nodeName, const char* jnParam);
 
     /// вернуть параметры узла
-    bool getParamNode(const char* nodeName, char* jnParam /*minsz 256*/);
+    bool getParamNode(const char* nodeName, char** jnParam);
 
     /// вернуть архитектуру сети
-    bool getArchitecNet(char* jnArchitecNet /*minsz 2048*/);
+    bool getArchitecNet(char** jnArchitecNet);
 
     /// задать польз callBack
     bool snAddUserCallBack(const char* ucbName, SN_API::snUserCBack, SN_API::snUData);
