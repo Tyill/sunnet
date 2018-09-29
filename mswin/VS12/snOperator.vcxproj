@@ -1,0 +1,395 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F3E981BD-4BA4-4538-9D21-6ACD252F4895}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>SNOperator</RootNamespace>
+    <ProjectName>snOperator</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;SN_CUDA;SN_DEBUG;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <CudaCompile>
+      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
+      <UseHostInclude>true</UseHostInclude>
+      <Keep>false</Keep>
+      <KeepDir>$(CudaIntDir)</KeepDir>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <NvccCompilation>compile</NvccCompilation>
+      <CudaRuntime>Static</CudaRuntime>
+      <TargetMachinePlatform>32</TargetMachinePlatform>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <MaxRegCount>0</MaxRegCount>
+      <PtxAsOptionV>false</PtxAsOptionV>
+      <UseHostDefines>true</UseHostDefines>
+      <Emulation>false</Emulation>
+      <HostDebugInfo>
+      </HostDebugInfo>
+      <FastMath>false</FastMath>
+      <Optimization>InheritFromHost</Optimization>
+      <Runtime>InheritFromHost</Runtime>
+      <RuntimeChecks>InheritFromHost</RuntimeChecks>
+      <TypeInfo>InheritFromHost</TypeInfo>
+      <Warning>InheritFromHost</Warning>
+      <Defines>
+      </Defines>
+    </CudaCompile>
+    <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
+      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
+      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
+      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
+      <Optimization>InheritFromProject</Optimization>
+    </CudaLink>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;libopenblas.dll.a;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;SN_CUDA;SN_DEBUG;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <MinimalRebuild>true</MinimalRebuild>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libopenblas.dll.a;SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
+      <UseHostInclude>true</UseHostInclude>
+      <Keep>false</Keep>
+      <KeepDir>$(CudaIntDir)</KeepDir>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <NvccCompilation>compile</NvccCompilation>
+      <CudaRuntime>Static</CudaRuntime>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <MaxRegCount>0</MaxRegCount>
+      <PtxAsOptionV>false</PtxAsOptionV>
+      <UseHostDefines>true</UseHostDefines>
+      <Emulation>false</Emulation>
+      <HostDebugInfo>
+      </HostDebugInfo>
+      <FastMath>false</FastMath>
+      <Optimization>InheritFromHost</Optimization>
+      <Runtime>InheritFromHost</Runtime>
+      <RuntimeChecks>InheritFromHost</RuntimeChecks>
+      <TypeInfo>InheritFromHost</TypeInfo>
+      <Warning>InheritFromHost</Warning>
+      <Defines>
+      </Defines>
+      <Include>
+      </Include>
+    </CudaCompile>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;libopenblas.dll.a;</AdditionalDependencies>
+    </Lib>
+    <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
+      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
+      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
+      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
+      <Optimization>InheritFromProject</Optimization>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;SN_CUDA;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <CudaCompile>
+      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
+      <UseHostInclude>true</UseHostInclude>
+      <Keep>false</Keep>
+      <KeepDir>$(CudaIntDir)</KeepDir>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <NvccCompilation>compile</NvccCompilation>
+      <CudaRuntime>Static</CudaRuntime>
+      <TargetMachinePlatform>32</TargetMachinePlatform>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <MaxRegCount>0</MaxRegCount>
+      <PtxAsOptionV>false</PtxAsOptionV>
+      <UseHostDefines>true</UseHostDefines>
+      <Emulation>false</Emulation>
+      <HostDebugInfo>
+      </HostDebugInfo>
+      <FastMath>false</FastMath>
+      <Optimization>InheritFromHost</Optimization>
+      <Runtime>InheritFromHost</Runtime>
+      <RuntimeChecks>InheritFromHost</RuntimeChecks>
+      <TypeInfo>InheritFromHost</TypeInfo>
+      <Warning>InheritFromHost</Warning>
+      <Defines>
+      </Defines>
+    </CudaCompile>
+    <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
+      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
+      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
+      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
+      <Optimization>InheritFromProject</Optimization>
+    </CudaLink>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;libopenblas.dll.a;</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>libopenblas.dll.a;SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
+      <UseHostInclude>true</UseHostInclude>
+      <Keep>false</Keep>
+      <KeepDir>$(CudaIntDir)</KeepDir>
+      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
+      <NvccCompilation>compile</NvccCompilation>
+      <CudaRuntime>Static</CudaRuntime>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
+      <CodeGeneration>compute_30,sm_30</CodeGeneration>
+      <GenerateLineInfo>false</GenerateLineInfo>
+      <MaxRegCount>0</MaxRegCount>
+      <PtxAsOptionV>false</PtxAsOptionV>
+      <UseHostDefines>true</UseHostDefines>
+      <Emulation>false</Emulation>
+      <HostDebugInfo>
+      </HostDebugInfo>
+      <FastMath>false</FastMath>
+      <Optimization>InheritFromHost</Optimization>
+      <Runtime>InheritFromHost</Runtime>
+      <RuntimeChecks>InheritFromHost</RuntimeChecks>
+      <TypeInfo>InheritFromHost</TypeInfo>
+      <Warning>InheritFromHost</Warning>
+      <Defines>
+      </Defines>
+    </CudaCompile>
+    <Lib>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libopenblas.dll.a;</AdditionalDependencies>
+    </Lib>
+    <CudaLink>
+      <PerformDeviceLink>true</PerformDeviceLink>
+      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
+      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
+      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
+      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
+      <Optimization>InheritFromProject</Optimization>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\snOperator\snOperator.h" />
+    <ClInclude Include="..\..\src\snOperator\src\activeFunctions.h" />
+    <ClInclude Include="..\..\src\snOperator\src\mathFunctions.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\concat.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\convolution.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\crop.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\deconvolution.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\fullyConnected.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\input.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\lock.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\lossFunction.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\output.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\pooling.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\resize.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\summator.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\switch.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\userLayer.h" />
+    <ClInclude Include="..\..\src\snOperator\src\optimizer.h" />
+    <ClInclude Include="..\..\src\snOperator\src\random.h" />
+    <ClInclude Include="..\..\src\snOperator\src\stdafx.h" />
+    <ClInclude Include="..\..\src\snOperator\src\structurs.h" />
+    <ClInclude Include="..\..\src\snOperator\src\weightInit.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\snOperator\src\activeFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\CPU\convolutionCPU.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\CPU\deconvolutionCPU.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\CPU\fullyConnectedCPU.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\CPU\poolingCPU.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\mathFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\concat.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\convolution.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\crop.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\deconvolution.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\fullyConnected.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\input.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\lock.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\lossFunction.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\output.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\pooling.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\resize.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\summator.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\switch.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\userLayer.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\optimizer.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\random.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\snOperator.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\stdafx.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\weightInit.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\convolutionCUDA.cu" />
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\deconvolutionCUDA.cu" />
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\fullyConnectedCUDA.cu" />
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\poolingCUDA.cu" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.targets" />
+  </ImportGroup>
+</Project>

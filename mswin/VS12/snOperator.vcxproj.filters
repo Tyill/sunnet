@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="CUDA">
+      <UniqueIdentifier>{00f476b6-2a3d-4e67-b892-078ed803aad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenCL">
+      <UniqueIdentifier>{6246e236-99f7-45f9-9657-b848ba19ed5f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Operator">
+      <UniqueIdentifier>{45042fac-ebea-43c9-8dfe-21144c5116cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CPU">
+      <UniqueIdentifier>{2b7c4e93-c6f2-4c9f-a972-ba3698c3306f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\snOperator\src\activeFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\mathFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\optimizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\structurs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\weightInit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\snOperator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\concat.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\convolution.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\crop.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\deconvolution.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\fullyConnected.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\input.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\lock.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\lossFunction.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\output.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\pooling.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\resize.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\summator.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\switch.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\userLayer.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\snOperator\src\CPU\convolutionCPU.cpp">
+      <Filter>CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\CPU\deconvolutionCPU.cpp">
+      <Filter>CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\CPU\fullyConnectedCPU.cpp">
+      <Filter>CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\CPU\poolingCPU.cpp">
+      <Filter>CPU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\concat.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\convolution.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\crop.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\deconvolution.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\fullyConnected.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\input.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\lock.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\lossFunction.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\output.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\pooling.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\resize.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\summator.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\switch.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\userLayer.cpp">
+      <Filter>Operator</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\activeFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\mathFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\optimizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\random.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\snOperator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\weightInit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\convolutionCUDA.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\deconvolutionCUDA.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\fullyConnectedCUDA.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperator\src\CUDA\poolingCUDA.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>
