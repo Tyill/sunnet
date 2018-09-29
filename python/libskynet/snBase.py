@@ -23,39 +23,33 @@
 # THE SOFTWARE.
 
 import sys
-import os
-import platform
-import logging
 import ctypes
+import numpy
 
-def _load_lib():
-    """Load library by searching possible path."""
-    lib_path = find_lib_path()
+if sys.version_info[0] > 2:
+    py_str = lambda x: x.encode('utf-8')
+else:
+    py_str = lambda x: x
 
-    if (lib_path == ''):
-        raise RuntimeError('Cannot find the library libskynet')
+# type definitions
+snFloat = ctypes.c_float
+snFloat_p = ctypes.POINTER(snFloat)
+snHandle = ctypes.c_void_p
 
-    lib = ctypes.CDLL(lib_path)
+def c_str(string : str) -> ctypes.c_char_p:
+    """Create ctypes char * from a Python string."""
 
-    return lib
+    return ctypes.c_char_p(py_str(string))
 
-def find_lib_path():
+class snLSize(ctypes.Structure):
+     _fields_ = [('w', ctypes.c_size_t),
+                ('h', ctypes.c_size_t),
+                ('ch', ctypes.c_size_t),
+                ('bsz', ctypes.c_size_t)]
 
-    nm = 'libskynet.so'
-    if os.name == 'nt':
-        nm = 'libskynet.dll'
+def snArrayFloat(values):
+    """Create ctypes array from a Python array."""
 
-    for p in sys.path:
-        for f in os.listdir(p):
-            if (f == nm):
-                return os.path.join(p, f)
-
-    return ''
-
-
-_LIB = _load_lib()
-
-__all__ = ["snType", "snNet", "snOperator"]
-
-__version__ = "1.0.0.1"
-
+    out = (snFloat * len(values))()
+    out[:] = values
+    return out

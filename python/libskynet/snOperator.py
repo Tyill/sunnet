@@ -24,7 +24,6 @@
 
 from snType import *
 
-
 class Input():
     """Input layer."""
 
@@ -32,28 +31,30 @@ class Input():
         pass
 
     def getParamsJn(self):
-        return '{}'
+        return {}
 
     def name(self):
-        return "Input"
+        return 'Input'
 
 class FullyConnected():
     '''Fully connected layer'''
 
-    kernel = 0
-    act = active.relu
-    opt = optimizer.adam
-    dropOut = 0.0
-    bnorm = batchNormType.none
-    mode = calcMode.CPU
-    gpuDeviceId = 0
-    gpuClearMem = False
-    freeze = False
-    wini = weightInit.he
-    decayMomentDW = 0.9
-    decayMomentWGr = 0.99
-    lmbRegular = 0.001
-    batchNormLr = 0.001
+    _params = {
+    'kernel' : '0',
+    'act' : active.relu.value,
+    'opt' : optimizer.adam.value,
+    'dropOut' : '0',
+    'bnorm' : batchNormType.none.value,
+    'mode' : calcMode.CPU.value,
+    'gpuDeviceId' : '0',
+    'gpuClearMem' : '0',
+    'freeze' :'0',
+    'wini' : weightInit.he.value,
+    'decayMomentDW' : '0.9',
+    'decayMomentWGr' : '0.99',
+    'lmbRegular' : '0.001',
+    'batchNormLr' : '0.001'
+    }
 
     def __init__(self,
                  kernel,
@@ -65,39 +66,24 @@ class FullyConnected():
                  gpuDeviceId=0,
                  gpuClearMem=False,
                  freeze=False):
-        self.kernel = kernel
-        self.act = act
-        self.opt = opt
-        self.dropOut = dropOut
-        self.bnorm = bnorm
-        self.mode = mode
-        self.gpuDeviceId = gpuDeviceId
-        self.gpuClearMem = gpuClearMem
-        self.freeze = freeze
+        self._params['kernel'] = str(kernel)
+        self._params['act'] = act.value
+        self._params['opt'] = opt.value
+        self._params['dropOut'] = str(dropOut)
+        self._params['bnorm'] = bnorm.value
+        self._params['mode'] = mode.value
+        self._params['gpuDeviceId'] = str(gpuDeviceId)
+        self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
+        self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
                  kernel,
                  mode=calcMode.CPU):
-        self.kernel = kernel
-        self.mode = mode
+        self._params['kernel'] = str(kernel)
+        self._params['mode'] = mode.value
 
     def getParamsJn(self):
-        ret = '{'
-        ret += str(self.kernel) + ','
-        ret += self.act + ','
-        ret += self.opt + ','
-        ret += str(self.dropOut) + ','
-        ret += self.bnorm + ','
-        ret += self.mode + ','
-        ret += str(self.gpuDeviceId) + ','
-        ret += ('1' if self.gpuClearMem else '0') + ','
-        ret += ('1' if self.freeze else '0') + ','
-        ret += self.wini + ','
-        ret += str(self.decayMomentDW) + ','
-        ret += str(self.decayMomentWGr) + ','
-        ret += str(self.lmbRegular) + ','
-        ret += str(self.batchNormLr) + '}'
-        return ret
+        return self._params
 
     def name(self):
         return "FullyConnected"

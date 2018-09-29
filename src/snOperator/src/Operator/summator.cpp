@@ -46,47 +46,40 @@ OperatorBase(net, name, node, prms){
 
 std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
-    if (neighbOpr.size() == 1){
-        if (operPrm.action == snAction::forward)
-            *baseOut_ = *neighbOpr[0]->getOutput();
-        else
-            *baseGrad_ = *neighbOpr[0]->getGradient();           
+        
+    if (operPrm.action == snAction::forward){
+
+        *baseOut_ = *neighbOpr[0]->getOutput();
+
+        size_t sz = neighbOpr.size();
+        for (size_t i = 1; i < sz; ++i){
+            
+            if (*baseOut_ != *neighbOpr[i]->getOutput()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }  
+            switch (sType_){
+            case Summator::sType::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
+            case Summator::sType::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
+            case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput(), baseOut_); break;
+            }                
+        }
     }
     else{
-       
-        if (operPrm.action == snAction::forward){
 
-            *baseOut_ = *neighbOpr[0]->getOutput();
+        *baseGrad_ = *neighbOpr[0]->getGradient();
 
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i){
-            
-                if (*baseOut_ != *neighbOpr[i]->getOutput()){
-                    ERROR_MESS("operators size is not equals");
-                    return std::vector < std::string > {"noWay"};
-                }  
-                switch (sType_){
-                case Summator::sType::summ: *baseOut_ += *neighbOpr[i]->getOutput(); break;
-                case Summator::sType::diff: *baseOut_ -= *neighbOpr[i]->getOutput(); break;
-                case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput(), baseOut_); break;
-                }                
-            }
-        }
-        else{
-
-            *baseGrad_ = *neighbOpr[0]->getGradient();
-
-            size_t sz = neighbOpr.size();
-            for (size_t i = 1; i < sz; ++i){
+        size_t sz = neighbOpr.size();
+        for (size_t i = 1; i < sz; ++i){
              
-                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
-                    ERROR_MESS("operators size is not equals");
-                    return std::vector < std::string > {"noWay"};
-                }
-                *baseGrad_ += *neighbOpr[i]->getGradient();                
+            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
             }
+            *baseGrad_ += *neighbOpr[i]->getGradient();                
         }
     }
+    
 
     return std::vector<std::string>();
 }

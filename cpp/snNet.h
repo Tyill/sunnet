@@ -204,7 +204,7 @@ namespace SN_API{
                         prevEndNode = nodes_.back().name;
 
             for (auto& nd : nodes_){
-                if (nd.name == "Input") beginNode = nd.nextNodes;
+                if (nd.opr == "Input") beginNode = nd.nextNodes;
                 if (nd.nextNodes == "Output"){
                     prevEndNode = nd.name;
                     nd.nextNodes = "EndNet";

@@ -118,7 +118,8 @@ SN_API::Net createNet(){
         "\"padding\":\"0\","
         "\"freeze\":\"0\"}"
         "},"
-
+		
+		
         "{"
         "\"NodeName\":\"P2\","
         "\"NextNodes\":\"U1\","
@@ -128,6 +129,8 @@ SN_API::Net createNet(){
         "\"freeze\":\"0\"}"
         "},"
 
+		
+		
         "{"
         "\"NodeName\":\"U1\","
         "\"NextNodes\":\"U2\","

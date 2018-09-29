@@ -283,6 +283,11 @@ SKYNET_API bool snLoadAllWeightFromFile(skyNet, const char* filePath);
 /// @param[in] skyNet - object net
 SKYNET_API void snFreeNet(skyNet);
 
+/// free resources
+/// @param[in] data - gradient or weight from snGetWeightNode
+/// @param[in] str - string from snGetArchitecNet
+SKYNET_API void snFreeResources(snFloat* data = nullptr, char* str = nullptr);
+
 #if defined(__cplusplus)
 }}
 #endif /* __cplusplus */

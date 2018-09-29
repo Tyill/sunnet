@@ -496,4 +496,13 @@ namespace SN_API{
 
         if (fn) delete static_cast<SNet*>(fn);
     }
+
+    /// free resources
+    /// @param[in] data - gradient or weight from snGetWeightNode
+    /// @param[in] str - string from snGetArchitecNet
+    void snFreeResources(snFloat* data, char* str){
+
+        if (data) free(data);
+        if (str) free(str);
+    }
 }

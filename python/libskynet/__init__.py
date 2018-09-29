@@ -22,30 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from __init__ import _LIB
+import os
+import ctypes
 
-class Net():
-    """Net object."""
+libname = 'libskynet.so'
+if os.name == 'nt':
+    libname = 'libskynet.dll'
 
-    net_ = 0
-    err_ = ''
+libname = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), libname))
 
-    def __init__(self, jnNet = "", weightPath = ""):
+_LIB = ctypes.CDLL(libname)
 
-        if (len(jnNet) > 0):
-            self.createNet(jnNet)
+__all__ = ["snType", "snNet", "snOperator", "snBase"]
 
-        if (len(weightPath) > 0):
-            self.loadAllWeightFromFile(weightPath)
-
-    def createNet(self, jnNet):
-        if (self.net_): return True
-
-        err = '\0';
-        net_ = _LIB.snCreateNet(jnNet, err)
-
-        err_ = err
-
-    def loadAllWeightFromFile(self, weightPath):
-        pass
 
