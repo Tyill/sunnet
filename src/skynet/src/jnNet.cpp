@@ -41,29 +41,29 @@ namespace rj = rapidjson;
 /*
 {
 
-"BeginNet":                             ///< вход сети
+"BeginNet":                             ///< input net
 {
-"NextNodes": ....,                      ///< имена след-го узла. Мбыть только один!
+"NextNodes": ....,                      ///< names next node's
 },
 
-"Nodes":                                ///< узлы сети
+"Nodes":                                ///< node's of net
 [
 {
-"NodeName":....,                        ///< имя узла. Дбыть уникальным в пределах ветви, без ' ' и '-'.
-"NextNodes": ....,                      ///< имена след узлов через пробел. Для условного перехода: оператор узла должен выдать имя след узла, иначе пойдет на все
-"OperatorName":....,                    ///< имя оператора узла. Дбыть определен в snOperator.lib
-"OperatorParams": {"name":"value",}     ///< Необязательно. Список параметров оператора, параметры индивидуальны для каждого оператора. Если опустить, будут по умолч.
+"NodeName":....,                        ///< name node. Should be unique, without ' ' и '-'.
+"NextNodes": ....,                      ///< names of the trace nodes through a space. For a conditional jump: the node operator must issue the node trace name, otherwise it will go to all
+"OperatorName":....,                    ///< name of the host operator. Must be defined in snOperator.lib
+"OperatorParams": {"name":"value",}     ///< Not necessary. List of operator parameters, parameters are individual for each operator. If to omit, will be by default.
 },
 ],
 
-"EndNet":                               ///< выход сети
+"EndNet":                               ///< output of net
 {
-"PrevNode": ....,                       ///< предыд узел. Мбыть только один!
+"PrevNode": ....,                       ///< prev node. Can be only one
 }
 }
 */
 
-/// проверка документа на соотв-е
+/// document validation
 bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
 
     if (!jnDoc.IsObject()){
@@ -86,7 +86,7 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
     ///////////////
 
 
-    // проверка узлов
+    // check nodes
 
     if (!jnDoc.HasMember("Nodes") || !jnDoc["Nodes"].IsArray()){
         err = "!jnDoc.HasMember('Nodes') || !jnDoc['Nodes'].IsArray()"; return false;
@@ -121,7 +121,7 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
 
     ///////////////
         
-    // проверка Output
+    // check Output
     if (jnDoc.HasMember("EndNet")){
 
         if (!jnDoc["EndNet"].IsObject()){
@@ -140,10 +140,10 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
     return true;
 }
 
-/// узлы ветви
+/// nodes
 bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes, string& out_err){
 
-    // Создаем узлы
+    // create nodes
     auto nodes = jnDoc["Nodes"].GetArray();
     int sz = nodes.Size();
     for (int i = 0; i < sz; ++i){
@@ -186,7 +186,7 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
         }
     }
 
-    // проверим, что ссылка на первый узел только одна
+    // we check that the link to the first node is only one
     int beginRefCnt = 0;
     for (auto& n : out_nodes){
 
@@ -198,7 +198,7 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
         return false;
     }
     
-    // проверим, что ссылка на последний узел только одна
+    // we check that the link to the last node is only one
     int endRefCnt = 0;
     for (auto& n : out_nodes){
 
@@ -210,7 +210,7 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
         return false;
     }
 
-    // заполняем prevNodes
+    // fill prevNodes
     for (auto& on : out_nodes){
 
         for (auto& nn : on.second.nextNodes){
@@ -222,7 +222,7 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
     return true;
 }
 
-/// начало ветви
+/// begin net
 bool jnGetBegin(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes, string& out_err){
 
     if (jnDoc.HasMember("BeginNet")){
@@ -245,7 +245,7 @@ bool jnGetBegin(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
     return true;
 }
 
-/// конец ветви
+/// end net
 bool jnGetEnd(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes, string& out_err){
 
     if (jnDoc.HasMember("EndNet")){
@@ -274,27 +274,23 @@ bool jnGetEnd(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nodes
     return true;
 }
     
-// парсинг структуры сети
+/// parsing the network structure
 bool SNet::jnParseNet(const std::string& branchJSON, SN_Base::Net& out_net, std::string& out_err){
 
     jnNet_.Parse(branchJSON.c_str());
 
-    // Проверка 
     if (!jnCheckJDoc(jnNet_, out_err)) return false;
 
-    // начало сети
     if (!jnGetBegin(jnNet_, out_net.nodes, out_err)) return false;
 
-    // конец сети
     if (!jnGetEnd(jnNet_, out_net.nodes, out_err)) return false;
 
-    // получаем узлы
     if (!jnGetNodes(jnNet_, out_net.nodes, out_err)) return false;
                     
     return true;
 }
 
-/// задать параметры узла
+/// set node parameters
 bool SNet::setParamNode(const char* nodeName, const char* jnParam){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -302,38 +298,11 @@ bool SNet::setParamNode(const char* nodeName, const char* jnParam){
         statusMess("SN error: '" + string(nodeName) + "' not found");
         return false;
     }
-
-    //rj::Document jnDoc;
-    //jnDoc.Parse(jnParam);
-
-    //if (!jnDoc.IsObject()){
-    //    statusMess("setParamNode error: !jnDoc.IsObject()");
-    //    return false;
-    //}
-
-    //if (!jnDoc.HasMember("OperatorParams") || !jnDoc["OperatorParams"].IsObject()){
-    //    statusMess("setParamNode error: !jnDoc.HasMember("OperatorParams") || !jnDoc["OperatorParams"].IsObject()");
-    //    return false;
-    //}
-
-    //auto oprPrms = node["OperatorParams"].GetObject();
-
-    //const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
-
-    //for (rj::Value::ConstMemberIterator itr = oprPrms.MemberBegin(); itr != oprPrms.MemberEnd(); ++itr){
-
-    //    if (string(kTypeNames[itr->value.GetType()]) == "String")
-    //        nd.oprPrms[trim(itr->name.GetString())] = trim(itr->value.GetString());
-    //    else{
-    //        out_err = string("node['OperatorParams'][") + itr->name.GetString() + "] != 'String'";
-    //        return false;
-    //    }
-    //}
-
+        
     return true;
 }
 
-/// вернуть параметры узла
+/// get node parameters
 bool SNet::getParamNode(const char* nodeName, char** jnParam){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -364,7 +333,7 @@ bool SNet::getParamNode(const char* nodeName, char** jnParam){
     return false;
 }
 
-/// вернуть архитектуру сети
+/// network architecture
 bool SNet::getArchitecNet(char** jnArchitecNet){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 

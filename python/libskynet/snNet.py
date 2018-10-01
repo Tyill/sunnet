@@ -49,7 +49,7 @@ class Net():
     def addNode(self, name : str, nd : snOperator, nextNodes : str):
         """Add node."""
 
-        self._nodes.append({'NodeName': name, 'OperatorName': nd.name(), 'OperatorParams': nd.getParamsJn(), 'NextNodes': nextNodes})
+        self._nodes.append({'NodeName': name, 'OperatorName': nd.name(), 'OperatorParams': nd.getParams(), 'NextNodes': nextNodes})
 
         return self
 
@@ -59,11 +59,11 @@ class Net():
 
         ok = False
         if (self._net):
-            ok = _LIB.snSetParamNode(self._net, c_str(name),  c_str(nd.getParamsJn()))
+            ok = _LIB.snSetParamNode(self._net, c_str(name),  c_str(nd.getParams()))
         else:
             for n in self._nodes:
                 if (n['name'] == name):
-                    n['params'] = nd.getParamsJn()
+                    n['params'] = nd.getParams()
                     ok = True
                     break
         return ok
@@ -100,14 +100,9 @@ class Net():
         trgsz.bsz = trgTns.shape[3] if (ssz > 3) else 1
         trgdata = trgTns.__array_interface__['data'][0]
 
-      #  _LIB.snTraining.argtypes = (ctypes.c_void_p, ctypes.c_float, ctypes.Structure, ctypes.POINTER(ctypes.c_float),
-      #                              ctypes.Structure, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float))
-      #  _LIB.snTraining.restype = ctypes.c_bool
-
         cAccurate = (ctypes.c_float)(*outAccurate)
         ok = _LIB.snTraining(self._net, ctypes.c_float(lr), insz, indata, outsz, outdata, trgdata, cAccurate)
 
-        #outAccurate[0] = accurate
         return ok
 
 

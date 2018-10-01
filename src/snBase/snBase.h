@@ -39,13 +39,13 @@ namespace SN_Base{
     
     typedef float snFloat;
     
-    /// режим работы сети - прямой/обратный проход
+    /// network mode - forward / reverse
     enum snAction{
         forward = 0,
         backward = 1,
     };
             
-    /// размер
+    /// size
     struct snSize{
         size_t w, h, d, n, p;
                 
@@ -70,7 +70,7 @@ namespace SN_Base{
 
     };
         
-    /// тензор - вход данные и выходные данные каждого узла сети.
+    /// tensor - input data and output data of each node of the network.
     struct Tensor{
                 
         explicit Tensor(const snSize& sz = snSize(0,0,0,0,0)) : sz_(sz){
@@ -181,29 +181,29 @@ namespace SN_Base{
         snSize sz_;
     };
 
-    /// параметры тек действия
+    /// parameters of the current operation
     struct operationParam{
 
-        bool isLerning;       ///< обучение
-        snAction action;      ///< режим работы
-        snFloat lr;           ///< коэф скорости обучения
+        bool isLerning;       ///< lerning
+        snAction action;      ///< mode
+        snFloat lr;           ///< learning rate
         
         operationParam(bool isLerning_ = false, snAction action_ = snAction::forward, SN_Base::snFloat lr_ = 0.001) :
            isLerning(isLerning_), action(action_), lr(lr_){}
     };
     
-    /// нормализация слоя по батчу
+    /// layer normalization
     struct batchNorm{
                
-       SN_Base::snFloat* norm = nullptr;       ///< нормирован вх значения
-       SN_Base::snFloat* mean = nullptr;       ///< среднее вх значений
-       SN_Base::snFloat* varce = nullptr;      ///< дисперсия вх значений
-       SN_Base::snFloat* scale = nullptr;      ///< коэф γ
+       SN_Base::snFloat* norm = nullptr;       ///< norm
+       SN_Base::snFloat* mean = nullptr;       ///< mean
+       SN_Base::snFloat* varce = nullptr;      ///< disp
+       SN_Base::snFloat* scale = nullptr;      ///< γ
        SN_Base::snFloat* dScale = nullptr;     ///< dγ
-       SN_Base::snFloat* schift = nullptr;     ///< коэф β
+       SN_Base::snFloat* schift = nullptr;     ///< β
        SN_Base::snFloat* dSchift = nullptr;    ///< dβ
-       SN_Base::snFloat* onc = nullptr;        ///< 1й вектор
-       SN_Base::snFloat lr = 0.001F;           ///< коэф для изменения γ и β
+       SN_Base::snFloat* onc = nullptr;        ///< 1 vector 
+       SN_Base::snFloat lr = 0.001F;           ///< lrate for γ и β
        snSize sz = snSize(0,0,0,0,0);
              
        void offset(int offs){
@@ -216,15 +216,14 @@ namespace SN_Base{
        }
     };
 
-    /// базовый оператор сети. Реализация слоев, расчет весов, градиентов, активации и тд.
-    /// Все расчетные операторы наследуются от него. 
+    /// basic network operator. All settlement operators are inherited from it.
     class OperatorBase{
 
     protected:
-        /// создать ф-ю
-        /// @param name - имя оператора - конкретный класс реализации 
-        /// @param node - название узла в символьной структуре НС
-        /// @param prms - параметры ф-и. Ключ - имя параметра. (задает польз-ль когда создает сеть - JSON структуру сети).
+        /// Operator 
+        /// @param name - The name of the operator is a specific implementation class
+        /// @param node - the name of the node in the NN structure
+        /// @param prms - params. Key - name param
         OperatorBase(void* Net_, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms) :
             Net(Net_), name_(name), node_(node), basePrms_(prms){}
         virtual ~OperatorBase(){
@@ -235,108 +234,98 @@ namespace SN_Base{
         } 
     public:
         
-        /// обратная ссылка на родит-й объект сети
+        /// back link to the parent network object
         void* Net = nullptr;
 
-        /// задать параметры
         virtual bool setInternPrm(std::map<std::string, std::string>& prms){
             basePrms_ = prms;
             return true;
         }
 
-        /// задать входные данные для расчета
         virtual bool setInput(SN_Base::Tensor* in){            
             if (baseInput_) delete baseInput_;
             baseInput_ = in;
             return true;
         }
 
-        /// задать градиент
         virtual bool setGradient(SN_Base::Tensor* grad){
             if (baseGrad_) delete baseGrad_;
             baseGrad_ = grad;
             return true;
         }
         
-        /// задать веса
         virtual bool setWeight(SN_Base::Tensor* weight){
             if (baseWeight_) delete baseWeight_;
             baseWeight_ = weight;
             return true;
         }
 
-        /// задать нормализацию
         virtual bool setBatchNorm(const batchNorm& bn){
             baseBatchNorm_ = bn;
             return true;
         }
 
-        /// вернуть параметры
         virtual std::map<std::string, std::string> getInternPrm() const final{
             return basePrms_;
         }
 
-        /// вернуть веса
         virtual SN_Base::Tensor* getWeight() const final{
             return baseWeight_;
         }
 
-        /// вернуть нормализацию
         virtual batchNorm getBatchNorm() const final{
             return baseBatchNorm_;
         }
 
-        /// вернуть выходные данные ф-и
         virtual SN_Base::Tensor* getOutput() const final{
             return baseOut_;
         }
 
-        /// вернуть расчитан градиенты ф-и
         virtual SN_Base::Tensor* getGradient() const final{
             return baseGrad_;
         }
 
-        /// название узла в символьной структуре
+        /// node name in character structure
         virtual std::string node() const final{
             return node_;
         }
 
-        /// имя оператора - конкретный класс реализации 
+        /// The name of the operator is a specific implementation class
         virtual std::string name() const final{
             return name_;
         }
 
-        /// выполнить расчет
-        /// @param learnPrm - параметры обучения на тек итерации
-        /// @param neighbOpr - соседние операторы, передающие сюда данные
-        /// @return - список след узлов куда идти, если след-х > 1. Если ничего не выбрано идем на все
+        /// calculation
+        /// @param learnPrm - learning options on the iteration
+        /// @param neighbOpr - The neighboring operators that transmit data here
+        /// @return - list track nodes where to go, if the trace is> 1. If nothing is selected go to all
         virtual std::vector<std::string> Do(const operationParam& learnPrm, const std::vector<OperatorBase*>& neighbOpr) = 0;
         
     protected:
-        std::string node_;                            ///< имя узла, в котором вычисляется оператор
-        std::string name_;                            ///< имя оператора - конкретный класс реализации 
-        std::map<std::string, std::string> basePrms_; ///< параметры
-        SN_Base::Tensor* baseInput_ = nullptr;        ///< входные данные оператора
-        SN_Base::Tensor* baseWeight_ = nullptr;       ///< веса
-        SN_Base::Tensor* baseGrad_ = nullptr;         ///< градиенты
-        SN_Base::Tensor* baseOut_ = nullptr;          ///< выходные данные оператора
-        batchNorm baseBatchNorm_;                     ///< нормализация
+        std::string node_;                            ///< The name of the node in which the statement is evaluated
+        std::string name_;                            ///< The name of the operator is a specific implementation class
+        std::map<std::string, std::string> basePrms_; ///< param's
+        SN_Base::Tensor* baseInput_ = nullptr;        ///< input
+        SN_Base::Tensor* baseWeight_ = nullptr;       ///< weight
+        SN_Base::Tensor* baseGrad_ = nullptr;         ///< gradient
+        SN_Base::Tensor* baseOut_ = nullptr;          ///< output
+        batchNorm baseBatchNorm_;                     ///< batch norm
     };
 
-    /// узел в символьной структуре НС 
+    /// node in the symbol structure of the NN
     struct Node{
 
-        std::string name;                             ///< название узла - дбыть уникальным в пределах ветки, без ' ' и '-'. "Begin", "End" зарезервированы как начало, конец сети                                                                                                     
-        std::string oprName;                          ///< оператор узла, который выполняется в узле. !Один оператор на узел. 
-        std::map<std::string, std::string> oprPrms;   ///< параметры оператора (задает польз-ль при создании ветви)
-        std::vector<std::string> prevNodes;           ///< предыдущие узлы (множест число, тк узел мбыть собирательным из неск веток)
-        std::vector<std::string> nextNodes;           ///< все возможные след узлы (множест число, тк мбыть разделение на неск параллель нитей), название след узлов (через пробел) возвращает ф-я оператора узла на тек итерации. Если ничего не вернула, идет на все
+        std::string name;                             ///< the name of the node is to be unique within the branch, without the '' and '-'. "Begin", "End" are reserved as the beginning, the end of the network
+        std::string oprName;                          ///< the node operator that is executed at the node. One operator per node.
+        std::map<std::string, std::string> oprPrms;   ///< parameters of the operator (specifies the user when creating the net)
+        std::vector<std::string> prevNodes;           ///< previous nodes (sets of numbers, mk node being collective of non-branches)
+        std::vector<std::string> nextNodes;           ///< all the possible trace nodes (set number, mk can be split into several parallel threads), the name of the node trail (via a space) returns the node's operator-node on the iteration. If nothing is returned, it goes to all
     };
     
-    /// символьная стр-ре НС - последовательный граф операций (мбыть ветвления).
+    /// character structure of NN
     struct Net{            
-        std::map<std::string, Node> nodes;            ///< общая коллекция узлов НС. Ключ - название узла
-        std::map<std::string, OperatorBase*> operats; ///< общая коллекция операторов НС. Ключ - название узла
+        std::map<std::string, Node> nodes;            ///< the general collection of nodes of the NN. Key - the name of the node
+        std::map<std::string, OperatorBase*> operats; ///< general collection of NN operators. Key - the name of the node
     };
 
     

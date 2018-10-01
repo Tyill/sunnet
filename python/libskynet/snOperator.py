@@ -30,7 +30,7 @@ class Input():
     def __init__(self):
         pass
 
-    def getParamsJn(self):
+    def getParams(self):
         return {}
 
     def name(self):
@@ -82,7 +82,7 @@ class FullyConnected():
         self._params['kernel'] = str(kernel)
         self._params['mode'] = mode.value
 
-    def getParamsJn(self):
+    def getParams(self):
         return self._params
 
     def name(self):

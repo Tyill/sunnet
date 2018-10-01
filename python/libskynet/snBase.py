@@ -24,12 +24,6 @@
 
 import sys
 import ctypes
-import numpy
-
-if sys.version_info[0] > 2:
-    py_str = lambda x: x.encode('utf-8')
-else:
-    py_str = lambda x: x
 
 # type definitions
 snFloat = ctypes.c_float
@@ -39,6 +33,11 @@ snHandle = ctypes.c_void_p
 def c_str(string : str) -> ctypes.c_char_p:
     """Create ctypes char * from a Python string."""
 
+    if sys.version_info[0] > 2:
+        py_str = lambda x: x.encode('utf-8')
+    else:
+        py_str = lambda x: x
+
     return ctypes.c_char_p(py_str(string))
 
 class snLSize(ctypes.Structure):
@@ -46,10 +45,3 @@ class snLSize(ctypes.Structure):
                 ('h', ctypes.c_size_t),
                 ('ch', ctypes.c_size_t),
                 ('bsz', ctypes.c_size_t)]
-
-def snArrayFloat(values):
-    """Create ctypes array from a Python array."""
-
-    out = (snFloat * len(values))()
-    out[:] = values
-    return out

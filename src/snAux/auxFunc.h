@@ -29,7 +29,7 @@
 
 namespace SN_Aux{
     
-    // тек дата-время %Y-%m-%d %H:%M:%S:%MS
+    // %Y-%m-%d %H:%M:%S:%MS
     std::string CurrDateTimeMs();
 
     std::vector<std::string> split(std::string text, const char* sep);

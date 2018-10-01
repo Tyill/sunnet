@@ -37,7 +37,7 @@ using namespace std;
 
 namespace SN_Aux{
 
-    // тек дата-время %Y-%m-%d %H:%M:%S:%MS
+    // %Y-%m-%d %H:%M:%S:%MS
     string CurrDateTimeMs() {
 
         time_t ct = time(nullptr);

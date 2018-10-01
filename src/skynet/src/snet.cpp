@@ -75,12 +75,12 @@ void SNet::userCBack(const std::string& cbname, const std::string& node, bool fw
         statusMess("userCBack error: not found cbname '" + cbname + "'");
 }
 
-// проверка перекр ссылок мду узлами
+// checking links between nodes
 bool SNet::checkCrossRef(std::map<std::string, SN_Base::Node>& nodes, std::string& err){
         
     for (auto& n : nodes){
 
-        // проверка наличия узлов
+        // checking for nodes
         if ((n.second.name == "") || (n.second.oprName == "")){
             err = "Error createNet: node '" + n.first + "' - not found";
             return false;
@@ -171,10 +171,9 @@ bool SNet::checkCrossRef(std::map<std::string, SN_Base::Node>& nodes, std::strin
     return true;
 }
 
-// создание сети
 bool SNet::createNet(Net& inout_net, std::string& out_err){
         
-    // проверка перекр ссылок мду узлами
+    // checking links between nodes
     if (!checkCrossRef(inout_net.nodes, out_err)) return false;
 
     for (auto& n : inout_net.nodes){
@@ -203,7 +202,6 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
     return true;
 }
 
-/// создать нсеть
 SNet::SNet(const char* jnNet, char* out_err /*sz 256*/,
     SN_API::snStatusCBack sts, SN_API::snUData ud) : stsCBack_(sts), udata_(ud){
 
@@ -237,10 +235,9 @@ SNet::~SNet(){
         SN_Opr::freeOperator(o.second, o.second->name());
 }
 
-/// тренинг
 bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const snSize& osz, snFloat* outData, const snFloat* targetData, snFloat* outAccurate){
     
-    // идем вперед
+    // go ahead
     if (!forward(true, isz, iLayer, osz, outData))
         return false;
 
@@ -251,7 +248,7 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
         return false;
     }
 
-    // идем обратно    
+    // go back  
     gradData_["EndNet"]->setData(targetData, osz);
 
     operPrm_.lr = lr;
@@ -259,14 +256,13 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
     operPrm_.isLerning = true;
     engine_->backward(operPrm_);
 
-    // метрика
+    // metrics
     auto outTensor = operats_["EndNet"]->getOutput();
     *outAccurate = calcAccurate(gradData_["EndNet"], outTensor);
 
     return true;
 }
 
-/// прямой проход
 bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const snSize& osz, snFloat* outData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
     
@@ -298,7 +294,6 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
     return true;
 }
 
-/// обратный проход
 bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -328,7 +323,6 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     return true;
 }
 
-// считаем метрику
 SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
 
     snFloat* targetData = targetTens->getData();
@@ -344,7 +338,6 @@ SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
     return (accCnt * 1.F) / osz;
 }
 
-/// задать веса узла сети
 bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const SN_Base::snFloat* wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -358,7 +351,6 @@ bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const
     return true;
 }
 
-/// вернуть веса узла сети
 bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::snFloat** wData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -376,7 +368,6 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
     return true;
 }
 
-/// задать нормализацию для узла
 bool SNet::setBatchNormNode(const char* nodeName, const SN_Base::batchNorm& bn){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -390,7 +381,6 @@ bool SNet::setBatchNormNode(const char* nodeName, const SN_Base::batchNorm& bn){
     return true;
 }
 
-/// вернуть нормализацию узла
 bool SNet::getBatchNormNode(const char* nodeName, SN_Base::batchNorm& obn){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -404,7 +394,7 @@ bool SNet::getBatchNormNode(const char* nodeName, SN_Base::batchNorm& obn){
     return true;
 }
 
-/// задать входные данные узла (актуально для доп входов)
+/// set the input data of the node (actual for additional inputs)
 bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const SN_Base::snFloat* inData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -418,7 +408,7 @@ bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const 
     return true;
 }
 
-/// вернуть выходные значения узла (актуально для доп выходов)
+/// get the output values of the node (actual for additional outputs)
 bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::snFloat** outData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -438,7 +428,7 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
     return true;
 }
 
-/// задать градиент значения узла (актуально для доп выходов)
+/// set the gradient of the node value (actual for additional outputs)
 bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, const SN_Base::snFloat* gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
@@ -460,7 +450,7 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
     return true;
 }
 
-/// вернуть градиент значения узла (актуально для доп выходов)
+/// get the gradient of the node value (actual for additional outputs)
 bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::snFloat** gData){
     std::unique_lock<std::mutex> lk(mtxCmn_);
     
@@ -478,7 +468,7 @@ bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::
     return true;
 }
 
-/// задать польз callBack
+/// set callBack uses
 bool SNet::snAddUserCallBack(const char* ucbName, SN_API::snUserCBack ucb, SN_API::snUData ud){
     std::unique_lock<std::mutex> lk(mtxCmn_);
 
