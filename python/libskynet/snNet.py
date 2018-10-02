@@ -33,9 +33,8 @@ class Net():
     """Net object."""
 
     _net = 0
-    _err = 0
-
     _nodes = []
+    _errCBack = 0
 
     def __init__(self, jnNet : str = '', weightPath : str = ''):
 
@@ -44,6 +43,31 @@ class Net():
 
         if (self._net and (len(weightPath) > 0)):
             self.loadAllWeightFromFile(weightPath)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if (self._net):
+            pfun = _LIB.snFreeNet
+            pfun.restype = None
+            pfun.argtypes = (ctypes.c_void_p)
+            self._net = pfun(self._net)
+
+    def getErrorStr(self) -> str:
+
+        if (not self._net):
+            return 'net not create'
+
+        pfun = _LIB.snGetLastErrorStr
+        pfun.restype = None
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
+
+        err = ctypes.create_string_buffer(256)
+
+        self._net = pfun(self._net, err)
+
+        return err
 
 
     def addNode(self, name : str, nd : snOperator, nextNodes : str):
@@ -69,7 +93,7 @@ class Net():
         return ok
 
 
-    def training(self, lr : float, inTns : numpy.ndarray, outTns : numpy.ndarray,
+    def training(self, lr: float, inTns: numpy.ndarray, outTns: numpy.ndarray,
                  trgTns: numpy.ndarray, outAccurate : []) -> bool:
         """Training net - cycle fwd<->bwd with calc error."""
 
@@ -77,31 +101,37 @@ class Net():
             return False
 
         insz = snLSize()
-        ssz = len(inTns.shape)
-        insz.h = inTns.shape[0]
-        insz.w = inTns.shape[1]
-        insz.ch = inTns.shape[2] if (ssz > 2) else 1
-        insz.bsz = inTns.shape[3] if (ssz > 3) else 1
+        insz.bsz = inTns.shape[0]
+        insz.ch = inTns.shape[1]
+        insz.h = inTns.shape[2]
+        insz.w = inTns.shape[3]
         indata = inTns.__array_interface__['data'][0]
 
         outsz = snLSize()
-        ssz = len(outTns.shape)
-        outsz.h = outTns.shape[0]
-        outsz.w = outTns.shape[1]
-        outsz.ch = outTns.shape[2] if (ssz > 2) else 1
-        outsz.bsz = outTns.shape[3] if (ssz > 3) else 1
+        outsz.bsz = outTns.shape[0]
+        outsz.ch = outTns.shape[1]
+        outsz.h = outTns.shape[2]
+        outsz.w = outTns.shape[3]
         outdata = outTns.__array_interface__['data'][0]
 
         trgsz = snLSize()
-        ssz = len(trgTns.shape)
-        trgsz.h = trgTns.shape[0]
-        trgsz.w = trgTns.shape[1]
-        trgsz.ch = trgTns.shape[2] if (ssz > 2) else 1
-        trgsz.bsz = trgTns.shape[3] if (ssz > 3) else 1
+        trgsz.bsz = trgTns.shape[0]
+        trgsz.ch = trgTns.shape[1]
+        trgsz.h = trgTns.shape[2]
+        trgsz.w = trgTns.shape[3]
         trgdata = trgTns.__array_interface__['data'][0]
 
-        cAccurate = (ctypes.c_float)(*outAccurate)
-        ok = _LIB.snTraining(self._net, ctypes.c_float(lr), insz, indata, outsz, outdata, trgdata, cAccurate)
+        pfun = _LIB.snTraining
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, ctypes.Structure, ctypes.POINTER(ctypes.c_float),
+                         ctypes.Structure, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float))
+
+        cAccurate = ctypes.c_float(0)
+
+        ok = pfun(self._net, ctypes.c_float(lr), insz, snFloat_p(indata), outsz,
+                  snFloat_p(outdata), snFloat_p(trgdata), snFloat_p(ctypes.addressof(cAccurate)))
+
+        outAccurate[0] = cAccurate.value
 
         return ok
 
@@ -113,22 +143,25 @@ class Net():
             return False
 
         insz = snLSize()
-        ssz = len(inTns.shape)
-        insz.h = inTns.shape[0]
-        insz.w = inTns.shape[1]
-        insz.ch = inTns.shape[2] if (ssz > 2) else 1
-        insz.bsz = inTns.shape[3] if (ssz > 3) else 1
+        insz.bsz = inTns.shape[0]
+        insz.ch = inTns.shape[1]
+        insz.h = inTns.shape[2]
+        insz.w = inTns.shape[3]
         indata = inTns.__array_interface__['data'][0]
 
         outsz = snLSize()
-        ssz = len(outTns.shape)
-        outsz.h = outTns.shape[0]
-        outsz.w = outTns.shape[1]
-        outsz.ch = outTns.shape[2] if (ssz > 2) else 1
-        outsz.bsz = outTns.shape[3] if (ssz > 3) else 1
+        outsz.bsz = outTns.shape[0]
+        outsz.ch = outTns.shape[1]
+        outsz.h = outTns.shape[2]
+        outsz.w = outTns.shape[3]
         outdata = outTns.__array_interface__['data'][0]
 
-        return _LIB.snForward(self._net, isLern, insz, indata, outsz, outdata)
+        pfun = _LIB.snForward
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_bool, ctypes.Structure, ctypes.POINTER(ctypes.c_float),
+                         ctypes.Structure, ctypes.POINTER(ctypes.c_float))
+
+        return pfun(self._net, isLern, insz, indata, outsz, outdata)
 
 
     def backward(self, lr : float, gradTns : numpy.ndarray) -> bool:
@@ -138,29 +171,43 @@ class Net():
             return False
 
         insz = snLSize()
-        ssz = len(gradTns.shape)
-        insz['h'] = gradTns.shape[0]
-        insz['w'] = gradTns.shape[1]
-        insz['ch'] = gradTns.shape[2] if (ssz > 2) else 1
-        insz['bsz'] = gradTns.shape[3] if (ssz > 3) else 1
+        insz.bsz = gradTns.shape[0]
+        insz.ch = gradTns.shape[1]
+        insz.h = gradTns.shape[2]
+        insz.w = gradTns.shape[3]
         indata = gradTns.__array_interface__['data'][0]
 
-        return _LIB.snBackward(self._net, lr, insz, indata)
+        pfun = _LIB.snBackward
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, ctypes.Structure, ctypes.POINTER(ctypes.c_float))
+
+        return pfun(self._net, lr, insz, indata)
 
 
     def loadAllWeightFromFile(self, weightPath : str) -> bool:
-        pass
+        """load All Weight From File"""
+
+        if (not (self._net) and not (self._createNet())):
+            return False
+
+        pfun = _LIB.snLoadAllWeightFromFile
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
+
+        return pfun(self._net, c_str(weightPath))
 
 
-    def _createNetJn(self, jnNet : str) -> bool:
-        """Create net."""
+    def saveAllWeightToFile(self, weightPath: str) -> bool:
+        """save All Weight to File"""
 
-        if (self._net): return True
+        if (not (self._net) and not (self._createNet())):
+            return False
 
-        self.err_ = ctypes.create_string_buffer(256)
-        self.net_ = _LIB.snCreateNet(c_str(jnNet), self.err_)
+        pfun = _LIB.snSaveAllWeightToFile
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
 
-        return self.net_ > 0
+        return pfun(self._net, c_str(weightPath))
 
 
     def _createNet(self) -> bool:
@@ -199,4 +246,24 @@ class Net():
         return self._createNetJn(json.dumps(ss))
 
 
+    def _createNetJn(self, jnNet : str) -> bool:
+        """Create net."""
 
+        if (self._net): return True
+
+        err = ctypes.create_string_buffer(256)
+
+        errCBack = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)
+
+        pfun = _LIB.snCreateNet
+        pfun.restype = ctypes.c_void_p
+        pfun.argtypes = (ctypes.c_char_p, ctypes.c_char_p, errCBack, ctypes.c_void_p)
+
+        self._errCBack = errCBack(lambda mess, obj : print('SNet ' + str(mess)))
+
+        self._net = pfun(c_str(jnNet), err, self._errCBack, 0)
+
+        if (not self._net):
+            print(err)
+
+        return self._net

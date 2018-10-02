@@ -23,7 +23,6 @@
 # THE SOFTWARE.
 
 """Information about skynet."""
-from __future__ import absolute_import
 
 # current version
-__version__ = "1.0.0.6"
+__version__ = "1.0.1"

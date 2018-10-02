@@ -26,9 +26,7 @@ import sys
 import ctypes
 
 # type definitions
-snFloat = ctypes.c_float
-snFloat_p = ctypes.POINTER(snFloat)
-snHandle = ctypes.c_void_p
+snFloat_p = lambda x : ctypes.cast(x, ctypes.POINTER(ctypes.c_float))
 
 def c_str(string : str) -> ctypes.c_char_p:
     """Create ctypes char * from a Python string."""
