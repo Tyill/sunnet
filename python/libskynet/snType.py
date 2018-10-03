@@ -92,14 +92,20 @@ class lossType(Enum):
 
 class diap():
     """Diapason"""
-    def __init__(self, begin , end):
+    def __init__(self, begin: int = 0, end: int = 0):
         self.begin = begin
         self.end = end
 
+    def value(self):
+        return self.begin + ' ' + self.end
+
 class rect():
     """Rectangle"""
-    def __init__(self, x, y, w, h):
+    def __init__(self, x: int = 0, y: int = 0, w: int = 0, h: int = 0):
         self.x = x
         self.y = y
         self.w = w
         self.h = h
+
+    def value(self):
+        return self.x + ' ' + self.y + ' ' + self.w + ' ' + self.h

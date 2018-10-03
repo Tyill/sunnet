@@ -8,12 +8,24 @@ import random
 import ctypes
 import os
 
+
+def myLayer(ucbName: str,          # name user cback
+            nodeName: str,         # name node
+            isFwdBwd: bool,        # current action forward(true) or backward(false)
+            inLayer: np.ndarray,   # input layer - receive from prev node
+            outLayer: np.ndarray): # output layer - send to next node
+   pass
+
 # create net
 net = snNet.Net()
-net.addNode('In', snOperator.Input(), 'F1')
-net.addNode('F1', snOperator.FullyConnected(256), 'F2')
-net.addNode('F2', snOperator.FullyConnected(10), 'LS')
-net.addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
+net.addNode('In', snOperator.Input(), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(256), 'UCB') \
+   .addNode('UCB', snOperator.UserLayer('myLayer'), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(10), 'LS') \
+   .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
+
+# user cback
+net.addUserCallBack('myLayer', myLayer)
 
 # load of weight
 if (net.loadAllWeightFromFile('c:/C++/w.dat')):
@@ -32,11 +44,10 @@ inLayer = np.zeros((bsz, 1, 28, 28), ctypes.c_float)
 outLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
 targLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
 
-# cycle
+# cycle lern
 accuratSumm = 0.;
 for n in range(1000):
 
-    outLayer[...] = 0
     targLayer[...] = 0
 
     for i in range(bsz):

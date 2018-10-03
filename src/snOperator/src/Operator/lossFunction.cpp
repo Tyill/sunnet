@@ -136,7 +136,6 @@ void LossFunction::forward(Tensor* inTns){
 
         if (outData){
             baseOut_->setData(outData, outSz);
-            free(outData);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
@@ -200,7 +199,6 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
 
         if (outData){
             baseGrad_->setData(outData, outSz);
-            free(outData);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");

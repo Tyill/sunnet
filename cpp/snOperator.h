@@ -220,7 +220,7 @@ namespace SN_API{
         batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
         uint32_t fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
         uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-        uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
+        uint32_t stride = 2;                       ///< Mask movement step. Optional parameter(> 0)
         calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
         uint32_t gpuDeviceId = 0;                  ///< GPU Id
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
@@ -411,7 +411,7 @@ namespace SN_API{
     };
 
     /*
-   
+    The operator connects the channels with multiple layers
     */
     class Concat{
 
@@ -438,7 +438,7 @@ namespace SN_API{
     };
 
     /*
-
+    Change the number of channels
     */
     class Resize{
 
@@ -467,7 +467,7 @@ namespace SN_API{
     };
 
     /*
-
+    ROI clipping in each image of each channel
     */
     class Crop{
 
@@ -494,7 +494,7 @@ namespace SN_API{
     };
 
     /*
-
+    Custom layer
     */
     class UserLayer{
 
@@ -521,7 +521,7 @@ namespace SN_API{
     };
 
     /*
-
+    Error function calculation layer
     */
     class LossFunction{
 

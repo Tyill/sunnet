@@ -36,20 +36,21 @@ class Input():
     def name(self):
         return 'Input'
 
+
 class FullyConnected():
     '''Fully connected layer'''
 
     _params = {
     'kernel' : '0',
-    'act' : active.relu.value,
-    'opt' : optimizer.adam.value,
+    'active' : active.relu.value,
+    'optimizer' : optimizer.adam.value,
     'dropOut' : '0',
-    'bnorm' : batchNormType.none.value,
+    'batchNorm' : batchNormType.none.value,
     'mode' : calcMode.CPU.value,
     'gpuDeviceId' : '0',
     'gpuClearMem' : '0',
     'freeze' :'0',
-    'wini' : weightInit.he.value,
+    'weightInit' : weightInit.he.value,
     'decayMomentDW' : '0.9',
     'decayMomentWGr' : '0.99',
     'lmbRegular' : '0.001',
@@ -88,6 +89,7 @@ class FullyConnected():
     def name(self):
         return "FullyConnected"
 
+
 class Convolution():
     '''Convolution layer'''
 
@@ -98,15 +100,15 @@ class Convolution():
     'padding': '0',
     'stride':'1',
     'dilate': '1',
-    'act' : active.relu.value,
-    'opt' : optimizer.adam.value,
+    'active' : active.relu.value,
+    'optimizer' : optimizer.adam.value,
     'dropOut' : '0',
-    'bnorm' : batchNormType.none.value,
+    'batchNorm' : batchNormType.none.value,
     'mode' : calcMode.CPU.value,
     'gpuDeviceId' : '0',
     'gpuClearMem' : '0',
     'freeze' :'0',
-    'wini' : weightInit.he.value,
+    'weightInit' : weightInit.he.value,
     'decayMomentDW' : '0.9',
     'decayMomentWGr' : '0.99',
     'lmbRegular' : '0.001',
@@ -145,23 +147,23 @@ class Convolution():
     def name(self):
         return "Convolution"
 
+
 class Deconvolution():
     '''Deconvolution layer'''
 
     _params = {
-        'kernel': '0',
         'fWidth': '3',
         'fHeight': '3',
         'stride': '2',
-        'act': active.relu.value,
-        'opt': optimizer.adam.value,
+        'active': active.relu.value,
+        'optimizer': optimizer.adam.value,
         'dropOut': '0',
-        'bnorm': batchNormType.none.value,
+        'batchNorm': batchNormType.none.value,
         'mode': calcMode.CPU.value,
         'gpuDeviceId': '0',
         'gpuClearMem': '0',
         'freeze': '0',
-        'wini': weightInit.he.value,
+        'weightInit': weightInit.he.value,
         'decayMomentDW': '0.9',
         'decayMomentWGr': '0.99',
         'lmbRegular': '0.001',
@@ -200,6 +202,7 @@ class Deconvolution():
     def name(self):
         return "Deconvolution"
 
+
 class Pooling():
     '''Pooling layer'''
 
@@ -223,15 +226,152 @@ class Pooling():
     def name(self):
         return "Pooling"
 
-class LossFunction():
-    '''Loss Function layer'''
+
+class Lock():
+    '''
+    Operator to block further calculation at the current location.
+    It is designed for the ability to dynamically disconnect the parallel
+    branches of the network during operation.
+    '''
 
     _params = {
-        'loss': lossType.softMaxToCrossEntropy.value
+        'state':lockType.unlock.value
     }
 
-    def __init__(self, loss):
+    def __init__(self, lock):
+        self._params['state'] = lock.value
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Lock"
+
+
+class Switch():
+    '''
+    Operator for transferring data to several nodes at once.
+    Data can only be received from one node.
+    '''
+
+    _params = {
+        'nextWay':''
+    }
+
+    def __init__(self, nextWay : str):
+        self._params['nextWay'] = nextWay
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Switch"
+
+
+class Summator():
+    '''
+    The operator is designed to combine the values of two layers.
+    The consolidation can be performed by the following options: "summ", "diff", "mean".
+    The dimensions of the input layers must be the same.
+    '''
+
+    _params = {
+        'type': summatorType.summ.value
+    }
+
+    def __init__(self, type : summatorType):
+        self._params['type'] = type.value
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Summator"
+
+
+class Concat():
+    """The operator connects the channels with multiple layers."""
+
+    def __init__(self):
+        pass
+
+    def getParams(self):
+        return {}
+
+    def name(self):
+        return 'Concat'
+
+
+class Resize():
+    '''
+    Change the number of channels
+    '''
+
+    _params = {
+        'fwdDiap': '0 0',
+        'bwdDiap': '0 0'
+    }
+
+    def __init__(self, fwdDiap: diap, bwdDiap: diap):
+        self._params['fwdDiap'] = fwdDiap.value()
+        self._params['bwdDiap'] = bwdDiap.value()
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Resize"
+
+
+class Crop():
+    '''
+    ROI clipping in each image of each channel
+    '''
+
+    _params = {
+        'roi': '0 0 0 0'
+    }
+
+    def __init__(self, rct: rect):
+        self._params['roi'] = rct.value()
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Crop"
+
+
+class UserLayer():
+    '''
+    Custom layer
+    '''
+
+    _params = {
+        'cbackName': ''
+    }
+
+    def __init__(self, cbackName: str):
+        self._params['cbackName'] = cbackName
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "UserLayer"
+
+
+class LossFunction():
+    '''Error function calculation layer'''
+
+    _params = {
+        'loss': lossType.softMaxToCrossEntropy.value,
+        'cbackName': ''    # for user cback
+    }
+
+    def __init__(self, loss: lossType, userCBackName: str = ''):
         self._params['loss'] = loss.value
+        self._params['cbackName'] = userCBackName
 
     def getParams(self):
         return self._params

@@ -43,12 +43,7 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
         ERROR_MESS("not set param 'cbackName'");
         return std::vector < std::string > {"noWay"};
     }
-
-    Tensor* outTns = nullptr;
-
-    snSize outSz;
-    snFloat* outData = nullptr;
-
+       
     if (opr.action == SN_Base::snAction::forward){
 
         if (neighbOpr.size() > 1){
@@ -56,40 +51,44 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
             return std::vector < std::string > {"noWay"};
         }
 
-        Tensor* tns = neighbOpr[0]->getOutput();
-        
-        outTns = baseOut_;
+        *baseOut_ = *neighbOpr[0]->getOutput();
+   
+        snSize outSz;
+        snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            true, tns->size(), tns->getData(), outSz, &outData);
+            true, baseOut_->size(), baseOut_->getData(), outSz, &outData);
+
+        if (outData)
+            baseOut_->setData(outData, outSz);
+        else{
+            ERROR_MESS("not set 'outData' in userCBack");
+        }
     }
     else{
-
-        Tensor tns = *neighbOpr[0]->getGradient();
+               
+        *baseGrad_ = *neighbOpr[0]->getGradient();
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (tns != *neighbOpr[i]->getGradient()){
+            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            tns += *neighbOpr[i]->getGradient();
+            *baseGrad_ += *neighbOpr[i]->getGradient();
         }
      
-        outTns = baseGrad_;
+        snSize outSz;
+        snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, tns.size(), tns.getData(), outSz, &outData);
-    }
+            false, baseGrad_->size(), baseGrad_->getData(), outSz, &outData);
 
-   
-    if (outData)
-        outTns->setData(outData, outSz);
-    else{
-        ERROR_MESS("not set 'outData' in userCBack");
-        return std::vector < std::string > {"noWay"};
+        if (outData)
+            baseGrad_->setData(outData, outSz);
+        else{
+            ERROR_MESS("not set 'outData' in userCBack");
+        }
     }
-
-    free(outData);
 
     return std::vector<std::string>();
 }

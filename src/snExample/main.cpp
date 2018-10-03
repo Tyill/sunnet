@@ -243,25 +243,9 @@ int main(int argc, char* argv[])
 
     sn::Net snet;
     
-    snet.addNode("Input", sn::Input(), "C1 C3 C5")
-        .addNode("C1", sn::Convolution(20, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(40, sn::calcMode::CUDA), "P1")
-        .addNode("P1", sn::Pooling(), "R1")
-        .addNode("R1", sn::Resize(SN_API::diap(0, 40), sn::diap(0, 40)), "Ct")
-
-        .addNode("C3", sn::Convolution(20, sn::calcMode::CUDA), "C4")
-        .addNode("C4", sn::Convolution(40, sn::calcMode::CUDA), "P2")
-        .addNode("P2", sn::Pooling(), "R2")
-        .addNode("R2", sn::Resize(sn::diap(0, 40), sn::diap(40, 80)), "Ct")
-
-        .addNode("C5", sn::Convolution(20, sn::calcMode::CUDA), "C6")
-        .addNode("C6", sn::Convolution(40, sn::calcMode::CUDA), "P3")
-        .addNode("P3", sn::Pooling(), "R3")
-        .addNode("R3", sn::Resize(sn::diap(0, 40), sn::diap(80, 120)), "Ct")
-
-        .addNode("Ct", sn::Concat("R1 R2 R3"), "FC1")
-        .addNode("FC1", sn::FullyConnected(1024, sn::calcMode::CUDA), "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+    snet.addNode("Input", sn::Input(), "FC1")
+        .addNode("FC1", sn::FullyConnected(125, sn::calcMode::CPU), "FC2")
+        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 
@@ -333,7 +317,7 @@ int main(int argc, char* argv[])
             for (size_t r = 0; r < nr; ++r){
                 uchar* pt = img.ptr<uchar>(r);
                 for (size_t c = 0; c < nc; ++c)
-                    refData[r * nc + c] = pt[c] - mean;
+                    refData[r * nc + c] = pt[c];// -mean;
             } 
 
             float* tarData = targetLayer + i * w1 * h1;

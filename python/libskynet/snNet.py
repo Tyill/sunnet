@@ -35,6 +35,7 @@ class Net():
     _net = 0
     _nodes = []
     _errCBack = 0
+    _userCBack = {}
 
     def __init__(self, jnNet : str = '', weightPath : str = ''):
 
@@ -53,6 +54,7 @@ class Net():
             pfun.restype = None
             pfun.argtypes = (ctypes.c_void_p)
             self._net = pfun(self._net)
+
 
     def getErrorStr(self) -> str:
 
@@ -73,7 +75,7 @@ class Net():
     def addNode(self, name : str, nd : snOperator, nextNodes : str):
         """Add node."""
 
-        self._nodes.append({'NodeName': name, 'OperatorName': nd.name(), 'OperatorParams': nd.getParams(), 'NextNodes': nextNodes})
+        self._nodes.append({'NodeName': name, 'OperatorName':  nd.name(), 'OperatorParams': nd.getParams().copy(), 'NextNodes': nextNodes})
 
         return self
 
@@ -87,7 +89,7 @@ class Net():
         else:
             for n in self._nodes:
                 if (n['name'] == name):
-                    n['params'] = nd.getParams()
+                    n['params'] = nd.getParams().copy()
                     ok = True
                     break
         return ok
@@ -184,6 +186,121 @@ class Net():
         return pfun(self._net, lr, insz, indata)
 
 
+    def addUserCallBack(self, ucbName: str, ucb) -> bool:
+        """
+        User callback for 'UserCBack' layer and 'LossFunction' layer
+
+        ucb = function(None,
+                       str,               # name user cback
+                       str,               # name node
+                       bool,              # current action forward(true) or backward(false)
+                       inLayer: ndarray,  # input layer - receive from prev node
+                       outLayer: ndarray, # output layer - send to next node
+                       )
+        """
+
+        if (not (self._net) and not (self._createNet())):
+            return False
+
+        def c_ucb(ucbName: ctypes.c_char_p,                                # name user cback
+                  nodeName: ctypes.c_char_p,                               # name node
+                  isFwdBwd: ctypes.c_bool,                                 # current action forward(true) or backward(false)
+                  inSize: snLSize,                                         # input layer size - receive from prev node
+                  inData: ctypes.POINTER(ctypes.c_float),                  # input layer - receive from prev node
+                  outSize: ctypes.POINTER(snLSize),                        # output layer size - send to next node
+                  outData: ctypes.POINTER(ctypes.POINTER(ctypes.c_float)), # output layer - send to next node
+                  auxUData: ctypes.c_void_p):                              # aux used data
+
+            insz = inSize.w * inSize.h * inSize.ch * inSize.bsz
+
+            dbuffer = (ctypes.c_float * insz).from_address(ctypes.addressof(inData.contents))
+            inLayer = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((inSize.bsz, inSize.ch, inSize.h, inSize.w))
+
+            outLayer = inLayer.copy()
+
+            ucb(ucbName.decode("utf-8"), nodeName.decode("utf-8"), isFwdBwd, inLayer, outLayer)
+
+            outSize.contents.bsz = outLayer.shape[0]
+            outSize.contents.ch = outLayer.shape[1]
+            outSize.contents.h = outLayer.shape[2]
+            outSize.contents.w = outLayer.shape[3]
+
+            outsz = outLayer.shape[0] * outLayer.shape[1] * outLayer.shape[2] * outLayer.shape[3]
+
+            cbuff = self._userCBack[ucbName.decode("utf-8")][1]
+            if (self._userCBack[ucbName.decode("utf-8")][2] != outsz):
+                self._userCBack[ucbName.decode("utf-8")][2] = outsz
+                cbuff = self._userCBack[ucbName.decode("utf-8")][1] = (ctypes.c_float * outsz)()
+
+            addrBuff = ctypes.cast(ctypes.addressof(cbuff), ctypes.POINTER(ctypes.c_float))
+            ctypes.memmove(ctypes.addressof(outData.contents), ctypes.addressof(addrBuff),
+                           ctypes.sizeof(ctypes.POINTER(ctypes.c_float)))
+
+            ctypes.memmove(ctypes.addressof(cbuff), snFloat_p(outLayer.__array_interface__['data'][0]),
+                           ctypes.sizeof(ctypes.c_float) * outsz)
+
+
+        self._userCBack[ucbName] = [snUserCBack(c_ucb), (ctypes.c_float)(), 0]
+
+        pfun = _LIB.snAddUserCallBack
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p, snUserCBack, ctypes.c_void_p)
+
+        return pfun(self._net, c_str(ucbName), self._userCBack[ucbName][0], 0)
+
+
+    def getWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
+        """ getWeightNode """
+
+        if (not (self._net)):
+            return False
+
+        pfun = _LIB.snGetWeightNode
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
+           ctypes.POINTER(snLSize), ctypes.POINTER(ctypes.POINTER(ctypes.c_float)))
+
+        wsize = snLSize()
+        wdata = (ctypes.c_float)()
+
+        if (pfun(self._net, c_str(nodeName), ctypes.POINTER(wsize), ctypes.POINTER(wdata))):
+
+            wsz = wsize.w * wsize.h * wsize.ch * wsize.bsz
+
+            dbuffer = (ctypes.c_float * wsz).from_address(ctypes.addressof(wdata.value))
+            weight = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((wsize.bsz, wsize.ch, wsize.h, wsize.w))
+
+            return True
+        else:
+            return False
+
+
+    def setWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
+        """ setWeightNode """
+
+        if (not (self._net)):
+            return False
+
+        pfun = _LIB.snSetWeightNode
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
+                         snLSize, ctypes.POINTER(ctypes.c_float))
+
+        wsize = snLSize()
+        wdata = (ctypes.c_float)()
+
+        if (pfun(self._net, c_str(nodeName), wsize, ctypes.POINTER(wdata))):
+
+            wsz = wsize.w * wsize.h * wsize.ch * wsize.bsz
+
+            dbuffer = (ctypes.c_float * wsz).from_address(ctypes.addressof(wdata.value))
+            weight = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((wsize.bsz, wsize.ch, wsize.h, wsize.w))
+
+            return True
+        else:
+            return False
+
+
     def loadAllWeightFromFile(self, weightPath : str) -> bool:
         """load All Weight From File"""
 
@@ -251,19 +368,17 @@ class Net():
 
         if (self._net): return True
 
-        err = ctypes.create_string_buffer(256)
-
-        errCBack = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)
-
         pfun = _LIB.snCreateNet
         pfun.restype = ctypes.c_void_p
-        pfun.argtypes = (ctypes.c_char_p, ctypes.c_char_p, errCBack, ctypes.c_void_p)
+        pfun.argtypes = (ctypes.c_char_p, ctypes.c_char_p, snErrCBack, ctypes.c_void_p)
 
-        self._errCBack = errCBack(lambda mess, obj : print('SNet ' + str(mess)))
+        self._errCBack = snErrCBack(lambda mess, obj : print('SNet ' + str(mess)))
 
+        err = ctypes.create_string_buffer(256)
         self._net = pfun(c_str(jnNet), err, self._errCBack, 0)
 
         if (not self._net):
             print(err)
 
         return self._net
+

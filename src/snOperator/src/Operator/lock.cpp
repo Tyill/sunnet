@@ -53,19 +53,15 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
         *baseOut_ = *neighbOpr[0]->getOutput();
     }
     else{
-        if (neighbOpr.size() == 1){
-            *baseGrad_ = *neighbOpr[0]->getGradient();
-        }
-        else{
-            *baseGrad_ = *neighbOpr[0]->getGradient();
-            for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (*baseGrad_ != *neighbOpr[i]->getGradient()){
-                    ERROR_MESS("operators size is not equals");
-                    return std::vector < std::string > {"noWay"};
-                }
-                *baseGrad_ += *neighbOpr[i]->getGradient();
-            }            
+        *baseGrad_ = *neighbOpr[0]->getGradient();
+        for (size_t i = 1; i < neighbOpr.size(); ++i){
+
+            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+                ERROR_MESS("operators size is not equals");
+                return std::vector < std::string > {"noWay"};
+            }
+            *baseGrad_ += *neighbOpr[i]->getGradient();
         }
     }
 

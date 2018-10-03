@@ -43,3 +43,16 @@ class snLSize(ctypes.Structure):
                 ('h', ctypes.c_size_t),
                 ('ch', ctypes.c_size_t),
                 ('bsz', ctypes.c_size_t)]
+
+snErrCBack = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)
+
+snUserCBack = ctypes.CFUNCTYPE(None,
+                               ctypes.c_char_p,                                # name user cback
+                               ctypes.c_char_p,                                # name node
+                               ctypes.c_bool,                                  # current action forward(true) or backward(false)
+                               snLSize,                                        # input layer size - receive from prev node
+                               ctypes.POINTER(ctypes.c_float),                 # input layer - receive from prev node
+                               ctypes.POINTER(snLSize),                        # output layer size - send to next node
+                               ctypes.POINTER(ctypes.POINTER(ctypes.c_float)), # output layer - send to next node
+                               ctypes.c_void_p                                 # aux used data
+                               )
