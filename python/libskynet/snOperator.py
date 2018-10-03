@@ -292,8 +292,12 @@ class Summator():
 class Concat():
     """The operator connects the channels with multiple layers."""
 
-    def __init__(self):
-        pass
+	_params = {
+        'sequence': ''        
+    }
+	
+    def __init__(self, sequence: str):
+        self._params['sequence'] = sequence
 
     def getParams(self):
         return {}
