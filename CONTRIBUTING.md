@@ -9,7 +9,7 @@
  * [cpp interface](https://github.com/Tyill/skynet/tree/master/cpp) - without restrictions, but with the agreement
  * [c_sharp interface](https://github.com/Tyill/skynet/tree/master/c_sharp/libskynet) - no limits
  * [test](https://github.com/Tyill/skynet/tree/master/test) - no limits
- * [wiki(https://github.com/Tyill/skynet/wiki) - no limits, but reliably
+ * [wiki](https://github.com/Tyill/skynet/wiki) - no limits, but reliably
  
 ## Modules forbidden for commits (only issue)
 
