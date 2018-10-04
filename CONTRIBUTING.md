@@ -1,5 +1,7 @@
 # How to contribute
 
+No external dependencies: boost, opencv, etc.
+
 ## Modules allowed for commits
  
  * [skynet](https://github.com/Tyill/skynet/tree/master/src/skynet) - only fix bug. Interface no changed
@@ -8,7 +10,7 @@
  * [python interface](https://github.com/Tyill/skynet/tree/master/python/libskynet) - no limits
  * [cpp interface](https://github.com/Tyill/skynet/tree/master/cpp) - without restrictions, but with the agreement
  * [c_sharp interface](https://github.com/Tyill/skynet/tree/master/c_sharp/libskynet) - no limits
- * [test](https://github.com/Tyill/skynet/tree/master/test) - no limits
+ * [example](https://github.com/Tyill/skynet/tree/master/example) - no limits
  * [wiki](https://github.com/Tyill/skynet/wiki) - no limits, but reliably
  
 ## Modules forbidden for commits (only issue)
