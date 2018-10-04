@@ -1,13 +1,10 @@
 
-import snNet
-import snOperator
-import snType
+from libskynet import*
 import numpy as np
 import imageio
 import random
 import ctypes
 import os
-
 
 def myLayer(ucbName: str,          # name user cback
             nodeName: str,         # name node
@@ -18,7 +15,10 @@ def myLayer(ucbName: str,          # name user cback
 
 # create net
 net = snNet.Net()
-net.addNode('In', snOperator.Input(), 'F1') \
+net.addNode('In', snOperator.Input(), 'C1') \
+   .addNode('C1', snOperator.Convolution(15), 'C2') \
+   .addNode('C2', snOperator.Convolution(25), 'P1') \
+   .addNode('P1', snOperator.Pooling(), 'F1') \
    .addNode('F1', snOperator.FullyConnected(256), 'UCB') \
    .addNode('UCB', snOperator.UserLayer('myLayer'), 'F2') \
    .addNode('F2', snOperator.FullyConnected(10), 'LS') \
@@ -26,6 +26,7 @@ net.addNode('In', snOperator.Input(), 'F1') \
 
 # user cback
 net.addUserCallBack('myLayer', myLayer)
+
 
 # load of weight
 if (net.loadAllWeightFromFile('c:/C++/w.dat')):
@@ -46,7 +47,7 @@ targLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
 
 # cycle lern
 accuratSumm = 0.;
-for n in range(1000):
+for n in range(100):
 
     targLayer[...] = 0
 
@@ -58,7 +59,7 @@ for n in range(1000):
         targLayer[i][0][0][ndir] = 1.
 
     acc = [0]
-    net.training(0.01, inLayer, outLayer, targLayer, acc)
+    net.training(0.001, inLayer, outLayer, targLayer, acc)
 
     accuratSumm += acc[0]
 

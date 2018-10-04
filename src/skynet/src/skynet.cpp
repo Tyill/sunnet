@@ -218,7 +218,7 @@ namespace SN_API{
     /// @param[in] bnsz - data size
     /// @param[in] bnData - data       
     /// @return true - ok
-    bool snSetBatchNormNode(skyNet fn, const char* nodeName, snLSize bnsz, const SN_API::batchNorm bnData){
+    bool snSetBatchNormNode(skyNet fn, const char* nodeName, snLSize bnsz, SN_API::batchNorm bnData){
 
         if (!fn) return false;
 

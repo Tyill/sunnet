@@ -36,6 +36,6 @@ libname = os.path.abspath(
 
 _LIB = ctypes.CDLL(libname)
 
-__all__ = ["snType", "snNet", "snOperator", "snBase"]
+__all__ = ["snType", "snNet", "snOperator"]
 
 

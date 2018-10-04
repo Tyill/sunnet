@@ -41,20 +41,20 @@ class FullyConnected():
     '''Fully connected layer'''
 
     _params = {
-    'kernel' : '0',
-    'active' : active.relu.value,
-    'optimizer' : optimizer.adam.value,
-    'dropOut' : '0',
-    'batchNorm' : batchNormType.none.value,
-    'mode' : calcMode.CPU.value,
-    'gpuDeviceId' : '0',
-    'gpuClearMem' : '0',
-    'freeze' :'0',
-    'weightInit' : weightInit.he.value,
-    'decayMomentDW' : '0.9',
-    'decayMomentWGr' : '0.99',
-    'lmbRegular' : '0.001',
-    'batchNormLr' : '0.001'
+    'kernel' : '0',                          # Number of hidden neurons. !Required parameter [0..)
+    'active' : active.relu.value,            # Activation function type. Optional parameter
+    'optimizer' : optimizer.adam.value,      # Optimizer of weights. Optional parameter
+    'dropOut' : '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
+    'batchNorm' : batchNormType.none.value,  # Type of batch norm. Optional parameter
+    'mode' : calcMode.CPU.value,             # Сalculation mode. Optional parameter
+    'gpuDeviceId' : '0',                     # GPU Id. Optional parameter
+    'gpuClearMem' : '0',                     # Clear memory GPU. Optional parameter
+    'freeze' :'0',                           # Do not change weights. Optional parameter
+    'weightInit' : weightInit.he.value,      # Type of initialization of weights. Optional parameter
+    'decayMomentDW' : '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
+    'decayMomentWGr' : '0.99',               # Optimizer of weights moment change of prev. Optional parameter
+    'lmbRegular' : '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
+    'batchNormLr' : '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
     }
 
     def __init__(self,
@@ -94,25 +94,25 @@ class Convolution():
     '''Convolution layer'''
 
     _params = {
-    'kernel' : '0',
-    'fWidth': '3',
-    'fHeight': '3',
-    'padding': '0',
-    'stride':'1',
-    'dilate': '1',
-    'active' : active.relu.value,
-    'optimizer' : optimizer.adam.value,
-    'dropOut' : '0',
-    'batchNorm' : batchNormType.none.value,
-    'mode' : calcMode.CPU.value,
-    'gpuDeviceId' : '0',
-    'gpuClearMem' : '0',
-    'freeze' :'0',
-    'weightInit' : weightInit.he.value,
-    'decayMomentDW' : '0.9',
-    'decayMomentWGr' : '0.99',
-    'lmbRegular' : '0.001',
-    'batchNormLr' : '0.001'
+    'kernel' : '0',                          # Number of output layers. !Required parameter [0..)
+    'fWidth': '3',                           # Width of mask. Optional parameter(> 0)
+    'fHeight': '3',                          # Height of mask. Optional parameter(> 0)
+    'padding': '0',                          # Padding around the edges. Optional parameter
+    'stride':'1',                            # Mask movement step. Optional parameter(> 0)
+    'dilate': '1',                           # Expansion mask. Optional parameter(> 0)
+    'active' : active.relu.value,            # Activation function type. Optional parameter
+    'optimizer' : optimizer.adam.value,      # Optimizer of weights. Optional parameter
+    'dropOut' : '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
+    'batchNorm' : batchNormType.none.value,  # Type of batch norm. Optional parameter
+    'mode' : calcMode.CPU.value,             # Сalculation mode. Optional parameter
+    'gpuDeviceId' : '0',                     # GPU Id. Optional parameter
+    'gpuClearMem' : '0',                     # Clear memory GPU. Optional parameter
+    'freeze' :'0',                           # Do not change weights. Optional parameter
+    'weightInit' : weightInit.he.value,      # Type of initialization of weights. Optional parameter
+    'decayMomentDW' : '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
+    'decayMomentWGr' : '0.99',               # Optimizer of weights moment change of prev. Optional parameter
+    'lmbRegular' : '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
+    'batchNormLr' : '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
     }
 
     def __init__(self,
@@ -152,22 +152,23 @@ class Deconvolution():
     '''Deconvolution layer'''
 
     _params = {
-        'fWidth': '3',
-        'fHeight': '3',
-        'stride': '2',
-        'active': active.relu.value,
-        'optimizer': optimizer.adam.value,
-        'dropOut': '0',
-        'batchNorm': batchNormType.none.value,
-        'mode': calcMode.CPU.value,
-        'gpuDeviceId': '0',
-        'gpuClearMem': '0',
-        'freeze': '0',
-        'weightInit': weightInit.he.value,
-        'decayMomentDW': '0.9',
-        'decayMomentWGr': '0.99',
-        'lmbRegular': '0.001',
-        'batchNormLr': '0.001'
+        'kernel': '0',                         # Number of output layers. !Required parameter [0..)
+        'fWidth': '3',                         # Width of mask. Optional parameter(> 0)
+        'fHeight': '3',                        # Height of mask. Optional parameter(> 0)
+        'stride': '2',                         # Mask movement step. Optional parameter(> 0)
+        'active': active.relu.value,           # Activation function type. Optional parameter
+        'optimizer': optimizer.adam.value,     # Optimizer of weights. Optional parameter
+        'dropOut': '0',                        # Random disconnection of neurons. Optional parameter [0..1.F]
+        'batchNorm': batchNormType.none.value, # Type of batch norm. Optional parameter
+        'mode': calcMode.CPU.value,            # Сalculation mode. Optional parameter
+        'gpuDeviceId': '0',                    # GPU Id. Optional parameter
+        'gpuClearMem': '0',                    # Clear memory GPU. Optional parameter
+        'freeze': '0',                         # Do not change weights. Optional parameter
+        'weightInit': weightInit.he.value,     # Type of initialization of weights. Optional parameter
+        'decayMomentDW': '0.9',                # Optimizer of weights moment change. Optional parameter [0..1.F]
+        'decayMomentWGr': '0.99',              # Optimizer of weights moment change of prev. Optional parameter
+        'lmbRegular': '0.001',                 # Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        'batchNormLr': '0.001'                 # Learning rate for batch norm coef. Optional parameter [0..)
     }
 
     def __init__(self,
@@ -207,15 +208,15 @@ class Pooling():
     '''Pooling layer'''
 
     _params = {
-        'kernel': '0',
-        'pool': poolType.max.value,
-        'mode': calcMode.CPU.value,
-        'gpuDeviceId': '0',
-        'gpuClearMem': '0',
+        'kernel': '2',              # Square Mask Size. Optional parameter (> 0)
+        'pool': poolType.max.value, # Operator Type. Optional parameter
+        'mode': calcMode.CPU.value, # Сalculation mode. Optional parameter
+        'gpuDeviceId': '0',         # GPU Id. Optional parameter
+        'gpuClearMem': '0',         # Clear memory GPU. Optional parameter
     }
 
     def __init__(self,
-                 kernel,
+                 kernel = 2,
                  mode=calcMode.CPU):
         self._params['kernel'] = str(kernel)
         self._params['mode'] = mode.value
@@ -235,7 +236,7 @@ class Lock():
     '''
 
     _params = {
-        'state':lockType.unlock.value
+        'state':lockType.unlock.value   # Blocking activity. Optional parameter
     }
 
     def __init__(self, lock):
@@ -255,7 +256,7 @@ class Switch():
     '''
 
     _params = {
-        'nextWay':''
+        'nextWay':''       # next nodes through a space
     }
 
     def __init__(self, nextWay : str):
@@ -292,8 +293,8 @@ class Summator():
 class Concat():
     """The operator connects the channels with multiple layers."""
 
-	_params = {
-        'sequence': ''        
+    _params = {
+        'sequence': ''         # prev nodes through a space
     }
 	
     def __init__(self, sequence: str):
@@ -312,7 +313,7 @@ class Resize():
     '''
 
     _params = {
-        'fwdDiap': '0 0',
+        'fwdDiap': '0 0',     # diap layer through a space
         'bwdDiap': '0 0'
     }
 
@@ -333,7 +334,7 @@ class Crop():
     '''
 
     _params = {
-        'roi': '0 0 0 0'
+        'roi': '0 0 0 0'     # region of interest
     }
 
     def __init__(self, rct: rect):

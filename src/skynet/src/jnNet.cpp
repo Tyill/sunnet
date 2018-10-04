@@ -93,28 +93,28 @@ bool jnCheckJDoc(rapidjson::Document& jnDoc, string& err){
     }
 
 
-    auto Nodes = jnDoc["Nodes"].GetArray();
+    auto nodes = jnDoc["Nodes"].GetArray();
 
-    int sz = Nodes.Size();
+    int sz = nodes.Size();
     if (sz == 0){
         err = "jnDoc['Nodes'].Size() == 0"; return false;
     }
 
     for (int i = 0; i < sz; ++i){
 
-        auto Node = Nodes[i].GetObject();
+        auto node = nodes[i].GetObject();
 
-        if (!Node.HasMember("NodeName") || !Node["NodeName"].IsString()){
+        if (!node.HasMember("NodeName") || !node["NodeName"].IsString()){
             err = "!Node.HasMember('NodeName') || !Node['NodeName'].IsString()"; return false;
         }
         
-        if (!Node.HasMember("OperatorName") || !Node["OperatorName"].IsString()){
+        if (!node.HasMember("OperatorName") || !node["OperatorName"].IsString()){
             err = "!Node.HasMember('OperatorName') || !Node['OperatorName'].IsString()"; return false;
         }
 
-        if (Node["OperatorName"].GetString() == "Output") continue;
+        if (node["OperatorName"].GetString() == "Output") continue;
 
-        if (!Node.HasMember("NextNodes") || !Node["NextNodes"].IsString()){
+        if (!node.HasMember("NextNodes") || !node["NextNodes"].IsString()){
             err = "!Node.HasMember('NextNodes') || !Node['NextNodes'].IsString()"; return false;
         }
     }

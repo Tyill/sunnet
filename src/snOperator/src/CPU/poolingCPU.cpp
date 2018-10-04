@@ -50,7 +50,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
         // по батчу
 #pragma omp parallel for
-        for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
             size_t* outInxBuff = shareI + insz.d * n;
@@ -99,7 +99,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
         // по батчу
 #pragma omp parallel for
-        for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
           
@@ -152,7 +152,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
         // по батчу
 #pragma omp parallel for
-        for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < int(insz.n); ++n){
 
             for (size_t p = 0; p < outStepByD; ++p){
 
@@ -183,7 +183,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
         // по батчу
 #pragma omp parallel for
-        for (int n = 0; n < insz.n; ++n){
+        for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = share + shareStepByN * n;
 

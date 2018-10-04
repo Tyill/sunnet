@@ -49,7 +49,7 @@ void Convolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, size_
         
     // по батчу
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* outBuff = share + insz.d + shareStepByN * n;
@@ -125,7 +125,7 @@ void Convolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight, s
     
     // по батчу  
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* ginBuff = share + insz.d + shareStepByN * n;
@@ -224,7 +224,7 @@ void Convolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, si
 
     // по батчу  
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* ginBuff = share + shareStepByN * n;
         snFloat* goutBuff = share + kernel + shareStepByN * n;

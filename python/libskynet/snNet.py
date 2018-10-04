@@ -38,7 +38,11 @@ class Net():
     _userCBack = {}
 
     def __init__(self, jnNet : str = '', weightPath : str = ''):
-
+        """
+        init
+        :param jnNet: architec of net json
+        :param weightPath: weight file path
+        """
         if (len(jnNet) > 0):
             self._createNetJn(jnNet)
 
@@ -53,11 +57,14 @@ class Net():
             pfun = _LIB.snFreeNet
             pfun.restype = None
             pfun.argtypes = (ctypes.c_void_p)
-            self._net = pfun(self._net)
+            pfun(self._net)
 
 
     def getErrorStr(self) -> str:
-
+        """
+        last error string
+        :return: '' ok
+        """
         if (not self._net):
             return 'net not create'
 
@@ -73,15 +80,25 @@ class Net():
 
 
     def addNode(self, name : str, nd : snOperator, nextNodes : str):
-        """Add node."""
-
+        """
+        add Node
+        :param name: name node
+        :param nd: tensor node
+        :param nextNodes: next nodes through a space
+        :return: True ok
+        """
         self._nodes.append({'NodeName': name, 'OperatorName':  nd.name(), 'OperatorParams': nd.getParams().copy(), 'NextNodes': nextNodes})
 
         return self
 
 
     def updateNode(self, name : str, nd : snOperator) -> bool:
-        """Update params node."""
+        """
+        Update params node
+        :param name: name node
+        :param nd: tensor node
+        :return: True ok
+        """
 
         ok = False
         if (self._net):
@@ -97,7 +114,15 @@ class Net():
 
     def training(self, lr: float, inTns: numpy.ndarray, outTns: numpy.ndarray,
                  trgTns: numpy.ndarray, outAccurate : []) -> bool:
-        """Training net - cycle fwd<->bwd with calc error."""
+        """
+        Training net - cycle fwd<->bwd with calc error
+        :param lr: lerning rate
+        :param inTns: in tensor
+        :param outTns: out tensor
+        :param trgTns: target tensor
+        :param outAccurate: accurate
+        :return: True ok
+        """
 
         if (not(self._net) and not(self._createNet())):
             return False
@@ -125,8 +150,8 @@ class Net():
 
         pfun = _LIB.snTraining
         pfun.restype = ctypes.c_bool
-        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, ctypes.Structure, ctypes.POINTER(ctypes.c_float),
-                         ctypes.Structure, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float))
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, snLSize, ctypes.POINTER(ctypes.c_float),
+                         snLSize, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float))
 
         cAccurate = ctypes.c_float(0)
 
@@ -139,7 +164,13 @@ class Net():
 
 
     def forward(self, isLern : bool, inTns : numpy.ndarray, outTns : numpy.ndarray) -> bool:
-        """Forward net."""
+        """
+        Forward action
+        :param isLern: is lerning?
+        :param inTns: in tensor
+        :param outTns: out tensor
+        :return: True ok
+        """
 
         if (not(self._net) and not(self._createNet())):
             return False
@@ -160,14 +191,19 @@ class Net():
 
         pfun = _LIB.snForward
         pfun.restype = ctypes.c_bool
-        pfun.argtypes = (ctypes.c_void_p, ctypes.c_bool, ctypes.Structure, ctypes.POINTER(ctypes.c_float),
-                         ctypes.Structure, ctypes.POINTER(ctypes.c_float))
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_bool, snLSize, ctypes.POINTER(ctypes.c_float),
+                         snLSize, ctypes.POINTER(ctypes.c_float))
 
-        return pfun(self._net, isLern, insz, indata, outsz, outdata)
+        return pfun(self._net, isLern, insz, snFloat_p(indata), outsz, snFloat_p(outdata))
 
 
     def backward(self, lr : float, gradTns : numpy.ndarray) -> bool:
-        """Backward net."""
+        """
+        Backward action
+        :param lr: lerning rate
+        :param gradTns: in gradient error tensor
+        :return: True ok
+        """
 
         if (not(self._net) and not(self._createNet())):
             return False
@@ -181,14 +217,17 @@ class Net():
 
         pfun = _LIB.snBackward
         pfun.restype = ctypes.c_bool
-        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, ctypes.Structure, ctypes.POINTER(ctypes.c_float))
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, snLSize, ctypes.POINTER(ctypes.c_float))
 
-        return pfun(self._net, lr, insz, indata)
+        return pfun(self._net, ctypes.c_float(lr), insz, snFloat_p(indata))
 
 
     def addUserCallBack(self, ucbName: str, ucb) -> bool:
         """
         User callback for 'UserCBack' layer and 'LossFunction' layer
+        :param ucbName: cback name
+        :param ucb: cback function
+        :return: True ok
 
         ucb = function(None,
                        str,               # name user cback
@@ -249,10 +288,15 @@ class Net():
         return pfun(self._net, c_str(ucbName), self._userCBack[ucbName][0], 0)
 
 
-    def getWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
-        """ getWeightNode """
+    def getWeightNode(self, nodeName: str, weight: [numpy.ndarray]) -> bool:
+        """
+         get Weight of Node
+        :param nodeName: node name
+        :param weight: out array weight as list[0]
+        :return: True ok
+        """
 
-        if (not (self._net)):
+        if (not (self._net) and not (self._createNet())):
             return False
 
         pfun = _LIB.snGetWeightNode
@@ -261,14 +305,20 @@ class Net():
            ctypes.POINTER(snLSize), ctypes.POINTER(ctypes.POINTER(ctypes.c_float)))
 
         wsize = snLSize()
-        wdata = (ctypes.c_float)()
+        wdata = ctypes.POINTER(ctypes.c_float)()
 
-        if (pfun(self._net, c_str(nodeName), ctypes.POINTER(wsize), ctypes.POINTER(wdata))):
+        if (pfun(self._net, c_str(nodeName), ctypes.pointer(wsize), ctypes.byref(wdata))):
 
             wsz = wsize.w * wsize.h * wsize.ch * wsize.bsz
 
-            dbuffer = (ctypes.c_float * wsz).from_address(ctypes.addressof(wdata.value))
-            weight = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((wsize.bsz, wsize.ch, wsize.h, wsize.w))
+            dbuffer = (ctypes.c_float * wsz).from_address(ctypes.addressof(wdata.contents))
+            weight[0] = numpy.frombuffer(dbuffer, ctypes.c_float).copy().reshape((wsize.bsz, wsize.ch, wsize.h, wsize.w))
+
+            pfun = _LIB.snFreeResources
+            pfun.restype = None
+            pfun.argtypes = (ctypes.POINTER(ctypes.c_float), ctypes.c_char_p)
+
+            pfun(wdata, ctypes.c_char_p(0))
 
             return True
         else:
@@ -276,33 +326,37 @@ class Net():
 
 
     def setWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
-        """ setWeightNode """
+        """
+        set weight of node
+        :param nodeName: node name
+        :param weight: set array weight
+        :return: True ok
+        """
 
-        if (not (self._net)):
+        if (not (self._net) and not (self._createNet())):
             return False
+
+        wsize = snLSize()
+        wsize.bsz = weight.shape[0]
+        wsize.ch = weight.shape[1]
+        wsize.h = weight.shape[2]
+        wsize.w = weight.shape[3]
+        inw = weight.__array_interface__['data'][0]
 
         pfun = _LIB.snSetWeightNode
         pfun.restype = ctypes.c_bool
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
                          snLSize, ctypes.POINTER(ctypes.c_float))
 
-        wsize = snLSize()
-        wdata = (ctypes.c_float)()
-
-        if (pfun(self._net, c_str(nodeName), wsize, ctypes.POINTER(wdata))):
-
-            wsz = wsize.w * wsize.h * wsize.ch * wsize.bsz
-
-            dbuffer = (ctypes.c_float * wsz).from_address(ctypes.addressof(wdata.value))
-            weight = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((wsize.bsz, wsize.ch, wsize.h, wsize.w))
-
-            return True
-        else:
-            return False
+        return pfun(self._net, c_str(nodeName), wsize, snFloat_p(inw))
 
 
     def loadAllWeightFromFile(self, weightPath : str) -> bool:
-        """load All Weight From File"""
+        """
+        load All Weight From File
+        :param weightPath: weight Path file
+        :return: True ok
+        """
 
         if (not (self._net) and not (self._createNet())):
             return False
@@ -315,7 +369,11 @@ class Net():
 
 
     def saveAllWeightToFile(self, weightPath: str) -> bool:
-        """save All Weight to File"""
+        """
+        save All Weight to File
+        :param weightPath: weight Path file
+        :return: True ok
+        """
 
         if (not (self._net) and not (self._createNet())):
             return False
@@ -325,6 +383,36 @@ class Net():
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p)
 
         return pfun(self._net, c_str(weightPath))
+
+
+    def getGetArchitecNet(self) -> str:
+        """
+        architecture of net
+        :return: arch in json. '' - error
+        """
+
+        if (not (self._net) and not (self._createNet())):
+            return False
+
+        pfun = _LIB.snGetArchitecNet
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p,  ctypes.POINTER(ctypes.c_char_p))
+
+        ss = ctypes.c_char_p()
+
+        if (pfun(self._net, ctypes.byref(ss))):
+
+            ret = ss.value.decode("utf-8")
+
+            pfun = _LIB.snFreeResources
+            pfun.restype = None
+            pfun.argtypes = (ctypes.POINTER(ctypes.c_float), ctypes.c_char_p)
+
+            pfun(ctypes.cast(0, ctypes.POINTER(ctypes.c_float)), ss)
+
+            return ret
+        else:
+            return ''
 
 
     def _createNet(self) -> bool:

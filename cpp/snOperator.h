@@ -71,7 +71,7 @@ namespace SN_API{
         snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
         batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
         calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
-        uint32_t gpuDeviceId = 0;                  ///< GPU Id
+        uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
@@ -139,9 +139,9 @@ namespace SN_API{
         uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
         uint32_t padding = 0;                      ///< Padding around the edges. Optional parameter
         uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
-        uint32_t dilate = 1;                       ///< Expansion mask (> 0). Optional parameter(> 0)
+        uint32_t dilate = 1;                       ///< Expansion mask. Optional parameter(> 0)
         calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
-        uint32_t gpuDeviceId = 0;                  ///< GPU Id
+        uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
@@ -222,7 +222,7 @@ namespace SN_API{
         uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
         uint32_t stride = 2;                       ///< Mask movement step. Optional parameter(> 0)
         calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
-        uint32_t gpuDeviceId = 0;                  ///< GPU Id
+        uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
@@ -292,7 +292,7 @@ namespace SN_API{
         uint32_t kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
         poolType pool = poolType::max;    ///< Operator Type. Optional parameter 
         calcMode mode = calcMode::CPU;    ///< Сalculation mode. Optional parameter           
-        uint32_t gpuDeviceId = 0;         ///< GPU Id
+        uint32_t gpuDeviceId = 0;         ///< GPU Id. Optional parameter
         bool gpuClearMem = false;         ///< Clear memory GPU. Optional parameter
 
         Pooling(uint32_t kernel_ = 2,
@@ -361,7 +361,7 @@ namespace SN_API{
 
     public:
 
-        std::string nextWay;
+        std::string nextWay;   // next nodes through a space
        
         Switch(const std::string& nextWay_) :nextWay(nextWay_){};
 
@@ -390,7 +390,7 @@ namespace SN_API{
 
     public:
          
-        summatorType summType;
+        summatorType summType;     
 
         Summator(summatorType summType_ = summatorType::summ) : summType(summType_){};
 
@@ -417,7 +417,7 @@ namespace SN_API{
 
     public:
               
-        std::string sequence;
+        std::string sequence;    // prev nodes through a space
 
         Concat(const std::string& sequence_) : sequence(sequence_){};
 
@@ -444,7 +444,7 @@ namespace SN_API{
 
     public:
                
-        diap fwdDiap, bwdDiap;
+        diap fwdDiap, bwdDiap;   // diap layer through a space
 
         Resize(const diap& fwdDiap_, const diap& bwdDiap_) :
             fwdDiap(fwdDiap_), bwdDiap(bwdDiap_){};
@@ -473,7 +473,7 @@ namespace SN_API{
 
     public:
         
-        rect rct;
+        rect rct;         // region of interest
 
         Crop(const rect& rct_) : rct(rct_){};
 

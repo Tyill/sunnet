@@ -50,7 +50,7 @@ void Deconvolution::forwardCPU(size_t kernel, size_t fWidth, size_t fHeight, siz
 
     // по батчу  
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* outBuff = share + insz.d + shareStepByN * n;
@@ -124,7 +124,7 @@ void Deconvolution::backwardCPU_GW(size_t kernel, size_t fWidth, size_t fHeight,
 
     // по батчу
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* grinBuff = share + insz.d + shareStepByN * n;
@@ -228,7 +228,7 @@ void Deconvolution::backwardCPU_G(size_t kernel, size_t fWidth, size_t fHeight, 
 
     // по батчу
 #pragma omp parallel for
-    for (int n = 0; n < insz.n; ++n){
+    for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* grinBuff = share + shareStepByN * n;
         snFloat* groutBuff = share + outsz.d + shareStepByN * n;

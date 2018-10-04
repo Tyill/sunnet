@@ -158,7 +158,7 @@ struct batchNorm{
 SKYNET_API bool snSetBatchNormNode(skyNet,
     const char* nodeName,
     snLSize bnsz,
-    const batchNorm bnData);
+    batchNorm bnData);
 
 /// get batchNorm of node
 /// @param[in] skyNet - object net

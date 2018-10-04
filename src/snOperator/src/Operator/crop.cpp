@@ -63,7 +63,7 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
 
         if (nsz.size() != 4){
             ERROR_MESS("'roi' param no correct. Must be four arguments: x y w h");
-            vector < string > {"noWay"};
+            return vector < string > {"noWay"};
         }
 
         baseSz_ = baseOut_->size();

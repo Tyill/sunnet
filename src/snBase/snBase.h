@@ -40,7 +40,7 @@ namespace SN_Base{
     typedef float snFloat;
     
     /// network mode - forward / reverse
-    enum snAction{
+    enum class snAction{
         forward = 0,
         backward = 1,
     };
