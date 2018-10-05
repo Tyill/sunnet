@@ -75,10 +75,10 @@ namespace SN_API{
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-        snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-        snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-        snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
+        snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+        snFloat decayMomentWGr = 0.99F;            ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+        snFloat lmbRegular = 0.001F;               ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         FullyConnected(uint32_t kernel_,                          
                        active act_ = active::relu,                
@@ -145,10 +145,10 @@ namespace SN_API{
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-        snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-        snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-        snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
+        snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+        snFloat decayMomentWGr = 0.99F;            ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+        snFloat lmbRegular = 0.001F;               ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
 
 
         Convolution(uint32_t kernel_,              
@@ -226,10 +226,10 @@ namespace SN_API{
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
-        snFloat decayMomentDW = 0.9;               ///< Optimizer of weights moment change. Optional parameter [0..1.F]
-        snFloat decayMomentWGr = 0.99;             ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        snFloat lmbRegular = 0.001;                ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
-        snFloat batchNormLr = 0.001;               ///< Learning rate for batch norm coef. Optional parameter [0..)
+        snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
+        snFloat decayMomentWGr = 0.99F;            ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
+        snFloat lmbRegular = 0.001F;               ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         Deconvolution(uint32_t kernel_,
             active act_ = active::relu,

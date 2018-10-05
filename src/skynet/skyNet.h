@@ -57,21 +57,26 @@ typedef void* skyNet;
 typedef void* snUData;                                      ///< user data    
 typedef void(*snStatusCBack)(const char* mess, snUData);    ///< status callback
 
+
+/// version lib
+/// @param[out] outVersion The memory is allocated by the user
+SKYNET_API void snVersionLib(char* outVersion /*sz 32*/);
+
 /// create net
 /// @param[in] jnNet - network architecture in JSON
-/// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+/// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
 /// @param[in] statusCBack - callback state. Not necessary
 /// @param[in] udata - user data. Not necessary
 /// @return object net
 SKYNET_API skyNet snCreateNet(const char* jnNet,
-    char* out_err /*sz 256*/,
+    char* outErr /*sz 256*/,
     snStatusCBack = nullptr,
     snUData = nullptr);
 
 /// get last error
 /// @param[in] skyNet - object net
-/// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
-SKYNET_API void snGetLastErrorStr(skyNet, char* out_err);
+/// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
+SKYNET_API void snGetLastErrorStr(skyNet, char* outErr);
 
 /// training - a cycle forward-back with auto-correction of weights
 /// @param[in] skyNet - object net

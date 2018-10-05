@@ -1,9 +1,11 @@
 
 from libskynet import*
+import snLibInfo
 import numpy as np
 import imageio
 import random
 import ctypes
+import datetime
 import os
 
 def myLayer(ucbName: str,          # name user cback
@@ -11,22 +13,24 @@ def myLayer(ucbName: str,          # name user cback
             isFwdBwd: bool,        # current action forward(true) or backward(false)
             inLayer: np.ndarray,   # input layer - receive from prev node
             outLayer: np.ndarray): # output layer - send to next node
-   pass
+    pass
+
+# version lib
+vlib = snLibInfo.__version__
 
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15), 'C2') \
-   .addNode('C2', snOperator.Convolution(25), 'P1') \
-   .addNode('P1', snOperator.Pooling(), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(256), 'UCB') \
-   .addNode('UCB', snOperator.UserLayer('myLayer'), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(10), 'LS') \
+   .addNode('C1', snOperator.Convolution(15, snType.calcMode.CPU), 'C2') \
+   .addNode('C2', snOperator.Convolution(25, snType.calcMode.CPU), 'P1') \
+   .addNode('P1', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(256, snType.calcMode.CPU), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(10, snType.calcMode.CPU), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
+
 
 # user cback
 net.addUserCallBack('myLayer', myLayer)
-
 
 # load of weight
 if (net.loadAllWeightFromFile('c:/C++/w.dat')):
@@ -36,7 +40,7 @@ else:
 
 # loadImg
 imgList = []
-pathImg = 'c:/C++/skyNet/test/mnist/'
+pathImg = 'c:/C++/skyNet/example/mnist/'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 
@@ -47,7 +51,7 @@ targLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
 
 # cycle lern
 accuratSumm = 0.;
-for n in range(100):
+for n in range(1000):
 
     targLayer[...] = 0
 
@@ -63,7 +67,7 @@ for n in range(100):
 
     accuratSumm += acc[0]
 
-    print(n, "accurate", accuratSumm / (n + 1))
+    print(datetime.datetime.now().strftime('%H:%M:%S'), n, "accurate", accuratSumm / (n + 1))
 
 # save weight
 if (net.saveAllWeightToFile('c:/C++/w.dat')):

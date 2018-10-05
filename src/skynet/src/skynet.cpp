@@ -28,24 +28,33 @@
 #include "skynet/skynet.h"
 #include "snet.h"
 
+#define SN_VERSION "1.0.1"
 
 namespace SN_API{
 
+    /// version lib
+    /// @param[out] outVersion The memory is allocated by the user
+    void snVersionLib(char* outVersion /*sz 32*/){
+
+        if (outVersion)
+            strcpy(outVersion, SN_VERSION);
+    }
+
     /// create net
     /// @param[in] jnNet - network architecture in JSON
-    /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
+    /// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
     /// @param[in] statusCBack - callback state. Not necessary
     /// @param[in] udata - user data. Not necessary
     skyNet snCreateNet(const char* jnNet,
-        char* out_err /*sz 256*/,
+        char* outErr /*sz 256*/,
         snStatusCBack sts,
         snUData ud){
 
-        if (!jnNet || !out_err) return nullptr;
+        if (!jnNet || !outErr) return nullptr;
 
-        auto net = new SNet(jnNet, out_err, sts, ud);
+        auto net = new SNet(jnNet, outErr, sts, ud);
 
-        if (strlen(out_err) > 0){
+        if (strlen(outErr) > 0){
             delete net;
             net = nullptr;
         }
@@ -55,12 +64,12 @@ namespace SN_API{
     
     /// get last error
     /// @param[in] skyNet - object net
-    /// @param[out] out_err - parse error jnNet. "" - ok. The memory is allocated by the user
-    void snGetLastErrorStr(skyNet fn, char* out_err){
+    /// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
+    void snGetLastErrorStr(skyNet fn, char* outErr){
 
-        if (!fn || !out_err) return;
+        if (!fn || !outErr) return;
 
-        static_cast<SNet*>(fn)->getLastErrorStr(out_err);
+        static_cast<SNet*>(fn)->getLastErrorStr(outErr);
     }
 
     /// training - a cycle forward-back with auto-correction of weights

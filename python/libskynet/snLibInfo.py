@@ -22,7 +22,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""Information about skynet."""
+from __init__ import _LIB
+import ctypes
+
+"""Information about libskynet"""
+
+def _snVersionLib() -> str:
+    """
+    version library
+    :return: version
+    """
+
+    pfun = _LIB.snVersionLib
+    pfun.restype = None
+    pfun.argtypes = (ctypes.c_char_p,)
+
+    ver = ctypes.create_string_buffer(32)
+    pfun(ver)
+
+    return ver.value.decode("utf-8")
 
 # current version
-__version__ = "1.0.1"
+__version__ = _snVersionLib()

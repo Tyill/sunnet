@@ -241,10 +241,12 @@ int main(int argc, char* argv[])
 {
     namespace sn = SN_API;
 
+    auto ver = sn::versionLib();
+
     sn::Net snet;
     
-    snet.addNode("Input", sn::Input(), "FC2")
-        //.addNode("FC1", sn::FullyConnected(125, sn::calcMode::CPU), "FC2")
+    snet.addNode("Input", sn::Input(), "C1")
+        .addNode("C1", sn::Convolution(25, sn::calcMode::CUDA), "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
@@ -263,7 +265,7 @@ int main(int argc, char* argv[])
     string imgPath = "d:\\Работа\\CNN\\Mnist/training/";
     //string imgPath = "d:\\Работа\\CNN\\ТипИзоляции\\ОбучВыборка2\\";
 
-    int batchSz = 100, classCnt = 10, w = 28, h = 28, w1 = 10, h1 = 1, d = 1; float lr = 0.01; //28
+    int batchSz = 100, classCnt = 10, w = 28, h = 28, w1 = 10, h1 = 1, d = 1; float lr = 0.01F; //28
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;

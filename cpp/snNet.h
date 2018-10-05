@@ -35,6 +35,15 @@
 
 namespace SN_API{
       
+    /// version library
+    /// @return version
+    std::string versionLib(){
+
+        char ver[32];
+        snVersionLib(ver);
+
+        return ver;
+    }
    
     class Net{
                
@@ -56,7 +65,7 @@ namespace SN_API{
             if (net_)
                 snFreeNet(net_);        
         };
-
+               
         /// last error
         /// @return "" ok
         std::string getLastErrorStr(){
