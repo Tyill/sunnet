@@ -245,8 +245,9 @@ int main(int argc, char* argv[])
 
     sn::Net snet;
     
-    auto cll = sn::Convolution(25, sn::calcMode::CPU);
-    cll.padding = -1;
+    auto cll = sn::Convolution(25, sn::calcMode::CUDA);
+    cll.padding = 0;
+    cll.gpuClearMem = false;
 
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", cll, "P1")

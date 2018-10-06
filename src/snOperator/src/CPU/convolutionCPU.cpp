@@ -78,10 +78,10 @@ void Convolution::forwardCPU(const convParams& prms,
                     pIn += inStepByD;
                 }
                             
-                // by all out layers
+                // on all out layers
                 for (size_t k = 0; k < kernel; ++k){
                                         
-                    // by all in layers
+                    // on all in layers
                     snFloat cout = 0;
                     for (size_t d = 0; d < insz.d; ++d){
                         cout += inBuff[d] * (*pW);
@@ -95,7 +95,7 @@ void Convolution::forwardCPU(const convParams& prms,
             snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
             snFloat* pW = weight + wStepByK;
 
-            // by all out layers
+            // on all out layers
             for (size_t k = 0; k < kernel; ++k){
                
                 *pOut += outBuff[k] + *(pW + k); // + bias
@@ -150,7 +150,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
             snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
             snFloat* pdW = wBuff + wStepByK;
 
-            // by all out layers
+            // on all out layers
             for (size_t k = 0; k < kernel; ++k){
                 ginBuff[k] = *pGrIn;
 
@@ -175,10 +175,10 @@ void Convolution::backwardCPU_GW(const convParams& prms,
 
                 memset(goutBuff, 0, insz.d * sizeof(snFloat));
 
-                // by all out layers
+                // on all out layers
                 for (size_t k = 0; k < kernel; ++k){
 
-                    // by all in layers
+                    // on all in layers
                     snFloat gin = ginBuff[k];
                     for (size_t d = 0; d < insz.d; ++d){
                         goutBuff[d] += gin * (*pW);
@@ -251,7 +251,7 @@ void Convolution::backwardCPU_G(const convParams& prms,
 
             snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
-            // by all out layers
+            // on all out layers
             for (size_t k = 0; k < kernel; ++k){
                 ginBuff[k] = *pGrIn;
                 pGrIn += outStepByD;
@@ -265,10 +265,10 @@ void Convolution::backwardCPU_G(const convParams& prms,
                               
                 memset(goutBuff, 0, insz.d * sizeof(snFloat));
 
-                // by all out layers
+                // on all out layers
                 for (size_t k = 0; k < kernel; ++k){
 
-                    // by all in layers
+                    // on all in layers
                     snFloat gin = ginBuff[k];
                     for (size_t d = 0; d < insz.d; ++d){
                         goutBuff[d] += gin * (*pW);

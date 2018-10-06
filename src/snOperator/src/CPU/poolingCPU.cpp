@@ -69,7 +69,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // by all input layers
+                    // on all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         snFloat val = *pIn;
                         pIn += inStepByD;
@@ -83,7 +83,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
                 size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
 
-                // by all output layers
+                // on all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
 
                     *pOut = outBuff[k];
@@ -116,7 +116,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // by all input layers
+                    // on all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         outBuff[d] += *pIn;
                         pIn += inStepByD;
@@ -125,7 +125,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
 
-                // by all output layers
+                // on all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
                     *pOut = outBuff[k] / kernelSz;
                     pOut += outStepByD;
@@ -163,7 +163,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
 
-                // by all input layers
+                // on all input layers
                 for (size_t d = 0; d < insz.d; ++d){
 
                     size_t c = *pOutInx, cx = c % kernel, cy = c / kernel;
@@ -194,7 +194,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
-                // // by all output layers
+                // on all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
                     outBuff[k] = *pGrIn;
                     pGrIn += outStepByD;
@@ -206,7 +206,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // by all input layers
+                    // on all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         *pGrOut = outBuff[d] / kernelSz;
                         pGrOut += inStepByD;
