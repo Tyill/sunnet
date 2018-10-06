@@ -245,8 +245,11 @@ int main(int argc, char* argv[])
 
     sn::Net snet;
     
+    auto cll = sn::Convolution(25, sn::calcMode::CPU);
+    cll.padding = -1;
+
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(25, sn::calcMode::CUDA), "FC2")
+        .addNode("C1", cll, "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 

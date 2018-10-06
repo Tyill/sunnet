@@ -137,7 +137,7 @@ namespace SN_API{
         batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
         uint32_t fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
         uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-        uint32_t padding = 0;                      ///< Padding around the edges. Optional parameter
+        int padding = 0;                           ///< Padding around the edges. Optional parameter
         uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
         uint32_t dilate = 1;                       ///< Expansion mask. Optional parameter(> 0)
         calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
@@ -158,7 +158,7 @@ namespace SN_API{
             batchNormType bnorm_ = batchNormType::none,
             uint32_t fWidth_ = 3,                      
             uint32_t fHeight_ = 3,                    
-            uint32_t padding_ = 0,                     
+            int padding_ = 0,
             uint32_t stride_ = 1,                      
             uint32_t dilate_ = 1,                      
             calcMode mode_ = calcMode::CPU,            
