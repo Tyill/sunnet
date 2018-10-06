@@ -35,23 +35,23 @@ using namespace SN_Base;
 void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output){
 
     // Out = α * In * W + βC
-    // In - матрица вход данных - значения с предыд слоя
-    // W - матрица весов
-    // Out - матрица выход данных
+    // In - data input matrix - values from the previous layer
+    // W - weights matrix
+    // Out - data output matrix
     cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasNoTrans,
         CBLAS_TRANSPOSE::CblasNoTrans,
-        blasint(insz.n),                       // In, строк, кол-во изобр в батче
-        blasint(kernel),                       // W, столбцов, кол-во скрытых нейронов 
-        blasint(insz.w * insz.h * insz.d + 1), // In, столбцов, В М - строк, кол-во вх нейронов - размер одного изображения из батча. (+1 - X0)                   
-        1.0F,                                  // α, коэф
-        input,                                 // In, вх данные - нейроны пришедшие с предыд слоя
-        blasint(insz.w * insz.h * insz.d + 1), // In, шаг до след X (X21 - X11) 
-        weight,                                // W, веса
-        blasint(kernel),                       // W, шаг до след W (W21 - W11) 
-        0.0,                                   // β, коэф
-        output,                                // Out, выходные данные - нейроны для след слоя
-        blasint(kernel));                      // Out, шаг до след Y (Y21 - Y11) 
+        blasint(insz.n),                       // In, rows
+        blasint(kernel),                       // W, cols
+        blasint(insz.w * insz.h * insz.d + 1), // In, cols, В М - rows (+1 - X0)                   
+        1.0F,                                  // α
+        input,                                 // In
+        blasint(insz.w * insz.h * insz.d + 1), // In, step to next In (X21 - X11) 
+        weight,                                // W
+        blasint(kernel),                       // W, step to next W (W21 - W11) 
+        0.0,                                   // β
+        output,                                // Out
+        blasint(kernel));                      // Out, step to next Out (Y21 - Y11) 
 }
 
 void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
@@ -59,67 +59,67 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
 
-    // Градиент по весам
+    // Grad by weight
     // dW = αIn^T * GrIn + βdW
-    // In - матрица вход данных с предыд слоя
-    // GrIn - матрица градиентов со след слоя
+    // In - data input matrix - values from the previous layer
+    // GrIn - gradient matrix from the next layer
     cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasTrans,
         CBLAS_TRANSPOSE::CblasNoTrans,
-        blasint(imSz),                 // In, строк, кол-во вх значений (+1 - X0)     
-        blasint(kernel),               // GrIn, столбцов, кол-во скрытых нейронов 
-        blasint(insz.n),               // In, столбцов. GrIn, строк, размер батча                   
-        1.0F / insz.n,                 // α коэф 
-        input,                         // In, - вх данные - вх значения пришедшие с предыд слоя
-        blasint(imSz),                 // In, - шаг до след
-        gradIn,                        // GrIn - градиент пришедший со след слоя
-        blasint(kernel),               // GrIn - шаг до след
-        0.0F,                          // β коэф 
-        dWOut,                         // dW, выходные данные - градиент по весам
-        blasint(kernel));              // dW, шаг до след
+        blasint(imSz),                 // In, rows (+1 - X0)     
+        blasint(kernel),               // GrIn, cols
+        blasint(insz.n),               // In, cols. GrIn, rows
+        1.0F / insz.n,                 // α
+        input,                         // In
+        blasint(imSz),                 // In, step to next
+        gradIn,                        // GrIn
+        blasint(kernel),               // GrIn, step to next
+        0.0F,                          // β
+        dWOut,                         // dW
+        blasint(kernel));              // dW, step to next
 
-    // Градиент для предыд слоя
+    // Gradient for previous layer
     // GrOut = αGrIn * W^T + βGrOut
-    // GrIn - матрица градиентов со след слоя
-    // W - веса
+    // GrIn - gradient matrix from the next layer
+    // W - weight
     cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasNoTrans,
         CBLAS_TRANSPOSE::CblasTrans,
-        blasint(insz.n),               // GrIn, строк, размер батча     
-        blasint(imSz - 1),             // W, столбцов, кол-во вх значений 
-        blasint(kernel),               // GrIn, столбцов. W, строк, кол-во скрытых нейронов                 
-        1.0F,                          // α, коэф 
-        gradIn,                        // GrIn, градиент пришедший со след слоя
-        blasint(kernel),               // GrIn, шаг до след X (X21 - X11) 
-        weight + kernel,               // W, веса
-        blasint(kernel),               // W, шаг до след W (W21 - W11) 
-        0.0F,                          // β, доп коэф 
-        gradOut,                       // GrOut, градиент для предыд слоя
-        blasint(imSz - 1));            // GrOut, шаг до след Y (Y21 - Y11) 
+        blasint(insz.n),               // GrIn, rows
+        blasint(imSz - 1),             // W, cols
+        blasint(kernel),               // GrIn, cols. W, rows
+        1.0F,                          // α
+        gradIn,                        // GrIn
+        blasint(kernel),               // GrIn, step to next (I21 - I11) 
+        weight + kernel,               // W
+        blasint(kernel),               // W, step to next W (W21 - W11) 
+        0.0F,                          // β
+        gradOut,                       // GrOut
+        blasint(imSz - 1));            // GrOut, step to next Y (Y21 - Y11) 
 }
 
 void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut){
 
     size_t imSz = insz.w * insz.h * insz.d + 1;
 
-    // Градиент для предыд слоя
+    // Gradient for previous layer
     // GrOut = αGrIn * W^T + βGrOut
-    // GrIn - матрица градиентов со след слоя
-    // W - веса
+    // GrIn - gradient matrix from the next layer
+    // W - weight
     cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasNoTrans,
         CBLAS_TRANSPOSE::CblasTrans,
-        blasint(insz.n),               // GrIn, строк, размер батча     
-        blasint(imSz - 1),             // W, столбцов, кол-во вх значений 
-        blasint(kernel),               // GrIn, столбцов. W, строк, кол-во скрытых нейронов                 
-        1.0F,                          // α, коэф 
-        gradIn,                        // GrIn, градиент пришедший со след слоя
-        blasint(kernel),               // GrIn, шаг до след X (X21 - X11) 
-        weight + kernel,               // W, веса
-        blasint(kernel),               // W, шаг до след W (W21 - W11) 
-        0.0F,                          // β, доп коэф 
-        gradOut,                       // GrOut, градиент для предыд слоя
-        blasint(imSz - 1));            // GrOut, шаг до след Y (Y21 - Y11) 
+        blasint(insz.n),               // GrIn, rows
+        blasint(imSz - 1),             // W, cols
+        blasint(kernel),               // GrIn, cols
+        1.0F,                          // α
+        gradIn,                        // GrIn
+        blasint(kernel),               // GrIn, step to next (I21 - I11) 
+        weight + kernel,               // W
+        blasint(kernel),               // W,  step to next W (W21 - W11) 
+        0.0F,                          // β 
+        gradOut,                       // GrOut
+        blasint(imSz - 1));            // GrOut, step to next Y (Y21 - Y11) 
 }
 
 

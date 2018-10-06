@@ -251,7 +251,7 @@ int main(int argc, char* argv[])
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", cll, "P1")
         .addNode("P1", sn::Pooling(2, sn::poolType::max, sn::calcMode::CUDA), "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
+        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 

@@ -116,24 +116,24 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* inp
     cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, d_w, ida));
    
     // Out = α * W * In + βC
-    // In - матрица вход данных - значения с предыд слоя
-    // W - матрица весов
-    // Out - матрица выход данных
+    // In - data input matrix - values from the previous layer
+    // W - weights matrix
+    // Out - output matrix
     float alpha = 1.0f, beta = 0.0f;
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_N,
-        krn,                           // W, столбцов, кол-во скрытых нейронов 
-        bsz,                           // In, строк, кол-во изобр в батче
-        ida,                           // In, столбцов, В М - строк, кол-во вх нейронов - размер одного изображения из батча. (+1 - X0)                   
-        &alpha,                        // α, коэф
-        d_w,                           // W, веса
-        krn,                           // W, шаг до след W (W21 - W11)
-        d_in,                          // In, вх данные - нейроны пришедшие с предыд слоя
-        ida,                           // In, шаг до след X (X21 - X11)  
-        &beta,                         // β, коэф
-        d_out,                         // Out, выходные данные - нейроны для след слоя
-        krn));                         // Out, шаг до след Y (Y21 - Y11) 
+        krn,                           // W, cols
+        bsz,                           // In, rows
+        ida,                           // In, cols, В М - rows (+1 - X0)                   
+        &alpha,                        // α
+        d_w,                           // W
+        krn,                           // W, step to next W (W21 - W11)
+        d_in,                          // In
+        ida,                           // In, step to next X (X21 - X11)  
+        &beta,                         // β
+        d_out,                         // Out
+        krn));                         // Out, step to next Y (Y21 - Y11) 
     
     cuCHECK(cublasGetMatrix(bsz, krn, sizeof(snFloat), d_out, bsz, output, bsz));
 
@@ -172,49 +172,49 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
       
     cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
 
-    // Градиент по весам
+    // Weight gradient
     // dW = αIn^T * GrIn + βdW
-    // In - матрица вход данных с предыд слоя
-    // GrIn - матрица градиентов со след слоя
+    // In - data input matrix from previous layer
+    // GrIn - gradient matrix from the next layer
     float alpha = 1.0F / insz.n, beta = 0.0f;
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_N,
         CUBLAS_OP_T,
-        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
-        ida,                     // In, столбцов, кол-во вх значений (+1 - X0)      
-        bsz,                     // In, строк, кол-во изобр в батче
-        &alpha,                  // α, коэф                 
-        d_grin,                  // GrIn - градиент пришедший со след слоя
-        krn,                     // GrIn - шаг до след
-        d_in,                    // In, вх данные - нейроны пришедшие с предыд слоя
-        ida,                     // In, шаг до след X (X21 - X11)  
-        &beta,                   // β, коэф                 
-        d_dw,                    // dW, выходные данные - градиент по весам                 
-        krn));                   // dW, шаг до след
+        krn,                     // GrIn, cols
+        ida,                     // In, cols (+1 - X0)      
+        bsz,                     // In, rows
+        &alpha,                  // α                
+        d_grin,                  // GrIn
+        krn,                     // GrIn, step to next 
+        d_in,                    // In
+        ida,                     // In, step to next  X (X21 - X11)  
+        &beta,                   // β               
+        d_dw,                    // dW            
+        krn));                   // dW, step to next 
 
     cuCHECK(cublasGetMatrix(ida, krn, sizeof(snFloat), d_dw, ida, dWOut, ida));
          
     cuCHECK(cublasSetMatrix(ida - 1, krn, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
-    //// Градиент для предыд слоя
+    //// Gradient for previous layer
     //// GrOut = αGrIn * W^T + βGrOut
-    //// GrIn - матрица градиентов со след слоя
-    //// W - веса
+    //// GrIn - gradient matrix from the next layer
+    //// W - weight
     alpha = 1.F;
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_T,
         CUBLAS_OP_N,
-        ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
-        bsz,                     // W, строк, кол-во изобр в батче    
-        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
-        &alpha,                  // α, коэф                                  
-        d_w,                     // W - веса
-        krn,                     // W - шаг до след
-        d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
-        krn,                     // GrIn, шаг до след 
-        &beta,                   // β, коэф                 
-        d_grout,                 // GrOut, выходной градиент для пред слоя                                   
-        ida - 1));               // GrOut, шаг до след
+        ida - 1,                 // W, cols (+1 - X0)     
+        bsz,                     // W, rows
+        krn,                     // GrIn, cols
+        &alpha,                  // α                               
+        d_w,                     // W
+        krn,                     // W, step to next 
+        d_grin,                  // GrIn
+        krn,                     // GrIn, step to next 
+        &beta,                   // β               
+        d_grout,                 // GrOut                                  
+        ida - 1));               // GrOut, step to next 
       
     cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
  
@@ -250,25 +250,25 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize
 
     cuCHECK(cublasSetMatrix(ida - 1, krn, sizeof(snFloat), weight + kernel, ida - 1, d_w, ida - 1));
 
-    //// Градиент для предыд слоя
+    //// Gradient for previous layer
     //// GrOut = αGrIn * W^T + βGrOut
-    //// GrIn - матрица градиентов со след слоя
-    //// W - веса
+    //// GrIn - gradient matrix from the next layer
+    //// W - weight
     float alpha = 1.0F, beta = 0.0f;
     cuCHECK(cublasSgemm(hcuBLAS,
         CUBLAS_OP_T,
         CUBLAS_OP_N,
-        ida - 1,                 // W, столбцов, кол-во вх значений (+1 - X0)     
-        bsz,                     // W, строк, кол-во изобр в батче    
-        krn,                     // GrIn, столбцов, кол-во скрытых нейронов 
-        &alpha,                  // α, коэф                                  
-        d_w,                     // W - веса
-        krn,                     // W - шаг до след
-        d_grin,                  // GrIn, вх данные - нейроны пришедшие с предыд слоя
-        krn,                     // GrIn, шаг до след 
-        &beta,                   // β, коэф                 
-        d_grout,                 // GrOut, выходной градиент для пред слоя                                   
-        ida - 1));               // GrOut, шаг до след
+        ida - 1,                 // W, cols (+1 - X0)     
+        bsz,                     // W, rows
+        krn,                     // GrIn, cols
+        &alpha,                  // α                               
+        d_w,                     // W
+        krn,                     // W, step to next 
+        d_grin,                  // GrIn
+        krn,                     // GrIn, step to next 
+        &beta,                   // β         
+        d_grout,                 // GrOut                          
+        ida - 1));               // GrOut, step to next 
 
     cuCHECK(cublasGetMatrix(bsz, ida - 1, sizeof(snFloat), d_grout, bsz, gradOut, bsz));
 

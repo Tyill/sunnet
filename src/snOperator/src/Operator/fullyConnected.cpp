@@ -34,8 +34,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// полносвязный слой
-
+/// fullyConnected layer
 FullyConnected::FullyConnected(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
     OperatorBase(net, name, node, prms){
         
@@ -95,10 +94,10 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
 
     baseOut_->resize(snSize(kernel_));
   
-    // текущие параметры
+    // currrect params
     setInternPrm(prms);
   
-    // вспом массивы
+    // aux array
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();
@@ -232,13 +231,12 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
 
     snSize insz = inTns->size();
 
-    /// размер вх данных изменился?
     if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
     }
    
-    /// копируем со смещением для bias для каждого изобр
+    /// copy with bias offset for each image
     baseInput_ = inTns;    
     size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
         
@@ -247,7 +245,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     for (size_t i = 0; i < insz.n; ++i)
         memcpy(pDtMem + i * stp + i + 1, pInTns + i * stp, ssz);
        
-    /// расчет выходных значений нейронов
+    /// calculation of the output values of neurons
     snFloat* out = baseOut_->getData();
         
     switch (calcMode_){
@@ -265,7 +263,7 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
-    /// функция активации
+    /// active func
     switch (activeType_){
     case activeType::sigmoid:   fv_sigmoid(out, kernel_ * insz.n); break;
     case activeType::relu:      fv_relu(out, kernel_ * insz.n); break;
@@ -288,12 +286,11 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
-    // проходим через ф-ю активации, если есть
+    // active func
     if (activeType_ != activeType::none){
 
         snFloat* out = baseOut_->getData();
         
-        // производная функции активации
         size_t osz = kernel_ * inSzMem_.n;
         switch (activeType_){
         case activeType::sigmoid:   df_sigmoid(out, osz); break;
@@ -303,7 +300,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         default: break;
         }
         
-        // обновл градиент
+        // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
     }
 
@@ -311,7 +308,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
-    // расчет вых градиента и коррекции весов
+    // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_->getData();
     snFloat* weight = baseWeight_->getData();
        
@@ -325,7 +322,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
                 
-        // корректируем веса
+        // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
@@ -377,7 +374,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     for (size_t i = 0; i < newsz.n; ++i)
         inDataExp_[i * stp + i] = 1.0F;
 
-    // имеющиеся веса оставляем как есть, остаток инициализируем
+    // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_->size().size();
     if (ntp > wcsz){
                 
@@ -394,7 +391,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));
     baseGrad_->resize(newsz);
            
-    // вспом массивы
+    // aux array
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);
