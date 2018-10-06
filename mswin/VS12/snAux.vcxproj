@@ -24,7 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snAux\src\auxFunc.cpp" />
-    <ClCompile Include="..\..\src\snAux\src\stdafx.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C993F645-29F0-4079-ACBA-033BFED8B8F6}</ProjectGuid>

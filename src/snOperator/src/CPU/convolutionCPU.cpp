@@ -309,7 +309,8 @@ void Convolution::backwardCUDA_G(size_t kernel, size_t fWidth, size_t fHeight, s
 #ifndef SN_OpenCL
 
 /// иниц вспом параметров CUDA          
-void Convolution::iniParamOCL(const snSize& insz, const snSize& outsz, size_t fWidth, size_t fHeight, map<string, void*>& gpuPrm){
+void Convolution::iniParamOCL(const snSize& insz, const snSize& outsz,
+    size_t fWidth, size_t fHeight, size_t dilate, size_t stride, map<string, void*>& gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

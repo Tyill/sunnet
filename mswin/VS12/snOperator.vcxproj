@@ -381,7 +381,6 @@
     <ClCompile Include="..\..\src\snOperator\src\optimizer.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\random.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\snOperator.cpp" />
-    <ClCompile Include="..\..\src\snOperator\src\stdafx.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\weightInit.cpp" />
   </ItemGroup>
   <ItemGroup>

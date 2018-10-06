@@ -20,12 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snEngine\snEngine.h" />
-    <ClInclude Include="..\..\src\snEngine\src\stdafx.h" />
     <ClInclude Include="..\..\src\snEngine\src\threadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snEngine\src\snEngine.cpp" />
-    <ClCompile Include="..\..\src\snEngine\src\stdafx.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{87E622F8-2436-40B6-A5A6-3F5DDE14BAC5}</ProjectGuid>

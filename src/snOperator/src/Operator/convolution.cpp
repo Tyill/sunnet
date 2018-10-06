@@ -548,9 +548,9 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     }  
 
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(expSz, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamCUDA(expSz, outSz, fWidth_, fHeight_, dilate_, stride_, gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(expSz, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamOCL(expSz, outSz, fWidth_, fHeight_, dilate_, stride_, gpuParams_);
 } 
 
 

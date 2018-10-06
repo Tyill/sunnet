@@ -138,8 +138,9 @@ private:
     /// CUDA ///////////////////////////
 
     /// иниц вспом параметров CUDA          
-    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
-
+    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        size_t fWidth, size_t fHeight, size_t dilate, size_t stride, std::map<std::string, void*>& gpuPrm);
+   
     /// освоб вспом параметров CUDA          
     void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
 
@@ -188,7 +189,8 @@ private:
     /// OpenCL ///////////////////////////
 
     /// иниц вспом параметров OpenCL          
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        size_t fWidth, size_t fHeight, size_t dilate, size_t stride, std::map<std::string, void*>& gpuPrm);
 
     /// освоб вспом параметров OpenCL          
     void freeParamOCL(std::map<std::string, void*>& gpuPrm);

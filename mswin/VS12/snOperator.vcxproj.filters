@@ -164,9 +164,6 @@
     <ClCompile Include="..\..\src\snOperator\src\snOperator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snOperator\src\stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\snOperator\src\weightInit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

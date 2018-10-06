@@ -27,9 +27,6 @@
     <ClCompile Include="..\..\src\skynet\src\snet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\skynet\src\stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\skynet\src\snet.h">

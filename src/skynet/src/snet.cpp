@@ -247,7 +247,7 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
         statusMess("training error: 'EndNet' not found");
         return false;
     }
-
+    
     // go back  
     gradData_["EndNet"]->setData(targetData, osz);
 

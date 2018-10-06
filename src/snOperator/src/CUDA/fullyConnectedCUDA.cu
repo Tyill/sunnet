@@ -49,27 +49,33 @@ void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, map<string,
 
         gpuPrm["hcuBLAS"] = cuHandle;
           
+        gpuPrm["d_in"] = 0;
+        gpuPrm["d_w"] = 0;
+        gpuPrm["d_out"] = 0;
+        gpuPrm["d_grout"] = 0;
+        gpuPrm["d_dw"] = 0;
+
         if (!gpuClearMem_){
-            snFloat* d_in = 0, *d_w = 0, *d_out = 0, *d_grout = 0, *d_dw = 0;
-            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
-            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
-            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
-            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
-            cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
+            cuCHECK(cudaMalloc(&gpuPrm["d_in"], bsz * ida * sizeof(snFloat)));
+            cuCHECK(cudaMalloc(&gpuPrm["d_w"], ida * kernel * sizeof(snFloat)));
+            cuCHECK(cudaMalloc(&gpuPrm["d_out"], bsz * kernel * sizeof(snFloat)));
+            cuCHECK(cudaMalloc(&gpuPrm["d_grout"], bsz * (ida - 1) * sizeof(snFloat)));
+            cuCHECK(cudaMalloc(&gpuPrm["d_dw"], ida * kernel * sizeof(snFloat)));
         }
     }
     else if (!gpuClearMem_){
-        snFloat* d_in    = (snFloat*)gpuPrm["d_in"],
-               * d_w     = (snFloat*)gpuPrm["d_w"],
-               * d_dw    = (snFloat*)gpuPrm["d_dw"],
-               * d_out   = (snFloat*)gpuPrm["d_out"],
-               * d_grout = (snFloat*)gpuPrm["d_grout"];            
+          
+        cuCHECK(cudaFree(gpuPrm["d_in"]));    gpuPrm["d_in"] = 0;
+        cuCHECK(cudaFree(gpuPrm["d_w"]));     gpuPrm["d_w"] = 0;
+        cuCHECK(cudaFree(gpuPrm["d_out"]));   gpuPrm["d_out"] = 0;
+        cuCHECK(cudaFree(gpuPrm["d_grout"])); gpuPrm["d_grout"] = 0;
+        cuCHECK(cudaFree(gpuPrm["d_dw"]));    gpuPrm["d_dw"] = 0;
 
-        cuCHECK(cudaFree(d_in));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_in), bsz * ida * sizeof(snFloat)));          gpuPrm["d_in"] = d_in;
-        cuCHECK(cudaFree(d_w));     cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_w), ida * kernel * sizeof(snFloat)));        gpuPrm["d_w"] = d_w;
-        cuCHECK(cudaFree(d_out));   cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_out), bsz * kernel * sizeof(snFloat)));      gpuPrm["d_out"] = d_out;
-        cuCHECK(cudaFree(d_grout)); cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_grout), bsz * (ida - 1) * sizeof(snFloat))); gpuPrm["d_grout"] = d_grout;
-        cuCHECK(cudaFree(d_dw));    cuCHECK(cudaMalloc(reinterpret_cast<void**>(&d_dw), ida * kernel * sizeof(snFloat)));       gpuPrm["d_dw"] = d_dw;
+        cuCHECK(cudaMalloc(&gpuPrm["d_in"], bsz * ida * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_w"], ida * kernel * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_out"], bsz * kernel * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_grout"], bsz * (ida - 1) * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_dw"], ida * kernel * sizeof(snFloat)));
     }
 }
          

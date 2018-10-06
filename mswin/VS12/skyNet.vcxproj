@@ -23,7 +23,6 @@
     <ClCompile Include="..\..\src\skynet\src\jnNet.cpp" />
     <ClCompile Include="..\..\src\skynet\src\skynet.cpp" />
     <ClCompile Include="..\..\src\skynet\src\snet.cpp" />
-    <ClCompile Include="..\..\src\skynet\src\stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\skynet\skyNet.h" />

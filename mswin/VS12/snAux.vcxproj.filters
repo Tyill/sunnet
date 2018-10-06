@@ -26,8 +26,5 @@
     <ClCompile Include="..\..\src\snAux\src\auxFunc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snAux\src\stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
