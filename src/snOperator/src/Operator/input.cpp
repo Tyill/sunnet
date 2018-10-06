@@ -28,7 +28,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// начало сети - оператор заглушка - ничего не должен делать!
+/// input layer
 Input::Input(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 

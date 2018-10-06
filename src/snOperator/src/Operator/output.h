@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// конец сети - оператор заглушка - ничего не должен делать!
+/// output layer
 class Output : SN_Base::OperatorBase{
 
 public:
@@ -36,10 +36,6 @@ public:
 
     ~Output() = default;
 
-    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
-
-private:
-
-    SN_Base::Tensor inFwTns_;                    ///< тензор с сосед слоя 
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;   
 
 };

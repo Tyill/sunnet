@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// Соединение слоев
+/// Compound layers
 class Concat : SN_Base::OperatorBase{
 
 public:

@@ -30,7 +30,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-/// Обрезка данных
+/// Trimming data
 Crop::Crop(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 

@@ -28,7 +28,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// запирает дальнейший проход по графу
+/// locks further passage along the graph
 Lock::Lock(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
@@ -38,7 +38,6 @@ OperatorBase(net, name, node, prms){
 
 std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    // дальше не идем?
     if ((basePrms_.find("state") == basePrms_.end()) || 
         (basePrms_["state"] != "unlock"))
         return std::vector < std::string > {"noWay"};

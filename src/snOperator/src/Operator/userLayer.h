@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// польз-й слой
+/// custom layer
 class UserLayer : SN_Base::OperatorBase{
 
 public:

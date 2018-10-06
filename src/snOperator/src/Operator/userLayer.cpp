@@ -28,7 +28,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// польз слой
+/// custom layer
 UserLayer::UserLayer(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 

@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// Выбор дальнейшего пути
+/// The choice of the path
 class Switch : SN_Base::OperatorBase{
 
 public:

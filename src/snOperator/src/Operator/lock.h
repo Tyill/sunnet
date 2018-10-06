@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// запирает дальнейший проход по графу
+/// locks further passage along the graph
 class Lock : SN_Base::OperatorBase{
 
 public:

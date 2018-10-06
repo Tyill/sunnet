@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// Обрезка данных
+/// Trimming data
 class Crop : SN_Base::OperatorBase{
 
 public:

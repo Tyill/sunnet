@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// сумматор 2х и более слоев
+/// adder of 2 and more layers
 class Summator : SN_Base::OperatorBase{
 
 public:

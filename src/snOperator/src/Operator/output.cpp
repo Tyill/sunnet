@@ -29,8 +29,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-
-/// конец сети - оператор заглушка - ничего не должен делать!
+/// output layer
 Output::Output(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
         

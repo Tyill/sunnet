@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 
 
-/// Изменение размеров слоев
+/// Trimming the number of layers
 class Resize : SN_Base::OperatorBase{
 
 public:

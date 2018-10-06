@@ -29,7 +29,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// Выбор дальнейшего пути
+/// The choice of the path
 Switch::Switch(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 

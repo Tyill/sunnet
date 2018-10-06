@@ -30,7 +30,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-/// Соединение слоев
+/// Compound layers
 Concat::Concat(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 

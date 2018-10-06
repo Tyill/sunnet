@@ -30,7 +30,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-/// Изменение размеров слоев
+/// Trimming the number of layers
 Resize::Resize(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
