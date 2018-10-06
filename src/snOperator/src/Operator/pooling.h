@@ -29,7 +29,7 @@
 #include"SNOperator/src/mathFunctions.h"
 
 
-/// объединяющий слой
+/// pooling layer
 class Pooling : SN_Base::OperatorBase{
 
 public:
@@ -43,29 +43,29 @@ public:
         
 private:
         
-    size_t kernel_ = 2;                                               ///< размер
+    size_t kernel_ = 2;                                               ///< mask size
     
-    poolType poolType_ = poolType::max;                               ///< тип
+    poolType poolType_ = poolType::max;                               ///< type
                                                                       
-    SN_Base::snSize inSzMem_;                                         ///< размер вх данных
-    SN_Base::snSize inDataExpSz_;                                     ///< размер вх данных
-    std::vector<size_t> outInx_;                                      ///< индекс выбран эл-та (если maxPool)
+    SN_Base::snSize inSzMem_;                                         ///< input size mem
+    SN_Base::snSize inDataExpSz_;                                     ///< input size expand
+    std::vector<size_t> outInx_;                                      ///< index select elem
 
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
 
-    size_t paddingH_ = 0, paddingW_ = 0;                              ///< доп отступ по краям для свертки
+    size_t paddingH_ = 0, paddingW_ = 0;                              
     bool isPadding_ = false;
     
-    bool gpuClearMem_ = false;                                        ///< освобождать память
+    bool gpuClearMem_ = false;                                        ///< freee gpu mem
 
     uint32_t gpuDeviceId_ = 0;                                        ///< gpu id
 
-    calcMode calcMode_ = calcMode::CPU;                               ///< режим расчета
+    calcMode calcMode_ = calcMode::CPU;                               ///< calc mode
 
 
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
-    std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
+    std::map<std::string, void*> gpuParams_;                          
 
     void load(std::map<std::string, std::string>& prms);
         
@@ -78,80 +78,71 @@ private:
 
     /// CPU ///////////////////////////
 
-    /// прямой проход
-    void forwardCPU(poolType type,     ///< тип: max, avr..
-        size_t kernel,                 ///< размер маски
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* output,      ///< выход значения
-        size_t* outputInx);            ///< выход значения индекс ненулевого элемента
+    void forwardCPU(poolType type,     
+        size_t kernel,                 
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* output,      
+        size_t* outputInx);            
 
-    /// обратный проход
-    void backwardCPU(poolType type,    ///< тип: max, avr..
-        size_t kernel,                 ///< размер маски
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        size_t* outputInx,             ///< выход значения индекс ненулевого элемента
-        SN_Base::snFloat* gradIn,      ///< входной градиент
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* gradOut);    ///< выходной градиент
+   void backwardCPU(poolType type,    
+        size_t kernel,                
+        const SN_Base::snSize& outsz, 
+        size_t* outputInx,            
+        SN_Base::snFloat* gradIn,     
+        const SN_Base::snSize& insz,  
+        SN_Base::snFloat* gradOut);  
 
 
     /// CUDA ///////////////////////////
 
-    /// иниц вспом параметров CUDA          
     void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, std::map<std::string, void*>& gpuPrm);
 
-    /// освоб вспом параметров CUDA          
     void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
 
-    /// прямой проход CUDA
-    void forwardCUDA(poolType type,      ///< тип: max, avr..
-        size_t kernel,                   ///< размер маски
-        const SN_Base::snSize& insz,     ///< вход значения размер 
-        SN_Base::snFloat* input,         ///< вход значения
-        const SN_Base::snSize& outsz,    ///< выход значения размер 
-        SN_Base::snFloat* output,        ///< выход значения
-        size_t* outputInx,               ///< выход значения индекс ненулевого элемента
-        std::map<std::string, void*>&);  ///< вспом
+    void forwardCUDA(poolType type,     
+        size_t kernel,                  
+        const SN_Base::snSize& insz,    
+        SN_Base::snFloat* input,        
+        const SN_Base::snSize& outsz,   
+        SN_Base::snFloat* output,       
+        size_t* outputInx,              
+        std::map<std::string, void*>& gpuParams);
 
     /// обратный проход CUDA
-    void backwardCUDA(poolType type,     ///< тип: max, avr..
-        size_t kernel,                   ///< размер маски
-        const SN_Base::snSize& outsz,    ///< выход значения размер 
-        size_t* outputInx,               ///< выход значения индекс ненулевого элемента
-        SN_Base::snFloat* gradIn,        ///< входной градиент
-        const SN_Base::snSize& insz,     ///< вход значения размер 
-        SN_Base::snFloat* gradOut,       ///< выходной градиент
-        std::map<std::string, void*>&);  ///< вспом
+    void backwardCUDA(poolType type,    
+        size_t kernel,                  
+        const SN_Base::snSize& outsz,   
+        size_t* outputInx,              
+        SN_Base::snFloat* gradIn,       
+        const SN_Base::snSize& insz,    
+        SN_Base::snFloat* gradOut,      
+        std::map<std::string, void*>& gpuParams);
 
 
     /// OpenCL ///////////////////////////
 
-    /// иниц вспом параметров OpenCL          
     void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, std::map<std::string, void*>& gpuPrm);
 
-    /// освоб вспом параметров OpenCL          
     void freeParamOCL(std::map<std::string, void*>& gpuPrm);
 
-    /// прямой проход OpenCL
-    void forwardOCL(poolType type,        ///< тип: max, avr..
-        size_t kernel,                    ///< размер маски
-        const SN_Base::snSize& insz,      ///< вход значения размер 
-        SN_Base::snFloat* input,          ///< вход значения
-        const SN_Base::snSize& outsz,     ///< выход значения размер 
-        SN_Base::snFloat* output,         ///< выход значения
-        size_t* outputInx,                ///< выход значения индекс ненулевого элемента
-        std::map<std::string, void*>&);   ///< вспом
+    void forwardOCL(poolType type,        
+        size_t kernel,                    
+        const SN_Base::snSize& insz,      
+        SN_Base::snFloat* input,          
+        const SN_Base::snSize& outsz,     
+        SN_Base::snFloat* output,         
+        size_t* outputInx,                
+        std::map<std::string, void*>& gpuParams);
 
-    /// обратный проход OpenCL
-    void backwardOCL(poolType type,       ///< тип: max, avr..
-        size_t kernel,                    ///< размер маски
-        const SN_Base::snSize& outsz,     ///< выход значения размер 
-        size_t* outputInx,                ///< выход значения индекс ненулевого элемента
-        SN_Base::snFloat* gradIn,         ///< входной градиент
-        const SN_Base::snSize& insz,      ///< вход значения размер 
-        SN_Base::snFloat* gradOut,        ///< выходной градиент
-        std::map<std::string, void*>&);   ///< вспом
+   void backwardOCL(poolType type,       
+        size_t kernel,                   
+        const SN_Base::snSize& outsz,    
+        size_t* outputInx,               
+        SN_Base::snFloat* gradIn,        
+        const SN_Base::snSize& insz,     
+        SN_Base::snFloat* gradOut,       
+        std::map<std::string, void*>& gpuParams);
  
 };

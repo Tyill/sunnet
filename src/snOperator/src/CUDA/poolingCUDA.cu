@@ -88,14 +88,14 @@ void Pooling::freeParamCUDA(map<std::string, void*>& gpuPrm){
 
 __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* input, snSize outsz, snFloat* output, size_t* outputInx){
 
-    size_t outStepByD = outsz.w * outsz.h, // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d, // шаг вых слоя по батчу
-        inStepByD = insz.w * insz.h,       // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,    // шаг вх слоя по батчу
+    size_t outStepByD = outsz.w * outsz.h, // step out by output
+        outStepByN = outStepByD * outsz.d, // step out by batch
+        inStepByD = insz.w * insz.h,       // step in by input
+        inStepByN = inStepByD * insz.d,    // step in by batch
         kernelSz = kernel * kernel;     
 
-    // gridDim.x - кол-во вх/вых слоев
-    // gridDim.y - размер батча
+    // gridDim.x - number of input layers
+    // gridDim.y - batch sz
         
     input += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
     output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
@@ -111,7 +111,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
                                        
                 size_t posW = ox * kernel, posH = oy * kernel;
 
-                // ядро свертки   
+                // kernel
                 snFloat valMax = 0; size_t idx = 0;
 #pragma unroll
                 for (size_t c = 0; c < kernelSz; ++c){
@@ -142,7 +142,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
                                         
                 size_t posW = ox * kernel, posH = oy * kernel;
 
-                // ядро свертки   
+                // kernel
                 snFloat valMean = 0;
 #pragma unroll
                 for (size_t c = 0; c < kernelSz; ++c){
@@ -174,16 +174,16 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
         cuCHECK(cudaMalloc((void **)&d_idx, outsz.size() * sizeof(size_t))); 
     }
 
-    // вход данные
+    // input
     cuCHECK(cudaMemcpy(d_in, input, insz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
     
-    // выполнение     
+    // run     
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
     cuPoolFwd <<< dimGrid, dimBlock >>>(type, kernel, insz, d_in, outsz, d_out, d_idx);
 
-    // результ
+    // result
     cuCHECK(cudaMemcpy(output, d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
     cuCHECK(cudaMemcpy(outputInx, d_idx, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
@@ -196,14 +196,14 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
 
 __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
-    size_t outStepByD = outsz.w * outsz.h,     // шаг вых слоя по выходу
-           outStepByN = outStepByD * outsz.d,  // шаг вых слоя по батчу
-           inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-           inStepByN = inStepByD * insz.d,     // шаг вх слоя по батчу
+    size_t outStepByD = outsz.w * outsz.h,     // step out by output
+           outStepByN = outStepByD * outsz.d,  // step out by batch
+           inStepByD = insz.w * insz.h,        // step in by input
+           inStepByN = inStepByD * insz.d,     // step in by batch
            kernelSz = kernel * kernel;
     
-    // gridDim.x - кол-во вх/вых слоев
-    // gridDim.y - размер батча
+    // gridDim.x - number of input layers
+    // gridDim.y - batch sz
 
     gradIn += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
     gradOut += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
@@ -272,18 +272,18 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
         cuCHECK(cudaMalloc((void **)&d_idx, outsz.size() * sizeof(size_t)));
     }
 
-    // вход данные    
+    // input   
     cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
       
     cuCHECK(cudaMemcpy(d_idx, outputInx, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
   
-    // выполнение     
+    // run     
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
     cuPoolBwd <<< dimGrid, dimBlock >>>(type, kernel, outsz, d_idx, d_grin, insz, d_grout);
 
-    // результ
+    // result
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){

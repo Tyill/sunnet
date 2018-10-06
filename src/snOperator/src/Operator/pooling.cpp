@@ -30,8 +30,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// объединяющий слой
-
+/// pooling layer
 Pooling::Pooling(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
     OperatorBase(net, name, node, prms){
         
@@ -123,13 +122,12 @@ void Pooling::forward(SN_Base::Tensor* inTns){
     snSize insz = inTns->size();
     baseInput_ = inTns;
 
-    /// размер вх данных изменился?
     if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
     }
        
-    /// копируем со смещением padding для каждого изобр   
+    /// copy with offset padding for each image
     snFloat* in = baseInput_->getData();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
@@ -138,7 +136,7 @@ void Pooling::forward(SN_Base::Tensor* inTns){
         in = inTnsExp_.getData();
     }
 
-    /// расчет выходных значений
+    /// output calculation
     snFloat* out = baseOut_->getData();
    
     switch (calcMode_){
@@ -161,7 +159,7 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
         gradOut = gradOutExp_.getData();
     }
 
-    /// расчет вых градиента
+    /// grad calculation
     switch (calcMode_){
     case calcMode::CPU:    backwardCPU(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
     case calcMode::CUDA:   backwardCUDA(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
@@ -176,7 +174,7 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
 void Pooling::paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out){
 
-    /// копируем со смещением padding для каждого изобр
+    /// copy with offset padding for each image
 
     size_t paddW = paddingW_, paddH = paddingH_,
         sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
@@ -220,7 +218,7 @@ void Pooling::updateConfig(const snSize& newsz){
     outSz.w = (newsz.w - kernel_) / kernel_ + 1;
     outSz.h = (newsz.h - kernel_) / kernel_ + 1;
 
-    // проверка коррект
+    // check correct
     size_t resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;    
     isPadding_ = (resW != 0) || (resH != 0);
 

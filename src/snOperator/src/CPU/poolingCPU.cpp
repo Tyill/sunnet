@@ -34,10 +34,10 @@ using namespace SN_Base;
 void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx){
 
-    size_t inStepByD = insz.w * insz.h,           // шаг вх слоя по входу
-           inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
-           outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
-           outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
+    size_t inStepByD = insz.w * insz.h,           // step in by input
+           inStepByN = inStepByD * insz.d,        // step in by batch
+           outStepByD = outsz.w * outsz.h,        // step out by output
+           outStepByN = outStepByD * outsz.d,     // step out by batch
            kernelSz = kernel * kernel;
    
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
@@ -48,7 +48,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
     if (type == poolType::max){ // max
 
-        // по батчу
+        // by batch
 #pragma omp parallel for
         for (int n = 0; n < int(insz.n); ++n){
 
@@ -63,13 +63,13 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
                 memset(outBuff, 0, insz.d * sizeof(snFloat));
                 memset(outInxBuff, 0, insz.d * sizeof(size_t));
 
-                // ядро свертки
+                // kernel
                 for (size_t c = 0; c < kernelSz; ++c){
 
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // по всем вх слоям
+                    // by all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         snFloat val = *pIn;
                         pIn += inStepByD;
@@ -83,7 +83,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
                 size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
 
-                // по всем вых слоям
+                // by all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
 
                     *pOut = outBuff[k];
@@ -97,7 +97,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
     }
     else{ // mean
 
-        // по батчу
+        // by batch
 #pragma omp parallel for
         for (int n = 0; n < int(insz.n); ++n){
 
@@ -110,13 +110,13 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
                 memset(outBuff, 0, insz.d * sizeof(snFloat));
               
-                // ядро свертки
+                // kernel
                 for (size_t c = 0; c < kernelSz; ++c){
 
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // по всем вх слоям
+                    // by all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         outBuff[d] += *pIn;
                         pIn += inStepByD;
@@ -125,7 +125,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
                 snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
 
-                // по всем вых слоям
+                // by all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
                     *pOut = outBuff[k] / kernelSz;
                     pOut += outStepByD;
@@ -140,17 +140,17 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
 
 void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* gradIn, const snSize& insz, snFloat* gradOut){
 
-    size_t inStepByD = insz.w * insz.h,        // шаг вх слоя по входу
-        inStepByN = inStepByD * insz.d,        // шаг вх слоя по батчу
-        outStepByD = outsz.w * outsz.h,        // шаг вых слоя по выходу
-        outStepByN = outStepByD * outsz.d,     // шаг вых слоя по батчу
+    size_t inStepByD = insz.w * insz.h,        // step in by input
+        inStepByN = inStepByD * insz.d,        // step in by batch
+        outStepByD = outsz.w * outsz.h,        // step out by output
+        outStepByN = outStepByD * outsz.d,     // step out by batch
         kernelSz = kernel * kernel;
 
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
     if (type == poolType::max){ // max
 
-        // по батчу
+        // by batch
 #pragma omp parallel for
         for (int n = 0; n < int(insz.n); ++n){
 
@@ -163,7 +163,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
 
-                // по всем вх слоям
+                // by all input layers
                 for (size_t d = 0; d < insz.d; ++d){
 
                     size_t c = *pOutInx, cx = c % kernel, cy = c / kernel;
@@ -178,10 +178,10 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
     }
     else{ // mean
 
-        size_t shareStepByN = insz.d;                 // для локализации памяти
+        size_t shareStepByN = insz.d;                 // for local mem
         snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
-        // по батчу
+        // by batch
 #pragma omp parallel for
         for (int n = 0; n < int(insz.n); ++n){
 
@@ -194,19 +194,19 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
-                // по всем вых слоям
+                // // by all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
                     outBuff[k] = *pGrIn;
                     pGrIn += outStepByD;
                 }
 
-                // ядро свертки
+                // kernel
                 for (size_t c = 0; c < kernelSz; ++c){
 
                     size_t cx = c % kernel, cy = c / kernel;
                     snFloat* pGrOut = gradOut + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
-                    // по всем вх слоям
+                    // by all input layers
                     for (size_t d = 0; d < insz.d; ++d){
                         *pGrOut = outBuff[d] / kernelSz;
                         pGrOut += inStepByD;
@@ -222,12 +222,10 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
 #ifndef SN_CUDA
 
-/// иниц вспом параметров CUDA          
 void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-/// освоб вспом параметров CUDA          
 void Pooling::freeParamCUDA(map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
@@ -247,12 +245,10 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
 
 #ifndef SN_OpenCL
 
-/// иниц вспом параметров OpenCL         
 void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, size_t kernel, map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-/// освоб вспом параметров OpenCL          
 void Pooling::freeParamOCL(map<string, void*>& gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
