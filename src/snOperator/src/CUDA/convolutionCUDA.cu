@@ -72,6 +72,7 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
         gpuPrm["wsBwdDataSz"] = 0;
         gpuPrm["d_wsBwdW"] = 0;
         gpuPrm["wsBwdWSz"] = 0;
+        gpuPrm["d_bias"] = 0;
        
         isFirst = true;
     }  
@@ -145,8 +146,16 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
     if (!isFirst)
         cuCHECK(cudnnDestroyTensorDescriptor((cudnnTensorDescriptor_t)gpuPrm["grin_desc"]));
     gpuPrm["grin_desc"] = grin_desc;
+         
+    // bias
+    cudnnTensorDescriptor_t bias_desc;
+    cuCHECK(cudnnCreateTensorDescriptor(&bias_desc));
+    cuCHECK(cudnnSetTensor4dDescriptor(bias_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        1, out_c, 1, 1));
+    if (!isFirst)
+        cuCHECK(cudnnDestroyTensorDescriptor((cudnnTensorDescriptor_t)gpuPrm["bias_desc"]));
+    gpuPrm["bias_desc"] = bias_desc;
 
-   
     // algorithm
     cudnnConvolutionFwdAlgo_t* algoFwd = new cudnnConvolutionFwdAlgo_t();
     cuCHECK(cudnnGetConvolutionForwardAlgorithm(cudnn, in_desc, w_desc, conv_desc, out_desc,
@@ -190,13 +199,14 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
 
     if (isFirst && !gpuClearMem_){
         cuCHECK(cudaMalloc(&gpuPrm["d_in"], insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_w"], outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_dw"], outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_w"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_dw"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_out"], out_n * out_c * out_h * out_w * sizeof(snFloat)));  
         cuCHECK(cudaMalloc(&gpuPrm["d_grout"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsFwd"], *wsFwdSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdData"], *wsBwdDataSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdW"], *wsBwdWSz));
+        cuCHECK(cudaMalloc(&gpuPrm["d_bias"], outsz.d * sizeof(snFloat)));
     }   
     else if (!gpuClearMem_){        
         cuCHECK(cudaFree(gpuPrm["d_in"]));        gpuPrm["d_in"] = 0; 
@@ -207,15 +217,17 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
         cuCHECK(cudaFree(gpuPrm["d_wsFwd"]));     gpuPrm["d_wsFwd"] = 0;
         cuCHECK(cudaFree(gpuPrm["d_wsBwdData"])); gpuPrm["d_wsBwdData"] = 0;
         cuCHECK(cudaFree(gpuPrm["d_wsBwdW"]));    gpuPrm["d_wsBwdW"] = 0;
+        cuCHECK(cudaFree(gpuPrm["d_bias"]));      gpuPrm["d_bias"] = 0;
 
         cuCHECK(cudaMalloc(&gpuPrm["d_in"], insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_w"], outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_dw"], outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_w"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_dw"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_out"], out_n * out_c * out_h * out_w * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_grout"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsFwd"], *wsFwdSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdData"], *wsBwdDataSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdW"], *wsBwdWSz));
+        cuCHECK(cudaMalloc(&gpuPrm["d_bias"], outsz.d * sizeof(snFloat)));
     }
 }
 
@@ -232,6 +244,24 @@ void Convolution::freeParamCUDA(map<std::string, void*>& gpuPrm){
     }
 }
 
+__global__ void cuFwdBias(snSize outsz, snFloat* bias, snFloat* output){
+
+    size_t osz = outsz.w * outsz.h;
+      
+    snFloat* pOut = output + osz * outsz.d * blockIdx.x;
+    unsigned int d = threadIdx.x;
+    while (d < outsz.d){
+                
+        snFloat b = bias[d];
+        for (size_t j = 0; j < osz; ++j)
+            pOut[j] += b;
+
+        pOut += osz * blockDim.x;
+       
+        d += blockDim.x;
+    }    
+}
+
 void Convolution::forwardCUDA(const convParams& prms,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, map<string, void*>& gpuPrm){
 
@@ -239,13 +269,15 @@ void Convolution::forwardCUDA(const convParams& prms,
 
     snFloat* d_in = (snFloat*)gpuPrm["d_in"],
            * d_w = (snFloat*)gpuPrm["d_w"],           
-           * d_out = (snFloat*)gpuPrm["d_out"];
+           * d_out = (snFloat*)gpuPrm["d_out"],
+           * d_bias = (snFloat*)gpuPrm["d_bias"];
     void* d_wsFwd = (size_t*)gpuPrm["d_wsFwd"];
 
     if (gpuClearMem_){
         cuCHECK(cudaMalloc((void**)&d_in, insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc((void**)&d_w, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc((void**)&d_out, outsz.size() * sizeof(snFloat)));
+        cuCHECK(cudaMalloc((void**)&d_bias, outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&d_wsFwd, *(size_t*)gpuPrm["wsFwdSz"]));
     }
 
@@ -253,10 +285,12 @@ void Convolution::forwardCUDA(const convParams& prms,
     cuCHECK(cudaMemcpy(d_in, input, insz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // weight
-    cuCHECK(cudaMemcpy(d_w, weight, outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat), cudaMemcpyHostToDevice));
-
+    size_t wsz = outsz.d * insz.d * prms.fHeight * prms.fWidth;
+    cuCHECK(cudaMemcpy(d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(d_bias, weight + wsz, outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
+    
     // run
-    snFloat alpha = 1.f, beta = 0.f;
+    snFloat alpha = 1.f, beta = 0.f;   
     cuCHECK(cudnnConvolutionForward((cudnnHandle_t)gpuPrm["cudnnHandle"],
         &alpha,
         (cudnnTensorDescriptor_t)gpuPrm["in_desc"],
@@ -270,29 +304,17 @@ void Convolution::forwardCUDA(const convParams& prms,
         &beta,
         (cudnnTensorDescriptor_t)gpuPrm["out_desc"],
         d_out));
+ 
+    // +bias
+    cuFwdBias <<< insz.n, 128 >>> (outsz, d_bias, d_out);
 
     // result
     cuCHECK(cudaMemcpy(output, d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
     
-    // +bias
-    snFloat* pW = weight + outsz.d * insz.d * prms.fHeight * prms.fWidth;
-    size_t osz = outsz.w * outsz.h;
-    for (size_t n = 0; n < outsz.n; ++n){
-
-        snFloat* pOut = output + osz * outsz.d * n;
-        for (size_t i = 0; i < prms.kernel; ++i){
-                       
-            snFloat b = pW[i];
-            for (size_t j = 0; j < osz; ++j)
-                pOut[j] += b;
-
-            pOut += osz;
-        }
-    }
-
     if (gpuClearMem_){
         cuCHECK(cudaFree(d_in));
         cuCHECK(cudaFree(d_w));
+        cuCHECK(cudaFree(d_bias));
         cuCHECK(cudaFree(d_wsFwd));
         cuCHECK(cudaFree(d_out));
     }
@@ -307,6 +329,7 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
            * d_grin = (snFloat*)gpuPrm["d_out"],
            * d_w = (snFloat*)gpuPrm["d_w"],
            * d_dw = (snFloat*)gpuPrm["d_dw"],
+           * d_bias = (snFloat*)gpuPrm["d_bias"],
            * d_grout = (snFloat*)gpuPrm["d_grout"];
     void* d_wsBwdData = (size_t*)gpuPrm["d_wsBwdData"],
         * d_wsBwdW = (size_t*)gpuPrm["d_wsBwdW"];
@@ -314,9 +337,10 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
     if (gpuClearMem_){
         cuCHECK(cudaMalloc((void**)&d_in, insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc((void**)&d_w, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc((void**)&d_dw, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc((void**)&d_bias, outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc((void**)&d_grin, outsz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc((void**)&d_grout, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc((void**)&d_dw, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&d_wsBwdData, *(size_t*)gpuPrm["wsBwdDataSz"]));
         cuCHECK(cudaMalloc(&d_wsBwdW, *(size_t*)gpuPrm["wsBwdWSz"]));
     }
@@ -328,9 +352,93 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
     cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // weight
-    cuCHECK(cudaMemcpy(d_w, weight, outsz.d * insz.d * prms.fHeight * prms.fWidth * sizeof(snFloat), cudaMemcpyHostToDevice));
-    
+    size_t wsz = outsz.d * insz.d * prms.fHeight * prms.fWidth;
+    cuCHECK(cudaMemcpy(d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(d_bias, weight + wsz, outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
+
     // run   
+    auto cudnnHandle = (cudnnHandle_t)gpuPrm["cudnnHandle"];
+    auto grin_desc = (cudnnTensorDescriptor_t)gpuPrm["grin_desc"];
+    auto conv_desc = (cudnnConvolutionDescriptor_t)gpuPrm["conv_desc"];
+    snFloat alpha = 1.f, beta = 0.f;
+    cuCHECK(cudnnConvolutionBackwardData(cudnnHandle,
+        &alpha,
+        (cudnnFilterDescriptor_t)gpuPrm["w_desc"],
+        d_w,
+        grin_desc,
+        d_grin,
+        conv_desc,
+        *(cudnnConvolutionBwdDataAlgo_t*)gpuPrm["algoBwdData"],
+        d_wsBwdData,
+        *(size_t*)gpuPrm["wsBwdDataSz"],
+        &beta,
+        (cudnnTensorDescriptor_t)gpuPrm["grout_desc"],
+        d_grout));
+
+    cuCHECK(cudnnConvolutionBackwardFilter(cudnnHandle,
+        &alpha,
+        (cudnnTensorDescriptor_t)gpuPrm["in_desc"],
+        d_in,
+        grin_desc,
+        d_grin,
+        conv_desc,
+        *(cudnnConvolutionBwdFilterAlgo_t*)gpuPrm["algoBwdW"],
+        d_wsBwdW,
+        *(size_t*)gpuPrm["wsBwdWSz"],
+        &beta,
+        (cudnnFilterDescriptor_t)gpuPrm["dw_desc"],
+        d_dw));
+    
+    cuCHECK(cudnnConvolutionBackwardBias(cudnnHandle,
+        &alpha,
+        grin_desc,
+        d_grin,
+        &beta,
+        (cudnnTensorDescriptor_t)gpuPrm["bias_desc"],
+        d_bias));
+
+    // результ
+    cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(dWeightOut, d_dw, wsz * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(dWeightOut + wsz, d_bias, outsz.d * sizeof(snFloat), cudaMemcpyDeviceToHost));
+   
+    if (gpuClearMem_){
+        cuCHECK(cudaFree(d_in));
+        cuCHECK(cudaFree(d_w));
+        cuCHECK(cudaFree(d_grin));
+        cuCHECK(cudaFree(d_grout));
+        cuCHECK(cudaFree(d_dw));
+        cuCHECK(cudaFree(d_bias));
+        cuCHECK(cudaFree(d_wsBwdData));
+        cuCHECK(cudaFree(d_wsBwdW));
+    }
+}
+
+void Convolution::backwardCUDA_G(const convParams& prms,
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
+    
+    cudaSetDevice(gpuDeviceId_);
+      
+    snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
+           * d_w = (snFloat*)gpuPrm["d_w"],           
+           * d_grout = (snFloat*)gpuPrm["d_grout"];
+    void* d_wsBwdData = (size_t*)gpuPrm["d_wsBwdData"];
+
+    if (gpuClearMem_){
+        cuCHECK(cudaMalloc((void**)&d_w, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc((void**)&d_grin, outsz.size() * sizeof(snFloat)));
+        cuCHECK(cudaMalloc((void**)&d_grout, insz.size() * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&d_wsBwdData, *(size_t*)gpuPrm["wsBwdDataSz"]));      
+    }
+  
+    // grin
+    cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+
+    // weight
+    size_t wsz = outsz.d * insz.d * prms.fHeight * prms.fWidth;
+    cuCHECK(cudaMemcpy(d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
+  
+    // run      
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnConvolutionBackwardData((cudnnHandle_t)gpuPrm["cudnnHandle"],
         &alpha,
@@ -344,63 +452,17 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
         *(size_t*)gpuPrm["wsBwdDataSz"],
         &beta,
         (cudnnTensorDescriptor_t)gpuPrm["grout_desc"],
-        d_grout));
-
-    cuCHECK(cudnnConvolutionBackwardFilter((cudnnHandle_t)gpuPrm["cudnnHandle"],
-        &alpha,
-        (cudnnTensorDescriptor_t)gpuPrm["in_desc"],
-        d_in,
-        (cudnnTensorDescriptor_t)gpuPrm["grin_desc"],
-        d_grin,
-        (cudnnConvolutionDescriptor_t)gpuPrm["conv_desc"],
-        *(cudnnConvolutionBwdFilterAlgo_t*)gpuPrm["algoBwdW"],
-        d_wsBwdW,
-        *(size_t*)gpuPrm["wsBwdWSz"],
-        &beta,
-        (cudnnFilterDescriptor_t)gpuPrm["dw_desc"],
-        d_dw));
+        d_grout));    
 
     // результ
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
-    cuCHECK(cudaMemcpy(dWeightOut, d_dw, prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat), cudaMemcpyDeviceToHost));
    
-    if (gpuClearMem_){
-        cuCHECK(cudaFree(d_in));
+    if (gpuClearMem_){      
         cuCHECK(cudaFree(d_w));
         cuCHECK(cudaFree(d_grin));
-        cuCHECK(cudaFree(d_grout));
-        cuCHECK(cudaFree(d_dw));
-        cuCHECK(cudaFree(d_wsBwdData));
-        cuCHECK(cudaFree(d_wsBwdW));
+        cuCHECK(cudaFree(d_grout));        
+        cuCHECK(cudaFree(d_wsBwdData));        
     }
-}
-
-void Convolution::backwardCUDA_G(const convParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>& gpuPrm){
-    cudaSetDevice(gpuDeviceId_);
-
-    snFloat* d_grin = (snFloat*)gpuPrm["d_out"],
-        *d_w = (snFloat*)gpuPrm["d_w"],
-        *d_grout = (snFloat*)gpuPrm["d_grout"];
-
-   
-    //// вход данные
-    //cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
-
-    //// веса
-    //cuCHECK(cudaMemcpy(d_w, weight, (fWidth * fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
-
-    //// выход
-
-    //// выполнение   
-    //dim3 dimBlock(16, 16);
-    //dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
-
-    //cuConvBwd_G << < dimGrid, dimBlock >> > (fWidth, fHeight, dilate, stride, d_w, insz, outsz, d_grin, d_grout);
-
-    //// результ
-    //cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
-    //    
 }
 
 
@@ -510,7 +572,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t s
 
                 size_t posW = ox * stride, posH = oy * stride;
                                
-                // ядро свертки   
+                // kernel
                 snFloat csum = 0;
 #pragma unroll
                 for (size_t c = 0; c < wStepByD; ++c){
@@ -561,7 +623,7 @@ void Convolution::forwardCUDA(const convParams& prms,
     
     // result
     cuCHECK(cudaMemcpy(output, d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));  
-
+    
     if (gpuClearMem_){
         cuCHECK(cudaFree(d_in));
         cuCHECK(cudaFree(d_w));

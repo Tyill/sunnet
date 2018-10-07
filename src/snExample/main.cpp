@@ -248,6 +248,7 @@ int main(int argc, char* argv[])
     auto cll = sn::Convolution(25, sn::calcMode::CUDA);
     cll.padding = 0;
     cll.gpuClearMem = false;
+    cll.freeze = false;
 
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", cll, "P1")
