@@ -295,28 +295,28 @@ void Convolution::backwardCPU_G(const convParams& prms,
 
 /// init aux params CUDA          
 void Convolution::iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
-    const convParams&, std::map<std::string, void*>& gpuPrm){
+    const convParams&, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 /// free aux params CUDA          
-void Convolution::freeParamCUDA(map<string, void*>& gpuPrm){
+void Convolution::freeParamCUDA(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Convolution::forwardCUDA(const convParams&,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Convolution::backwardCUDA_GW(const convParams&,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 
 }
 
 void Convolution::backwardCUDA_G(const convParams&,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 

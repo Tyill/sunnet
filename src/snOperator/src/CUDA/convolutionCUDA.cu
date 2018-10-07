@@ -547,18 +547,21 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
     }
 }
 
-void Convolution::freeParamCUDA(void* gpuPrm){
+void Convolution::freeParamCUDA(void* gpuPrms){
  
     cudaSetDevice(gpuDeviceId_);
 
-   /* if (gpuPrm.find("cu_deviceProps") == gpuPrm.end()) return;
+    gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
-    delete (cudaDeviceProp*)gpuPrm["cu_deviceProps"];
+    if (!gpuPrm) return;
 
-    if (!gpuClearMem_){
-        for (auto p : gpuPrm)
-            if (p.first != "cu_deviceProps") cudaFree(p.second);
-    }*/
+    delete gpuPrm->cu_deviceProps;
+
+    cuCHECK(cudaFree(gpuPrm->d_in));
+    cuCHECK(cudaFree(gpuPrm->d_w));
+    cuCHECK(cudaFree(gpuPrm->d_out));
+    cuCHECK(cudaFree(gpuPrm->d_grout));
+    cuCHECK(cudaFree(gpuPrm->d_dw));
 }
 
 __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t stride,

@@ -43,6 +43,8 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 
 FullyConnected::~FullyConnected(){
     
+    baseInput_ = 0;
+
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else  if (calcMode_ == calcMode::OpenCL)
@@ -230,27 +232,20 @@ std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const
 void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snSize insz = inTns->size();
+    baseInput_ = inTns;
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
     }
-   
-    /// copy with bias offset for each image
-    size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
-        
-    snFloat* pInTns = inTns->getData();
-    snFloat* pDtMem = inDataExp_.data();
-    for (size_t i = 0; i < insz.n; ++i)
-        memcpy(pDtMem + i * stp + i + 1, pInTns + i * stp, ssz);
-       
+             
     /// calculation of the output values of neurons
     snFloat* out = baseOut_->getData();
         
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, insz, pDtMem, baseWeight_->getData(), out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, insz, pDtMem, baseWeight_->getData(), out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(kernel_, insz, inTns->getData(), baseWeight_->getData(), out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, insz, inTns->getData(), baseWeight_->getData(), out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, insz, inTns->getData(), baseWeight_->getData(), out, gpuParams_); break;
     }
 
     /// dropOut
@@ -316,9 +311,9 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* dWeight = auxParams_["dWeight"].data();
        
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, inDataExp_.data(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
                 
         // correct weight
@@ -368,11 +363,7 @@ void FullyConnected::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, s
 void FullyConnected::updateConfig(const snSize& newsz){
     
     size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
-    
-    inDataExp_.resize((stp + 1) * newsz.n);
-    for (size_t i = 0; i < newsz.n; ++i)
-        inDataExp_[i * stp + i] = 1.0F;
-
+        
     // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_->size().size();
     if (ntp > wcsz){

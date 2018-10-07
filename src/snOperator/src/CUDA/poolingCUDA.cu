@@ -176,10 +176,10 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->grin_desc));
     cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->grout_desc));
 
-    cudaFree(gpuPrm->d_in);
-    cudaFree(gpuPrm->d_out);
-    cudaFree(gpuPrm->d_grin);
-    cudaFree(gpuPrm->d_grout);
+    cuCHECK(cudaFree(gpuPrm->d_in));
+    cuCHECK(cudaFree(gpuPrm->d_out));
+    cuCHECK(cudaFree(gpuPrm->d_grin));
+    cuCHECK(cudaFree(gpuPrm->d_grout));
 }
 
 void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFloat* input,

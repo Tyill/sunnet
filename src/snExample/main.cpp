@@ -255,10 +255,10 @@ int main(int argc, char* argv[])
    pp.gpuClearMem = true;
   
 
-    snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", cll, "P1")
-        .addNode("P1", pp, "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+    snet.addNode("Input", sn::Input(), "FC1")
+       // .addNode("C1", cll, "P1")
+       // .addNode("P1", pp, "FC2")
+        .addNode("FC1", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 
@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 100; ++k){
+    for (int k = 0; k < 10000; ++k){
 
         fill_n(targetLayer, w1 * h1 * d * batchSz, 0.F);
         fill_n(outLayer, w1 * h1 * d * batchSz, 0.F);

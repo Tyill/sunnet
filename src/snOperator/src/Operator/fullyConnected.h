@@ -51,9 +51,7 @@ private:
     weightInitType weightInitType_ = weightInitType::he;      ///< init weight
     batchNormType batchNormType_ = batchNormType::none;       ///< batchNorm 
     SN_Base::snSize inSzMem_;                                 ///< input sz mem
-    std::vector<SN_Base::snFloat> inDataExp_;                 ///< input expand 
-   
-    
+     
     bool isFreeze_ = false;                                   ///< not change weight
     bool gpuClearMem_ = false;                                ///< free gpu mem
 

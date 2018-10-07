@@ -34,6 +34,8 @@ using namespace SN_Base;
 
 void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output){
 
+    size_t imSz = insz.w * insz.h * insz.d;
+
     // Out = α * In * W + βC
     // In - data input matrix - values from the previous layer
     // W - weights matrix
@@ -43,21 +45,30 @@ void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* inpu
         CBLAS_TRANSPOSE::CblasNoTrans,
         blasint(insz.n),                       // In, rows
         blasint(kernel),                       // W, cols
-        blasint(insz.w * insz.h * insz.d + 1), // In, cols, В М - rows (+1 - X0)                   
+        blasint(imSz),                         // In, cols, W, rows              
         1.0F,                                  // α
         input,                                 // In
-        blasint(insz.w * insz.h * insz.d + 1), // In, step to next In (X21 - X11) 
+        blasint(imSz),                         // In, step to next In
         weight,                                // W
         blasint(kernel),                       // W, step to next W (W21 - W11) 
         0.0,                                   // β
         output,                                // Out
         blasint(kernel));                      // Out, step to next Out (Y21 - Y11) 
+       
+    // +bias
+    weight += imSz * kernel;               
+    for (size_t i = 0; i < insz.n; ++i){
+   
+        snFloat* out = output + kernel * i;
+        for (size_t j = 0; j < kernel; ++j)
+            out[j] += weight[j];            
+     }
 }
 
 void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
     const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
-    size_t imSz = insz.w * insz.h * insz.d + 1;
+    size_t imSz = insz.w * insz.h * insz.d;
 
     // Grad by weight
     // dW = αIn^T * GrIn + βdW
@@ -66,7 +77,7 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
     cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasTrans,
         CBLAS_TRANSPOSE::CblasNoTrans,
-        blasint(imSz),                 // In, rows (+1 - X0)     
+        blasint(imSz),                 // In, rows     
         blasint(kernel),               // GrIn, cols
         blasint(insz.n),               // In, cols. GrIn, rows
         1.0F / insz.n,                 // α
@@ -86,21 +97,32 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
         CBLAS_TRANSPOSE::CblasNoTrans,
         CBLAS_TRANSPOSE::CblasTrans,
         blasint(insz.n),               // GrIn, rows
-        blasint(imSz - 1),             // W, cols
+        blasint(imSz),                 // W, cols
         blasint(kernel),               // GrIn, cols. W, rows
         1.0F,                          // α
         gradIn,                        // GrIn
         blasint(kernel),               // GrIn, step to next (I21 - I11) 
-        weight + kernel,               // W
+        weight,                        // W
         blasint(kernel),               // W, step to next W (W21 - W11) 
         0.0F,                          // β
         gradOut,                       // GrOut
-        blasint(imSz - 1));            // GrOut, step to next Y (Y21 - Y11) 
+        blasint(imSz));                // GrOut, step to next Y (Y21 - Y11) 
+
+    // bias
+    dWOut += imSz * kernel;
+    for (size_t i = 0; i < kernel; ++i){
+
+        snFloat* grin = gradIn + i, b = 0;
+        for (size_t j = 0; j < insz.n; ++j)
+            b += grin[kernel * j];
+
+        dWOut[i] = b;
+    }
 }
 
 void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut){
 
-    size_t imSz = insz.w * insz.h * insz.d + 1;
+    size_t imSz = insz.w * insz.h * insz.d;
 
     // Gradient for previous layer
     // GrOut = αGrIn * W^T + βGrOut
@@ -110,16 +132,16 @@ void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize&
         CBLAS_TRANSPOSE::CblasNoTrans,
         CBLAS_TRANSPOSE::CblasTrans,
         blasint(insz.n),               // GrIn, rows
-        blasint(imSz - 1),             // W, cols
+        blasint(imSz),                 // W, cols
         blasint(kernel),               // GrIn, cols
         1.0F,                          // α
         gradIn,                        // GrIn
         blasint(kernel),               // GrIn, step to next (I21 - I11) 
-        weight + kernel,               // W
+        weight,                        // W
         blasint(kernel),               // W,  step to next W (W21 - W11) 
         0.0F,                          // β 
         gradOut,                       // GrOut
-        blasint(imSz - 1));            // GrOut, step to next Y (Y21 - Y11) 
+        blasint(imSz));                // GrOut, step to next Y (Y21 - Y11) 
 }
 
 
