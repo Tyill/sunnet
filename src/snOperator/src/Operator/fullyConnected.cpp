@@ -237,7 +237,6 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     }
    
     /// copy with bias offset for each image
-    baseInput_ = inTns;    
     size_t stp = insz.w * insz.h * insz.d, ssz = stp * sizeof(snFloat);
         
     snFloat* pInTns = inTns->getData();

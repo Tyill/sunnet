@@ -33,8 +33,12 @@ using namespace SN_Base;
 Switch::Switch(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
+}
+
+Switch::~Switch(){
+
+    baseOut_ = 0;
 }
 
 std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -47,7 +51,7 @@ std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::ve
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
     }
     else{
        

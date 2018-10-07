@@ -34,7 +34,7 @@ public:
 
     Lock(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Lock() = default;
+    ~Lock();
                 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 

@@ -32,8 +32,12 @@ using namespace SN_Base;
 Lock::Lock(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    baseOut_ = new Tensor();
     baseGrad_ = new Tensor();
+}
+
+Lock::~Lock(){
+
+    baseOut_ = 0;
 }
 
 std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -49,10 +53,10 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
     }
     else{
-
+       
         *baseGrad_ = *neighbOpr[0]->getGradient();
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 

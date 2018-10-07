@@ -39,16 +39,16 @@ void batchNormForward(const SN_Base::snSize& insz, snFloat* in, snFloat* out, ba
     /// μ = 1/n * ∑x
     cblas_sgemv(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasTrans,
-        blasint(bsz),                 // x, строк - размер батча
-        blasint(inSz),                // x, столбцов 
-        1.F / bsz,                    // коэф
-        in,                           // x, данные
-        blasint(inSz),                // x, шаг до след 
-        prm.onc,                      // 1й вектор
-        blasint(1),                   // 1й вектор, шаг движения по вектору
-        0.F,                          // коэф
-        prm.mean,                     // μ, результ
-        blasint(1));                  // μ, шаг до след
+        blasint(bsz),                 
+        blasint(inSz),                
+        1.F / bsz,                    
+        in,                           
+        blasint(inSz),                
+        prm.onc,                      
+        blasint(1),                   
+        0.F,                          
+        prm.mean,                     
+        blasint(1));                  
      
    /// varce = sqrt(∑xx - mean^2 + e)
    for (size_t i = 0; i < inSz; ++i){
@@ -83,15 +83,15 @@ void batchNormBackward(const SN_Base::snSize& insz, snFloat* gradIn, snFloat* gr
     /// ∂f/∂β = ∑∂f/∂y
     cblas_sgemv(CBLAS_ORDER::CblasRowMajor,
         CBLAS_TRANSPOSE::CblasTrans,
-        blasint(bsz),                 // ∂f/∂y, строк - размер батча
-        blasint(inSz),                // ∂f/∂y, столбцов 
-        1.F,                          // коэф
-        gradIn,                       // ∂f/∂y, данные
-        blasint(inSz),                // ∂f/∂y, шаг до след
-        prm.onc,                      // 1й вектор
-        blasint(1),                   // 1й вектор, шаг движения по вектору
-        0.F,                          // коэф
-        prm.dSchift,                  // ∂f/∂β, результ
+        blasint(bsz),                 
+        blasint(inSz),                
+        1.F,                          
+        gradIn,                       
+        blasint(inSz),                
+        prm.onc,                      
+        blasint(1),                   
+        0.F,                          
+        prm.dSchift,                  
         blasint(1));
 
     /// ∂f/∂γ = ∑∂f/∂y ⋅ ^x

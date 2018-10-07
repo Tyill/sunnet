@@ -44,6 +44,8 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 
 Convolution::~Convolution(){
 
+    baseInput_ = 0;
+
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)

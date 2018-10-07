@@ -201,7 +201,7 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
         cuCHECK(cudaMalloc(&gpuPrm["d_in"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_w"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_dw"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_out"], out_n * out_c * out_h * out_w * sizeof(snFloat)));  
+        cuCHECK(cudaMalloc(&gpuPrm["d_out"], outsz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_grout"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsFwd"], *wsFwdSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdData"], *wsBwdDataSz));
@@ -222,7 +222,7 @@ void Convolution::iniParamCUDA(const snSize& insz, const snSize& outsz,
         cuCHECK(cudaMalloc(&gpuPrm["d_in"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_w"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_dw"], prms.fWidth * prms.fHeight * insz.d * outsz.d * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm["d_out"], out_n * out_c * out_h * out_w * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm["d_out"], outsz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_grout"], insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsFwd"], *wsFwdSz));
         cuCHECK(cudaMalloc(&gpuPrm["d_wsBwdData"], *wsBwdDataSz));

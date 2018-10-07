@@ -249,6 +249,8 @@ int main(int argc, char* argv[])
     cll.padding = 0;
     cll.gpuClearMem = false;
     cll.freeze = false;
+    cll.bnorm = sn::batchNormType::postActive;
+
 
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", cll, "P1")

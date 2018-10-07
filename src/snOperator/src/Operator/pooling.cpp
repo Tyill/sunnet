@@ -37,6 +37,11 @@ Pooling::Pooling(void* net, const string& name, const string& node, std::map<std
     load(prms);
 }
 
+Pooling::~Pooling(){
+
+    baseInput_ = 0;
+}
+
 void Pooling::load(std::map<std::string, std::string>& prms){
     
     baseOut_ = new Tensor();
@@ -95,7 +100,7 @@ std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::v
             return std::vector < std::string > {"noWay"};
         }
 
-        forward(neighbOpr[0]->getOutput());
+        forward(neighbOpr[0]->getOutput(), operPrm);
     }
     else{
         if (neighbOpr.size() == 1){
@@ -117,7 +122,7 @@ std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::v
     return std::vector<std::string>();
 }
 
-void Pooling::forward(SN_Base::Tensor* inTns){
+void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm){
 
     snSize insz = inTns->size();
     baseInput_ = inTns;
@@ -145,7 +150,7 @@ void Pooling::forward(SN_Base::Tensor* inTns){
     case calcMode::OpenCL: forwardOCL(poolType_, kernel_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
     }      
 
-    if (isPadding_)
+    if (!operPrm.isLerning && isPadding_)
         inTnsExp_.tfree();
 }
 
@@ -153,16 +158,18 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     snFloat* gradIn = inTns->getData();
         
+    snFloat* input = baseInput_->getData();
     snFloat* gradOut = baseGrad_->getData();
     if (isPadding_){
         gradOutExp_.resize(inDataExpSz_);
         gradOut = gradOutExp_.getData();
+        input = inTnsExp_.getData();
     }
 
     /// grad calculation
     switch (calcMode_){
     case calcMode::CPU:    backwardCPU(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
-    case calcMode::CUDA:   backwardCUDA(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
+    case calcMode::CUDA:   backwardCUDA(poolType_, kernel_, baseOut_->size(), outInx_.data(), baseOut_->getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_); break;
     case calcMode::OpenCL: backwardOCL(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
     }
    

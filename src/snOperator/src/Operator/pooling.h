@@ -36,7 +36,7 @@ public:
 
     Pooling(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Pooling() = default;
+    ~Pooling();
 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
     
@@ -73,7 +73,7 @@ private:
       
     void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 
-    void forward(SN_Base::Tensor* inTns);
+    void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 
     /// CPU ///////////////////////////
@@ -114,9 +114,11 @@ private:
     void backwardCUDA(poolType type,    
         size_t kernel,                  
         const SN_Base::snSize& outsz,   
-        size_t* outputInx,              
+        size_t* outputInx,       
+        SN_Base::snFloat* output,
         SN_Base::snFloat* gradIn,       
-        const SN_Base::snSize& insz,    
+        const SN_Base::snSize& insz,
+        SN_Base::snFloat* input,
         SN_Base::snFloat* gradOut,      
         std::map<std::string, void*>& gpuParams);
 
