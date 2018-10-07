@@ -247,14 +247,17 @@ int main(int argc, char* argv[])
     
     auto cll = sn::Convolution(25, sn::calcMode::CUDA);
     cll.padding = 0;
-    cll.gpuClearMem = false;
+    cll.gpuClearMem = true;
     cll.freeze = false;
     cll.bnorm = sn::batchNormType::postActive;
 
+    auto pp = sn::Pooling(2, sn::poolType::avg, sn::calcMode::CUDA);
+   pp.gpuClearMem = true;
+  
 
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", cll, "P1")
-        .addNode("P1", sn::Pooling(2, sn::poolType::max, sn::calcMode::CUDA), "FC2")
+        .addNode("P1", pp, "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 

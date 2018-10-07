@@ -81,8 +81,9 @@ private:
                      opt_lmbRegular_ = 0.001F;
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
-    std::map<std::string, void*> gpuParams_;                         
-       
+    
+    void* gpuParams_ = nullptr;                                       ///< gpu params 
+
 
     void load(std::map<std::string, std::string>& prms);
 
@@ -128,10 +129,10 @@ private:
 
     /// init aux params
     void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
-        const convParams&, std::map<std::string, void*>& gpuPrm);
+        const convParams&, void** gpuPrm);
    
     /// free aux params
-    void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
+    void freeParamCUDA(void* gpuPrm);
 
     void forwardCUDA(const convParams&,
         SN_Base::snFloat* weight,      
@@ -139,7 +140,7 @@ private:
         SN_Base::snFloat* input,       
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     /// calc grad and weight
     void backwardCUDA_GW(const convParams&,
@@ -150,7 +151,7 @@ private:
         SN_Base::snFloat* gradIn,      
         SN_Base::snFloat* gradOut,     
         SN_Base::snFloat* dWeightOut,  
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     /// calc grad
     void backwardCUDA_G(const convParams&,
@@ -159,17 +160,17 @@ private:
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* gradIn,      
         SN_Base::snFloat* gradOut,     
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
 
     /// OpenCL ///////////////////////////
 
     /// init aux params OpenCL          
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
-        const convParams&, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, 
+        const convParams&, void** gpuPrm);
 
     /// free aux params OpenCL          
-    void freeParamOCL(std::map<std::string, void*>& gpuPrm);
+    void freeParamOCL(void* gpuPrm);
 
     void forwardOCL(const convParams&,
         SN_Base::snFloat* weight,      
@@ -177,7 +178,7 @@ private:
         SN_Base::snFloat* input,       
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     /// calc grad and weight
     void backwardOCL_GW(const convParams&,
@@ -188,7 +189,7 @@ private:
         SN_Base::snFloat* gradIn,      
         SN_Base::snFloat* gradOut,     
         SN_Base::snFloat* dWeightOut,  
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     /// calc grad
     void backwardOCL_G(const convParams&,
@@ -197,5 +198,5 @@ private:
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* gradIn,      
         SN_Base::snFloat* gradOut,     
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 };

@@ -38,6 +38,7 @@ namespace SN_API{
 
         Tensor(const snLSize& lsz = snLSize(), std::vector<snFloat>& data = std::vector<snFloat>()){
         
+            chsz_ = 0;
             lsz_ = lsz;
             data_ = data;
         };

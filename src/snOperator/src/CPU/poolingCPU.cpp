@@ -245,21 +245,21 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
 
 #ifndef SN_OpenCL
 
-void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, size_t kernel, map<string, void*>& gpuPrm){
+void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, size_t kernel, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Pooling::freeParamOCL(map<string, void*>& gpuPrm){
+void Pooling::freeParamOCL(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Pooling::forwardOCL(poolType type, size_t kernel, const snSize& insz, snFloat* input,
-    const snSize& outsz, snFloat* output, size_t* outputInx, std::map<std::string, void*>&){
+    const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Pooling::backwardOCL(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx,
-    snFloat* gradIn, const snSize& insz, snFloat* gradOut, std::map<std::string, void*>&){
+    snFloat* gradIn, const snSize& insz, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

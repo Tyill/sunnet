@@ -212,10 +212,13 @@ namespace SN_API{
         /// @return true - ok
         bool addUserCBack(const std::string& name, snUserCBack cback, snUData udata){
 
+            bool ok = true;
             if (net_)
-                snAddUserCallBack(net_, name.c_str(), cback, udata);
+               ok = snAddUserCallBack(net_, name.c_str(), cback, udata);
             else
                 ucb_.push_back(uCBack{ name, cback, udata });
+
+            return ok;
         }
 
         /// architecture of net in json

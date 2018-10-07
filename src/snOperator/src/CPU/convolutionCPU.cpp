@@ -326,28 +326,28 @@ void Convolution::backwardCUDA_G(const convParams&,
 
 /// init aux params OpenCL          
 void Convolution::iniParamOCL(const snSize& insz, const snSize& outsz,
-    const convParams&, map<string, void*>& gpuPrm){
+    const convParams&, void** gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 /// free aux params OpenCL           
-void Convolution::freeParamOCL(map<string, void*>& gpuPrm){
+void Convolution::freeParamOCL(void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Convolution::forwardOCL(const convParams&,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, std::map<std::string, void*>& auxPrm){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Convolution::backwardOCL_GW(const convParams&,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 
 }
 
 void Convolution::backwardOCL_G(const convParams&,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, map<string, void*>&){
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

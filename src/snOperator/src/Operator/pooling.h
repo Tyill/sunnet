@@ -65,7 +65,7 @@ private:
 
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
-    std::map<std::string, void*> gpuParams_;                          
+    void* gpuParams_ = nullptr;                                       ///< gpu data
 
     void load(std::map<std::string, std::string>& prms);
         
@@ -97,9 +97,9 @@ private:
 
     /// CUDA ///////////////////////////
 
-    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, void** gpuPrm);
 
-    void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
+    void freeParamCUDA(void* gpuPrm);
 
     void forwardCUDA(poolType type,     
         size_t kernel,                  
@@ -108,7 +108,7 @@ private:
         const SN_Base::snSize& outsz,   
         SN_Base::snFloat* output,       
         size_t* outputInx,              
-        std::map<std::string, void*>& gpuParams);
+        void* gpuParams);
 
     /// обратный проход CUDA
     void backwardCUDA(poolType type,    
@@ -120,14 +120,14 @@ private:
         const SN_Base::snSize& insz,
         SN_Base::snFloat* input,
         SN_Base::snFloat* gradOut,      
-        std::map<std::string, void*>& gpuParams);
+        void* gpuParams);
 
 
     /// OpenCL ///////////////////////////
 
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, void** gpuPrm);
 
-    void freeParamOCL(std::map<std::string, void*>& gpuPrm);
+    void freeParamOCL(void* gpuPrm);
 
     void forwardOCL(poolType type,        
         size_t kernel,                    
@@ -136,7 +136,7 @@ private:
         const SN_Base::snSize& outsz,     
         SN_Base::snFloat* output,         
         size_t* outputInx,                
-        std::map<std::string, void*>& gpuParams);
+        void* gpuParams);
 
    void backwardOCL(poolType type,       
         size_t kernel,                   
@@ -145,6 +145,6 @@ private:
         SN_Base::snFloat* gradIn,        
         const SN_Base::snSize& insz,     
         SN_Base::snFloat* gradOut,       
-        std::map<std::string, void*>& gpuParams);
+        void* gpuParams);
  
 };

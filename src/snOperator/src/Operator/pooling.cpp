@@ -248,7 +248,7 @@ void Pooling::updateConfig(const snSize& newsz){
     outInx_.resize(outSz.size(), 0);
        
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(inDataExpSz_, outSz, kernel_, gpuParams_);
+        iniParamCUDA(inDataExpSz_, outSz, kernel_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(inDataExpSz_, outSz, kernel_, gpuParams_);
+        iniParamOCL(inDataExpSz_, outSz, kernel_, &gpuParams_);
 }
