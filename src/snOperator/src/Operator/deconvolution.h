@@ -44,172 +44,135 @@ public:
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
 private:
-        
-    size_t kernel_ = 10;                                        ///< кол-во вых слоев свертки
-    size_t fWidth_ = 3;                                         ///< длина слоя свертки
-    size_t fHeight_ = 3;                                        ///< высота слоя свертки   
-    size_t stride_ = 1;                                         ///< шаг перемещения свертки
-       
-    activeType activeType_ = activeType::relu;                  ///< тип ф-ии активации
-    optimizerType optimizerType_ = optimizerType::adam;         ///< тип оптимизатора весов
-    weightInitType weightInitType_ = weightInitType::he;        ///< тип инициализации весов
-    batchNormType batchNormType_ = batchNormType::none;         ///< тип batchNorm 
-    SN_Base::snSize inSzMem_;                                   ///< размер вх данных
+      
+    struct deconvParams{
+        size_t kernel = 10;                                     ///< number of output layers of convolution
+        size_t fWidth = 3;                                      ///< mask width
+        size_t fHeight = 3;                                     ///< mask height  
+        size_t stride = 1;                                      ///< mask step
+    };
+    deconvParams deconvParams_;
+
+    activeType activeType_ = activeType::relu;                  ///< activation type
+    optimizerType optimizerType_ = optimizerType::adam;         ///< optimizer
+    weightInitType weightInitType_ = weightInitType::he;        ///< weight init
+    batchNormType batchNormType_ = batchNormType::none;         ///< batchNorm 
+    SN_Base::snSize inSzMem_;                                   ///< insz mem
            
-    bool isFreeze_ = false;                                     ///< не менять веса
-    bool gpuClearMem_ = false;                                  ///< очищать память GPU
+    bool isFreeze_ = false;                                     ///< not change weight
+    bool gpuClearMem_ = false;                                  ///< clear mem GPU
       
     uint32_t gpuDeviceId_ = 0;                                  ///< gpu id
 
-    calcMode calcMode_ = calcMode::CPU;                         ///< режим расчета
+    calcMode calcMode_ = calcMode::CPU;                         ///< calc mode
 
-    SN_Base::snFloat dropOut_ = 0.F;                            ///< случ отключение нейронов
+    SN_Base::snFloat dropOut_ = 0.F;                            ///< rand off output
 
-    SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< оптимизация изм весов
+    SN_Base::snFloat opt_decayMomentDW_ = 0.9F,                 ///< optimizer weight coef
                      opt_decayMomentWGr_ = 0.99F,
                      opt_lmbRegular_ = 0.001F;
   
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< вспом данные для расчета
-    std::map<std::string, void*> gpuParams_;                          ///< вспом для CUDA и OpenCL
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
+    void* gpuParams_ = nullptr     ;                                  ///< aux GPU
 
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
 
-    void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm& prm);
+    void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
        
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
        
     /// CPU ///////////////////////////
 
-    /// прямой проход
-    void forwardCPU(size_t kernel,     ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* output);     ///< выход знач (скрытых нейронов) для след слоя
+    void forwardCPU(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* output);     
+    
+    void backwardCPU_GW(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* gradIn,      
+        SN_Base::snFloat* gradOut,     
+        SN_Base::snFloat* dWeightOut); 
 
-    /// обратный проход. Расчет град-в и весов
-    void backwardCPU_GW(size_t kernel, ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        SN_Base::snFloat* dWeightOut); ///< дельта изменения весов
-
-    /// обратный проход. Расчет град-в
-    void backwardCPU_G(size_t kernel,  ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut);    ///< выход градиент ошибки для след слоя
+    void backwardCPU_G(const deconvParams&,
+        SN_Base::snFloat* weight,     
+        const SN_Base::snSize& insz,  
+        const SN_Base::snSize& outsz, 
+        SN_Base::snFloat* gradIn,     
+        SN_Base::snFloat* gradOut);   
 
 
 
     /// CUDA ///////////////////////////
 
-    /// иниц вспом параметров CUDA          
-    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, const deconvParams&, void** gpuPrm);
 
-    /// освоб вспом параметров CUDA          
-    void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
+    void freeParamCUDA(void* gpuPrm);
 
-    /// прямой проход CUDA
-    void forwardCUDA(size_t kernel,    ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
-        std::map<std::string, void*>&); ///< вспом  
+    void forwardCUDA(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* output,      
+        void* gpuPrm);
 
-    /// обратный проход CUDA. Расчет град-в и весов
-    void backwardCUDA_GW(size_t kernel, ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
-        std::map<std::string, void*>&);  ///< вспом 
+    void backwardCUDA_GW(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* gradIn,      
+        SN_Base::snFloat* gradOut,     
+        SN_Base::snFloat* dWeightOut,  
+        void* gpuPrm);
 
-    /// обратный проход CUDA. Расчет град-в
-    void backwardCUDA_G(size_t kernel,  ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        std::map<std::string, void*>&);  ///< вспом 
+    void backwardCUDA_G(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* gradIn,      
+        SN_Base::snFloat* gradOut,     
+        void* gpuPrm);
 
 
     /// OpenCL ///////////////////////////
 
-    /// иниц вспом параметров OpenCL          
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t fWidth, size_t fHeight, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, const deconvParams&, void** gpuPrm);
 
-    /// освоб вспом параметров OpenCL          
-    void freeParamOCL(std::map<std::string, void*>& gpuPrm);
+    void freeParamOCL(void* gpuPrm);
 
-    /// прямой проход OpenCL
-    void forwardOCL(size_t kernel,     ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* output,      ///< выход знач (скрытых нейронов) для след слоя
-        std::map<std::string, void*>&); ///< вспом  
+    void forwardOCL(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* output,      
+        void* gpuPrm);
+    
+    void backwardOCL_GW(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        SN_Base::snFloat* input,       
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* gradIn,      
+        SN_Base::snFloat* gradOut,     
+        SN_Base::snFloat* dWeightOut,  
+        void* gpuPrm);
 
-    /// обратный проход OpenCL. Расчет град-в и весов
-    void backwardOCL_GW(size_t kernel, ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        SN_Base::snFloat* input,       ///< вход значения 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        SN_Base::snFloat* dWeightOut,  ///< дельта изменения весов
-        std::map<std::string, void*>&);  ///< вспом 
-
-    /// обратный проход OpenCL. Расчет град-в
-    void backwardOCL_G(size_t kernel,  ///< колво вых слоев
-        size_t fWidth,                 ///< ширина маски
-        size_t fHeight,                ///< высота маски
-        size_t stride,                 ///< шаг движения маски
-        SN_Base::snFloat* weight,      ///< веса
-        const SN_Base::snSize& insz,   ///< вход значения размер 
-        const SN_Base::snSize& outsz,  ///< выход значения размер 
-        SN_Base::snFloat* gradIn,      ///< вход градиент ошибки с пред слоя
-        SN_Base::snFloat* gradOut,     ///< выход градиент ошибки для след слоя
-        std::map<std::string, void*>&);  ///< вспом 
+    void backwardOCL_G(const deconvParams&,
+        SN_Base::snFloat* weight,      
+        const SN_Base::snSize& insz,   
+        const SN_Base::snSize& outsz,  
+        SN_Base::snFloat* gradIn,      
+        SN_Base::snFloat* gradOut,     
+        void* gpuPrm);
 };

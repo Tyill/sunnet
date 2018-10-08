@@ -40,7 +40,6 @@ using namespace SN_Base;
 struct gpuParams{
 
     cudnnHandle_t cudnn = 0;
-    cudaDeviceProp* cu_deviceProps = 0;
     cudnnPoolingDescriptor_t pool_desc = 0;
     cudnnTensorDescriptor_t in_desc = 0;
     cudnnTensorDescriptor_t out_desc = 0;
@@ -62,18 +61,14 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
     if (!gpuPrm){
   
-        cudaDeviceProp* cu_deviceProps = new cudaDeviceProp();
-
-        cudaGetDeviceProperties(cu_deviceProps, 0);
-        if (cu_deviceProps->major < 2){
-            ERROR_MESS("%s requires SM >= 2.0");
-            delete cu_deviceProps;
+        cudaDeviceProp cu_deviceProps;
+        cudaGetDeviceProperties(&cu_deviceProps, 0);
+        if (cu_deviceProps.major < 3){
+            ERROR_MESS("%s requires SM >= 3.0");
             return;
         }
         gpuPrm = new gpuParams();
         *pGpuPrm = gpuPrm;
-
-        gpuPrm->cu_deviceProps = cu_deviceProps;
        
         cudnnHandle_t cudnn = nullptr;
         cuCHECK(cudnnCreate(&cudnn));
@@ -85,7 +80,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     // input
     cudnnTensorDescriptor_t in_desc = nullptr;
     cuCHECK(cudnnCreateTensorDescriptor(&in_desc));
-    cuCHECK(cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, insz.n, insz.d, insz.h, insz.w));
+    cuCHECK(cudnnSetTensor4dDescriptor(in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, int(insz.n), int(insz.d), int(insz.h), int(insz.w)));
     if (!isFirst)
         cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->in_desc));
     gpuPrm->in_desc = in_desc;
@@ -93,7 +88,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     // grout
     cudnnTensorDescriptor_t grout_desc;
     cuCHECK(cudnnCreateTensorDescriptor(&grout_desc));
-    cuCHECK(cudnnSetTensor4dDescriptor(grout_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, insz.n, insz.d, insz.h, insz.w));
+    cuCHECK(cudnnSetTensor4dDescriptor(grout_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, int(insz.n), int(insz.d), int(insz.h), int(insz.w)));
     if (!isFirst)
         cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->grout_desc));
     gpuPrm->grout_desc = grout_desc;
@@ -107,7 +102,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
         poolType = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolType, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
-        kernel, kernel, 0, 0, kernel, kernel));
+        int(kernel), int(kernel), 0, 0, int(kernel), int(kernel)));
     if (!isFirst)
         cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
     gpuPrm->pool_desc = pool_desc;
@@ -166,9 +161,7 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
-
-    delete gpuPrm->cu_deviceProps;
-
+    
     cuCHECK(cudnnDestroy(gpuPrm->cudnn));
     cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
     cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->in_desc));
@@ -211,8 +204,8 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     cuCHECK(cudaMemcpy(output, gpuPrm->d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
-        cuCHECK(cudaFree(gpuPrm->d_in)); 
-        cuCHECK(cudaFree(gpuPrm->d_out));
+        cuCHECK(cudaFree(gpuPrm->d_in));   gpuPrm->d_in = 0;
+        cuCHECK(cudaFree(gpuPrm->d_out));  gpuPrm->d_out = 0;
     }
 }
 
@@ -257,10 +250,10 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
     cuCHECK(cudaMemcpy(gradOut, gpuPrm->d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
-        cuCHECK(cudaFree(gpuPrm->d_in));
-        cuCHECK(cudaFree(gpuPrm->d_out));
-        cuCHECK(cudaFree(gpuPrm->d_grin));
-        cuCHECK(cudaFree(gpuPrm->d_grout));
+        cuCHECK(cudaFree(gpuPrm->d_in));     gpuPrm->d_in = 0;
+        cuCHECK(cudaFree(gpuPrm->d_out));    gpuPrm->d_out = 0;
+        cuCHECK(cudaFree(gpuPrm->d_grin));   gpuPrm->d_grin = 0;
+        cuCHECK(cudaFree(gpuPrm->d_grout));  gpuPrm->d_grout = 0;
     }
 }
 
@@ -278,32 +271,27 @@ using namespace SN_Base;
 #endif
 
 struct gpuParams{
-
-    cudaDeviceProp* cu_deviceProps = 0;
-
+  
     snFloat* d_in = 0;
     snFloat* d_out = 0;    
     size_t* d_idx = 0;
 };
 
 void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** pGpuPrm){
+   
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
     if (!gpuPrm){
 
-        cudaDeviceProp* cu_deviceProps = new cudaDeviceProp();
-              
-        cudaGetDeviceProperties(cu_deviceProps, 0);
-        if (cu_deviceProps->major < 2){
+        cudaDeviceProp cu_deviceProps;              
+        cudaGetDeviceProperties(&cu_deviceProps, 0);
+        if (cu_deviceProps.major < 2){
             ERROR_MESS("%s requires SM >= 2.0");
-            delete cu_deviceProps;
             return;
         }
         gpuPrm = new gpuParams();
         *pGpuPrm = gpuPrm;
-
-        gpuPrm->cu_deviceProps = cu_deviceProps;
         
         if (!gpuClearMem_){
             cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat))); 
@@ -330,9 +318,7 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
-
-    delete gpuPrm->cu_deviceProps;
-
+   
     cudaFree(gpuPrm->d_in);
     cudaFree(gpuPrm->d_out);
     cudaFree(gpuPrm->d_idx);  
@@ -431,16 +417,22 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
-    cuPoolFwd <<< dimGrid, dimBlock >>>(type, kernel, insz, gpuPrm->d_in, outsz, gpuPrm->d_out, gpuPrm->d_idx);
+    cuPoolFwd <<< dimGrid, dimBlock >>>(type,
+        kernel, 
+        insz, 
+        gpuPrm->d_in,
+        outsz, 
+        gpuPrm->d_out,
+        gpuPrm->d_idx);
 
     // result
     cuCHECK(cudaMemcpy(output, gpuPrm->d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
     cuCHECK(cudaMemcpy(outputInx, gpuPrm->d_idx, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
-        cuCHECK(cudaFree(gpuPrm->d_in));
-        cuCHECK(cudaFree(gpuPrm->d_out));
-        cuCHECK(cudaFree(gpuPrm->d_idx));
+        cuCHECK(cudaFree(gpuPrm->d_in));   gpuPrm->d_in = 0;
+        cuCHECK(cudaFree(gpuPrm->d_out));  gpuPrm->d_out = 0;
+        cuCHECK(cudaFree(gpuPrm->d_idx));  gpuPrm->d_idx = 0;
     }
 }
 
@@ -510,6 +502,7 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
 
 void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
     const snSize& insz, SN_Base::snFloat* input, snFloat* gradOut, void* gpuPrms){
+  
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
@@ -533,15 +526,21 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
     dim3 dimBlock(16, 16);
     dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
 
-    cuPoolBwd <<< dimGrid, dimBlock >>>(type, kernel, outsz, d_idx, d_grin, insz, d_grout);
+    cuPoolBwd <<< dimGrid, dimBlock >>>(type,
+        kernel, 
+        outsz,
+        d_idx, 
+        d_grin, 
+        insz, 
+        d_grout);
 
     // result
     cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
-        cuCHECK(cudaFree(d_grin));
-        cuCHECK(cudaFree(d_grout));
-        cuCHECK(cudaFree(d_idx));
+        cuCHECK(cudaFree(d_grin));    gpuPrm->d_out = 0;
+        cuCHECK(cudaFree(d_grout));   gpuPrm->d_in = 0;
+        cuCHECK(cudaFree(d_idx));     gpuPrm->d_idx = 0;
     }
 }
 

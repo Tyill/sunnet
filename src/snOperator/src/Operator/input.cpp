@@ -35,6 +35,11 @@ OperatorBase(net, name, node, prms){
     
 }
 
+Input::~Input(){
+
+    baseOut_ = 0;
+}
+
 bool Input::setInput(SN_Base::Tensor* args){
     baseOut_ = args;
     return true;

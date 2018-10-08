@@ -34,7 +34,7 @@ public:
 
     Input(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-    ~Input() = default;
+    ~Input();
 
     bool setInput(SN_Base::Tensor* args) override;
             

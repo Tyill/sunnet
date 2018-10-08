@@ -44,6 +44,8 @@ Deconvolution::Deconvolution(void* net, const string& name, const string& node, 
 
 Deconvolution::~Deconvolution(){
 
+    baseInput_ = 0;
+
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
@@ -70,11 +72,11 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
         
-    setIntParam("kernel", false, true, kernel_);
-    setIntParam("fWidth", false, false, fWidth_);
-    setIntParam("fHeight", false, false, fHeight_);
+    setIntParam("kernel", false, true, deconvParams_.kernel);
+    setIntParam("fWidth", false, false, deconvParams_.fWidth);
+    setIntParam("fHeight", false, false, deconvParams_.fHeight);
   
-    setIntParam("stride", false, false, stride_);
+    setIntParam("stride", false, false, deconvParams_.stride);
   
     if (prms.find("batchNorm") != prms.end()){
 
@@ -251,9 +253,9 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
     snSize outsz = baseOut_->size();
 
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, fWidth_, fHeight_, stride_, weight, insz, pInTns, outsz, out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(deconvParams_, weight, insz, pInTns, outsz, out); break;
+    case calcMode::CUDA:   forwardCUDA(deconvParams_, weight, insz, pInTns, outsz, out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(deconvParams_, weight, insz, pInTns, outsz, out, gpuParams_); break;
     }
 
     /// dropOut
@@ -323,9 +325,9 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         snFloat* dWeight = auxParams_["dWeight"].data();
         
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(kernel_, fWidth_, fHeight_, stride_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(deconvParams_, weight, insz, in, outsz, gradIn, grOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(deconvParams_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(deconvParams_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
         }
 
         // корректируем веса
@@ -344,14 +346,14 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut); break;
-        case calcMode::CUDA:   backwardCUDA_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_G(kernel_, fWidth_, fHeight_, stride_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_G(deconvParams_, weight, insz, outsz, gradIn, grOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(deconvParams_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(deconvParams_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
         }
     }        
 }
 
-void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
+void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
 
     /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
 
@@ -369,10 +371,8 @@ void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, sn
                 for (size_t k = 0; k < stepD; ++k)
                     cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
             }
-            prm.offset(int(stepD));
-        }
-
-        prm.offset(-int(stepD * insz.d));
+            prm.offset(stepD);
+        }       
     }
     else{
 
@@ -391,9 +391,9 @@ void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, sn
             }
 
             if (fwBw)
-               batchNormForward(sz, share, share, baseBatchNorm_);                  
+                batchNormForward(sz, share, share, prm);
             else
-               batchNormBackward(sz, share, share, baseBatchNorm_);
+                batchNormBackward(sz, share, share, prm);
               
             pSh = share;
             snFloat* pOut = out + stepD * i;
@@ -403,19 +403,17 @@ void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, sn
                 pOut += stepN;
             }
 
-            prm.offset(int(stepD));
+            prm.offset(stepD);
             prm.norm += stepD * bsz;
         }
         free(share);
-
-        prm.offset(-int(stepD * insz.d));
-        prm.norm -= stepD * insz.d * bsz;
     }         
 }
 
 void Deconvolution::updateConfig(const snSize& newsz){
     
-    size_t stp = fWidth_ * fHeight_ * kernel_, ntp = (stp + 1) * newsz.d;
+    size_t stp = deconvParams_.fWidth * deconvParams_.fHeight * deconvParams_.kernel,
+        ntp = (stp + 1) * newsz.d;
         
     // имеющиеся веса оставляем как есть, остаток инициализируем
     size_t wcsz = baseWeight_->size().size();
@@ -426,16 +424,16 @@ void Deconvolution::updateConfig(const snSize& newsz){
         switch (weightInitType_){
         case weightInitType::uniform: wi_uniform(wd + wcsz, ntp - wcsz); break;
         case weightInitType::he: wi_he(wd + wcsz, ntp - wcsz, stp + 1); break;
-        case weightInitType::lecun:wi_lecun(wd + wcsz, ntp - wcsz, kernel_); break;
-        case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, kernel_); break;
+        case weightInitType::lecun:wi_lecun(wd + wcsz, ntp - wcsz, deconvParams_.kernel); break;
+        case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, deconvParams_.kernel); break;
         }
     }
         
-    snSize outSz(0, 0, kernel_, newsz.n);
+    snSize outSz(0, 0, deconvParams_.kernel, newsz.n);
         
    
-    outSz.w = (newsz.w - 1) * stride_ + fWidth_;
-    outSz.h = (newsz.h - 1) * stride_ + fHeight_;
+    outSz.w = (newsz.w - 1) * deconvParams_.stride + deconvParams_.fWidth;
+    outSz.h = (newsz.h - 1) * deconvParams_.stride + deconvParams_.fHeight;
     
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
@@ -461,9 +459,9 @@ void Deconvolution::updateConfig(const snSize& newsz){
     }  
 
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(newsz, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamCUDA(newsz, outSz, deconvParams_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(newsz, outSz, fWidth_, fHeight_, gpuParams_);
+        iniParamOCL(newsz, outSz, deconvParams_, &gpuParams_);
 } 
 
 

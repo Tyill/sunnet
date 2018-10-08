@@ -35,6 +35,11 @@ OperatorBase(net, name, node, prms){
         
 }
 
+Output::~Output(){
+
+    baseOut_ = 0;
+}
+
 std::vector<std::string> Output::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
         
     if (neighbOpr.size() > 1){

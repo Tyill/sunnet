@@ -222,21 +222,6 @@ bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, v
     return true;
 }
 
-void showImg(){
-
-    /*cv::Mat imggg = img.clone();
-    cv::resize(imggg, imggg, cv::Size(500, 500));
-    string tt;
-    for (int h = 0; h < 10; ++h)
-    tt += " " + to_string(int(refTarget[h])) + " ";
-    cv::putText(imggg, tt,
-    cv::Point(25, 25), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar::all(255), 1);
-
-    cv::imshow("", imggg);
-    cv::waitKey(1000);
-    */
-}
-
 int main(int argc, char* argv[])
 {
     namespace sn = SN_API;
@@ -245,20 +230,28 @@ int main(int argc, char* argv[])
 
     sn::Net snet;
     
-    auto cll = sn::Convolution(25, sn::calcMode::CUDA);
-    cll.padding = 0;
-    cll.gpuClearMem = true;
-    cll.freeze = false;
-    cll.bnorm = sn::batchNormType::postActive;
+    auto c1 = sn::Convolution(15, sn::calcMode::CUDA);
+    c1.padding = 0;
+    c1.gpuClearMem = false;
+    c1.freeze = false;
+    c1.bnorm = sn::batchNormType::none;
 
-    auto pp = sn::Pooling(2, sn::poolType::avg, sn::calcMode::CUDA);
-   pp.gpuClearMem = true;
+    auto dc1 = sn::Deconvolution(15, sn::calcMode::CUDA);
+    dc1.gpuClearMem = true;
+    dc1.freeze = false;
+    dc1.bnorm = sn::batchNormType::beforeActive;
+
+   // auto p1 = sn::Pooling(2, sn::poolType::avg, sn::calcMode::CUDA);
+   // p1.gpuClearMem = false;
   
+    auto fc1 = sn::FullyConnected(10, sn::calcMode::CUDA);
+   // fc1.freeze = true;
+    fc1.gpuClearMem = true;
 
-    snet.addNode("Input", sn::Input(), "FC1")
-       // .addNode("C1", cll, "P1")
-       // .addNode("P1", pp, "FC2")
-        .addNode("FC1", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
+    snet.addNode("Input", sn::Input(), "C1")
+        .addNode("C1", c1, "DC1")
+        .addNode("DC1", dc1, "FC1")
+        .addNode("FC1", fc1, "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 
@@ -287,17 +280,17 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SN_API::snFloat* inLayer = new SN_API::snFloat[w * h * d * batchSz];
-    SN_API::snFloat* targetLayer = new SN_API::snFloat[w1 * h1 * d * batchSz];
-    SN_API::snFloat* outLayer = new SN_API::snFloat[w1 * h1 * d * batchSz];
-
+    sn::Tensor inLayer(sn::snLSize(w, h, d, batchSz));
+    sn::Tensor targetLayer(sn::snLSize(w1, h1, d, batchSz));
+    sn::Tensor outLayer(sn::snLSize(w1, h1, d, batchSz));
+       
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 10000; ++k){
+    for (int k = 0; k < 10; ++k){
 
-        fill_n(targetLayer, w1 * h1 * d * batchSz, 0.F);
-        fill_n(outLayer, w1 * h1 * d * batchSz, 0.F);
+        targetLayer.clear();
+        outLayer.clear();
 
         Sleep(1); srand(clock());
 
@@ -323,27 +316,53 @@ int main(int argc, char* argv[])
 
             cv::resize(img, img, cv::Size(w, h));
 
-            float* refData = inLayer + i * w * h;
+            float* refData = inLayer.data() + i * w * h;
            
             double mean = cv::mean(img)[0];
             size_t nr = img.rows, nc = img.cols;
             for (size_t r = 0; r < nr; ++r){
                 uchar* pt = img.ptr<uchar>(r);
                 for (size_t c = 0; c < nc; ++c)
-                    refData[r * nc + c] = pt[c];// -mean;
+                    refData[r * nc + c] = pt[c];
             } 
 
-            float* tarData = targetLayer + i * w1 * h1;
+            float* tarData = targetLayer.data() + i * w1 * h1;
 
             tarData[ndir] = 1;
         }
 
         float accurat = 0;
         snet.training(lr,
-            sn::Tensor(sn::snLSize(w, h, d, batchSz), inLayer),
-            sn::Tensor(sn::snLSize(w1, h1, d, batchSz), outLayer),
-            sn::Tensor(sn::snLSize(w1, h1, d, batchSz), targetLayer),
+            inLayer,
+            outLayer,
+            targetLayer,
             accurat);
+
+        snFloat* targetData = targetLayer.data();
+        snFloat* outData = outLayer.data();
+
+        size_t accCnt = 0, bsz = batchSz, osz = w1;
+        for (int i = 0; i < bsz; ++i){
+
+            float* refTarget = targetData + i * osz;
+            float* refOutput = outData + i * osz;
+
+            if (osz > 1){
+                int maxOutInx = distance(refOutput, max_element(refOutput, refOutput + osz)),
+                    maxTargInx = distance(refTarget, max_element(refTarget, refTarget + osz));
+
+                if (maxTargInx == maxOutInx)
+                    ++accCnt;
+            }
+            else{
+
+                if (abs(refOutput[0] - refTarget[0]) < 0.1)
+                    ++accCnt;
+            }
+        }
+
+        accurat = (accCnt * 1.F) / bsz;
+
 
         accuratSumm += accurat;     
         cout << k << " metrix " << accuratSumm / k << " " << snet.getLastErrorStr() << endl;
@@ -351,8 +370,12 @@ int main(int argc, char* argv[])
         
     }
 
-    SN_API::Tensor ow;
-    snet.getWeightNode("FC2", ow);
+    snet.~Net();
+
+    //SN_API::Tensor ow;
+   // snet.getWeightNode("FC2", ow);
+
+    
 
     //SN_API::snSaveAllWeightToFile(snet, "c:\\\C++\\ww\\w.dat");
     //writeWeight(snet);
@@ -362,38 +385,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-
-//
-//
-//float a[15] = { 3., 1., 2., 3., 3.,                  // 3   0  5   
-//               0., -1., 4., 3., 8., // 2 x 4 matrix  // 1  -1  6
-//               5., 6., 7., 3., 8. };                 // 2   4  7
-//                                                     // 3   3  3 
-//float b[5] = { 1., 1., 1.};                          // 3   8  8 
-//
-//float c[25] = { 0., 0., 0., 0., 0.,
-//                0., 0., 0., 0., 0.,
-//                0., 0., 0., 0., 0.,
-//                0., 0., 0., 0., 0.,
-//                0., 0., 0., 0., 0. };
-//
-//rmsOfBatch(false, snSize(5, 1, 1, 3), a, c);
-//return 0;
-//cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
-//    CBLAS_TRANSPOSE::CblasNoTrans,
-//    CBLAS_TRANSPOSE::CblasTrans,
-//    3,                        // Матрица А M - строк, кол-во изобр в батче
-//    2,                        // Матрица В N - столбцов, кол-во скрытых нейронов 
-//    5,                        // Матрица A N - столбцов, В М - строк, кол-во вх нейронов - размер одного изображения ((w + 1) * h * d) из батча. (+1 - X0)                   
-//    1.0,                      // α - доп коэф умн на результат AB
-//    a,                        // Матрица А - данные
-//    5,                        // Матрица А - до след а
-//    b,                        // Матрица B - данные
-//    5,                        // Матрица B - до след в
-//    0.0,                      // β - доп коэф умн на результат C
-//    c,                        // Матрица С - выходные данные
-//    2);                       // Матрица С - до след c
-//
-//
-//

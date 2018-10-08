@@ -206,7 +206,7 @@ namespace SN_Base{
        SN_Base::snFloat lr = 0.001F;           ///< lrate for γ и β
        snSize sz = snSize(0,0,0,0,0);
              
-       void offset(int offs){
+       void offset(size_t offs){
            mean += offs;
            varce += offs;
            scale += offs;

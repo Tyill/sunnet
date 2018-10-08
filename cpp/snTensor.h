@@ -36,11 +36,16 @@ namespace SN_API{
         
     public:
 
+      
         Tensor(const snLSize& lsz = snLSize(), std::vector<snFloat>& data = std::vector<snFloat>()){
         
-            chsz_ = 0;
             lsz_ = lsz;
-            data_ = data;
+
+            size_t sz = lsz.w * lsz.h * lsz.ch * lsz.bsz;
+            data_.resize(sz);
+
+            if (data.size() == sz)
+                data_ = data;
         };
 
         Tensor(const snLSize& lsz, snFloat* data){
@@ -88,7 +93,12 @@ namespace SN_API{
 
             return true;
         }
-                
+        
+        void clear(){
+
+            std::fill(data_.begin(), data_.end(), 0);
+        }
+
         snFloat* data(){
 
             return data_.data();
@@ -100,7 +110,7 @@ namespace SN_API{
         }
 
     private:
-        size_t chsz_;
+        size_t chsz_ = 0;
         snLSize lsz_;
         std::vector<snFloat> data_;
      

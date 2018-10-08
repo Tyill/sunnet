@@ -238,7 +238,7 @@ namespace SN_API{
             batchNormType bnorm_ = batchNormType::none,
             uint32_t fWidth_ = 3,
             uint32_t fHeight_ = 3,
-            uint32_t stride_ = 1,
+            uint32_t stride_ = 2,
             calcMode mode_ = calcMode::CPU,
             uint32_t gpuDeviceId_ = 0):
             

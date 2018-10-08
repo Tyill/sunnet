@@ -392,10 +392,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
     }
     
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(newsz, kernel_, gpuParams_);
+        iniParamCUDA(newsz, kernel_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(newsz, kernel_, gpuParams_);
+        iniParamOCL(newsz, kernel_, &gpuParams_);
 } 
-
-
-

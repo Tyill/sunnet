@@ -67,7 +67,7 @@ private:
 
     
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
-    std::map<std::string, void*> gpuParams_;                          
+    void* gpuParams_ = nullptr;                                       ///< gpu data
 
     
 
@@ -107,16 +107,16 @@ private:
 
     /// CUDA ///////////////////////////
  
-    void iniParamCUDA(const SN_Base::snSize& insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, size_t kernel, void** gpuPrm);
 
-    void freeParamCUDA(std::map<std::string, void*>& gpuPrm);
+    void freeParamCUDA(void* gpuPrm);
 
     void forwardCUDA(size_t kernel,     
         const SN_Base::snSize& insz,    
         SN_Base::snFloat* input,        
         SN_Base::snFloat* weight,       
         SN_Base::snFloat* output,              
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     // calc grad and dw
     void backwardCUDA_GW(size_t kernel, 
@@ -126,7 +126,7 @@ private:
         SN_Base::snFloat* gradIn,       
         SN_Base::snFloat* gradOut,      
         SN_Base::snFloat* dWeightOut,   
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     // calc grad
     void backwardCUDA_G(size_t kernel,   
@@ -134,21 +134,21 @@ private:
         const SN_Base::snSize& insz,     
         SN_Base::snFloat* gradIn,        
         SN_Base::snFloat* gradOut,       
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
   
     /// OpenCL ///////////////////////////
 
-    void iniParamOCL(const SN_Base::snSize& insz, size_t kernel, std::map<std::string, void*>& gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, size_t kernel, void** gpuPrm);
 
-    void freeParamOCL(std::map<std::string, void*>& gpuPrm);
+    void freeParamOCL(void* gpuPrm);
 
     void forwardOCL(size_t kernel,      
         const SN_Base::snSize& insz,    
         SN_Base::snFloat* input,        
         SN_Base::snFloat* weight,       
         SN_Base::snFloat* output,                 
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     // calc grad and dw
     void backwardOCL_GW(size_t kernel,
@@ -158,7 +158,7 @@ private:
         SN_Base::snFloat* gradIn,        
         SN_Base::snFloat* gradOut,       
         SN_Base::snFloat* dWeightOut,    
-        std::map<std::string, void*>& gpuPrm);
+        void* gpuPrm);
 
     // calc grad
     void backwardOCL_G(size_t kernel,   
@@ -166,5 +166,5 @@ private:
         const SN_Base::snSize& insz,    
         SN_Base::snFloat* gradIn,       
         SN_Base::snFloat* gradOut,      
-        std::map<std::string, void*>&); 
+        void* gpuPrm);
 };

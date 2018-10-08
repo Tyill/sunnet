@@ -416,7 +416,7 @@ void Convolution::paddingOffs(bool in2out, const snSize& insz, snFloat* in, snFl
     }
 }
 
-void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm& prm){
+void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
 
     /* Select 1 output layer from each image in the batch and normalize */
 
@@ -434,10 +434,8 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
                 for (size_t k = 0; k < stepD; ++k)
                     cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
             }
-            prm.offset(int(stepD));
+            prm.offset(stepD);
         }
-
-        prm.offset(-int(stepD * insz.d));
     }
     else{
 
@@ -456,9 +454,9 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
             }
 
             if (fwBw)
-               batchNormForward(sz, share, share, baseBatchNorm_);                  
+                batchNormForward(sz, share, share, prm);
             else
-               batchNormBackward(sz, share, share, baseBatchNorm_);
+                batchNormBackward(sz, share, share, prm);
               
             pSh = share;
             snFloat* pOut = out + stepD * i;
@@ -468,13 +466,10 @@ void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFl
                 pOut += stepN;
             }
 
-            prm.offset(int(stepD));
+            prm.offset(stepD);
             prm.norm += stepD * bsz;
         }
         free(share);
-
-        prm.offset(-int(stepD * insz.d));
-        prm.norm -= stepD * insz.d * bsz;
     }         
 }
 
