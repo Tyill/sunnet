@@ -556,6 +556,3 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     else if (calcMode_ == calcMode::OpenCL)
         iniParamOCL(expSz, outSz, convPrms_, &gpuParams_);
 } 
-
-
-

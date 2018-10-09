@@ -39,13 +39,13 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
            fHeight = prms.fHeight,
            kernel = prms.kernel,
            stride = prms.stride,
-           wStepByD = fWidth * fHeight,              
-           wStepByK = wStepByD * kernel,             
-           wStepByN = (wStepByK + 1) * insz.d,       
-           inStepByD = insz.w * insz.h,              
-           inStepByN = inStepByD * insz.d,           
-           outStepByD = outsz.w * outsz.h,           
-           outStepByN = outStepByD * outsz.d;        
+           wStepByD = fWidth * fHeight,              // step weight by input
+           wStepByK = wStepByD * kernel,             // step weight by output
+           wStepByN = (wStepByK + 1) * insz.d,       // step weight by batch
+           inStepByD = insz.w * insz.h,              // step in by input
+           inStepByN = inStepByD * insz.d,           // step in by batch
+           outStepByD = outsz.w * outsz.h,           // step out by input
+           outStepByN = outStepByD * outsz.d;        // step out by batch
 
     size_t shareStepByN = insz.d + outsz.d;          // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
@@ -114,13 +114,13 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
            fHeight = prms.fHeight,
            kernel = prms.kernel,
            stride = prms.stride,
-           wStepByD = fWidth * fHeight,        
-           wStepByK = wStepByD * kernel,       
-           wStepByN = (wStepByK + 1) * insz.d, 
-           inStepByD = insz.w * insz.h,        
-           inStepByN = inStepByD * insz.d,     
-           outStepByD = outsz.w * outsz.h,     
-           outStepByN = outStepByD * outsz.d;  
+           wStepByD = fWidth * fHeight,            // step weight by input
+           wStepByK = wStepByD * kernel,           // step weight by output
+           wStepByN = (wStepByK + 1) * insz.d,     // step weight by batch
+           inStepByD = insz.w * insz.h,            // step in by input
+           inStepByN = inStepByD * insz.d,         // step in by batch
+           outStepByD = outsz.w * outsz.h,         // step out by input
+           outStepByN = outStepByD * outsz.d;      // step out by batch
 
     size_t shareStepByN = insz.d + outsz.d + insz.d;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
@@ -225,13 +225,13 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
     size_t fWidth = prms.fWidth,
            fHeight = prms.fHeight,
            kernel = prms.kernel,
-           stride = prms.stride,
-           wStepByD = fWidth * fHeight,        
-           wStepByK = wStepByD * kernel,       
-           inStepByD = insz.w * insz.h,        
-           inStepByN = inStepByD * insz.d,     
-           outStepByD = outsz.w * outsz.h,     
-           outStepByN = outStepByD * outsz.d;  
+           stride = prms.stride,                
+           wStepByD = fWidth * fHeight,         // step weight by input
+           wStepByK = wStepByD * kernel,        // step weight by output
+           inStepByD = insz.w * insz.h,         // step in by input
+           inStepByN = inStepByD * insz.d,      // step in by batch
+           outStepByD = outsz.w * outsz.h,      // step out by input
+           outStepByN = outStepByD * outsz.d;   // step out by batch
 
     size_t shareStepByN = outsz.d + insz.d;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));

@@ -288,6 +288,43 @@ class Net():
         return pfun(self._net, c_str(ucbName), self._userCBack[ucbName][0], 0)
 
 
+    def getOutputNode(self, nodeName: str, output: [numpy.ndarray]) -> bool:
+        """
+         get Output of Node
+        :param nodeName: node name
+        :param output: out array as list[0]
+        :return: True ok
+        """
+
+        if (not (self._net) and not (self._createNet())):
+            return False
+
+        pfun = _LIB.snGetOutputNode
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
+           ctypes.POINTER(snLSize), ctypes.POINTER(ctypes.POINTER(ctypes.c_float)))
+
+        osize = snLSize()
+        odata = ctypes.POINTER(ctypes.c_float)()
+
+        if (pfun(self._net, c_str(nodeName), ctypes.pointer(osize), ctypes.byref(odata))):
+
+            osz = osize.w * osize.h * osize.ch * osize.bsz
+
+            dbuffer = (ctypes.c_float * osz).from_address(ctypes.addressof(odata.contents))
+            output[0] = numpy.frombuffer(dbuffer, ctypes.c_float).copy().reshape((osize.bsz, osize.ch, osize.h, osize.w))
+
+            pfun = _LIB.snFreeResources
+            pfun.restype = None
+            pfun.argtypes = (ctypes.POINTER(ctypes.c_float), ctypes.c_char_p)
+
+            pfun(odata, ctypes.c_char_p(0))
+
+            return True
+        else:
+            return False
+
+
     def getWeightNode(self, nodeName: str, weight: [numpy.ndarray]) -> bool:
         """
          get Weight of Node

@@ -28,7 +28,7 @@
 #include"SNOperator/src/structurs.h"
 #include"SNOperator/src/mathFunctions.h"
 
-/// сверточный слой с повышением размерности
+/// обратная свертка
 class Deconvolution : SN_Base::OperatorBase{
 
 public:

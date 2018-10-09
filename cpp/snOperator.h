@@ -295,13 +295,10 @@ namespace SN_API{
         uint32_t gpuDeviceId = 0;         ///< GPU Id. Optional parameter
         bool gpuClearMem = false;         ///< Clear memory GPU. Optional parameter
 
-        Pooling(uint32_t kernel_ = 2,
-            poolType pool_ = poolType::max,
-            calcMode mode_ = calcMode::CPU,
+        Pooling(calcMode mode_ = calcMode::CPU,
             uint32_t gpuDeviceId_ = 0,
             bool gpuClearMem_ = false):
-        
-            kernel(kernel_), pool(pool_), mode(mode_),
+            mode(mode_),
             gpuDeviceId(gpuDeviceId_), gpuClearMem(gpuClearMem_){}
               
         ~Pooling(){};

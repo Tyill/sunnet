@@ -6,7 +6,6 @@ No external dependencies: boost, opencv, etc.
  
  * [skynet](https://github.com/Tyill/skynet/tree/master/src/skynet) - only fix bug. Interface no changed
  * [snOperator](https://github.com/Tyill/skynet/tree/master/src/snOperator) - only new operator and fix bug
- * [snAuxFunc](https://github.com/Tyill/skynet/tree/master/src/snAux) - with the agreement
  * [python interface](https://github.com/Tyill/skynet/tree/master/python/libskynet) - no limits
  * [cpp interface](https://github.com/Tyill/skynet/tree/master/cpp) - without restrictions, but with the agreement
  * [c_sharp interface](https://github.com/Tyill/skynet/tree/master/c_sharp/libskynet) - no limits

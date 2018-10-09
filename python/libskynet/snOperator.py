@@ -216,9 +216,7 @@ class Pooling():
     }
 
     def __init__(self,
-                 kernel = 2,
                  mode=calcMode.CPU):
-        self._params['kernel'] = str(kernel)
         self._params['mode'] = mode.value
 
     def getParams(self):

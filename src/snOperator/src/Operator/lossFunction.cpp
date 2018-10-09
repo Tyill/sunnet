@@ -53,7 +53,6 @@ void LossFunction::load(std::map<std::string, std::string>& prms){
         ERROR_MESS("not found param 'loss'");
 }
 
-/// оператор - расчет ошибки
 LossFunction::LossFunction(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
@@ -61,7 +60,6 @@ OperatorBase(net, name, node, prms){
 }
 
 
-/// выполнить расчет
 std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
 
     if (neighbOpr.size() > 1){
@@ -87,8 +85,6 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
 void LossFunction::forward(Tensor* inTns){
 
     snSize tsz = inTns->size();
-        
-    // копируем себе
     baseOut_->setData(inTns->getData(), tsz);
     
     auto out = baseOut_->getData();
@@ -99,7 +95,7 @@ void LossFunction::forward(Tensor* inTns){
         if (auxParams_.find("sm_aux") == auxParams_.end())
             auxParams_["sm_aux"] = vector<snFloat>(tsz.w * tsz.h * tsz.d);
 
-        // прогоняем через softMax каждое изобр отдельно
+        // run through softMax each image separately
         snFloat* aux = auxParams_["sm_aux"].data();
         size_t nsz = tsz.n, width = tsz.w * tsz.h * tsz.d;
         for (size_t i = 0; i < nsz; ++i){
@@ -153,21 +149,19 @@ void LossFunction::forward(Tensor* inTns){
 
 void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
 
-    snSize tsz = inTns->size();
-        
-    // размер
+    snSize tsz = inTns->size();        
+   
     snSize grsz = baseGrad_->size();
     if (grsz != tsz)
         baseGrad_->resize(tsz);
         
-    auto smOut = baseOut_->getData();    // результат после forward
-    auto target = inTns->getData();         // задан целевой результат
-    auto grad = baseGrad_->getData();   // градиент ошибки на входе в lossFunc
+    auto smOut = baseOut_->getData();    
+    auto target = inTns->getData();      
+    auto grad = baseGrad_->getData();  
 
     switch (lossType_){
     case LossFunction::lossType::softMaxACrossEntropy:{
 
-        // считаем ошибку для всех изобр
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
             grad[i] = smOut[i] - target[i];
@@ -177,7 +171,6 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
 
     case LossFunction::lossType::binaryCrossEntropy:{
 
-        // считаем ошибку для всех изобр
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
             grad[i] = (smOut[i] - target[i]) / (smOut[i] * (1.F - smOut[i]));

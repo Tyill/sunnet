@@ -34,8 +34,7 @@
 using namespace std;
 using namespace SN_Base;
 
-/// сверточный слой
-
+/// deconvolution layer
 Deconvolution::Deconvolution(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
     OperatorBase(net, name, node, prms){
         
@@ -104,7 +103,7 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("param 'mode' = " + mode + " indefined");
     }
 
-    // вспом массивы
+    // aux arrays
     auxParams_["dWeight"] = vector<snFloat>();
     auxParams_["dWPrev"] = vector<snFloat>();
     auxParams_["dWGrad"] = vector<snFloat>();    
@@ -239,16 +238,13 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
     snSize insz = inTns->size();
     baseInput_ = inTns;
 
-    /// размер вх данных изменился?
     if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
     }
 
-    /// копируем со смещением padding для каждого изобр
     snFloat* pInTns = inTns->getData();
    
-    /// расчет выходных значений нейронов
     snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
     snSize outsz = baseOut_->size();
 
@@ -267,7 +263,7 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
 
-    /// функция активации
+    /// active func
     switch (activeType_){
     case activeType::sigmoid:   fv_sigmoid(out, outsz.size()); break;
     case activeType::relu:      fv_relu(out, outsz.size()); break;
@@ -290,12 +286,11 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
-    // проходим через ф-ю активации, если есть
+    /// active func
     if (activeType_ != activeType::none){
 
         snFloat* out = baseOut_->getData();
         
-        // производная функции активации
         size_t osz = baseOut_->size().size();
         switch (activeType_){
         case activeType::sigmoid:   df_sigmoid(out, osz); break;
@@ -305,7 +300,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         default: break;
         }
 
-        // обновл градиент
+        // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
     }
 
@@ -313,7 +308,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
-    // расчет вых градиента и коррекции весов
+    // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_->getData();   
     snFloat* weight = baseWeight_->getData();
     snFloat* in = baseInput_->getData();
@@ -330,7 +325,6 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         case calcMode::OpenCL: backwardOCL_GW(deconvParams_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_); break;
         }
 
-        // корректируем веса
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
@@ -355,7 +349,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
 void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
 
-    /* Выбираем по 1 вых слою из каждого изобр в батче и нормируем */
+    /* Select 1 output layer from each image in the batch and normalize */
 
     size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
 
@@ -415,7 +409,7 @@ void Deconvolution::updateConfig(const snSize& newsz){
     size_t stp = deconvParams_.fWidth * deconvParams_.fHeight * deconvParams_.kernel,
         ntp = (stp + 1) * newsz.d;
         
-    // имеющиеся веса оставляем как есть, остаток инициализируем
+    // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_->size().size();
     if (ntp > wcsz){
                 
@@ -438,7 +432,7 @@ void Deconvolution::updateConfig(const snSize& newsz){
     baseOut_->resize(outSz);
     baseGrad_->resize(newsz);
         
-    // вспом массивы
+    // aux array
     auxParams_["dWeight"].resize(ntp, 0);
     auxParams_["dWPrev"].resize(ntp, 0);
     auxParams_["dWGrad"].resize(ntp, 0);

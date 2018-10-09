@@ -153,7 +153,7 @@ namespace SN_API{
                 outTns.size(), outTns.data(),
                 targetTns.data(), &outAccurate);
         }
-            
+        
         /// set weight of node
         /// @param[in] name - name node in architecture of net
         /// @param[in] weight - set weight tensor
@@ -185,6 +185,26 @@ namespace SN_API{
                 return false;
         }
         
+        /// get output of node
+        /// @param[in] name - name node in architecture of net
+        /// @param[out] output - output tensor
+        /// @return true - ok
+        bool getOutputNode(const std::string& name, Tensor& output){
+
+            if (!net_) return false;
+
+            snLSize osz; snFloat* odata = nullptr;
+            if (snGetOutputNode(net_, name.c_str(), &osz, &odata) && odata){
+
+                output = Tensor(osz, odata);
+
+                snFreeResources(odata, 0);
+                return true;
+            }
+            else
+                return false;
+        }
+
         /// save all weight's in file
         /// @param[in] path - file path
         /// @return true - ok

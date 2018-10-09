@@ -147,24 +147,24 @@ void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize&
 
 #ifndef SN_CUDA
 
-void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, std::map<std::string, void*>& auxPrm){
+void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::freeParamCUDA(std::map<std::string, void*>& auxPrm){
+void FullyConnected::freeParamCUDA(void* auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, std::map<std::string, void*>& auxPrm){
+void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
-    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, std::map<std::string, void*>&){
+    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, std::map<std::string, void*>&){
+void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 

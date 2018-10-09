@@ -50,6 +50,8 @@ struct gpuParams{
     snFloat* d_out = 0;
     snFloat* d_grin = 0;
     snFloat* d_grout = 0;
+
+    size_t inszMem = 0;
 };
 
 void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** pGpuPrm){
@@ -68,6 +70,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
             return;
         }
         gpuPrm = new gpuParams();
+        memset(gpuPrm, 0, sizeof(gpuParams));
         *pGpuPrm = gpuPrm;
        
         cudnnHandle_t cudnn = nullptr;
@@ -135,23 +138,26 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     gpuPrm->grin_desc = grin_desc;
       
 
+    size_t isz = insz.size(), osz = outsz.size();
     if (isFirst && !gpuClearMem_){
-        cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grin, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grout, insz.size() * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grin, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grout, isz * sizeof(snFloat)));
     }
-    else if (!gpuClearMem_){
-        cuCHECK(cudaFree(gpuPrm->d_in));        gpuPrm->d_in = 0;
-        cuCHECK(cudaFree(gpuPrm->d_out));       gpuPrm->d_out = 0;
-        cuCHECK(cudaFree(gpuPrm->d_grin));      gpuPrm->d_grin = 0;
-        cuCHECK(cudaFree(gpuPrm->d_grout));     gpuPrm->d_grout = 0;
+    else if (!gpuClearMem_ && (gpuPrm->inszMem < isz)){
+        cuCHECK(cudaFree(gpuPrm->d_in));     gpuPrm->d_in = 0;
+        cuCHECK(cudaFree(gpuPrm->d_out));    gpuPrm->d_out = 0;
+        cuCHECK(cudaFree(gpuPrm->d_grin));   gpuPrm->d_grin = 0;
+        cuCHECK(cudaFree(gpuPrm->d_grout));  gpuPrm->d_grout = 0;
      
-        cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grin, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grout, insz.size() * sizeof(snFloat)));
-      }
+        cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grin, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grout, isz * sizeof(snFloat)));
+
+        gpuPrm->inszMem = isz;
+    }
 }
 
 void Pooling::freeParamCUDA(void* gpuPrms){
@@ -181,13 +187,14 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
+    size_t isz = insz.size(), osz = outsz.size();
     if (gpuClearMem_){
-        cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));       
+        cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
     }
 
     // input
-    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, insz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
       
     // run
     snFloat alpha = 1.f, beta = 0.f;
@@ -201,7 +208,7 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
         gpuPrm->d_out));
    
     // result
-    cuCHECK(cudaMemcpy(output, gpuPrm->d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(output, gpuPrm->d_out, osz * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
         cuCHECK(cudaFree(gpuPrm->d_in));   gpuPrm->d_in = 0;
@@ -214,22 +221,23 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
     
     cudaSetDevice(gpuDeviceId_);
 
+    size_t isz = insz.size(), osz = outsz.size();
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     if (gpuClearMem_){
-        cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grin, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grout, insz.size() * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grin, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_grout, isz * sizeof(snFloat)));
     }
 
     // input
-    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, insz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // output
-    cuCHECK(cudaMemcpy(gpuPrm->d_out, output, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_out, output, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
    
     // grin
-    cuCHECK(cudaMemcpy(gpuPrm->d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_grin, gradIn, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // run
     snFloat alpha = 1.f, beta = 0.f;
@@ -247,7 +255,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
         gpuPrm->d_grout));
 
     // result
-    cuCHECK(cudaMemcpy(gradOut, gpuPrm->d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(gradOut, gpuPrm->d_grout, isz * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
         cuCHECK(cudaFree(gpuPrm->d_in));     gpuPrm->d_in = 0;
@@ -275,6 +283,8 @@ struct gpuParams{
     snFloat* d_in = 0;
     snFloat* d_out = 0;    
     size_t* d_idx = 0;
+
+    size_t inszMem = 0;
 };
 
 void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** pGpuPrm){
@@ -291,6 +301,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
             return;
         }
         gpuPrm = new gpuParams();
+        memset(gpuPrm, 0, sizeof(gpuParams));
         *pGpuPrm = gpuPrm;
         
         if (!gpuClearMem_){
@@ -299,7 +310,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
             cuCHECK(cudaMalloc(&gpuPrm->d_idx, outsz.size() * sizeof(size_t)));
         }
     }
-    else if (!gpuClearMem_){
+    else if (!gpuClearMem_ && (gpuPrm->inszMem < insz.size())){
                    
         cuCHECK(cudaFree(gpuPrm->d_in));  gpuPrm->d_in = 0;
         cuCHECK(cudaFree(gpuPrm->d_out)); gpuPrm->d_out = 0;
@@ -308,6 +319,8 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
         cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_idx, outsz.size() * sizeof(size_t)));
+
+        gpuPrm->inszMem = insz.size();
     }
 }
 
@@ -403,15 +416,16 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
    
     cudaSetDevice(gpuDeviceId_);
        
+    size_t isz = insz.size(), osz = outsz.size();
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     if (gpuClearMem_){
-        cuCHECK(cudaMalloc(&gpuPrm->d_in, insz.size() * sizeof(snFloat)));  
-        cuCHECK(cudaMalloc(&gpuPrm->d_out, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_idx, outsz.size() * sizeof(size_t))); 
+        cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));  
+        cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_idx, osz * sizeof(size_t))); 
     }
 
     // input
-    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, insz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
     
     // run     
     dim3 dimBlock(16, 16);
@@ -426,8 +440,8 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
         gpuPrm->d_idx);
 
     // result
-    cuCHECK(cudaMemcpy(output, gpuPrm->d_out, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
-    cuCHECK(cudaMemcpy(outputInx, gpuPrm->d_idx, outsz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(output, gpuPrm->d_out, osz * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(outputInx, gpuPrm->d_idx, osz * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
         cuCHECK(cudaFree(gpuPrm->d_in));   gpuPrm->d_in = 0;
@@ -511,16 +525,17 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
            * d_grout = gpuPrm->d_in;
     size_t* d_idx =  gpuPrm->d_idx;
 
+    size_t isz = insz.size(), osz = outsz.size();
     if (gpuClearMem_){
-        cuCHECK(cudaMalloc(&d_grin, outsz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&d_grout, insz.size() * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&d_idx, outsz.size() * sizeof(size_t)));
+        cuCHECK(cudaMalloc(&d_grin, osz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&d_grout, isz * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&d_idx, osz * sizeof(size_t)));
     }
 
     // input   
-    cuCHECK(cudaMemcpy(d_grin, gradIn, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(d_grin, gradIn, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
       
-    cuCHECK(cudaMemcpy(d_idx, outputInx, outsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(d_idx, outputInx, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
   
     // run     
     dim3 dimBlock(16, 16);
@@ -535,7 +550,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
         d_grout);
 
     // result
-    cuCHECK(cudaMemcpy(gradOut, d_grout, insz.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    cuCHECK(cudaMemcpy(gradOut, d_grout, isz * sizeof(snFloat), cudaMemcpyDeviceToHost));
 
     if (gpuClearMem_){
         cuCHECK(cudaFree(d_grin));    gpuPrm->d_out = 0;
