@@ -42,7 +42,7 @@ private:
     enum class lossType{
         softMaxACrossEntropy = 0,
         binaryCrossEntropy = 1,
-        regressionOLS = 2,
+        regressionMSE = 2,
         userLoss = 3,
     };
 

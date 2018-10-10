@@ -164,7 +164,7 @@ bool jnGetNodes(rapidjson::Document& jnDoc, std::map<std::string, Node>& out_nod
             }
 
             auto oprPrms = node["OperatorParams"].GetObject();
-
+            
             const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
 
             for (rj::Value::ConstMemberIterator itr = oprPrms.MemberBegin(); itr != oprPrms.MemberEnd(); ++itr){
@@ -298,8 +298,48 @@ bool SNet::setParamNode(const char* nodeName, const char* jnParam){
         statusMess("SN error: '" + string(nodeName) + "' not found");
         return false;
     }
-        
-    return true;
+
+    rj::Document doc;
+    doc.Parse(jnParam);
+
+    if (!doc.IsObject()){
+        statusMess("!jnDoc.IsObject() errOffset " + to_string(doc.GetParseError())); return false;
+    }
+
+    auto docPrms = doc.GetObject();
+
+    const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
+
+    std::map<std::string, std::string> prms;
+
+    for (rj::Value::ConstMemberIterator itr = docPrms.MemberBegin(); itr != docPrms.MemberEnd(); ++itr){
+
+        if (string(kTypeNames[itr->value.GetType()]) == "String")
+            prms[trim(itr->name.GetString())] = trim(itr->value.GetString());
+        else{
+            statusMess(string("node['OperatorParams'][") + itr->name.GetString() + "] != 'String'");
+            return false;
+        }
+    }
+
+    auto nodes = jnNet_["Nodes"].GetArray();
+    int sz = nodes.Size();
+    for (int i = 0; i < sz; ++i){
+
+        auto node = nodes[i].GetObject();
+               
+        if ((string(node["NodeName"].GetString()) == nodeName) && node.HasMember("OperatorParams")){
+
+            auto& opr = node["OperatorParams"];
+            for (auto& p : prms){
+                auto mbr = opr.FindMember(p.first.c_str());
+                mbr->value.SetString(p.second.c_str(), jnNet_.GetAllocator());
+            }
+            break;
+        }
+    }
+
+    return operats_[nodeName]->setInternPrm(prms);
 }
 
 /// get node parameters

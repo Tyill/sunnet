@@ -84,8 +84,6 @@ private:
 
     SN_Eng::SNEngine* engine_ = nullptr;                        ///< driver 
         
-    SN_Base::Node inNet_;                                       ///< input net
-    SN_Base::Node outNet_;                                      ///< output net
     std::map<std::string, SN_Base::Node> nodes_;                ///< all nodes of net
     std::map<std::string, SN_Base::OperatorBase*> operats_;     ///< all operators. key - name node
 

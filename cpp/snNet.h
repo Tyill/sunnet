@@ -97,15 +97,15 @@ namespace SN_API{
         /// @param[in] nd - tensor node
         /// @return true - ok
         template<typename T>
-        bool updateNode(const std::string& name, const T& nd){
+        bool updateNode(const std::string& name, T& nd){
 
             bool ok = false;
             if (net_)
-                ok = snSetParamNode(net_, name.c_str(), nd.getParamsJn());
+                ok = snSetParamNode(net_, name.c_str(), nd.getParamsJn().c_str());
             else{
-                for (auto& nd : nodes_){
-                    if (nd.name == name){
-                        nd.params = nd.getParamsJn();
+                for (auto& n : nodes_){
+                    if (n.name == name){
+                        n.params = nd.getParamsJn();
                         ok = true;
                         break;
                     }

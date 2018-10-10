@@ -1,4 +1,6 @@
 ﻿
+#ifndef CV_VERSION  
+
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -78,7 +80,7 @@ int main(int argc, char* argv[]){
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 1000; ++k){
+    for (int k = 0; k < 10; ++k){
 
         targetLayer.clear();
        
@@ -145,7 +147,32 @@ int main(int argc, char* argv[]){
 
         cout << k << " accurate " << accuratSumm / k << " " << snet.getLastErrorStr() << endl;        
     }
-    
+       
     system("pause");
     return 0;
 }
+
+#else
+
+
+#include "../cpp/snNet.h"
+#include "../cpp/snTensor.h"
+#include "../cpp/snOperator.h"
+
+using namespace std;
+namespace sn = SN_API;
+
+int main(int argc, char* argv[]){
+
+    sn::Net snet;
+
+    snet.addNode("Input", sn::Input(), "C1")
+        .addNode("C1", sn::Convolution(15, sn::calcMode::CUDA), "C2")
+        .addNode("C2", sn::Convolution(15, sn::calcMode::CUDA), "P1")
+        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
+        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
+        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
+}
+
+#endif

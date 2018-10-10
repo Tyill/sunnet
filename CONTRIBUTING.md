@@ -12,7 +12,7 @@ No external dependencies: boost, opencv, etc.
  * [example](https://github.com/Tyill/skynet/tree/master/example) - no limits
  * [wiki](https://github.com/Tyill/skynet/wiki) - no limits, but reliably
  
-## Modules forbidden for commits (only issue)
+## Modules forbidden for commits
 
  * [snEngine](https://github.com/Tyill/skynet/tree/master/src/snEngine)
  * [snBase](https://github.com/Tyill/skynet/tree/master/src/snBase)

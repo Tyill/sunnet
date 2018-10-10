@@ -189,14 +189,17 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
     }
         
     for (auto& opr : inout_net.operats){
-        weight_[opr.first] = new SN_Base::Tensor();
-        opr.second->setWeight(weight_[opr.first]);
-
-        inData_[opr.first] = new SN_Base::Tensor();
-        opr.second->setInput(inData_[opr.first]);
-        
+       
+        if (inout_net.nodes[opr.first].oprName == "Input"){
+            inData_[opr.first] = new SN_Base::Tensor();
+            opr.second->setInput(inData_[opr.first]);
+        }        
+       
         gradData_[opr.first] = new SN_Base::Tensor();
         opr.second->setGradient(gradData_[opr.first]);
+        
+        weight_[opr.first] = new SN_Base::Tensor();
+        opr.second->setWeight(weight_[opr.first]);
     }
             
     return true;
@@ -403,6 +406,11 @@ bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const 
         return false;
     }
 
+    if (nodes_[nodeName].oprName != "Input"){
+        statusMess("SN error: '" + string(nodeName) + "' layer must be 'Input'");
+        return false;
+    }
+
     inData_[nodeName]->setData((SN_Base::snFloat*)inData, isz);
 
     return true;
@@ -434,6 +442,11 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
 
     if (operats_.find(nodeName) == operats_.end()){
         statusMess("SN error: '" + string(nodeName) + "' not found");
+        return false;
+    }
+
+    if (nodes_[nodeName].oprName != "Output"){
+        statusMess("SN error: '" + string(nodeName) + "' layer must be 'Output'");
         return false;
     }
 
