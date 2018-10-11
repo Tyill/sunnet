@@ -284,7 +284,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
     if (isEndNet_){
         Tensor* tnsOut = operats_["EndNet"]->getOutput();
 
-        auto& tnsOutSz = tnsOut->size();
+        auto tnsOutSz = tnsOut->size();
         if (tnsOutSz != osz){
             statusMess("forward error: tnsOutSz != osz. Must be osz: " +
                 to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h) + " " + to_string(tnsOutSz.d) + " " + to_string(tnsOutSz.n));
@@ -308,7 +308,7 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     if (isEndNet_){
         auto outTensor = operats_["EndNet"]->getOutput();
 
-        auto& tsz = outTensor->size();
+        auto tsz = outTensor->size();
         if (tsz != gsz){
             statusMess("backward error: tnsOutSz != gsz. Must be gsz: " +
                 to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d) + " " + to_string(tsz.n));

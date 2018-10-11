@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "summator.h"
+#include "snOperator/src/Operator/summator.h"
 
 using namespace std;
 using namespace SN_Base;

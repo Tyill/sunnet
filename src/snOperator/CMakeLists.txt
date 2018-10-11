@@ -13,13 +13,14 @@ if (OpenMP_CXX_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+if (UNIX)
+find_package(BLAS REQUIRED)
+endif()
+
 if(GPU STREQUAL "CUDA" OR GPU STREQUAL "cuDNN")
-  find_package(CUDA REQUIRED)
-  include_directories( ${CUDA_INCLUDE_DIR})
+
   add_definitions(-DSN_CUDA)
- 
-  link_directories(${CUDA_INCLUDE_DIRS}/../lib/x64)
-    
+
   target_link_libraries(snOperator cublas cudart_static)
   
   if(GPU STREQUAL "cuDNN")
@@ -28,4 +29,4 @@ if(GPU STREQUAL "CUDA" OR GPU STREQUAL "cuDNN")
   endif()	 
 endif()
 
-target_link_libraries(snOperator snAux snBase libopenblas)
+target_link_libraries(snOperator snAux snBase openblas)

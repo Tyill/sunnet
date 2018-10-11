@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "Input.h"
+#include "snOperator/src/Operator/input.h"
 
 using namespace std;
 using namespace SN_Base;

@@ -24,6 +24,7 @@
 //
 #include <thread>
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>

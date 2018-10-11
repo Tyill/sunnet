@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "lock.h"
+#include "snOperator/src/Operator/lock.h"
 
 using namespace std;
 using namespace SN_Base;

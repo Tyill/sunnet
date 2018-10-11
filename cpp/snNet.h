@@ -84,8 +84,8 @@ namespace SN_API{
         /// @param[in] nd - tensor node
         /// @param[in] nextNodes - next nodes through a space
         /// @return ref Net
-        template<typename T> 
-        Net& addNode(const std::string& name, T& nd, const std::string& nextNodes){
+        template<typename Operator>
+        Net& addNode(const std::string& name, Operator nd, const std::string& nextNodes){
                         
             nodes_.push_back(node{ name, nd.name(), nd.getParamsJn(), nextNodes });
             
@@ -96,8 +96,8 @@ namespace SN_API{
         /// @param[in] name - name node in architecture of net
         /// @param[in] nd - tensor node
         /// @return true - ok
-        template<typename T>
-        bool updateNode(const std::string& name, T& nd){
+        template<typename Operator>
+        bool updateNode(const std::string& name, Operator nd){
 
             bool ok = false;
             if (net_)

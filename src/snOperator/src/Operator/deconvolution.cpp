@@ -23,13 +23,13 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "deconvolution.h"
+#include "snOperator/src/Operator/deconvolution.h"
 #include "snAux/auxFunc.h"
-#include "SNOperator/src/weightInit.h"
-#include "SNOperator/src/activeFunctions.h"
-#include "SNOperator/src/optimizer.h"
-#include "SNOperator/src/structurs.h"
-#include "SNOperator/src/mathFunctions.h"
+#include "snOperator/src/weightInit.h"
+#include "snOperator/src/activeFunctions.h"
+#include "snOperator/src/optimizer.h"
+#include "snOperator/src/structurs.h"
+#include "snOperator/src/mathFunctions.h"
 
 using namespace std;
 using namespace SN_Base;

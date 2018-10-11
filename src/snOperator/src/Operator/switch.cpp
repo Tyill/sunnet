@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "switch.h"
+#include "snOperator/src/Operator/switch.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;

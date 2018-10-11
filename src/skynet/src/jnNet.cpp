@@ -29,7 +29,7 @@
 #include "Lib/rapidjson/document.h"
 #include "Lib/rapidjson/stringbuffer.h"
 #include "Lib/rapidjson/writer.h"
-#include "snet.h"
+#include "skynet/src/snet.h"
 
 using namespace std;
 using namespace SN_Aux;

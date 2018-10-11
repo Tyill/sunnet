@@ -25,7 +25,7 @@
 #pragma once
 
 #include "snBase/snBase.h"
-#include"SNOperator/src/structurs.h"
+#include"snOperator/src/structurs.h"
       
 /// fullyConnected layer
 class FullyConnected : SN_Base::OperatorBase{

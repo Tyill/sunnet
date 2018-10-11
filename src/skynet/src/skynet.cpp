@@ -25,8 +25,8 @@
 
 #include "stdafx.h"
 #include "snBase/snBase.h"
-#include "skynet/skynet.h"
-#include "snet.h"
+#include "skynet/skyNet.h"
+#include "skynet/src/snet.h"
 
 #define SN_VERSION "1.0.1"
 

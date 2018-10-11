@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "crop.h"
+#include "snOperator/src/Operator/crop.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;

@@ -23,8 +23,8 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "LossFunction.h"
-#include "SNOperator/src/activeFunctions.h"
+#include "snOperator/src/Operator/lossFunction.h"
+#include "snOperator/src/activeFunctions.h"
 
 using namespace std;
 using namespace SN_Base;

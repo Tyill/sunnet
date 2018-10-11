@@ -23,9 +23,9 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "pooling.h"
+#include "snOperator/src/Operator/pooling.h"
 #include "snAux/auxFunc.h"
-#include "SNOperator/src/structurs.h"
+#include "snOperator/src/structurs.h"
 
 using namespace std;
 using namespace SN_Base;

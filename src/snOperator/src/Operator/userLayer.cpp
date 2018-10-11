@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "userLayer.h"
+#include "snOperator/src/Operator/userLayer.h"
 
 using namespace std;
 using namespace SN_Base;

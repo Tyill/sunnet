@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "resize.h"
+#include "snOperator/src/Operator/resize.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;

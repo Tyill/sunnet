@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "concat.h"
+#include "snOperator/src/Operator/concat.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;

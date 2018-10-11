@@ -26,6 +26,7 @@
 
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 #include "../src/skynet/skyNet.h"
@@ -37,7 +38,7 @@ namespace SN_API{
     public:
 
       
-        Tensor(const snLSize& lsz = snLSize(), std::vector<snFloat>& data = std::vector<snFloat>()){
+        Tensor(const snLSize& lsz = snLSize(), const std::vector<snFloat>& data = std::vector<snFloat>()){
         
             lsz_ = lsz;
 

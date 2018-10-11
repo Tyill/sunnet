@@ -25,8 +25,8 @@
 #pragma once
 
 #include "snBase/snBase.h"
-#include"SNOperator/src/structurs.h"
-#include"SNOperator/src/mathFunctions.h"
+#include"snOperator/src/structurs.h"
+#include"snOperator/src/mathFunctions.h"
 
 /// convolution layer
 class Convolution : SN_Base::OperatorBase{
