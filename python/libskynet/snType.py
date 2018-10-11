@@ -87,7 +87,7 @@ class lossType(Enum):
     """Loss type."""
     softMaxToCrossEntropy = 'softMaxToCrossEntropy'
     binaryCrossEntropy = 'binaryCrossEntropy'
-    regressionOLS = 'regressionOLS'
+    regressionMSE = 'regressionMSE'             # Mean Square Error
     userLoss = 'userLoss'
 
 class diap():
@@ -97,7 +97,7 @@ class diap():
         self.end = end
 
     def value(self):
-        return self.begin + ' ' + self.end
+        return str(self.begin) + ' ' + str(self.end)
 
 class rect():
     """Rectangle"""
@@ -108,4 +108,4 @@ class rect():
         self.h = h
 
     def value(self):
-        return self.x + ' ' + self.y + ' ' + self.w + ' ' + self.h
+        return str(self.x) + ' ' + str(self.y) + ' ' + str(self.w) + ' ' + str(self.h)

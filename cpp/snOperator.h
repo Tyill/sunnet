@@ -91,8 +91,8 @@ namespace SN_API{
             kernel(kernel_), act(act_), opt(opt_), 
             dropOut(dropOut_), bnorm(bnorm_), mode(mode_), gpuDeviceId(gpuDeviceId_){};
 
-        FullyConnected(uint32_t kernel_, calcMode mode_ = calcMode::CPU):
-            kernel(kernel_), mode(mode_) {}
+        FullyConnected(uint32_t kernel_, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
+            kernel(kernel_), mode(mode_), bnorm(bnorm_){}
 
         ~FullyConnected(){};
               
@@ -168,8 +168,8 @@ namespace SN_API{
             fWidth(fWidth_), fHeight(fHeight_), padding(padding_), stride(stride_),
             dilate(dilate_), mode(mode_), gpuDeviceId(gpuDeviceId_){}           
        
-        Convolution(uint32_t kernel_, calcMode mode_ = calcMode::CPU) :
-            kernel(kernel_), mode(mode_){}
+        Convolution(uint32_t kernel_, int padding_ = 0, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
+            kernel(kernel_), padding(padding_), mode(mode_), bnorm(bnorm_){}
 
         ~Convolution(){};            
       

@@ -313,7 +313,7 @@ namespace SN_API{
 
                 auto& nd = nodes_[i];
 
-                if ((nd.name == "Input") || (nd.name == "Output"))
+                if ((nd.opr == "Input") || (nd.opr == "Output"))
                     continue;
                                 
                 ss << "{"

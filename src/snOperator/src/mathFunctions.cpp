@@ -123,9 +123,7 @@ void batchNormBackward(const SN_Base::snSize& insz, snFloat* gradIn, snFloat* gr
 }
 
 void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
-
-    if (dropOut > 1.F) dropOut = 1.F;
-
+        
     if (isLern){
         size_t sz = size_t(outsz.size() * dropOut);
         vector<int> rnd(sz);

@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 10; ++k){
+    for (int k = 0; k < 1000; ++k){
 
         targetLayer.clear();
        

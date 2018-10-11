@@ -183,8 +183,11 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
     if (prms.find("freeze") != prms.end())
         isFreeze_ = prms["freeze"] == "1";
                 
-    if (prms.find("dropOut") != prms.end())
+    if (prms.find("dropOut") != prms.end()){
         dropOut_ = stof(prms["dropOut"]);
+        if (dropOut_ > 1.F) dropOut_ = 1.F;
+        else if (dropOut_ < 0.F) dropOut_ = 0.F;
+    }
 
     return true;
 }

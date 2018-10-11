@@ -230,11 +230,11 @@ class Net():
         :return: True ok
 
         ucb = function(None,
-                       str,               # name user cback
-                       str,               # name node
-                       bool,              # current action forward(true) or backward(false)
-                       inLayer: ndarray,  # input layer - receive from prev node
-                       outLayer: ndarray, # output layer - send to next node
+                       str,                 # name user cback
+                       str,                 # name node
+                       bool,                # current action forward(true) or backward(false)
+                       inLayer: ndarray,    # input layer - receive from prev node
+                       outLayer: [ndarray]  # output layer - send to next node
                        )
         """
 
@@ -255,16 +255,15 @@ class Net():
             dbuffer = (ctypes.c_float * insz).from_address(ctypes.addressof(inData.contents))
             inLayer = numpy.frombuffer(dbuffer, ctypes.c_float).reshape((inSize.bsz, inSize.ch, inSize.h, inSize.w))
 
-            outLayer = inLayer.copy()
-
+            outLayer = [0]
             ucb(ucbName.decode("utf-8"), nodeName.decode("utf-8"), isFwdBwd, inLayer, outLayer)
 
-            outSize.contents.bsz = outLayer.shape[0]
-            outSize.contents.ch = outLayer.shape[1]
-            outSize.contents.h = outLayer.shape[2]
-            outSize.contents.w = outLayer.shape[3]
+            outSize.contents.bsz = outLayer[0].shape[0]
+            outSize.contents.ch = outLayer[0].shape[1]
+            outSize.contents.h = outLayer[0].shape[2]
+            outSize.contents.w = outLayer[0].shape[3]
 
-            outsz = outLayer.shape[0] * outLayer.shape[1] * outLayer.shape[2] * outLayer.shape[3]
+            outsz = outLayer[0].shape[0] * outLayer[0].shape[1] * outLayer[0].shape[2] * outLayer[0].shape[3]
 
             cbuff = self._userCBack[ucbName.decode("utf-8")][1]
             if (self._userCBack[ucbName.decode("utf-8")][2] != outsz):
@@ -275,7 +274,7 @@ class Net():
             ctypes.memmove(ctypes.addressof(outData.contents), ctypes.addressof(addrBuff),
                            ctypes.sizeof(ctypes.POINTER(ctypes.c_float)))
 
-            ctypes.memmove(ctypes.addressof(cbuff), snFloat_p(outLayer.__array_interface__['data'][0]),
+            ctypes.memmove(ctypes.addressof(cbuff), snFloat_p(outLayer[0].__array_interface__['data'][0]),
                            ctypes.sizeof(ctypes.c_float) * outsz)
 
 

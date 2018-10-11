@@ -41,20 +41,20 @@ class FullyConnected():
     '''Fully connected layer'''
 
     _params = {
-    'kernel' : '0',                          # Number of hidden neurons. !Required parameter [0..)
-    'active' : active.relu.value,            # Activation function type. Optional parameter
-    'optimizer' : optimizer.adam.value,      # Optimizer of weights. Optional parameter
-    'dropOut' : '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
-    'batchNorm' : batchNormType.none.value,  # Type of batch norm. Optional parameter
-    'mode' : calcMode.CPU.value,             # Сalculation mode. Optional parameter
-    'gpuDeviceId' : '0',                     # GPU Id. Optional parameter
-    'gpuClearMem' : '0',                     # Clear memory GPU. Optional parameter
-    'freeze' :'0',                           # Do not change weights. Optional parameter
-    'weightInit' : weightInit.he.value,      # Type of initialization of weights. Optional parameter
-    'decayMomentDW' : '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
-    'decayMomentWGr' : '0.99',               # Optimizer of weights moment change of prev. Optional parameter
-    'lmbRegular' : '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
-    'batchNormLr' : '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
+    'kernel': '0',                          # Number of hidden neurons. !Required parameter [0..)
+    'active': active.relu.value,            # Activation function type. Optional parameter
+    'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
+    'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
+    'batchNorm': batchNormType.none.value,  # Type of batch norm. Optional parameter
+    'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
+    'gpuDeviceId': '0',                     # GPU Id. Optional parameter
+    'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
+    'freeze': '0',                           # Do not change weights. Optional parameter
+    'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
+    'decayMomentDW': '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
+    'decayMomentWGr': '0.99',               # Optimizer of weights moment change of prev. Optional parameter
+    'lmbRegular': '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
+    'batchNormLr': '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
     }
 
     def __init__(self,
@@ -68,10 +68,10 @@ class FullyConnected():
                  gpuClearMem=False,
                  freeze=False):
         self._params['kernel'] = str(kernel)
-        self._params['act'] = act.value
-        self._params['opt'] = opt.value
+        self._params['active'] = act.value
+        self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
-        self._params['bnorm'] = bnorm.value
+        self._params['batchNorm'] = bnorm.value
         self._params['mode'] = mode.value
         self._params['gpuDeviceId'] = str(gpuDeviceId)
         self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
@@ -79,9 +79,11 @@ class FullyConnected():
 
     def __init__(self,
                  kernel,
-                 mode=calcMode.CPU):
+                 mode=calcMode.CPU,
+                 bnorm=batchNormType.none):
         self._params['kernel'] = str(kernel)
         self._params['mode'] = mode.value
+        self._params['batchNorm'] = bnorm.value
 
     def getParams(self):
         return self._params
@@ -94,29 +96,30 @@ class Convolution():
     '''Convolution layer'''
 
     _params = {
-    'kernel' : '0',                          # Number of output layers. !Required parameter [0..)
+    'kernel': '0',                          # Number of output layers. !Required parameter [0..)
     'fWidth': '3',                           # Width of mask. Optional parameter(> 0)
     'fHeight': '3',                          # Height of mask. Optional parameter(> 0)
     'padding': '0',                          # Padding around the edges. Optional parameter
-    'stride':'1',                            # Mask movement step. Optional parameter(> 0)
+    'stride': '1',                            # Mask movement step. Optional parameter(> 0)
     'dilate': '1',                           # Expansion mask. Optional parameter(> 0)
-    'active' : active.relu.value,            # Activation function type. Optional parameter
-    'optimizer' : optimizer.adam.value,      # Optimizer of weights. Optional parameter
-    'dropOut' : '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
-    'batchNorm' : batchNormType.none.value,  # Type of batch norm. Optional parameter
-    'mode' : calcMode.CPU.value,             # Сalculation mode. Optional parameter
-    'gpuDeviceId' : '0',                     # GPU Id. Optional parameter
-    'gpuClearMem' : '0',                     # Clear memory GPU. Optional parameter
-    'freeze' :'0',                           # Do not change weights. Optional parameter
-    'weightInit' : weightInit.he.value,      # Type of initialization of weights. Optional parameter
-    'decayMomentDW' : '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
-    'decayMomentWGr' : '0.99',               # Optimizer of weights moment change of prev. Optional parameter
-    'lmbRegular' : '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
-    'batchNormLr' : '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
+    'active': active.relu.value,            # Activation function type. Optional parameter
+    'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
+    'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
+    'batchNorm': batchNormType.none.value,  # Type of batch norm. Optional parameter
+    'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
+    'gpuDeviceId': '0',                     # GPU Id. Optional parameter
+    'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
+    'freeze': '0',                           # Do not change weights. Optional parameter
+    'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
+    'decayMomentDW': '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
+    'decayMomentWGr': '0.99',               # Optimizer of weights moment change of prev. Optional parameter
+    'lmbRegular': '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
+    'batchNormLr': '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
     }
 
     def __init__(self,
                  kernel,
+                 padding=0,
                  act=active.relu,
                  opt=optimizer.adam,
                  dropOut=0.0,
@@ -126,10 +129,11 @@ class Convolution():
                  gpuClearMem=False,
                  freeze=False):
         self._params['kernel'] = str(kernel)
-        self._params['act'] = act.value
-        self._params['opt'] = opt.value
+        self._params['padding'] = str(padding)
+        self._params['active'] = act.value
+        self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
-        self._params['bnorm'] = bnorm.value
+        self._params['batchNorm'] = bnorm.value
         self._params['mode'] = mode.value
         self._params['gpuDeviceId'] = str(gpuDeviceId)
         self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
@@ -137,9 +141,13 @@ class Convolution():
 
     def __init__(self,
                  kernel,
-                 mode=calcMode.CPU):
+                 padding=0,
+                 mode=calcMode.CPU,
+                 bnorm=batchNormType.none):
         self._params['kernel'] = str(kernel)
+        self._params['padding'] = str(padding)
         self._params['mode'] = mode.value
+        self._params['batchNorm'] = bnorm.value
 
     def getParams(self):
         return self._params
@@ -182,10 +190,10 @@ class Deconvolution():
                  gpuClearMem=False,
                  freeze=False):
         self._params['kernel'] = str(kernel)
-        self._params['act'] = act.value
-        self._params['opt'] = opt.value
+        self._params['active'] = act.value
+        self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
-        self._params['bnorm'] = bnorm.value
+        self._params['batchNorm'] = bnorm.value
         self._params['mode'] = mode.value
         self._params['gpuDeviceId'] = str(gpuDeviceId)
         self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
@@ -193,9 +201,11 @@ class Deconvolution():
 
     def __init__(self,
                  kernel,
-                 mode=calcMode.CPU):
+                 mode=calcMode.CPU,
+                 bnorm=batchNormType.none):
         self._params['kernel'] = str(kernel)
         self._params['mode'] = mode.value
+        self._params['batchNorm'] = bnorm.value
 
     def getParams(self):
         return self._params
@@ -299,7 +309,7 @@ class Concat():
         self._params['sequence'] = sequence
 
     def getParams(self):
-        return {}
+        return self._params
 
     def name(self):
         return 'Concat'
