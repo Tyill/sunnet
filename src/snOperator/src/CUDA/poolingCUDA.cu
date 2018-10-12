@@ -28,7 +28,7 @@
 #include <cuda_runtime.h>
 #include <cudnn.h>
 #include "../stdafx.h"
-#include "SNOperator/src/Operator/pooling.h"
+#include "snOperator/src/Operator/pooling.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -100,11 +100,11 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     cudnnPoolingDescriptor_t pool_desc = nullptr;
     cuCHECK(cudnnCreatePoolingDescriptor(&pool_desc));
 
-    cudnnPoolingMode_t poolType = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
+    cudnnPoolingMode_t poolT = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
     if (poolType_ == poolType::avg) 
-        poolType = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+        poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
-    cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolType, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
+    cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
         int(kernel), int(kernel), 0, 0, int(kernel), int(kernel)));
     if (!isFirst)
         cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
@@ -269,7 +269,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
 
 #include <cuda_runtime.h>
 #include "../stdafx.h"
-#include "SNOperator/src/Operator/pooling.h"
+#include "snOperator/src/Operator/pooling.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -429,7 +429,7 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     
     // run     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
+    dim3 dimGrid(int(outsz.d), int(outsz.n));
 
     cuPoolFwd <<< dimGrid, dimBlock >>>(type,
         kernel, 
@@ -539,7 +539,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
   
     // run     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
+    dim3 dimGrid(int(outsz.d), int(outsz.n));
 
     cuPoolBwd <<< dimGrid, dimBlock >>>(type,
         kernel, 

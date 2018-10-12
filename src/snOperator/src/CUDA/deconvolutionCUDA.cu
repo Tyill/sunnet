@@ -28,7 +28,7 @@
 #include <cuda_runtime.h>
 #include <cudnn.h>
 #include "../stdafx.h"
-#include "SNOperator/src/Operator/deconvolution.h"
+#include "snOperator/src/Operator/deconvolution.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -475,7 +475,7 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
 
 #include <cuda_runtime.h>
 #include "../stdafx.h"
-#include "SNOperator/src/Operator/deconvolution.h"
+#include "snOperator/src/Operator/deconvolution.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -632,7 +632,7 @@ void Deconvolution::forwardCUDA(const deconvParams& prms,
 
     // run     
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(unsigned int(outsz.d), unsigned int(outsz.n));
+    dim3 dimGrid(int(outsz.d), int(outsz.n));
 
     cuDeconvFwd <<< dimGrid, dimBlock >>>(prms.fWidth, 
         prms.fHeight,
@@ -762,7 +762,7 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
        
     // run   
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
+    dim3 dimGrid(int(insz.d), int(outsz.n));
    
     cuDeconvBwd_GW <<< dimGrid, dimBlock >>> (prms.fWidth,
         prms.fHeight, 
@@ -866,7 +866,7 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
     
     // run   
     dim3 dimBlock(16, 16);
-    dim3 dimGrid(unsigned int(insz.d), unsigned int(outsz.n));
+    dim3 dimGrid(int(insz.d), int(outsz.n));
 
     cuDeconvBwd_G <<< dimGrid, dimBlock >>> (prms.fWidth,
         prms.fHeight,

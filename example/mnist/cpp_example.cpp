@@ -51,8 +51,8 @@ int main(int argc, char* argv[]){
     sn::Net snet;
         
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, sn::calcMode::CUDA), "P1")
+        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
+        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
         .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
         .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
