@@ -8,7 +8,7 @@ FILE(GLOB_RECURSE SRC_skynet "*.cpp" "*.h")
 
 if(MSVC)
   add_definitions(-DSKYNETDLL_EXPORTS)
-  set_target_properties(skynet PROPERTIES OUTPUT_NAME "libmxnet")
+  set_target_properties(skynet PROPERTIES OUTPUT_NAME "libskynet")
 endif(MSVC)
 
 add_library(skynet SHARED ${SRC_skynet})

@@ -24,7 +24,7 @@ if(MSVC)
 endif(MSVC)
 
 if (UNIX)
-  add_compile_options(-fPIC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -pthread -fPIC -lrt")
 endif(UNIX)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

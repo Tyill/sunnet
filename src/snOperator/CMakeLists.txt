@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(snOperator)
 
-FILE(GLOB_RECURSE SRC_snOperator "*.cpp" "*.h" "*.cu")
-
-add_library(snOperator STATIC ${SRC_snOperator})
+FILE(GLOB_RECURSE SRC_snOperator "*.cpp" "*.h")
 
 find_package(OpenMP REQUIRED)
 if (OpenMP_CXX_FOUND)
@@ -17,16 +15,22 @@ if (UNIX)
 find_package(BLAS REQUIRED)
 endif()
 
+add_library(snOperator STATIC ${SRC_snOperator})
+
 if(GPU STREQUAL "CUDA" OR GPU STREQUAL "cuDNN")
 
   add_definitions(-DSN_CUDA)
 
   target_link_libraries(snOperator cublas cudart_static)
-  
+  target_link_libraries(snOperator ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/convolutionCUDA.o
+          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/deconvolutionCUDA.o
+          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/fullyConnectedCUDA.o
+          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/poolingCUDA.o)
+
   if(GPU STREQUAL "cuDNN")
      add_definitions(-DSN_CUDNN)
 	 target_link_libraries(snOperator cudnn)
-  endif()	 
+  endif()
 endif()
 
 target_link_libraries(snOperator snAux snBase openblas)
