@@ -158,6 +158,7 @@ int main(int argc, char* argv[]){
 #include "../cpp/snNet.h"
 #include "../cpp/snTensor.h"
 #include "../cpp/snOperator.h"
+#include <iostream>
 
 using namespace std;
 namespace sn = SN_API;
@@ -173,6 +174,9 @@ int main(int argc, char* argv[]){
         .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
+
+    cout << "Hello " <<  SN_API::versionLib() << endl;
+
 }
 
 #endif

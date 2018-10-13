@@ -1,33 +1,22 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
 project(snOperator)
 
-FILE(GLOB_RECURSE SRC_snOperator "*.cpp" "*.h")
-
-find_package(OpenMP REQUIRED)
-if (OpenMP_CXX_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
-if (UNIX)
-find_package(BLAS REQUIRED)
-endif()
+FILE(GLOB_RECURSE SRC_snOperator "*.cpp" "*.h" "*.cu")
 
 add_library(snOperator STATIC ${SRC_snOperator})
 
-if(GPU STREQUAL "CUDA" OR GPU STREQUAL "cuDNN")
+if(USE_CUDA)
 
-  add_definitions(-DSN_CUDA)
+    set_target_properties(snOperator PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(snOperator PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    target_compile_features(snOperator PUBLIC cxx_std_11)
 
-  target_link_libraries(snOperator cublas cudart_static)
-  target_link_libraries(snOperator ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/convolutionCUDA.o
-          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/deconvolutionCUDA.o
-          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/fullyConnectedCUDA.o
-          ${CMAKE_SOURCE_DIR}/cmake-build-release/Builds/Release/poolingCUDA.o)
+    add_definitions(-DSN_CUDA)
 
-  if(GPU STREQUAL "cuDNN")
+    target_link_libraries(snOperator cublas cudart_static)
+
+    if(GPU STREQUAL "CUDNN")
      add_definitions(-DSN_CUDNN)
 	 target_link_libraries(snOperator cudnn)
   endif()
