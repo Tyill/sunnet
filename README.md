@@ -64,7 +64,7 @@ for n in range(1000):
 * pip install libskynet-cudnn   -  CPU + cuDNN7.3.1
  
  
-## wiki 
+## [Wiki](https://github.com/Tyill/skynet/wiki) 
  
 ## License
 Licensed under an [MIT-2.0]-[license](LICENSE).
