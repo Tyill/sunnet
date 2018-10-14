@@ -23,10 +23,9 @@
 # THE SOFTWARE.
 import ctypes
 
-from __init__ import _LIB
+from libskynet.__init__ import _LIB
 import json
-from snBase import*
-import snOperator
+from libskynet.snBase import*
 import numpy
 
 class Net():
@@ -79,7 +78,7 @@ class Net():
         return err
 
 
-    def addNode(self, name : str, nd : snOperator, nextNodes : str):
+    def addNode(self, name : str, nd, nextNodes : str):
         """
         add Node
         :param name: name node
@@ -92,7 +91,7 @@ class Net():
         return self
 
 
-    def updateNode(self, name : str, nd : snOperator) -> bool:
+    def updateNode(self, name : str, nd) -> bool:
         """
         Update params node
         :param name: name node

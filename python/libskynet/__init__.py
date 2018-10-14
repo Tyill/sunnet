@@ -1,4 +1,5 @@
-#
+#!/usr/bin/env python
+
 # SkyNet Project
 # Copyright (C) 2018 by Contributors <https:#github.com/Tyill/skynet>
 #
@@ -22,10 +23,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# coding: utf-8
+
 from __future__ import absolute_import
 import os
 import ctypes
 
+
+from . import snNet
+from . import snType
+from . import snOperator
 
 libname = 'libskynet.so'
 if os.name == 'nt':
@@ -36,6 +43,21 @@ libname = os.path.abspath(
 
 _LIB = ctypes.CDLL(libname)
 
-__all__ = ["snType", "snNet", "snOperator"]
 
+def _snVersionLib() -> str:
+    """
+    version library
+    :return: version
+    """
 
+    pfun = _LIB.snVersionLib
+    pfun.restype = None
+    pfun.argtypes = (ctypes.c_char_p,)
+
+    ver = ctypes.create_string_buffer(32)
+    pfun(ver)
+
+    return ver.value.decode("utf-8")
+
+# current version
+__version__ = _snVersionLib()
