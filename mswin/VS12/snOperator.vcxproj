@@ -146,8 +146,12 @@
     </CudaLink>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.dll.a;</AdditionalDependencies>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.lib;</AdditionalDependencies>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -198,7 +202,7 @@
     </CudaCompile>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.dll.a;</AdditionalDependencies>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.lib;</AdditionalDependencies>
     </Lib>
     <CudaLink>
       <PerformDeviceLink>true</PerformDeviceLink>
@@ -210,6 +214,10 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
     </CudaLink>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -269,8 +277,12 @@
     </CudaLink>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.dll.a;</AdditionalDependencies>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.lib;</AdditionalDependencies>
     </Lib>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -279,7 +291,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG;SN_CUDA;SN_CUDNN;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG;NDEBUG;SN_CUDA;SN_CUDNN;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
@@ -322,7 +334,7 @@
     </CudaCompile>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.dll.a;</AdditionalDependencies>
+      <AdditionalDependencies>cublas.lib;cudart_static.lib;cudnn.lib;libopenblas.lib;</AdditionalDependencies>
     </Lib>
     <CudaLink>
       <PerformDeviceLink>true</PerformDeviceLink>
@@ -332,6 +344,10 @@
       <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
       <Optimization>InheritFromProject</Optimization>
     </CudaLink>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snOperator\snOperator.h" />
