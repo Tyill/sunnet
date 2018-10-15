@@ -116,7 +116,7 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
         for (size_t j = 0; j < insz.n; ++j)
             b += grin[kernel * j];
 
-        dWOut[i] = b;
+        dWOut[i] = b / insz.n;
     }
 }
 

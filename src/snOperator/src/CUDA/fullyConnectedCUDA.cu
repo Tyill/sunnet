@@ -191,7 +191,7 @@ __global__ void cuBwdBias(size_t kernel, snSize insz, snFloat* gradIn, snFloat* 
         for (size_t j = 0; j < insz.n; ++j)
             b += grin[kernel * j];
 
-        dWOut[k] = b;
+        dWOut[k] = b / insz.n;
         k += blockDim.x;
     }
 }
