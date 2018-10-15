@@ -261,14 +261,8 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
         calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
     /// active func
-    switch (activeType_){
-    case activeType::sigmoid:   fv_sigmoid(out, kernel_ * insz.n); break;
-    case activeType::relu:      fv_relu(out, kernel_ * insz.n); break;
-    case activeType::leakyRelu: fv_leakyRelu(out, kernel_ * insz.n); break;
-    case activeType::elu:       fv_elu(out, kernel_ * insz.n); break;
-    default: break;
-    }
-   
+    activeFuncForward(kernel_ * insz.n, out, activeType_);
+       
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
@@ -289,14 +283,8 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* out = baseOut_->getData();
         
         size_t osz = kernel_ * inSzMem_.n;
-        switch (activeType_){
-        case activeType::sigmoid:   df_sigmoid(out, osz); break;
-        case activeType::relu:      df_relu(out, osz); break;
-        case activeType::leakyRelu: df_leakyRelu(out, osz); break;
-        case activeType::elu:       df_elu(out, osz); break;
-        default: break;
-        }
-        
+        activeFuncBackward(osz, out, activeType_);
+                
         // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
     }

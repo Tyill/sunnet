@@ -25,14 +25,17 @@
 #pragma once
 
 #include "snBase/snBase.h"
+#include "structurs.h"
 
-/// батч нормализация прямой проход CPU    
+void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType);
+
+void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType);
+
 void batchNormForward(const SN_Base::snSize& insz,
     SN_Base::snFloat* in,
     SN_Base::snFloat* out,
     SN_Base::batchNorm);
 
-/// батч нормализация обратный проход CPU
 void batchNormBackward(const SN_Base::snSize& insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,

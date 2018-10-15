@@ -95,7 +95,7 @@ SKYNET_API bool snTraining(skyNet,
     snLSize osz,
     snFloat* outData,
     const snFloat* targetData,
-    snFloat* outAccurate);
+    snFloat* outAccurate = nullptr);
 
 /// forward pass
 /// @param[in] skyNet - object net

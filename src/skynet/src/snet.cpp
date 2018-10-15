@@ -260,8 +260,10 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
     engine_->backward(operPrm_);
 
     // metrics
-    auto outTensor = operats_["EndNet"]->getOutput();
-    *outAccurate = calcAccurate(gradData_["EndNet"], outTensor);
+    if (outAccurate){
+        auto outTensor = operats_["EndNet"]->getOutput();
+        *outAccurate = calcAccurate(gradData_["EndNet"], outTensor);
+    }
 
     return true;
 }

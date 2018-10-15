@@ -93,8 +93,8 @@ namespace SN_API{
 
         if (!fn) return false;
 
-        if (!iLayer || !outData || !targetData || !outAccurate){
-            static_cast<SNet*>(fn)->statusMess("SN error: !iLayer || !outData || !targetData || !outAccurate");
+        if (!iLayer || !outData || !targetData){
+            static_cast<SNet*>(fn)->statusMess("SN error: !iLayer || !outData || !targetData");
             return false;
         }
 

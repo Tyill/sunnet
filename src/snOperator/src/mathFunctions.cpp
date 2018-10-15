@@ -27,10 +27,32 @@
 #include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/mathFunctions.h"
 #include "snOperator/src/random.h"
+#include "snOperator/src/activeFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
 
+void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType active){
+
+    switch (active){
+    case activeType::sigmoid:   fv_sigmoid(data, sz); break;
+    case activeType::relu:      fv_relu(data, sz); break;
+    case activeType::leakyRelu: fv_leakyRelu(data, sz); break;
+    case activeType::elu:       fv_elu(data, sz); break;
+    default: break;
+    }
+}
+
+void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType active){
+
+    switch (active){
+    case activeType::sigmoid:   df_sigmoid(data, sz); break;
+    case activeType::relu:      df_relu(data, sz); break;
+    case activeType::leakyRelu: df_leakyRelu(data, sz); break;
+    case activeType::elu:       df_elu(data, sz); break;
+    default: break;
+    }
+}
 
 void batchNormForward(const SN_Base::snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
   

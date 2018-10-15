@@ -265,16 +265,9 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
     if (batchNormType_ == batchNormType::beforeActive)
         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
-
     /// active func
-    switch (activeType_){
-    case activeType::sigmoid:   fv_sigmoid(out, outsz.size()); break;
-    case activeType::relu:      fv_relu(out, outsz.size()); break;
-    case activeType::leakyRelu: fv_leakyRelu(out, outsz.size()); break;
-    case activeType::elu:       fv_elu(out, outsz.size()); break;
-    default: break;
-    }
-
+    activeFuncForward(outsz.size(), out, activeType_);
+    
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
@@ -295,13 +288,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         snFloat* out = baseOut_->getData();
         
         size_t osz = baseOut_->size().size();
-        switch (activeType_){
-        case activeType::sigmoid:   df_sigmoid(out, osz); break;
-        case activeType::relu:      df_relu(out, osz); break;
-        case activeType::leakyRelu: df_leakyRelu(out, osz); break;
-        case activeType::elu:       df_elu(out, osz); break;
-        default: break;
-        }
+        activeFuncBackward(osz, out, activeType_);
 
         // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
