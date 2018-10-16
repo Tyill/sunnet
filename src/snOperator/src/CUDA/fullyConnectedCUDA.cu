@@ -146,8 +146,8 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* inp
 
     cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, gpuPrm->d_in, bsz));
   
-    cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, gpuPrm->d_w, ida));
-   
+    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, (ida + 1) * krn * sizeof(snFloat), cudaMemcpyHostToDevice));
+
     // Out = α * W * In + βC
     // In - data input matrix - values from the previous layer
     // W - weights matrix

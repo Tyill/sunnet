@@ -25,11 +25,6 @@
 #pragma once
 
 #include "snBase/snBase.h"
-#include "structurs.h"
-
-void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType);
-
-void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType);
 
 void batchNormForward(const SN_Base::snSize& insz,
     SN_Base::snFloat* in,

@@ -23,12 +23,35 @@
 // THE SOFTWARE.
 //
 #include "stdafx.h"
+#include "structurs.h"
+#include "activeFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
 
-// fv - функция значения, df - производная функции
+// fv - value, df - deriv
 
+void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType active){
+
+    switch (active){
+    case activeType::sigmoid:   fv_sigmoid(data, sz); break;
+    case activeType::relu:      fv_relu(data, sz); break;
+    case activeType::leakyRelu: fv_leakyRelu(data, sz); break;
+    case activeType::elu:       fv_elu(data, sz); break;
+    default: break;
+    }
+}
+
+void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType active){
+
+    switch (active){
+    case activeType::sigmoid:   df_sigmoid(data, sz); break;
+    case activeType::relu:      df_relu(data, sz); break;
+    case activeType::leakyRelu: df_leakyRelu(data, sz); break;
+    case activeType::elu:       df_elu(data, sz); break;
+    default: break;
+    }
+}
 
 void fv_sigmoid(snFloat* ioVal, size_t sz){
     
