@@ -52,17 +52,17 @@ int main(int argc, char* argv[]){
        
     sn::Net snet;
         
-    snet.addNode("Input", sn::Input(), "FC2")
-     /*   .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
+    snet.addNode("Input", sn::Input(), "C1")
+        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
         .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
         .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
-        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")*/
+        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
     string imgPath = "c://C++//skyNet//example//mnist//images//";
     
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.01F;
+    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
