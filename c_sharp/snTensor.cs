@@ -26,20 +26,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using SN_API;
 
-namespace Test
+namespace SN_API
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Net net = new Net();
+    /// <summary>
+    /// layer size
+    /// </summary>
+    public struct snLSize{
 
-            string ver = net.versionLib();
+        public uint w = 0, h = 0, ch = 0, bsz = 0; 
+ 
+        public snLSize(uint w_ = 0, uint h_ = 0, uint ch_ = 0, uint bsz_ = 0){
+             w = w_;
+             h = h_;
+             ch = ch_;
+             bsz = bsz_;
         }
-    }              
-            
+    }
+
+    /// <summary>
+    /// Tensor
+    /// </summary>
+    public class Tensor{
+       
+        public Tensor(snLSize lsz = new snLSize(), float[] data = null){
+        
+            lsz_ = lsz;
+
+            data_ = data;
+        }
+                           
+        public void clear(){
+
+         //   data_.;
+        }
+
+        public float[] data(){
+
+            return data_;
+        }
+
+        public snLSize size(){
+
+            return lsz_;
+        }
+
+       private snLSize lsz_;
+       private float[] data_;
+     
+    };    
 }
