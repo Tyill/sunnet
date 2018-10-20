@@ -706,6 +706,9 @@ __global__ void cuDeconvBwd_GW(size_t fWidth, size_t fHeight, size_t stride,
                 }
                 gradOut[ox + oy * insz.w] += csum;
 
+                if (blockIdx.x == 0)
+                    dWeightOut[wStepByD * outsz.d] += cin; // bias
+
                 ox += blockDim.x;
             }
             oy += blockDim.y;
