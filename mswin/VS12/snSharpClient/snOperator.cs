@@ -504,9 +504,9 @@ namespace SN_API
         }
     };
 
-    /// <summary>
-    /// Custom layer
-    /// </summary>
+     /// <summary>
+     /// Custom layer
+     /// </summary>
     public class UserLayer{
               
         public string cbackName;
