@@ -43,13 +43,6 @@ if(MSVC)
   link_directories(";$(OutDir)")
 endif(MSVC)
 
-# copy mswin dependent
-if(WIN32)
-  mswin_getDependDir(DEPEND_WIN_DIR)
-  add_custom_command(TARGET skynet PRE_BUILD
-          COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPEND_WIN_DIR} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-endif()
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(snAux)

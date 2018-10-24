@@ -22,4 +22,10 @@ if(USE_CUDA)
   endif()
 endif()
 
-target_link_libraries(snOperator snAux snBase openblas)
+target_link_libraries(snOperator snAux snBase)
+
+if(WIN32)
+  target_link_libraries(snOperator libopenblas)
+else()
+  target_link_libraries(snOperator openblas)
+endif()
