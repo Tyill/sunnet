@@ -35,9 +35,9 @@ namespace SN_API
     /// <summary>
     /// layer size
     /// </summary>
-    public struct snLSize{
-
-        public uint w = 0, h = 0, ch = 0, bsz = 0; 
+    public unsafe struct snLSize
+    {
+        public Int64 w = 0, h = 0, ch = 0, bsz = 0; 
  
         public snLSize(uint w_ = 0, uint h_ = 0, uint ch_ = 0, uint bsz_ = 0){
              w = w_;
@@ -50,9 +50,9 @@ namespace SN_API
     /// <summary>
     /// Tensor
     /// </summary>
-    public class Tensor{
+    public unsafe class Tensor{
        
-        public Tensor(snLSize lsz = new snLSize(), float[] data = null){
+        public Tensor(snLSize lsz, float* data = null){
         
             lsz_ = lsz;
 
@@ -64,7 +64,7 @@ namespace SN_API
          //   data_.;
         }
 
-        public float[] data(){
+        public float* data(){
 
             return data_;
         }
@@ -75,7 +75,7 @@ namespace SN_API
         }
 
        private snLSize lsz_;
-       private float[] data_;
+       private float* data_ = null;
      
     };    
 }

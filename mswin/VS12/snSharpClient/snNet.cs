@@ -32,13 +32,13 @@ using System.Threading.Tasks;
 
 namespace SN_API
 {
-    public class Net
+    public unsafe class Net
     {
-        private struct node{
-            string name;
-            string opr;
-            string lparams;
-            string nextNodes;
+        private class node{
+            public string name;
+            public string opr;
+            public string lparams;
+            public string nextNodes;
 
             public node(string name_, string opr_,  string lparams_, string nextNodes_){
 
@@ -49,20 +49,19 @@ namespace SN_API
             }
         };
 
-        private struct uCBack{
-            string name;
-            IntPtr cback;
-            IntPtr udata;           
+        private class uCBack
+        {
+            public string name;
+            public IntPtr cback;
+            public IntPtr udata;           
         };   
 
         private List<node> nodes_;
         private List<uCBack> ucb_;
 
-        private IntPtr net_ = IntPtr.Zero;
+        private void* net_ = null;
 
-        private string netStruct_;
-        private string err_;
-                
+        private string netStruct_;                 
         
         [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void snVersionLib(IntPtr ver); 
@@ -91,23 +90,23 @@ namespace SN_API
         public Net(string jnNet = "", string weightPath = ""){
         
             if (jnNet.Length > 0)
-                createNet(jnNet);
+                createNetJN(jnNet);
 
-            if (!net_.Equals(0) && (weightPath.Length > 0))
+            if ((net_ != null) && (weightPath.Length > 0))
                 loadAllWeightFromFile(weightPath);            
         }
 
         [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        static extern void snFreeNet(IntPtr net); 
+        static extern void snFreeNet(void* net); 
 
         public ~Net()
         {
-            if (!net_.Equals(0))
+            if (net_ != null)
                 snFreeNet(net_);        
         }
 
         [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        static extern void snGetLastErrorStr(IntPtr net, IntPtr err); 
+        static extern void snGetLastErrorStr(void* net, IntPtr err); 
 
         /// <summary>
         /// last error
@@ -115,17 +114,18 @@ namespace SN_API
         /// <returns>"" ok</returns>
         public string getLastErrorStr(){
 
-            if (!net_.Equals(0)){
+            string err = "";
+            if (net_ != null){
 
                 IntPtr cptr = Marshal.AllocHGlobal(256);
 
                 snGetLastErrorStr(net_, cptr);
-                err_ = Marshal.PtrToStringAnsi(cptr);
+                err = Marshal.PtrToStringAnsi(cptr);
 
                 Marshal.FreeHGlobal(cptr);
             }
 
-            return err_;
+            return err;
         }
 
         /// add node (layer)
@@ -135,56 +135,75 @@ namespace SN_API
         /// @return ref Net
         public Net addNode<T>(string name, T nd, string nextNodes){
 
-            nodes_.Add(new node(name, nd.name(), nd.getParamsJn(), nextNodes));
+            nodes_.Add(new node(name, ((IOperator)nd).name(), ((IOperator)nd).getParamsJn(), nextNodes));
             
             return this;
         }
 
-        ///// update param node (layer)
-        ///// @param[in] name - name node in architecture of net
-        ///// @param[in] nd - tensor node
-        ///// @return true - ok
-        //template<typename Operator>
-        //bool updateNode(const std::string& name, Operator nd){
+        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern bool snSetParamNode(void* net, IntPtr prms, IntPtr prms); 
 
-        //    bool ok = false;
-        //    if (net_)
-        //        ok = snSetParamNode(net_, name.c_str(), nd.getParamsJn().c_str());
-        //    else{
-        //        for (auto& n : nodes_){
-        //            if (n.name == name){
-        //                n.params = nd.getParamsJn();
-        //                ok = true;
-        //                break;
-        //            }
-        //        }
-        //    }
+        /// update param node (layer)
+        /// @param[in] name - name node in architecture of net
+        /// @param[in] nd - tensor node
+        /// @return true - ok
+        bool updateNode<T>(string name, T nd){
 
-        //    return ok;
-        //}
+            bool ok = false;
+            if (net_ != null){
+                              
+                IntPtr cname = Marshal.StringToHGlobalAnsi(name);
+                IntPtr cprm = Marshal.StringToHGlobalAnsi(((IOperator)nd).getParamsJn());
 
-        ///// forward action
-        ///// @param[in] isLern - is lerning ?
-        ///// @param[in] inTns - in tensor
-        ///// @param[inout] outTns - out result tensor
-        ///// @return true - ok
-        //bool forward(bool isLern, Tensor& inTns, Tensor& outTns){
+                ok = snSetParamNode(net_, cname, cprm);
+               
+                Marshal.FreeHGlobal(cname);
+                Marshal.FreeHGlobal(cprm);
+            }
+            else{
+                for (int i = 0; i < nodes_.Count; ++i)
+                {
+                    if (nodes_[i].name == name)
+                    {
+                        nodes_[i].lparams = ((IOperator)nd).getParamsJn();
+                        ok = true;
+                        break;
+                    }
+                }
+            }
 
-        //    if (!net_ && !createNet()) return false;
+            return ok;
+        }
 
-        //    return snForward(net_, isLern, inTns.size(), inTns.data(), outTns.size(), outTns.data());
-        //}
+        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern bool snForward(void* net, bool isLern, snLSize isz, float* iLayer, snLSize osz, float* outData); 
+                
+        /// forward action
+        /// @param[in] isLern - is lerning ?
+        /// @param[in] inTns - in tensor
+        /// @param[inout] outTns - out result tensor
+        /// @return true - ok
+        bool forward(bool isLern, Tensor inTns, Tensor outTns){
 
-        ///// backward action
-        ///// @param[in] lr - lerning rate
-        ///// @param[in] gradTns - grad error tensor
-        ///// @return true - ok
-        //bool backward(snFloat lr, Tensor& gradTns){
+            if ((net_ == null) && !createNet()) return false;
+                       
+            return snForward(net_, isLern, inTns.size(), inTns.data(), outTns.size(), outTns.data());
+        }
 
-        //    if (!net_ && !createNet()) return false;
+        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern bool snBackward(void* net, float lr, snLSize gsz, float* grad); 
+      
+    
+        /// backward action
+        /// @param[in] lr - lerning rate
+        /// @param[in] gradTns - grad error tensor
+        /// @return true - ok
+        bool backward(float lr, Tensor gradTns){
 
-        //    return snBackward(net_, lr, gradTns.size(), gradTns.data());
-        //}
+            if ((net_ == null) && !createNet()) return false;
+
+            return snBackward(net_, lr, gradTns.size(), gradTns.data());
+        }
 
         ///// training action - cycle forward-backward
         ///// @param[in] lr - lerning rate
@@ -273,9 +292,9 @@ namespace SN_API
         /// <returns>true - ok</returns>
         public bool loadAllWeightFromFile(string path){
 
-            if (!net_.Equals(0) && !createNet()) return false;
+            if ((net_ == null) && !createNet()) return false;
 
-            return snLoadAllWeightFromFile(net_, net_);
+            return true;//snLoadAllWeightFromFile(net_, net_);
         }
 
         ///// add user callback
@@ -369,7 +388,7 @@ namespace SN_API
             //return createNet(ss.str().c_str());
         }
 
-        private bool createNet(string jnNet){
+        private bool createNetJN(string jnNet){
             
             return true;
             //if (net_) return true;

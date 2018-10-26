@@ -35,7 +35,7 @@ namespace SN_API
     /// <summary>
     /// Activation function type
     /// </summary>
-    public struct active{
+    public class active{
 
         public active(type tp)
         {
@@ -70,7 +70,8 @@ namespace SN_API
     /// <summary>
     /// Type of initialization of weights
     /// </summary>
-    public struct weightInit{
+    public class weightInit
+    {
 
         public weightInit(type tp)
         {
@@ -101,7 +102,8 @@ namespace SN_API
     /// <summary>
     /// Type of batch norm 
     /// </summary>
-    public struct batchNormType{
+    public class batchNormType
+    {
 
         public batchNormType(type tp)
         {
@@ -130,7 +132,8 @@ namespace SN_API
     /// <summary>
     /// Optimizer of weights
     /// </summary>
-    public struct optimizer{
+    public class optimizer
+    {
 
         public optimizer(type tp)
         {
@@ -163,7 +166,8 @@ namespace SN_API
     /// <summary>
     /// pooling
     /// </summary>
-    public struct pooling{
+    public class pooling
+    {
 
         public pooling(type tp)
         {
@@ -190,7 +194,8 @@ namespace SN_API
     /// <summary>
     /// CPU, CUDA or OpenCL
     /// </summary>
-    public struct calcMode{
+    public class calcMode
+    {
 
         public calcMode(type tp)
         {
@@ -219,7 +224,8 @@ namespace SN_API
     /// <summary>
     /// lockType
     /// </summary>
-    public struct lockType{
+    public class lockType
+    {
 
         public lockType(type tp)
         {
@@ -246,7 +252,8 @@ namespace SN_API
     /// <summary>
     /// summatorType
     /// </summary>
-    public struct summatorType{
+    public class summatorType
+    {
 
         public summatorType(type tp)
         {
@@ -275,7 +282,8 @@ namespace SN_API
     /// <summary>
     /// lossType
     /// </summary>
-    public struct lossType{
+    public class lossType
+    {
 
         public lossType(type tp)
         {
@@ -305,7 +313,8 @@ namespace SN_API
     /// <summary>
     /// diap
     /// </summary>
-    public struct diap{
+    public class diap
+    {
 
         public uint begin, end;
         public diap(uint begin_, uint end_)
@@ -317,7 +326,8 @@ namespace SN_API
     /// <summary>
     /// rect
     /// </summary>
-    public struct rect{
+    public class rect
+    {
         public uint x, y, w, h;
 
         public rect(uint x_, uint y_, uint w_, uint h_)

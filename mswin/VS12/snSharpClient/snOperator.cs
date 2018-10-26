@@ -32,10 +32,17 @@ using System.Threading.Tasks;
 
 namespace SN_API
 {
+    public interface IOperator
+    {
+        string getParamsJn();
+
+        string name();
+    } 
+    
     /// <summary>
     ///  Input layer
     /// </summary>
-    public class Input
+    public class Input : IOperator
     {   
         string getParamsJn(){
                        
@@ -50,7 +57,7 @@ namespace SN_API
     /// <summary>
     ///  Fully connected layer
     /// </summary>
-    public class FullyConnected
+    public class FullyConnected : IOperator
     {
         public uint kernel;                                        ///< Number of hidden neurons. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
@@ -123,7 +130,8 @@ namespace SN_API
     /// <summary>
     /// Convolution layer
     /// </summary>
-    public class Convolution{
+    public class Convolution : IOperator
+    {
                    
         public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
@@ -219,7 +227,7 @@ namespace SN_API
     /// <summary>
     /// Deconvolution layer
     /// </summary>
-    public class Deconvolution
+    public class Deconvolution : IOperator
     {
 
         public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
@@ -307,7 +315,7 @@ namespace SN_API
     /// <summary>
     ///  Pooling layer
     /// </summary>
-    public class Pooling
+    public class Pooling : IOperator
     {
 
         public uint kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
@@ -349,7 +357,8 @@ namespace SN_API
     /// It is designed for the ability to dynamically disconnect the parallel
     /// branches of the network during operation.
     /// </summary>
-    public class Lock{
+    public class Lock : IOperator
+    {
 
         public lockType lockTp;    ///< Blocking activity. Optional parameter
 
@@ -375,7 +384,7 @@ namespace SN_API
     /// Operator for transferring data to several nodes at once.
     /// Data can only be received from one node.
     /// </summary>
-    public class Switch
+    public class Switch : IOperator
     {
 
         public string nextWay;   // next nodes through a space
@@ -404,7 +413,8 @@ namespace SN_API
     /// The consolidation can be performed by the following options: "summ", "diff", "mean".
     /// The dimensions of the input layers must be the same.
     /// </summary>
-    public class Summator{
+    public class Summator : IOperator
+    {
         
         public summatorType summType;     
 
@@ -430,7 +440,8 @@ namespace SN_API
     /// <summary>
     ///  The operator connects the channels with multiple layers
     /// </summary>
-    public class Concat{
+    public class Concat : IOperator
+    {
                       
         public string sequence;    // prev nodes through a space
 
@@ -454,7 +465,8 @@ namespace SN_API
     /// <summary>
     ///  Change the number of channels
     /// </summary>
-    public class Resize{
+    public class Resize : IOperator
+    {
                
         public diap fwdDiap, bwdDiap;   // diap layer through a space
 
@@ -481,7 +493,8 @@ namespace SN_API
     /// <summary>
     /// ROI clipping in each image of each channel
     /// </summary>
-    public class Crop{
+    public class Crop : IOperator
+    {
                 
         public rect rct;         // region of interest
 
@@ -507,7 +520,8 @@ namespace SN_API
      /// <summary>
      /// Custom layer
      /// </summary>
-    public class UserLayer{
+    public class UserLayer : IOperator
+    {
               
         public string cbackName;
 
@@ -533,7 +547,8 @@ namespace SN_API
     /// <summary>
     /// Error function calculation layer
     /// </summary>
-    public class LossFunction{
+    public class LossFunction : IOperator
+    {
                    
         public lossType loss;
 
