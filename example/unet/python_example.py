@@ -18,13 +18,13 @@ net.addNode("In", snOperator.Input(), "C1") \
    .addNode("C1", snOperator.Convolution(10, -1, snType.calcMode.CUDA), "C2") \
    .addNode("C2",snOperator.Convolution(10, 0, snType.calcMode.CUDA), "P1 Crop1") \
    .addNode("Crop1", snOperator.Crop(snType.rect(0, 0, 487, 487)), "Rsz1") \
-   .addNode("Rsz1", snOperator.Resize(snType.diap(0, 10), snType.diap(0, 25)), "Conc1") \
+   .addNode("Rsz1", snOperator.Resize(snType.diap(0, 10), snType.diap(0, 10)), "Conc1") \
    .addNode("P1", snOperator.Pooling(snType.calcMode.CUDA), "C3") \
    \
    .addNode("C3", snOperator.Convolution(10, -1, snType.calcMode.CUDA), "C4") \
    .addNode("C4", snOperator.Convolution(10, 0, snType.calcMode.CUDA), "P2 Crop2") \
    .addNode("Crop2", snOperator.Crop(snType.rect(0, 0, 247, 247)), "Rsz2") \
-   .addNode("Rsz2", snOperator.Resize(snType.diap(0, 10), snType.diap(0, 25)), "Conc2") \
+   .addNode("Rsz2", snOperator.Resize(snType.diap(0, 10), snType.diap(0, 10)), "Conc2") \
    .addNode("P2", snOperator.Pooling(snType.calcMode.CUDA), "C5") \
    \
    .addNode("C5", snOperator.Convolution(10, 0, snType.calcMode.CUDA), "C6") \
@@ -45,7 +45,8 @@ net.addNode("In", snOperator.Input(), "C1") \
 
 convOut = snOperator.Convolution(1, 0, snType.calcMode.CUDA)
 convOut.act = snType.active.sigmoid;
-net.addNode("C10", convOut, "Output");
+net.addNode("C10", convOut, "LS") \
+   .addNode('LS', snOperator.LossFunction(snType.lossType.binaryCrossEntropy), 'Output')
 
 # loadImg
 

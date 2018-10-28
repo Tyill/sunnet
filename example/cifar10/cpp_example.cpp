@@ -1,4 +1,11 @@
 ﻿
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cstdlib>
+#include <map>
+#include <filesystem>
+
 #include "../cpp/snNet.h"
 #include "../cpp/snTensor.h"
 #include "../cpp/snOperator.h"

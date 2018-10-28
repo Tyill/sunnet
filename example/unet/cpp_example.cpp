@@ -51,13 +51,13 @@ int main(int argc, char* argv[]){
         .addNode("C1", sn::Convolution(10, -1, sn::calcMode::CUDA), "C2")
         .addNode("C2", sn::Convolution(10, 0, sn::calcMode::CUDA), "P1 Crop1")
         .addNode("Crop1", sn::Crop(sn::rect(0, 0, 487, 487)), "Rsz1")
-        .addNode("Rsz1", sn::Resize(sn::diap(0, 10), sn::diap(0, 25)), "Conc1")
+        .addNode("Rsz1", sn::Resize(sn::diap(0, 10), sn::diap(0, 10)), "Conc1")
         .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "C3")
 
         .addNode("C3", sn::Convolution(10, -1, sn::calcMode::CUDA), "C4")
         .addNode("C4", sn::Convolution(10, 0, sn::calcMode::CUDA), "P2 Crop2")
         .addNode("Crop2", sn::Crop(sn::rect(0, 0, 247, 247)), "Rsz2")
-        .addNode("Rsz2", sn::Resize(sn::diap(0, 10), sn::diap(0, 25)), "Conc2")
+        .addNode("Rsz2", sn::Resize(sn::diap(0, 10), sn::diap(0, 10)), "Conc2")
         .addNode("P2", sn::Pooling(sn::calcMode::CUDA), "C5")
 
         .addNode("C5", sn::Convolution(10, 0, sn::calcMode::CUDA), "C6")
@@ -78,8 +78,8 @@ int main(int argc, char* argv[]){
 
     sn::Convolution convOut(1, 0, sn::calcMode::CUDA);
     convOut.act = sn::active::sigmoid;
-    snet.addNode("C10", convOut, "Output");
-
+    snet.addNode("C10", convOut, "LS")
+        .addNode("LS", sn::LossFunction(sn::lossType::binaryCrossEntropy), "Output");
     
     string imgPath = "c://C++//skyNet//example//unet//images//";
     string labelPath = "c://C++//skyNet//example//unet//labels//";
