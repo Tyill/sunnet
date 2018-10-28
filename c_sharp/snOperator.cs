@@ -73,7 +73,7 @@ namespace SN_API
         public weightInit wini = new weightInit(weightInit.type.he); ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;                         ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;                       ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        public float lmbRegular = 0.000F;                          ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        public float lmbRegular = 0.001F;                          ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;                         ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         public FullyConnected(uint kernel_,                          
@@ -108,12 +108,12 @@ namespace SN_API
                          "\"active\":\"" + act.str() + "\"," +
                          "\"weightInit\":\"" + wini.str() + "\"," +
                          "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                         "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"batchNormLr\":\"" + batchNormLr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"optimizer\":\"" + opt.str() + "\"," +
-                         "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                         "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                         "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                         "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"mode\":\"" + mode.str() + "\"," +
                          "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                          "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -152,7 +152,7 @@ namespace SN_API
         public weightInit wini = new weightInit(weightInit.type.he);   ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;            ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;          ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        public float lmbRegular = 0.000F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        public float lmbRegular = 0.001F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;            ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         public Convolution(uint kernel_,              
@@ -204,12 +204,12 @@ namespace SN_API
                 "\"active\":\"" + act.str() + "\"," +
                 "\"weightInit\":\"" + wini.str() + "\"," +
                 "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"batchNormLr\":\"" + batchNormLr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"optimizer\":\"" + opt.str() + "\"," +
-                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"mode\":\"" + mode.str() + "\"," +
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -239,7 +239,7 @@ namespace SN_API
         public batchNormType bnorm = new batchNormType(batchNormType.type.none); ///< Type of batch norm. Optional parameter
         public uint fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
         public uint fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-        public uint stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
+        public uint stride = 2;                       ///< Mask movement step. Optional parameter(> 0)
         public calcMode mode = new calcMode(calcMode.type.CPU);        ///< Сalculation mode. Optional parameter           
         public uint gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         public bool gpuClearMem = false;              ///< Clear memory GPU. Optional parameter
@@ -292,12 +292,12 @@ namespace SN_API
                 "\"active\":\"" + act.str() + "\"," +
                 "\"weightInit\":\"" + wini.str() + "\"," +
                 "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"batchNormLr\":\"" + batchNormLr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"optimizer\":\"" + opt.str() + "\"," +
-                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"mode\":\"" + mode.str() + "\"," +
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -309,7 +309,7 @@ namespace SN_API
 
         public string name()
         {
-            return "Convolution";
+            return "Deconvolution";
         }
 
     };
