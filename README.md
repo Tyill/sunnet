@@ -19,7 +19,7 @@ SkyNet is a deep learning library designed for both efficiency and flexibility. 
 
 * the size of the input data is not rigidly specified, may vary in the process of work / training;
 
-* interfaces for C ++ and Python.
+* interfaces for C++, C# and Python.
 
 
 ## Python example
