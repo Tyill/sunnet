@@ -32,17 +32,26 @@ using System.Threading.Tasks;
 
 namespace SN_API
 {
+    public interface IOperator
+    {
+        string getParamsJn();
+
+        string name();
+    } 
+    
     /// <summary>
     ///  Input layer
     /// </summary>
-    public class Input
-    {   
-        string getParamsJn(){
+    public class Input : IOperator
+    {
+        public string getParamsJn()
+        {
                        
             return "{}";
         }
 
-        string name(){
+        public string name()
+        {
             return "Input";
         }
     }
@@ -50,7 +59,7 @@ namespace SN_API
     /// <summary>
     ///  Fully connected layer
     /// </summary>
-    public class FullyConnected
+    public class FullyConnected : IOperator
     {
         public uint kernel;                                        ///< Number of hidden neurons. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
@@ -64,7 +73,7 @@ namespace SN_API
         public weightInit wini = new weightInit(weightInit.type.he); ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;                         ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;                       ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        public float lmbRegular = 0.001F;                          ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        public float lmbRegular = 0.000F;                          ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;                         ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         public FullyConnected(uint kernel_,                          
@@ -99,12 +108,12 @@ namespace SN_API
                          "\"active\":\"" + act.str() + "\"," +
                          "\"weightInit\":\"" + wini.str() + "\"," +
                          "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                         "\"batchNormLr\":\"" + batchNormLr.ToString() + "\"," +
+                         "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"optimizer\":\"" + opt.str() + "\"," +
-                         "\"decayMomentDW\":\"" + decayMomentDW.ToString() + "\"," +
-                         "\"decayMomentWGr\":\"" + decayMomentWGr.ToString() + "\"," +
-                         "\"lmbRegular\":\"" + lmbRegular.ToString() + "\"," +
-                         "\"dropOut\":\"" + dropOut.ToString() + "\"," +
+                         "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                         "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"mode\":\"" + mode.str() + "\"," +
                          "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                          "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -123,7 +132,8 @@ namespace SN_API
     /// <summary>
     /// Convolution layer
     /// </summary>
-    public class Convolution{
+    public class Convolution : IOperator
+    {
                    
         public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
@@ -142,7 +152,7 @@ namespace SN_API
         public weightInit wini = new weightInit(weightInit.type.he);   ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;            ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;          ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
-        public float lmbRegular = 0.001F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
+        public float lmbRegular = 0.000F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;            ///< Learning rate for batch norm coef. Optional parameter [0..)
         
         public Convolution(uint kernel_,              
@@ -194,12 +204,12 @@ namespace SN_API
                 "\"active\":\"" + act.str() + "\"," +
                 "\"weightInit\":\"" + wini.str() + "\"," +
                 "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                "\"batchNormLr\":\"" + batchNormLr.ToString() + "\"," +
+                "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"optimizer\":\"" + opt.str() + "\"," +
-                "\"decayMomentDW\":\"" + decayMomentDW.ToString() + "\"," +
-                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString() + "\"," +
-                "\"lmbRegular\":\"" + lmbRegular.ToString() + "\"," +
-                "\"dropOut\":\"" + dropOut.ToString() + "\"," +
+                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"mode\":\"" + mode.str() + "\"," +
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -219,7 +229,7 @@ namespace SN_API
     /// <summary>
     /// Deconvolution layer
     /// </summary>
-    public class Deconvolution
+    public class Deconvolution : IOperator
     {
 
         public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
@@ -282,12 +292,12 @@ namespace SN_API
                 "\"active\":\"" + act.str() + "\"," +
                 "\"weightInit\":\"" + wini.str() + "\"," +
                 "\"batchNorm\":\"" + bnorm.str() + "\"," +
-                "\"batchNormLr\":\"" + batchNormLr.ToString() + "\"," +
+                "\"batchNormLr\":\"" + batchNormLr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"optimizer\":\"" + opt.str() + "\"," +
-                "\"decayMomentDW\":\"" + decayMomentDW.ToString() + "\"," +
-                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString() + "\"," +
-                "\"lmbRegular\":\"" + lmbRegular.ToString() + "\"," +
-                "\"dropOut\":\"" + dropOut.ToString() + "\"," +
+                "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"lmbRegular\":\"" + lmbRegular.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
+                "\"dropOut\":\"" + dropOut.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"mode\":\"" + mode.str() + "\"," +
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
@@ -307,7 +317,7 @@ namespace SN_API
     /// <summary>
     ///  Pooling layer
     /// </summary>
-    public class Pooling
+    public class Pooling : IOperator
     {
 
         public uint kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
@@ -349,7 +359,8 @@ namespace SN_API
     /// It is designed for the ability to dynamically disconnect the parallel
     /// branches of the network during operation.
     /// </summary>
-    public class Lock{
+    public class Lock : IOperator
+    {
 
         public lockType lockTp;    ///< Blocking activity. Optional parameter
 
@@ -375,7 +386,7 @@ namespace SN_API
     /// Operator for transferring data to several nodes at once.
     /// Data can only be received from one node.
     /// </summary>
-    public class Switch
+    public class Switch : IOperator
     {
 
         public string nextWay;   // next nodes through a space
@@ -404,7 +415,8 @@ namespace SN_API
     /// The consolidation can be performed by the following options: "summ", "diff", "mean".
     /// The dimensions of the input layers must be the same.
     /// </summary>
-    public class Summator{
+    public class Summator : IOperator
+    {
         
         public summatorType summType;     
 
@@ -430,7 +442,8 @@ namespace SN_API
     /// <summary>
     ///  The operator connects the channels with multiple layers
     /// </summary>
-    public class Concat{
+    public class Concat : IOperator
+    {
                       
         public string sequence;    // prev nodes through a space
 
@@ -446,7 +459,8 @@ namespace SN_API
             return ss;
         }
 
-        string name(){
+        public string name()
+        {
             return "Concat";
         }
     };
@@ -454,7 +468,8 @@ namespace SN_API
     /// <summary>
     ///  Change the number of channels
     /// </summary>
-    public class Resize{
+    public class Resize : IOperator
+    {
                
         public diap fwdDiap, bwdDiap;   // diap layer through a space
 
@@ -481,7 +496,8 @@ namespace SN_API
     /// <summary>
     /// ROI clipping in each image of each channel
     /// </summary>
-    public class Crop{
+    public class Crop : IOperator
+    {
                 
         public rect rct;         // region of interest
 
@@ -504,10 +520,11 @@ namespace SN_API
         }
     };
 
-    /// <summary>
-    /// Custom layer
-    /// </summary>
-    public class UserLayer{
+     /// <summary>
+     /// Custom layer
+     /// </summary>
+    public class UserLayer : IOperator
+    {
               
         public string cbackName;
 
@@ -533,7 +550,8 @@ namespace SN_API
     /// <summary>
     /// Error function calculation layer
     /// </summary>
-    public class LossFunction{
+    public class LossFunction : IOperator
+    {
                    
         public lossType loss;
 

@@ -35,11 +35,12 @@ namespace SN_API
     /// <summary>
     /// layer size
     /// </summary>
-    public unsafe struct snLSize
+    public struct snLSize
     {
-        public Int64 w = 0, h = 0, ch = 0, bsz = 0; 
- 
-        public snLSize(uint w_ = 0, uint h_ = 0, uint ch_ = 0, uint bsz_ = 0){
+        public UInt64 w, h, ch, bsz;
+
+        public snLSize(UInt64 w_ = 0, UInt64 h_ = 0, UInt64 ch_ = 0, UInt64 bsz_ = 0)
+        {
              w = w_;
              h = h_;
              ch = ch_;
@@ -52,16 +53,44 @@ namespace SN_API
     /// </summary>
     public unsafe class Tensor{
        
-        public Tensor(snLSize lsz, float* data = null){
+        public Tensor(snLSize lsz){
         
             lsz_ = lsz;
 
-            data_ = data;
+            int sz = (int)(lsz.w * lsz.h * lsz.ch * lsz.bsz * sizeof(float));
+            if (sz > 0)
+                data_ = (float*)Marshal.AllocHGlobal(sz);
         }
-                           
-        public void clear(){
 
-         //   data_.;
+        ~Tensor()
+        {
+            if (data_ != null)
+                Marshal.FreeHGlobal((IntPtr)data_);
+        }
+
+        [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public static extern IntPtr MemCopy(IntPtr dest, IntPtr src, UInt64 sz);
+
+        public Tensor(snLSize lsz, float* data)
+        {
+
+            lsz_ = lsz;
+
+            UInt64 sz = lsz.w * lsz.h * lsz.ch * lsz.bsz * sizeof(float);
+            if (sz > 0)
+            {
+                data_ = (float*)Marshal.AllocHGlobal((int)sz);
+                MemCopy((IntPtr)data_, (IntPtr)data, sz);
+            }
+        }
+             
+        [DllImport("msvcrt.dll", EntryPoint = "memset", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public static extern IntPtr MemSet(IntPtr dest, int c, UInt64 count);
+        
+        public void reset(){
+
+            UInt64 sz = (UInt64)(lsz_.w * lsz_.h * lsz_.ch * lsz_.bsz * sizeof(float));
+            MemSet((IntPtr)data_, 0, sz);
         }
 
         public float* data(){
@@ -74,8 +103,8 @@ namespace SN_API
             return lsz_;
         }
 
-       private snLSize lsz_;
-       private float* data_ = null;
+        private snLSize lsz_;
+        private float* data_ = null;
      
     };    
 }

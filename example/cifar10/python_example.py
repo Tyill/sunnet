@@ -1,10 +1,15 @@
+
+import os
+
+if os.name == 'nt':
+    os.chdir('C:\\Users\\work\\AppData\\Local\\Programs\\Python\\Python37\\lib\\site-packages\\libskynet')
+
 from libskynet import*
 import numpy as np
 import imageio
 import random
 import ctypes
 import datetime
-import os
 
 # create net
 net = snNet.Net()
