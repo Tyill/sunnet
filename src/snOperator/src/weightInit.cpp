@@ -25,6 +25,7 @@
 #include "snBase/snBase.h"
 #include "random.h"
 #include "structurs.h"
+#include "weightInit.h"
 
 using namespace std;
 using namespace SN_Base;

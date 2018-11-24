@@ -28,20 +28,103 @@
 #include "snOperator/src/Operator/convolution.h"
 #include <omp.h>
 
+#ifdef SN_AVX
+#include <immintrin.h>
+#endif
+
 using namespace std;
 using namespace SN_Base;
 
-
-void Convolution::forwardCPU(const convParams& prms,
+void forwardAVX_KRL3(size_t kernel, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
-   
-    size_t kernel = prms.kernel,
-           fWidth = prms.fWidth,
-           fHeight = prms.fHeight,
-           stride = prms.stride,
-           dilate = prms.dilate,
-           wStepByD = fWidth * fHeight,        // step weight by input
+
+    size_t wStepByD = 9,                       // step weight by input
            wStepByK = wStepByD * insz.d,       // step weight by output
+           wStepByN = wStepByK * kernel,       // step weight by batch
+           inStepByD = insz.w * insz.h,        // step in by input
+           inStepByN = inStepByD * insz.d,     // step in by batch
+           outStepByD = outsz.w * outsz.h,     // step out by input
+           outStepByN = outStepByD * outsz.d;  // step out by batch
+    
+    size_t shareStepByN = insz.d + kernel;     // for local mem
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+
+    __m256 arIn, arW, arOut;
+
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* inBuff = share + shareStepByN * n;
+        snFloat* outBuff = share + insz.d + shareStepByN * n;
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            memset(outBuff, 0, kernel * sizeof(snFloat));
+                     
+            snFloat* pW = weight;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                snFloat* pIn = input + n * inStepByN;
+                
+                arOut = _mm256_setzero_ps();
+
+                // on all in layers
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    // kernel conv
+                    for (size_t c = 0; c < 8; ++c){
+
+                        size_t cx = c % 3, cy = c / 3;
+                        arIn.m256_f32[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                        arW.m256_f32[c] = *(pW + cx + cy * 3);
+                    }
+
+                    arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+                    
+                    size_t cx = 8 % 3, cy = 8 / 3;
+                    snFloat tIn = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                    snFloat tW = *(pW + cx + cy * 3);
+
+                    outBuff[k] += tIn * tW;
+
+                    pIn += inStepByD;
+                    pW += wStepByD;
+                }
+
+                for (size_t c = 0; c < 8; ++c)
+                    outBuff[k] += arOut.m256_f32[c];                
+            }
+          
+            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pW = weight + wStepByN;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                *pOut += outBuff[k] + *(pW + k); // + bias              
+
+                pOut += outStepByD;
+            }
+        }
+    }
+
+    free(share);
+}
+
+void forwardAVX_KRL5(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    size_t wStepByD = 25,                   // step weight by input
+           wStepByK = wStepByD * insz.d,       // step weight by output
+           wStepByN = wStepByK * kernel,       // step weight by batch
            inStepByD = insz.w * insz.h,        // step in by input
            inStepByN = inStepByD * insz.d,     // step in by batch
            outStepByD = outsz.w * outsz.h,     // step out by input
@@ -49,18 +132,270 @@ void Convolution::forwardCPU(const convParams& prms,
 
     size_t shareStepByN = insz.d + kernel;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
-    
+
     memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-        
+
+    __m256 arIn, arW, arOut;
+
     // by batch
 #pragma omp parallel for
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* outBuff = share + insz.d + shareStepByN * n;
-        
+
         for (size_t p = 0; p < outStepByD; ++p){
-        
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            memset(outBuff, 0, kernel * sizeof(snFloat));
+
+            snFloat* pW = weight;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                snFloat* pIn = input + n * inStepByN;
+
+                arOut = _mm256_setzero_ps();
+
+                // on all in layers
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    // kernel conv
+                    for (size_t c = 0; c < 8; ++c){
+
+                        size_t cx = c % 3, cy = c / 3;
+                        arIn.m256_f32[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                        arW.m256_f32[c] = *(pW + cx + cy * 3);
+                    }
+
+                    arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+
+                    size_t cx = 8 % 3, cy = 8 / 3;
+                    snFloat tIn = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                    snFloat tW = *(pW + cx + cy * 3);
+
+                    outBuff[k] += tIn * tW;
+
+                    pIn += inStepByD;
+                    pW += wStepByD;
+                }
+
+                for (size_t c = 0; c < 8; ++c)
+                    outBuff[k] += arOut.m256_f32[c];
+            }
+
+            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pW = weight + wStepByN;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                *pOut += outBuff[k] + *(pW + k); // + bias              
+
+                pOut += outStepByD;
+            }
+        }
+    }
+
+    free(share);
+}
+
+void forwardAVX_KRL7(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    size_t wStepByD = 9,                       // step weight by input
+        wStepByK = wStepByD * insz.d,       // step weight by output
+        wStepByN = wStepByK * kernel,       // step weight by batch
+        inStepByD = insz.w * insz.h,        // step in by input
+        inStepByN = inStepByD * insz.d,     // step in by batch
+        outStepByD = outsz.w * outsz.h,     // step out by input
+        outStepByN = outStepByD * outsz.d;  // step out by batch
+
+    size_t shareStepByN = insz.d + kernel;     // for local mem
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+
+    __m256 arIn, arW, arOut;
+
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* inBuff = share + shareStepByN * n;
+        snFloat* outBuff = share + insz.d + shareStepByN * n;
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            memset(outBuff, 0, kernel * sizeof(snFloat));
+
+            snFloat* pW = weight;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                snFloat* pIn = input + n * inStepByN;
+
+                arOut = _mm256_setzero_ps();
+
+                // on all in layers
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    // kernel conv
+                    for (size_t c = 0; c < 8; ++c){
+
+                        size_t cx = c % 3, cy = c / 3;
+                        arIn.m256_f32[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                        arW.m256_f32[c] = *(pW + cx + cy * 3);
+                    }
+
+                    arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+
+                    size_t cx = 8 % 3, cy = 8 / 3;
+                    snFloat tIn = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                    snFloat tW = *(pW + cx + cy * 3);
+
+                    outBuff[k] += tIn * tW;
+
+                    pIn += inStepByD;
+                    pW += wStepByD;
+                }
+
+                for (size_t c = 0; c < 8; ++c)
+                    outBuff[k] += arOut.m256_f32[c];
+            }
+
+            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pW = weight + wStepByN;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                *pOut += outBuff[k] + *(pW + k); // + bias              
+
+                pOut += outStepByD;
+            }
+        }
+    }
+
+    free(share);
+}
+
+void forwardAVX_KRL9(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    size_t wStepByD = 9,                       // step weight by input
+        wStepByK = wStepByD * insz.d,       // step weight by output
+        wStepByN = wStepByK * kernel,       // step weight by batch
+        inStepByD = insz.w * insz.h,        // step in by input
+        inStepByN = inStepByD * insz.d,     // step in by batch
+        outStepByD = outsz.w * outsz.h,     // step out by input
+        outStepByN = outStepByD * outsz.d;  // step out by batch
+
+    size_t shareStepByN = insz.d + kernel;     // for local mem
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+
+    __m256 arIn, arW, arOut;
+
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* inBuff = share + shareStepByN * n;
+        snFloat* outBuff = share + insz.d + shareStepByN * n;
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            memset(outBuff, 0, kernel * sizeof(snFloat));
+
+            snFloat* pW = weight;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                snFloat* pIn = input + n * inStepByN;
+
+                arOut = _mm256_setzero_ps();
+
+                // on all in layers
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    // kernel conv
+                    for (size_t c = 0; c < 8; ++c){
+
+                        size_t cx = c % 3, cy = c / 3;
+                        arIn.m256_f32[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                        arW.m256_f32[c] = *(pW + cx + cy * 3);
+                    }
+
+                    arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+
+                    size_t cx = 8 % 3, cy = 8 / 3;
+                    snFloat tIn = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                    snFloat tW = *(pW + cx + cy * 3);
+
+                    outBuff[k] += tIn * tW;
+
+                    pIn += inStepByD;
+                    pW += wStepByD;
+                }
+
+                for (size_t c = 0; c < 8; ++c)
+                    outBuff[k] += arOut.m256_f32[c];
+            }
+
+            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pW = weight + wStepByN;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                *pOut += outBuff[k] + *(pW + k); // + bias              
+
+                pOut += outStepByD;
+            }
+        }
+    }
+
+    free(share);
+}
+
+void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    size_t wStepByD = fWidth * fHeight,        // step weight by input
+           wStepByK = wStepByD * insz.d,       // step weight by output
+           wStepByN = wStepByK * kernel,       // step weight by batch
+           inStepByD = insz.w * insz.h,        // step in by input
+           inStepByN = inStepByD * insz.d,     // step in by batch
+           outStepByD = outsz.w * outsz.h,     // step out by input
+           outStepByN = outStepByD * outsz.d;  // step out by batch
+
+    size_t shareStepByN = insz.d + kernel;     // for local mem
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
+
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* inBuff = share + shareStepByN * n;
+        snFloat* outBuff = share + insz.d + shareStepByN * n;
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
             size_t ox = p % outsz.w, oy = p / outsz.w,
                 posW = ox * stride, posH = oy * stride;
 
@@ -77,36 +412,56 @@ void Convolution::forwardCPU(const convParams& prms,
                     inBuff[d] = *pIn;
                     pIn += inStepByD;
                 }
-                            
+
                 // on all out layers
                 for (size_t k = 0; k < kernel; ++k){
-                                        
+
                     // on all in layers
                     snFloat cout = 0;
                     for (size_t d = 0; d < insz.d; ++d){
                         cout += inBuff[d] * (*pW);
                         pW += wStepByD;
                     }
-                    pW += 1;           // bias;
                     outBuff[k] += cout;
                 }
             }
 
             snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-            snFloat* pW = weight + wStepByK;
+            snFloat* pW = weight + wStepByN;
 
             // on all out layers
             for (size_t k = 0; k < kernel; ++k){
-               
-                *pOut += outBuff[k] + *(pW + k); // + bias
-               
-                pW += wStepByK;
+
+                *pOut += outBuff[k] + *(pW + k); // + bias              
+
                 pOut += outStepByD;
             }
-        }        
+        }
     }
 
-    free(share); 
+    free(share);
+}
+
+void Convolution::forwardCPU(const convParams& prms,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+      
+#ifdef SN_AVX
+
+    if ((prms.fWidth == 3) && (prms.fHeight == 3))
+        forwardAVX_KRL3(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 5) && (prms.fHeight == 5))
+        forwardAVX_KRL5(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 7) && (prms.fHeight == 7))
+        forwardAVX_KRL7(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 9) && (prms.fHeight == 9))
+        forwardAVX_KRL9(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else
+        forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+#else
+
+    forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+
+#endif
 }
 
 void Convolution::backwardCPU_GW(const convParams& prms,
@@ -119,7 +474,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
            dilate = prms.dilate,
            wStepByD = fWidth * fHeight,         // step weight by input
            wStepByK = wStepByD * insz.d,        // step weight by output
-           wStepByN = (wStepByK + 1) * kernel,  // step weight by batch
+           wStepByN = wStepByK * kernel,        // step weight by batch
            inStepByD = insz.w * insz.h,         // step in by input
            inStepByN = inStepByD * insz.d,      // step in by batch
            outStepByD = outsz.w * outsz.h,      // step out by input
@@ -148,16 +503,12 @@ void Convolution::backwardCPU_GW(const convParams& prms,
                 posW = ox * stride, posH = oy * stride;
 
             snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
-            snFloat* pdW = wBuff + wStepByK;
-
+           
             // on all out layers
             for (size_t k = 0; k < kernel; ++k){
                 ginBuff[k] = *pGrIn;
-
-                *(pdW + k) += *pGrIn;      // + bias
-
+              
                 pGrIn += outStepByD;
-                pdW += wStepByK;
             }
 
             // kernel conv
@@ -186,9 +537,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
 
                         *pdW += gin * inBuff[d];
                         pdW += wStepByD;
-                    }
-                    pW += 1;           // bias;
-                    pdW += 1;
+                    }                    
                 }
 
                 snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
@@ -202,7 +551,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
     }
    
     if (insz.n > 1){
-        for (size_t i = 0; i < insz.n; ++i){
+        for (size_t i = 0; i < insz.n; ++i){      // !!!!!!!!! +bias ????
             snFloat* wBuff = wgThr + wStepByN * i;
             for (size_t j = 0; j < wStepByN; ++j)
                 dWeightOut[j] += wBuff[j];
