@@ -24,11 +24,22 @@
 //
 #include "snBase/snBase.h"
 #include "random.h"
+#include "structurs.h"
 
 using namespace std;
 using namespace SN_Base;
 
 // инициализация весов
+
+void weightInit(snFloat* ioW, size_t sz, size_t fan_in, size_t fan_out, weightInitType wtype){
+
+    switch (wtype){
+    case weightInitType::uniform: wi_uniform(ioW, sz); break;
+    case weightInitType::he: wi_he(ioW, sz, fan_in); break;
+    case weightInitType::lecun:wi_lecun(ioW, sz, fan_out); break;
+    case weightInitType::xavier:wi_xavier(ioW, sz, fan_in, fan_out); break;
+    }
+}
 
 void wi_uniform(snFloat* ioW, size_t sz){
     

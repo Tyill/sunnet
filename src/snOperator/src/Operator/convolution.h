@@ -88,9 +88,7 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
-    
-    void paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
-      
+          
     void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
        
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);

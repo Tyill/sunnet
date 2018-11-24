@@ -136,3 +136,39 @@ void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz
             out[i] *= (1.F - dropOut);
     }
 }
+
+void paddingOffs(bool in2out, size_t paddW, size_t paddH, const snSize& insz, snFloat* in, snFloat* out){
+
+    /// copy with offset padding for each image    
+    size_t sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+    if (in2out){
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                out[j] = in[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+    else{
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                in[j] = out[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+}

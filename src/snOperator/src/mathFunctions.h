@@ -37,3 +37,5 @@ void batchNormBackward(const SN_Base::snSize& insz,
     SN_Base::batchNorm);
 
 void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
+
+void paddingOffs(bool in2out, size_t paddingW, size_t paddingH, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);

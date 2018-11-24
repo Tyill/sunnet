@@ -312,14 +312,17 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
         
-        switch (optimizerType_){
-        case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-        case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-        case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
-        default: break;
-        }      
+        optimizer(dWeight,
+                  dWPrev,
+                  dWGrad,
+                  weight,
+                  wsz,
+                  operPrm.lr,
+                  opt_lmbRegular_,
+                  opt_decayMomentDW_,
+                  opt_decayMomentWGr_,
+                  optimizerType_);
+      
     }
     else{ // isFreeze
         switch (calcMode_){
@@ -361,12 +364,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
                 
         baseWeight_->resize(snSize(kernel_, stp + 1));
         snFloat* wd = baseWeight_->getData();
-        switch (weightInitType_){
-        case weightInitType::uniform: wi_uniform(wd + wcsz, ntp - wcsz); break;
-        case weightInitType::he: wi_he(wd + wcsz, ntp - wcsz, stp + 1); break;
-        case weightInitType::lecun:wi_lecun(wd + wcsz, ntp - wcsz, kernel_); break;
-        case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, kernel_); break;
-        }
+        weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     
     baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));

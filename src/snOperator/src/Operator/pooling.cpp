@@ -136,7 +136,7 @@ void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& ope
     snFloat* in = baseInput_->getData();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, insz, inTnsExp_.getData(), baseInput_->getData());
+        paddingOffs(false, paddingW_, paddingH_, insz, inTnsExp_.getData(), baseInput_->getData());
         insz = inDataExpSz_;
         in = inTnsExp_.getData();
     }
@@ -174,48 +174,9 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
     }
    
     if (isPadding_){
-        paddingOffs(true, inSzMem_, gradOut, baseGrad_->getData());
+        paddingOffs(true, paddingW_, paddingH_, inSzMem_, gradOut, baseGrad_->getData());
         gradOutExp_.tfree();
     }
-}
-
-void Pooling::paddingOffs(bool in2out, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out){
-
-    /// copy with offset padding for each image
-
-    size_t paddW = paddingW_, paddH = paddingH_,
-        sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
-    if (in2out){
-        in += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                in += (stW + paddW * 2) * paddH * 2;
-
-            in += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                out[j] = in[j];
-            in += paddW + stW;
-
-            out += stW;
-        }
-    }
-    else{
-        in += (stW + paddW * 2) * paddH;
-        for (size_t i = 0; i < sz; ++i){
-
-            if ((i % stH == 0) && (i > 0))
-                in += (stW + paddW * 2) * paddH * 2;
-
-            in += paddW;
-            for (size_t j = 0; j < stW; ++j)
-                in[j] = out[j];
-            in += paddW + stW;
-
-            out += stW;
-        }
-    }
-
 }
 
 void Pooling::updateConfig(const snSize& newsz){

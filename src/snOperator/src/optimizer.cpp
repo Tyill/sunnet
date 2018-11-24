@@ -23,9 +23,24 @@
 // THE SOFTWARE.
 //
 #include "stdafx.h"
+#include "optimizer.h"
+#include "structurs.h"
+
 
 using namespace std;
 using namespace SN_Base;
+
+void optimizer(snFloat* dWeight, snFloat* dWPrev, snFloat* dWGrad, snFloat* weight, size_t wsz, snFloat alpha, snFloat lambda, snFloat mudW, snFloat muGr, optimizerType otype){
+
+    switch (otype){
+    case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, alpha, lambda); break;
+    case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, alpha, lambda, mudW); break;
+    case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, alpha, lambda, muGr); break;
+    case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, alpha, lambda); break;
+    case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, alpha, lambda, mudW, muGr); break;
+    default: break;
+    }     
+}
 
 /// adaptive gradient method
 void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, size_t sz, snFloat alpha, snFloat lambda, snFloat eps){
