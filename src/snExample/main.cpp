@@ -1,5 +1,5 @@
 ﻿
-#ifdef CV_VERSION
+#ifndef CV_VERSION
 
 #include <string>
 #include <iostream>
@@ -53,11 +53,11 @@ int main(int argc, char* argv[]){
     sn::Net snet;
   
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
-        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CPU), "C2")
+        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CPU), "P1")
+        .addNode("P1", sn::Pooling(sn::calcMode::CPU), "FC1")
+        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CPU), "FC2")
+        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
     string imgPath = "c://C++//skyNet//example//mnist//images//";
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-    snet.loadAllWeightFromFile("c:/C++/w.dat");
+   // snet.loadAllWeightFromFile("c:/C++/w.dat");
       
     sn::Tensor inLayer(sn::snLSize(w, h, 1, batchSz));
     sn::Tensor targetLayer(sn::snLSize(classCnt, 1, 1, batchSz));

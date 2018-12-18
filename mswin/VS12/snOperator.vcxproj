@@ -297,6 +297,7 @@
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>/arch:AVX</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
