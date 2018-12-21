@@ -44,6 +44,8 @@ class batchNormType(Enum):
     none = 'none'
     beforeActive = 'beforeActive'
     postActive = 'postActive'
+	byChannels = 'byChannels'
+    byLayer    = 'byLayer'
 
 class optimizer(Enum):
     """Optimizer of weights."""

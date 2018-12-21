@@ -520,6 +520,29 @@ namespace SN_API
         }
     };
 
+    /// <summary>
+    /// Batch norm
+    /// </summary>
+    public class BatchNormLayer : IOperator
+    {
+        public batchNormType bnorm = new batchNormType(batchNormType.type.byChannels); ///< Type of batch norm. Optional parameter
+       
+        public BatchNormLayer(batchNormType bnorm_)
+        {
+            bnorm = bnorm_;
+        }
+
+        public string getParamsJn()
+        {                       
+            return "{\"bnType\":\"" + bnorm.str() + "\"}";
+        }
+
+        public string name()
+        {
+            return "BatchNorm";
+        }        
+    };
+
      /// <summary>
      /// Custom layer
      /// </summary>
@@ -546,7 +569,7 @@ namespace SN_API
             return "UserLayer";
         }
     };
-
+    
     /// <summary>
     /// Error function calculation layer
     /// </summary>

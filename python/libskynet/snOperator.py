@@ -353,6 +353,25 @@ class Crop():
 
     def name(self):
         return "Crop"
+	
+	
+class BatchNormLayer():
+    '''
+    Batch norm
+    '''
+
+    _params = {
+        'bnType': batchNormType.byChannels.value,  # Type of batch norm. Optional parameter
+    }
+
+    def __init__(self, bnorm = batchNormType.byChannels):
+        self._params['bnType'] = bnorm.value
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "BatchNorm"
 
 
 class UserLayer():
