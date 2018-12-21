@@ -28,10 +28,8 @@
 
 namespace SN_Opr{    
   
-    /// создать оператор
     SN_Base::OperatorBase* createOperator(void* net, const std::string& fname, const std::string& node,
         std::map<std::string, std::string>& prms);    
     
-    /// освободить оператор
     void freeOperator(SN_Base::OperatorBase*, const std::string& fname);
 }
