@@ -259,7 +259,7 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
     if (!isSame){
         inTnsExp_.resize(inDataExpSz_);       
-        paddingOffs(false, convPrms_.paddingW, convPrms_.paddingH, insz, inTnsExp_.getData(), baseInput_->getData());
+        paddingOffs(false, convPrms_.paddingW, convPrms_.paddingH, insz, inTnsExp_.getData(), in);
         in = inTnsExp_.getData();
     }
     
@@ -282,14 +282,14 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
         
     /// active function
     activeFuncForward(outsz.size(), out, activeType_);
            
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-         calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
 }
 
 void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -298,7 +298,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
  
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // active function
     if (activeType_ != activeType::none){
@@ -314,7 +314,7 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_->getData();
@@ -371,63 +371,6 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     }
 }
 
-void Convolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
-
-    /* Select 1 output layer from each image in the batch and normalize */
-
-    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
-
-    if (!isLern){
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            /// y = ^x * γ + β
-            for (size_t j = 0; j < bsz; ++j){
-
-                snFloat* cin = in + stepN * j + stepD * i,
-                    *cout = out + stepN * j + stepD * i;
-                for (size_t k = 0; k < stepD; ++k)
-                    cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
-            }
-            prm.offset(stepD);
-        }
-    }
-    else{
-
-        snFloat* share = (snFloat*)calloc(stepD * bsz, sizeof(snFloat));
-        snSize sz(insz.w, insz.h, 1, insz.n);
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            snFloat* pSh = share;
-            snFloat* pIn = in + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-
-                memcpy(pSh, pIn, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pIn += stepN;
-            }
-
-            if (fwBw)
-                batchNormForward(sz, share, share, prm);
-            else
-                batchNormBackward(sz, share, share, prm);
-              
-            pSh = share;
-            snFloat* pOut = out + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-                memcpy(pOut, pSh, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pOut += stepN;
-            }
-
-            prm.offset(stepD);
-            prm.norm += stepD * bsz;
-        }
-        free(share);
-    }         
-}
-
 void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     
     size_t& kernel = convPrms_.kernel,
@@ -439,7 +382,7 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
           & stride = convPrms_.stride,
           & dilate = convPrms_.dilate;
 
-    size_t stp = fWidth * fHeight * newsz.d, ntp = (stp + 1) * kernel;
+    size_t stp = fWidth * fHeight * newsz.d, ntp = (stp + 1) * kernel;  // + 1 - bias
         
     // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_->size().size();

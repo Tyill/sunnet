@@ -355,6 +355,7 @@
     <ClInclude Include="..\..\src\snOperator\snOperator.h" />
     <ClInclude Include="..\..\src\snOperator\src\activeFunctions.h" />
     <ClInclude Include="..\..\src\snOperator\src\mathFunctions.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\concat.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\convolution.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\crop.h" />
@@ -382,6 +383,7 @@
     <ClCompile Include="..\..\src\snOperator\src\CPU\fullyConnectedCPU.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\CPU\poolingCPU.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\mathFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\batchNorm.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\concat.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\convolution.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\crop.cpp" />

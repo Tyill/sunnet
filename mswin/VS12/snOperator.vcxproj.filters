@@ -93,6 +93,9 @@
     <ClInclude Include="..\..\src\snOperator\src\Operator\userLayer.h">
       <Filter>Operator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\snOperator\src\Operator\batchNorm.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperator\src\CPU\convolutionCPU.cpp">
@@ -166,6 +169,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\snOperator\src\weightInit.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperator\src\Operator\batchNorm.cpp">
+      <Filter>Operator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

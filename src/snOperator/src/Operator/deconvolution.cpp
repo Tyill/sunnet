@@ -263,14 +263,14 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
     /// active func
     activeFuncForward(outsz.size(), out, activeType_);
     
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
 }
 
@@ -280,7 +280,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
@@ -296,7 +296,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_->getData();   
@@ -337,63 +337,6 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         case calcMode::OpenCL: backwardOCL_G(deconvParams_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
         }
     }        
-}
-
-void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
-
-    /* Select 1 output layer from each image in the batch and normalize */
-
-    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
-
-    if (!isLern){
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            /// y = ^x * γ + β
-            for (size_t j = 0; j < bsz; ++j){
-
-                snFloat* cin = in + stepN * j + stepD * i,
-                    *cout = out + stepN * j + stepD * i;
-                for (size_t k = 0; k < stepD; ++k)
-                    cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
-            }
-            prm.offset(stepD);
-        }       
-    }
-    else{
-
-        snFloat* share = (snFloat*)calloc(stepD * bsz, sizeof(snFloat));
-        snSize sz(insz.w, insz.h, 1, insz.n);
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            snFloat* pSh = share;
-            snFloat* pIn = in + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-
-                memcpy(pSh, pIn, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pIn += stepN;
-            }
-
-            if (fwBw)
-                batchNormForward(sz, share, share, prm);
-            else
-                batchNormBackward(sz, share, share, prm);
-              
-            pSh = share;
-            snFloat* pOut = out + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-                memcpy(pOut, pSh, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pOut += stepN;
-            }
-
-            prm.offset(stepD);
-            prm.norm += stepD * bsz;
-        }
-        free(share);
-    }         
 }
 
 void Deconvolution::updateConfig(const snSize& newsz){

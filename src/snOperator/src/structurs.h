@@ -57,6 +57,8 @@ enum class batchNormType{
     none = -1,
     beforeActive = 0,
     postActive = 1,
+    byChannels = 2,
+    byLayer = 3,
 };
 
 /// pooling
