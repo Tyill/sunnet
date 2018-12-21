@@ -22,6 +22,10 @@ if(USE_CUDA)
   endif()
 endif()
 
+if(USE_AVX)
+    add_definitions(-DSN_AVX)
+endif()
+
 target_link_libraries(snOperator snAux snBase)
 
 if(WIN32)

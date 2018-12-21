@@ -1,5 +1,5 @@
 ﻿
-#ifndef CV_VERSION
+#ifdef CV_VERSION
 
 #include <string>
 #include <iostream>

@@ -561,8 +561,8 @@ void Convolution::backwardCPU_GW(const convParams& prms,
     
 #else
 
-    backwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
-        weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    backwardGW_BASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
+          weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
 #endif
 }
 

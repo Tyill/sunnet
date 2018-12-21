@@ -10,6 +10,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Builds/$<CONFIG>/${CMAKE_
 set(GPU "NONE" CACHE STRING "Selected GPU library")
 set_property(CACHE GPU PROPERTY STRINGS "NONE;CUDA;CUDNN")
 
+option(USE_AVX     "AVX library support"    ON)
+
 if (GPU STREQUAL "CUDA" OR GPU STREQUAL "CUDNN")
   set(USE_CUDA ON)
 else()
