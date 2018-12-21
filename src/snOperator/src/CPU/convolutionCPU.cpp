@@ -35,6 +35,56 @@ using namespace SN_Base;
 #ifdef SN_AVX
 #include <immintrin.h>
 
+float valueAVX(__m256 a, int i){
+
+    float ret = 0;
+    switch (i){
+
+        case 0:
+                ret = _mm_cvtss_f32(_mm256_extractf128_ps(a, 0));
+                break;
+        case 1: {
+                  __m128 lo = _mm256_extractf128_ps(a, 0);
+                  ret = _mm_cvtss_f32(_mm_shuffle_ps(lo, lo, 1));
+                }
+                break;
+        case 2: {
+                  __m128 lo = _mm256_extractf128_ps(a, 0);
+                  ret = _mm_cvtss_f32(_mm_movehl_ps(lo, lo));
+                }
+                break;
+        case 3: {
+                  __m128 lo = _mm256_extractf128_ps(a, 0);
+                  __m128 tw = _mm_movehl_ps(lo, lo);
+                  ret = _mm_cvtss_f32(_mm_shuffle_ps(tw, tw, 1));
+                }
+                break;
+
+        case 4:
+                ret = _mm_cvtss_f32(_mm256_extractf128_ps(a, 1));
+                break;
+        case 5: {
+                  __m128 hi = _mm256_extractf128_ps(a, 1);
+                  ret = _mm_cvtss_f32(_mm_shuffle_ps(hi, hi, 1));
+                }
+                break;
+        case 6: {
+                  __m128 hi = _mm256_extractf128_ps(a, 1);
+                  ret = _mm_cvtss_f32(_mm_movehl_ps(hi, hi));
+                }
+                break;
+        case 7: {
+                   __m128 hi = _mm256_extractf128_ps(a, 1);
+                   __m128 tw = _mm_movehl_ps(hi, hi);
+                   ret = _mm_cvtss_f32(_mm_shuffle_ps(tw, tw, 1));
+                }
+                break;
+    }
+
+    return ret;
+}
+
+
 float horSummAVX(__m256 a) {
    
     __m128 hi = _mm256_extractf128_ps(a, 1);
@@ -47,7 +97,7 @@ float horSummAVX(__m256 a) {
     return _mm_cvtss_f32(lo);
 }
 
-template <typename int R>
+template <int R>
 void forwardAVX(size_t kernel, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
 
@@ -137,7 +187,7 @@ void forwardAVX(size_t kernel, size_t stride, size_t dilate,
     free(share);
 }
 
-template <typename int R>
+template <int R>
 void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
@@ -224,7 +274,7 @@ void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
 
                         size_t cx = c % R, cy = c / R;
 
-                        DW(cx, cy) += arDW[c / 8].m256_f32[c % 8];
+                        DW(cx, cy) += valueAVX(arDW[c / 8], c % 8);
                     }
                     DW(R - 1, R - 1) += gin * In[wStepByD - 1];
 
@@ -241,7 +291,7 @@ void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
 
                     size_t cx = c % R, cy = c / R;
 
-                    GOut(cx, cy) += arGOut[c / 8].m256_f32[c % 8];
+                    GOut(cx, cy) += valueAVX(arGOut[c / 8], c % 8);
                 }  
             }          
         }
@@ -264,7 +314,7 @@ void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
 
 }
 
-template <typename int R>
+template <int R>
 void backwardG_AVX(size_t kernel, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
@@ -333,7 +383,7 @@ void backwardG_AVX(size_t kernel, size_t stride, size_t dilate,
 
                     size_t cx = c % R, cy = c / R;
 
-                    GOut(cx, cy) += arGOut[c / 8].m256_f32[c % 8];
+                    GOut(cx, cy) += valueAVX(arGOut[c / 8], c % 8);
                 }
             }
         }

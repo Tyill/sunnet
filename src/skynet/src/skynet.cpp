@@ -28,7 +28,7 @@
 #include "skynet/skyNet.h"
 #include "skynet/src/snet.h"
 
-#define SN_VERSION "1.0.1"
+#define SN_VERSION "1.0.2"
 
 namespace SN_API{
 

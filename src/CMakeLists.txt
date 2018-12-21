@@ -36,6 +36,10 @@ if (UNIX)
   find_package(BLAS REQUIRED)
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -fPIC")
+
+  if (USE_AVX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+  endif()
 endif()
 
 if(MSVC)
