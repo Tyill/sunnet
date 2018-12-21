@@ -3,7 +3,7 @@ SkyNet is a deep learning library designed for both efficiency and flexibility. 
 
 ## Features
 
-* the library is written from scratch in C ++ (only STL + OpenBLAS for calculation), C-interface
+* the library is written from scratch in C++ (only STL + OpenBLAS for calculation), C-interface
 
 * win / linux;
 
