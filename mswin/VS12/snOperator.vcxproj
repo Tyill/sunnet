@@ -97,7 +97,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG;SN_CUDA;SN_CUDNN;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; SN_CUDA;SN_CUDNN;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
@@ -158,12 +158,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG;SN_CUDA;SN_CUDNN;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; SN_CUDA;SN_CUDNN;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
       <MinimalRebuild>true</MinimalRebuild>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>/arch:AVX</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -226,7 +227,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG;SN_CUDA;SN_CUDNN;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; SN_CUDA;SN_CUDNN;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
@@ -291,11 +292,12 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG;NDEBUG;SN_CUDA;SN_CUDNN;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; NDEBUG;SN_CUDA;SN_CUDNN;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>
       </MultiProcessorCompilation>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalOptions>/arch:AVX</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -353,6 +355,7 @@
     <ClInclude Include="..\..\src\snOperator\snOperator.h" />
     <ClInclude Include="..\..\src\snOperator\src\activeFunctions.h" />
     <ClInclude Include="..\..\src\snOperator\src\mathFunctions.h" />
+    <ClInclude Include="..\..\src\snOperator\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\concat.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\convolution.h" />
     <ClInclude Include="..\..\src\snOperator\src\Operator\crop.h" />
@@ -380,6 +383,7 @@
     <ClCompile Include="..\..\src\snOperator\src\CPU\fullyConnectedCPU.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\CPU\poolingCPU.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\mathFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperator\src\Operator\batchNorm.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\concat.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\convolution.cpp" />
     <ClCompile Include="..\..\src\snOperator\src\Operator\crop.cpp" />

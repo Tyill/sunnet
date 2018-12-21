@@ -31,6 +31,85 @@
 using namespace std;
 using namespace SN_Base;
 
+
+void channelBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
+
+    /* Select 1 output layer from each image in the batch and normalize */
+
+    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
+
+    if (!isLern){
+
+        for (size_t i = 0; i < insz.d; ++i){
+
+            /// y = ^x * γ + β
+            for (size_t j = 0; j < bsz; ++j){
+
+                snFloat* cin = in + stepN * j + stepD * i,
+                    *cout = out + stepN * j + stepD * i;
+                for (size_t k = 0; k < stepD; ++k)
+                    cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
+            }
+            prm.offset(stepD);
+        }
+    }
+    else{
+
+        snFloat* share = (snFloat*)calloc(stepD * bsz, sizeof(snFloat));
+        snSize sz(insz.w, insz.h, 1, insz.n);
+
+        for (size_t i = 0; i < insz.d; ++i){
+
+            snFloat* pSh = share;
+            snFloat* pIn = in + stepD * i;
+            for (size_t j = 0; j < bsz; ++j){
+
+                memcpy(pSh, pIn, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pIn += stepN;
+            }
+
+            if (fwBw)
+                batchNormForward(sz, share, share, prm);
+            else
+                batchNormBackward(sz, share, share, prm);
+
+            pSh = share;
+            snFloat* pOut = out + stepD * i;
+            for (size_t j = 0; j < bsz; ++j){
+                memcpy(pOut, pSh, stepD * sizeof(snFloat));
+                pSh += stepD;
+                pOut += stepN;
+            }
+
+            prm.offset(stepD);
+            prm.norm += stepD * bsz;
+        }
+        free(share);
+    }
+}
+
+void layerBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
+
+    if (!isLern){
+        size_t sz = insz.w * insz.h * insz.d, bsz = insz.n;
+
+        /// y = ^x * γ + β
+        for (size_t j = 0; j < bsz; ++j){
+
+            snFloat* cin = in + j * sz, *cout = out + j * sz;
+            for (size_t i = 0; i < sz; ++i)
+                cout[i] = (cin[i] - prm.mean[i])  * prm.scale[i] / prm.varce[i] + prm.schift[i];
+        }
+    }
+    else{ // isLerning
+        if (fwBw)
+            batchNormForward(insz, in, out, prm);
+        else
+            batchNormBackward(insz, in, out, prm);
+    }
+}
+
 void batchNormForward(const SN_Base::snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
   
     size_t inSz = insz.w * insz.h * insz.d, bsz = insz.n;
@@ -134,5 +213,41 @@ void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz
         size_t sz = outsz.size();
         for (size_t i = 0; i < sz; ++i)
             out[i] *= (1.F - dropOut);
+    }
+}
+
+void paddingOffs(bool in2out, size_t paddW, size_t paddH, const snSize& insz, snFloat* in, snFloat* out){
+
+    /// copy with offset padding for each image    
+    size_t sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+    if (in2out){
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                out[j] = in[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+    else{
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                in[j] = out[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
     }
 }

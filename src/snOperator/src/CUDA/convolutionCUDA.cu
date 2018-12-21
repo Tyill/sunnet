@@ -573,7 +573,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t s
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* output){
 
     size_t wStepByD = fWidth * fHeight,        // step weight by input
-           wStepByK = wStepByD * insz.d + 1,   // step weight by output
+           wStepByK = wStepByD * insz.d,       // step weight by output
            outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d,  // step out by batch
            inStepByD = insz.w * insz.h,        // step in by input
@@ -597,7 +597,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t s
             while (ox < outsz.w){
 
                 if (oz == 0)
-                    output[ox + oy * outsz.w] = weight[wStepByD * insz.d]; // bias
+                    output[ox + oy * outsz.w] = weight[(outsz.d - blockIdx.x) * wStepByK + blockIdx.x]; // bias
 
                 size_t posW = ox * stride, posH = oy * stride;
 
@@ -627,11 +627,12 @@ void Convolution::forwardCUDA(const convParams& prms,
 
     cudaSetDevice(gpuDeviceId_);
 
-    size_t isz = insz.size(), osz = outsz.size();
+    size_t isz = insz.size(), osz = outsz.size(),
+           wsz = (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d;
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     if (gpuClearMem_){
         cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_w, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_w, wsz * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_out, osz * sizeof(snFloat)));
     }
 
@@ -639,7 +640,7 @@ void Convolution::forwardCUDA(const convParams& prms,
     cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // weight
-    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // run
     dim3 dimBlock(16, 16);
@@ -669,8 +670,8 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
     snFloat* weight, snSize insz, snFloat* input, snSize outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
     size_t wStepByD = fWidth * fHeight,        // step weight by input
-           wStepByK = wStepByD * insz.d + 1,   // step weight by output
-           wStepByN = wStepByK * outsz.d,      // step weight by batch
+           wStepByK = wStepByD * insz.d,       // step weight by output
+           wStepByN = wStepByK * outsz.d + outsz.d,  // step weight by batch
            outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d,  // step out by batch
            inStepByD = insz.w * insz.h,        // step in by input
@@ -678,7 +679,7 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
 
     // gridDim.x - number of input layers
     // gridDim.y - batch size
-
+    
     input += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
     weight += blockIdx.x * wStepByD;
     dWeightOut += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
@@ -688,11 +689,7 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
 
     unsigned int oz = 0;
     while (oz < outsz.d){
-
-        memset(dWeightOut, 0, wStepByD * sizeof(snFloat));
-        if (blockIdx.x == 0)
-            dWeightOut[wStepByD * insz.d] = 0;
-
+            
         unsigned int oy = threadIdx.y;
         while (oy < outsz.h){
 
@@ -700,14 +697,7 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
             while (ox < outsz.w){
 
                 size_t posW = ox * stride, posH = oy * stride;
-
-                if (oz == 0){
-                    for (size_t c = 0; c < wStepByD; ++c){
-                        size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
-                    }
-                }
-
+                               
                 // kernel conv
                 snFloat grIn = gradIn[ox + oy * outsz.w];
 #pragma unroll
@@ -722,7 +712,7 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
                     dWeightOut[sw] += grIn * input[si];
                 }
                 if (blockIdx.x == 0)
-                    dWeightOut[wStepByD * insz.d] += grIn; // bias
+                    dWeightOut[wStepByK * (outsz.d - oz) + oz] += grIn; // bias
 
                 ox += blockDim.x;
             }
@@ -738,9 +728,9 @@ __global__ void cuConvBwd_GW(size_t fWidth, size_t fHeight, size_t dilate, size_
 // weighted averaging over batch
 __global__ void cuConvWeightMean(size_t kernel, size_t fWidth, size_t fHeight, snSize insz, snFloat* weight){
 
-    size_t wStepByD = fWidth * fHeight,     // step weight by input
-        wStepByK = wStepByD * insz.d + 1,   // step weight by output
-        wStepByN = wStepByK * kernel;       // step weight by batch
+    size_t wStepByD = fWidth * fHeight,        // step weight by input
+        wStepByK = wStepByD * insz.d,          // step weight by output
+        wStepByN = wStepByK * kernel + kernel; // step weight by batch
 
     unsigned int ox = threadIdx.x;
     while (ox < wStepByN){
@@ -757,28 +747,33 @@ __global__ void cuConvWeightMean(size_t kernel, size_t fWidth, size_t fHeight, s
 
 void Convolution::backwardCUDA_GW(const convParams& prms,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
-
+  
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    size_t isz = insz.size(), osz = outsz.size();
+    size_t isz = insz.size(), osz = outsz.size(),
+           wsz = (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d;
     snFloat* d_grin = gpuPrm->d_out;
     if (gpuClearMem_){
         cuCHECK(cudaMalloc(&gpuPrm->d_in, isz * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_w, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_w, wsz * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&d_grin, osz * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_grout, isz * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_dw, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * outsz.n * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_dw, wsz * outsz.n * sizeof(snFloat)));
     }
-
+    
     // input
     cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     cuCHECK(cudaMemcpy(d_grin, gradIn, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
-
+   
     // weight
-    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
-
+    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
+ 
+    // out
+    cuCHECK(cudaMemset(gpuPrm->d_grout, 0, isz * sizeof(snFloat)));
+    cuCHECK(cudaMemset(gpuPrm->d_dw, 0, wsz * outsz.n * sizeof(snFloat)));
+   
     // run
     dim3 dimBlock(16, 16);
     dim3 dimGrid(int(insz.d), int(outsz.n));
@@ -799,8 +794,8 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
 
     // result
     cuCHECK(cudaMemcpy(gradOut, gpuPrm->d_grout, isz * sizeof(snFloat), cudaMemcpyDeviceToHost));
-    cuCHECK(cudaMemcpy(dWeightOut, gpuPrm->d_dw, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyDeviceToHost));
-
+    cuCHECK(cudaMemcpy(dWeightOut, gpuPrm->d_dw, wsz * sizeof(snFloat), cudaMemcpyDeviceToHost));
+       
     if (gpuClearMem_){
         cuCHECK(cudaFree(gpuPrm->d_in));      gpuPrm->d_in = 0;
         cuCHECK(cudaFree(gpuPrm->d_w));       gpuPrm->d_w = 0;
@@ -814,7 +809,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t
     snFloat* weight, snSize insz, snSize outsz, snFloat* gradIn, snFloat* gradOut){
 
     size_t wStepByD = fWidth * fHeight,     // step weight by input
-        wStepByK = wStepByD * insz.d + 1,   // step weight by output
+        wStepByK = wStepByD * insz.d,       // step weight by output
         outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d,  // step out by batch
         inStepByD = insz.w * insz.h,        // step in by input
@@ -838,14 +833,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t
             while (ox < outsz.w){
 
                 size_t posW = ox * stride, posH = oy * stride;
-
-                if (oz == 0){
-                    for (size_t c = 0; c < wStepByD; ++c){
-                        size_t cx = c % fWidth, cy = c / fWidth;
-                        gradOut[(cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w] = 0;
-                    }
-                }
-
+                             
                 // kernel conv
                 snFloat grIn = gradIn[ox + oy * outsz.w];
 #pragma unroll
@@ -873,11 +861,12 @@ void Convolution::backwardCUDA_G(const convParams& prms,
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    size_t isz = insz.size(), osz = outsz.size();
+    size_t isz = insz.size(), osz = outsz.size(),
+           wsz = (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d;
     snFloat* d_grin = gpuPrm->d_out;
     if (gpuClearMem_){
         cuCHECK(cudaMalloc(&d_grin, osz * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_w, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat)));
+        cuCHECK(cudaMalloc(&gpuPrm->d_w, wsz * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_grout, isz * sizeof(snFloat)));
     }
 
@@ -885,12 +874,15 @@ void Convolution::backwardCUDA_G(const convParams& prms,
     cuCHECK(cudaMemcpy(d_grin, gradIn, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // weight
-    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, (prms.fWidth * prms.fHeight * insz.d + 1) * outsz.d * sizeof(snFloat), cudaMemcpyHostToDevice));
+    cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, wsz * sizeof(snFloat), cudaMemcpyHostToDevice));
 
     // run
     dim3 dimBlock(16, 16);
     dim3 dimGrid(int(insz.d), int(outsz.n));
 
+    // out
+    cuCHECK(cudaMemset(gpuPrm->d_grout, 0, isz * sizeof(snFloat)));
+  
     cuConvBwd_G <<< dimGrid, dimBlock >>> (prms.fWidth,
         prms.fHeight,
         prms.dilate,

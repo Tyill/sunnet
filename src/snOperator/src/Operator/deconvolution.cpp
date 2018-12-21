@@ -263,14 +263,14 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
     /// active func
     activeFuncForward(outsz.size(), out, activeType_);
     
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
 }
 
@@ -280,7 +280,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
@@ -296,7 +296,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_->getData();   
@@ -318,15 +318,17 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
-
-        switch (optimizerType_){
-        case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-        case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-        case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
-        default: break;
-        }
+               
+        optimizer(dWeight,
+            dWPrev,
+            dWGrad,
+            weight,
+            wsz,
+            operPrm.lr,
+            opt_lmbRegular_,
+            opt_decayMomentDW_,
+            opt_decayMomentWGr_,
+            optimizerType_);
     }
     else{ // isFreeze
         switch (calcMode_){
@@ -335,63 +337,6 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
         case calcMode::OpenCL: backwardOCL_G(deconvParams_, weight, insz, outsz, gradIn, grOut, gpuParams_); break;
         }
     }        
-}
-
-void Deconvolution::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
-
-    /* Select 1 output layer from each image in the batch and normalize */
-
-    size_t stepD = insz.w * insz.h, stepN = stepD * insz.d, bsz = insz.n;
-
-    if (!isLern){
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            /// y = ^x * γ + β
-            for (size_t j = 0; j < bsz; ++j){
-
-                snFloat* cin = in + stepN * j + stepD * i,
-                    *cout = out + stepN * j + stepD * i;
-                for (size_t k = 0; k < stepD; ++k)
-                    cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
-            }
-            prm.offset(stepD);
-        }       
-    }
-    else{
-
-        snFloat* share = (snFloat*)calloc(stepD * bsz, sizeof(snFloat));
-        snSize sz(insz.w, insz.h, 1, insz.n);
-
-        for (size_t i = 0; i < insz.d; ++i){
-
-            snFloat* pSh = share;
-            snFloat* pIn = in + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-
-                memcpy(pSh, pIn, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pIn += stepN;
-            }
-
-            if (fwBw)
-                batchNormForward(sz, share, share, prm);
-            else
-                batchNormBackward(sz, share, share, prm);
-              
-            pSh = share;
-            snFloat* pOut = out + stepD * i;
-            for (size_t j = 0; j < bsz; ++j){
-                memcpy(pOut, pSh, stepD * sizeof(snFloat));
-                pSh += stepD;
-                pOut += stepN;
-            }
-
-            prm.offset(stepD);
-            prm.norm += stepD * bsz;
-        }
-        free(share);
-    }         
 }
 
 void Deconvolution::updateConfig(const snSize& newsz){
@@ -405,12 +350,7 @@ void Deconvolution::updateConfig(const snSize& newsz){
                 
         baseWeight_->resize(snSize(newsz.d, stp + 1));
         snFloat* wd = baseWeight_->getData();
-        switch (weightInitType_){
-        case weightInitType::uniform: wi_uniform(wd + wcsz, ntp - wcsz); break;
-        case weightInitType::he: wi_he(wd + wcsz, ntp - wcsz, stp + 1); break;
-        case weightInitType::lecun:wi_lecun(wd + wcsz, ntp - wcsz, deconvParams_.kernel); break;
-        case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, deconvParams_.kernel); break;
-        }
+        weightInit(wd + wcsz, ntp - wcsz, stp + 1, deconvParams_.kernel, weightInitType_);
     }
         
     snSize outSz(0, 0, deconvParams_.kernel, newsz.n);

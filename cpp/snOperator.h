@@ -544,4 +544,31 @@ namespace SN_API{
         }
     };
 
+    /*
+    Batch norm
+    */
+    class BatchNormLayer{
+
+    public:
+
+        batchNormType bnType;
+
+        BatchNormLayer(batchNormType bnType_) : bnType(bnType_){};
+
+        ~BatchNormLayer(){};
+
+        std::string getParamsJn(){
+
+            std::stringstream ss;
+            ss << "{\"bnType\":\"" << batchNormTypeStr(bnType) << "\""
+                "}";
+
+            return ss.str();
+        }
+
+        std::string name(){
+            return "BatchNorm";
+        }
+    };
+
 }

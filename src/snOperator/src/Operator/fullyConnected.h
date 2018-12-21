@@ -74,9 +74,7 @@ private:
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(const SN_Base::snSize& newSz);
-   
-    void calcBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
-
+      
     void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
     void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
 

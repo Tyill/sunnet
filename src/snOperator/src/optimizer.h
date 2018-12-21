@@ -26,6 +26,18 @@
 #pragma once
 
 #include "stdafx.h"
+#include "structurs.h"
+
+void optimizer(SN_Base::snFloat* dWeight,
+               SN_Base::snFloat* dWPrev,
+               SN_Base::snFloat* dWGrad, 
+               SN_Base::snFloat* weight, 
+               size_t wsz, 
+               SN_Base::snFloat alpha, 
+               SN_Base::snFloat lambda, 
+               SN_Base::snFloat mudW, 
+               SN_Base::snFloat muGr,
+               optimizerType otype);
 
 /// adaptive gradient method
 void opt_adagrad(SN_Base::snFloat* dW, SN_Base::snFloat* ioWGr, SN_Base::snFloat* ioW, size_t sz, SN_Base::snFloat alpha = 0.001F, SN_Base::snFloat lambda = 0.F, SN_Base::snFloat eps = 1e-8F);

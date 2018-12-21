@@ -40,8 +40,6 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
            kernel = prms.kernel,
            stride = prms.stride,
            wStepByD = fWidth * fHeight,              // step weight by input
-           wStepByK = wStepByD * kernel,             // step weight by output
-           wStepByN = (wStepByK + 1) * insz.d,       // step weight by batch
            inStepByD = insz.w * insz.h,              // step in by input
            inStepByN = inStepByD * insz.d,           // step in by batch
            outStepByD = outsz.w * outsz.h,           // step out by input
@@ -88,8 +86,7 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
                     for (size_t k = 0; k < kernel; ++k){
                         outBuff[k] += in * (*pW);
                         pW += wStepByD;
-                    }
-                    pW += 1;           // bias;
+                    }                    
                 }
 
                 snFloat* pOut = output + (cx + posW) + (cy + posH) * outsz.w + n * outStepByN;
@@ -116,7 +113,7 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
            stride = prms.stride,
            wStepByD = fWidth * fHeight,            // step weight by input
            wStepByK = wStepByD * kernel,           // step weight by output
-           wStepByN = (wStepByK + 1) * insz.d,     // step weight by batch
+           wStepByN = wStepByK * insz.d + insz.d,  // step weight by batch
            inStepByD = insz.w * insz.h,            // step in by input
            inStepByN = inStepByD * insz.d,         // step in by batch
            outStepByD = outsz.w * outsz.h,         // step out by input
@@ -127,7 +124,6 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
 
     snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
 
-    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
 
     // по батчу
@@ -145,15 +141,14 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
                 posW = ix * stride, posH = iy * stride;
 
             snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
-            snFloat* pdW = wBuff + wStepByK;
+            snFloat* pdW = wBuff + wStepByK * insz.d;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
                 inBuff[d] = *pIn;   
                 *(pdW + d) += *pIn;      // + bias
 
-                pIn += inStepByD;
-                pdW += wStepByK;               
+                pIn += inStepByD;    
             }
 
             memset(groutBuff, 0, insz.d * sizeof(snFloat));
@@ -184,21 +179,18 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
                         pdW += wStepByD;
                     }
 
-                    pW += 1;             // bias
-                    pdW += 1;         
                     groutBuff[d] += cout;
                 }
             }
 
             snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
-            snFloat* pW = weight + wStepByK;
+            snFloat* pW = weight + wStepByK * insz.d;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
 
-                *pOut += groutBuff[d] + *(pW + d); // + bias (no change)
+                *pOut = groutBuff[d] + *(pW + d); // + bias (no change)
 
-                pW += wStepByK;
                 pOut += inStepByD;
             }
         }
@@ -235,9 +227,7 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
 
     size_t shareStepByN = outsz.d + insz.d;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
-
-    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
-
+  
     // on batch
 #pragma omp parallel for
     for (int n = 0; n < int(insz.n); ++n){
@@ -273,20 +263,19 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
                         cout += grinBuff[k] * (*pW);
                         pW += wStepByD;
                     }
-                    pW += 1;           // bias;
+                    
                     groutBuff[d] += cout;
                 }
             }
 
             snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
-            snFloat* pW = weight + wStepByK;
+            snFloat* pW = weight + wStepByK * insz.d;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
 
-                *pOut += groutBuff[d] + *(pW + d); // + bias (no change)
-
-                pW += wStepByK;
+                *pOut = groutBuff[d] + *(pW + d); // + bias (no change)
+                               
                 pOut += inStepByD;
             }
         }

@@ -25,21 +25,28 @@
 #pragma once
 
 #include "snBase/snBase.h"
+#include "snOperator/src/structurs.h"
 
-void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
+class BatchNorm : SN_Base::OperatorBase{
 
-void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
+public:
 
-void batchNormForward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
+    BatchNorm(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
 
-void batchNormBackward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+    ~BatchNorm() = default;
+                
+    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
-void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
+    bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
-void paddingOffs(bool in2out, size_t paddingW, size_t paddingH, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
+private: 
+
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
+    
+    batchNormType bnType_ = batchNormType::byLayer;
+    
+    SN_Base::snSize inSzMem_;                                         ///< insz mem
+
+
+    void updateConfig(const SN_Base::snSize& newsz);
+};

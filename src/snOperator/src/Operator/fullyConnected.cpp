@@ -258,14 +258,14 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
+        layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
     /// active func
     activeFuncForward(kernel_ * insz.n, out, activeType_);
        
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
+        layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
 }
 
 void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
@@ -275,7 +275,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
     /// batchNorm
     snSize gsz = inTns->size();
     if (batchNormType_ == batchNormType::postActive)
-        calcBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // active func
     if (activeType_ != activeType::none){
@@ -291,7 +291,7 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        calcBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_->getData();
@@ -312,14 +312,17 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         snFloat* dWGrad = auxParams_["dWGrad"].data();
         size_t wsz = baseWeight_->size().size();
         
-        switch (optimizerType_){
-        case optimizerType::sgd:       opt_sgd(dWeight, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::sgdMoment: opt_sgdMoment(dWeight, dWPrev, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_); break;
-        case optimizerType::RMSprop:   opt_RMSprop(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentWGr_); break;
-        case optimizerType::adagrad:   opt_adagrad(dWeight, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_); break;
-        case optimizerType::adam:      opt_adam(dWeight, dWPrev, dWGrad, weight, wsz, operPrm.lr, opt_lmbRegular_, opt_decayMomentDW_, opt_decayMomentWGr_); break;
-        default: break;
-        }      
+        optimizer(dWeight,
+                  dWPrev,
+                  dWGrad,
+                  weight,
+                  wsz,
+                  operPrm.lr,
+                  opt_lmbRegular_,
+                  opt_decayMomentDW_,
+                  opt_decayMomentWGr_,
+                  optimizerType_);
+      
     }
     else{ // isFreeze
         switch (calcMode_){
@@ -328,27 +331,6 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         case calcMode::OpenCL: backwardOCL_G(kernel_, weight, inSzMem_, gradIn, gradOut, gpuParams_); break;
         }
     }   
-}
-
-void FullyConnected::calcBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
-
-    if (!isLern){
-        size_t sz = insz.w * insz.h * insz.d, bsz = insz.n;
-              
-        /// y = ^x * γ + β
-        for (size_t j = 0; j < bsz; ++j){
-
-            snFloat* cin = in + j * sz, *cout = out + j * sz;
-            for (size_t i = 0; i < sz; ++i)                    
-                cout[i] = (cin[i] - prm.mean[i])  * prm.scale[i] / prm.varce[i] + prm.schift[i];                
-        }                
-    }
-    else{ // isLerning
-        if (fwBw)
-           batchNormForward(insz, in, out, baseBatchNorm_);         
-        else
-           batchNormBackward(insz, in, out, baseBatchNorm_);        
-    }
 }
 
 void FullyConnected::updateConfig(const snSize& newsz){
@@ -361,12 +343,7 @@ void FullyConnected::updateConfig(const snSize& newsz){
                 
         baseWeight_->resize(snSize(kernel_, stp + 1));
         snFloat* wd = baseWeight_->getData();
-        switch (weightInitType_){
-        case weightInitType::uniform: wi_uniform(wd + wcsz, ntp - wcsz); break;
-        case weightInitType::he: wi_he(wd + wcsz, ntp - wcsz, stp + 1); break;
-        case weightInitType::lecun:wi_lecun(wd + wcsz, ntp - wcsz, kernel_); break;
-        case weightInitType::xavier:wi_xavier(wd + wcsz, ntp - wcsz, stp + 1, kernel_); break;
-        }
+        weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     
     baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));

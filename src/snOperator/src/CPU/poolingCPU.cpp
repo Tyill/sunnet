@@ -42,10 +42,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
    
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
-
-    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-    memset(outputInx, 0, outStepByN * insz.n * sizeof(snFloat));
-
+      
     if (type == poolType::max){ // max
 
         // by batch
@@ -145,9 +142,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
         outStepByD = outsz.w * outsz.h,        // step out by output
         outStepByN = outStepByD * outsz.d,     // step out by batch
         kernelSz = kernel * kernel;
-
-    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
-
+       
     if (type == poolType::max){ // max
 
         // by batch
@@ -162,10 +157,10 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
                 size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
-
+              
                 // on all input layers
                 for (size_t d = 0; d < insz.d; ++d){
-
+                                        
                     size_t c = *pOutInx, cx = c % kernel, cy = c / kernel;
                     pGrOut[(cx + posW) + (cy + posH) * insz.w] = *pGrIn;
 

@@ -27,7 +27,10 @@
 // инициализация весов
 
 #include "snBase/snBase.h"
+#include "structurs.h"
 #include "random.h"
+
+void weightInit(SN_Base::snFloat* ioW, size_t sz, size_t fan_in, size_t fan_out, weightInitType wtype);
 
 void wi_uniform(SN_Base::snFloat* ioW, size_t sz);
 

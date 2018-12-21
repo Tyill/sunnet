@@ -28,20 +28,330 @@
 #include "snOperator/src/Operator/convolution.h"
 #include <omp.h>
 
+
 using namespace std;
 using namespace SN_Base;
 
+#ifdef SN_AVX
+#include <immintrin.h>
 
-void Convolution::forwardCPU(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+float horSummAVX(__m256 a) {
    
-    size_t kernel = prms.kernel,
-           fWidth = prms.fWidth,
-           fHeight = prms.fHeight,
-           stride = prms.stride,
-           dilate = prms.dilate,
-           wStepByD = fWidth * fHeight,        // step weight by input
+    __m128 hi = _mm256_extractf128_ps(a, 1);
+    __m128 lo = _mm256_extractf128_ps(a, 0);
+    lo = _mm_add_ps(hi, lo);
+    hi = _mm_movehl_ps(hi, lo);
+    lo = _mm_add_ps(hi, lo);
+    hi = _mm_shuffle_ps(lo, lo, 1);
+    lo = _mm_add_ss(hi, lo);
+    return _mm_cvtss_f32(lo);
+}
+
+template <typename int R>
+void forwardAVX(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    const size_t wStepByD = R * R,          // step weight by input
+        wStepByK = wStepByD * insz.d,       // step weight by output
+        wStepByN = wStepByK * kernel,       // step weight by batch
+        inStepByD = insz.w * insz.h,        // step in by input
+        inStepByN = inStepByD * insz.d,     // step in by batch
+        outStepByD = outsz.w * outsz.h,     // step out by input
+        outStepByN = outStepByD * outsz.d;  // step out by batch
+
+    size_t shareStepByN = kernel;           // for local mem
+    snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+      
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* outBuff = share + shareStepByN * n;
+        snFloat In[wStepByD], W[wStepByD];
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            memset(outBuff, 0, kernel * sizeof(snFloat));
+                       
+            snFloat* pIn = input + inStepByN * n;
+            snFloat* pW = weight;
+
+            // on all in layers
+            for (size_t d = 0; d < insz.d; ++d){
+                
+                for (size_t c = 0; c < wStepByD; ++c){
+
+                    size_t cx = c % R, cy = c / R;
+                    In[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                }
+
+                pW = weight + wStepByD * d;
+
+                // on all out layers
+                for (size_t k = 0; k < kernel; ++k){
+                                            
+                    for (size_t c = 0; c < wStepByD; ++c){
+
+                        size_t cx = c % R, cy = c / R;
+                        W[c] = *(pW + cx + cy * R);
+                    }
+
+                    __m256 arOut = _mm256_setzero_ps();
+
+                    for (int z = 0; z < wStepByD / 8; ++z){                      
+                                           
+                        __m256 arIn = _mm256_load_ps(In + z * 8);
+
+                        __m256 arW = _mm256_load_ps(W + z * 8);
+
+                        arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+                    }
+                    
+                    outBuff[k] += horSummAVX(arOut);
+ 
+                    outBuff[k] += In[wStepByD - 1] * W[wStepByD - 1];
+
+                    pW += wStepByK;
+                }
+                                
+                pIn += inStepByD;
+               
+            }
+
+            snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+            pW = weight + wStepByN;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+
+                *pOut = outBuff[k] + *(pW + k); // + bias              
+
+                pOut += outStepByD;
+            }
+        }
+    }
+  
+    free(share);
+}
+
+template <typename int R>
+void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+
+   const size_t wStepByD = R * R,              // step weight by input
+        wStepByK = wStepByD * insz.d,          // step weight by output
+        wStepByN = wStepByK * kernel + kernel, // step weight by batch
+        inStepByD = insz.w * insz.h,           // step in by input
+        inStepByN = inStepByD * insz.d,        // step in by batch
+        outStepByD = outsz.w * outsz.h,        // step out by input
+        outStepByN = outStepByD * outsz.d;     // step out by batch
+
+    snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
+
+    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+    memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
+
+
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        snFloat* wBuff = wgThr + wStepByN * n;
+        __m256 arDW[wStepByD / 8], arGOut[wStepByD / 8];
+        snFloat In[wStepByD], W[wStepByD];
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+            snFloat* pdW = wBuff + wStepByK * kernel;
+
+            // on all out layers
+            for (size_t k = 0; k < kernel; ++k){
+                *(pdW + k) += pGrIn[k * outStepByD];      // + bias
+            }
+           
+            // on all in layers               
+            for (size_t d = 0; d < insz.d; ++d){
+               
+                snFloat* pIn = input + inStepByD * d + inStepByN * n;
+                snFloat* pGrOut = gradOut + inStepByD * d + inStepByN * n;
+               
+                snFloat* pW = weight + wStepByD * d;
+                pdW = wBuff + wStepByD * d;
+
+                for (int z = 0; z < wStepByD / 8; ++z)
+                    arGOut[z] = _mm256_setzero_ps();
+
+                for (size_t c = 0; c < wStepByD; ++c){
+
+                    size_t cx = c % R, cy = c / R;
+                    In[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
+                }
+
+                // on all out layers
+                for (size_t k = 0; k < kernel; ++k){                     
+                  
+                    for (size_t c = 0; c < wStepByD; ++c){
+
+                        size_t cx = c % R, cy = c / R;
+                        W[c] = *(pW + cx + cy * R);
+                    }
+
+                    snFloat gin = pGrIn[k * outStepByD];
+
+                    __m256 arGIn = _mm256_set1_ps(gin);
+                    
+                    for (int z = 0; z < wStepByD / 8; ++z){
+                                                
+                        __m256 arW = _mm256_load_ps(W + z * 8);
+                        
+                        arGOut[z] = _mm256_add_ps(arGOut[z], _mm256_mul_ps(arGIn, arW));
+                                                                          
+                        __m256 arIn = _mm256_load_ps(In + z * 8);
+                        
+                        arDW[z] = _mm256_mul_ps(arGIn, arIn);
+                    }    
+
+#define DW(c, r)   *(pdW + (c) + (r) * R)
+                 
+                    for (size_t c = 0; c < (wStepByD - 1); ++c){
+
+                        size_t cx = c % R, cy = c / R;
+
+                        DW(cx, cy) += arDW[c / 8].m256_f32[c % 8];
+                    }
+                    DW(R - 1, R - 1) += gin * In[wStepByD - 1];
+
+
+#define GOut(c, r) *(pGrOut + ((c) + posW + (c) * (dilate - 1)) + ((r) + posH + (r) * (dilate - 1)) * insz.w)
+
+                    GOut(R - 1, R - 1) += gin * W[wStepByD - 1];
+         
+                    pW += wStepByK;
+                    pdW += wStepByK;
+                }             
+             
+                for (size_t c = 0; c < (wStepByD - 1); ++c){
+
+                    size_t cx = c % R, cy = c / R;
+
+                    GOut(cx, cy) += arGOut[c / 8].m256_f32[c % 8];
+                }  
+            }          
+        }
+    }
+
+    if (insz.n > 1){
+        for (size_t i = 0; i < insz.n; ++i){
+            snFloat* wBuff = wgThr + wStepByN * i;
+            for (size_t j = 0; j < wStepByN; ++j)
+                dWeightOut[j] += wBuff[j];
+        }
+        for (size_t j = 0; j < wStepByN; ++j)
+            dWeightOut[j] /= insz.n;
+
+        free(wgThr);
+    }
+
+#undef GOut
+#undef DW
+
+}
+
+template <typename int R>
+void backwardG_AVX(size_t kernel, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
+
+    const size_t wStepByD = R * R,             // step weight by input
+        wStepByK = wStepByD * insz.d,          // step weight by output
+        wStepByN = wStepByK * kernel + kernel, // step weight by batch
+        inStepByD = insz.w * insz.h,           // step in by input
+        inStepByN = inStepByD * insz.d,        // step in by batch
+        outStepByD = outsz.w * outsz.h,        // step out by input
+        outStepByN = outStepByD * outsz.d;     // step out by batch
+        
+    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+   
+    // by batch
+#pragma omp parallel for
+    for (int n = 0; n < int(insz.n); ++n){
+
+        __m256 arGOut[wStepByD / 8];
+        snFloat W[wStepByD];
+
+        for (size_t p = 0; p < outStepByD; ++p){
+
+            size_t ox = p % outsz.w, oy = p / outsz.w,
+                posW = ox * stride, posH = oy * stride;
+
+            snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                      
+            // on all in layers               
+            for (size_t d = 0; d < insz.d; ++d){
+
+                snFloat* pGrOut = gradOut + inStepByD * d + inStepByN * n;
+
+                snFloat* pW = weight + wStepByD * d;
+               
+                for (int z = 0; z < wStepByD / 8; ++z)
+                    arGOut[z] = _mm256_setzero_ps();
+                              
+                // on all out layers
+                for (size_t k = 0; k < kernel; ++k){
+
+                    for (size_t c = 0; c < wStepByD; ++c){
+
+                        size_t cx = c % R, cy = c / R;
+                        W[c] = *(pW + cx + cy * R);
+                    }
+
+                    snFloat gin = pGrIn[k * outStepByD];
+
+                    __m256 arGIn = _mm256_set1_ps(gin);
+
+                    for (int z = 0; z < wStepByD / 8; ++z){
+
+                        __m256 arW = _mm256_load_ps(W + z * 8);
+
+                        arGOut[z] = _mm256_add_ps(arGOut[z], _mm256_mul_ps(arGIn, arW));                                              
+                    }
+                    
+#define GOut(c, r) *(pGrOut + ((c) + posW + (c) * (dilate - 1)) + ((r) + posH + (r) * (dilate - 1)) * insz.w)
+
+                    GOut(R - 1, R - 1) += gin * W[wStepByD - 1];
+
+                    pW += wStepByK;
+                }
+
+                for (size_t c = 0; c < (wStepByD - 1); ++c){
+
+                    size_t cx = c % R, cy = c / R;
+
+                    GOut(cx, cy) += arGOut[c / 8].m256_f32[c % 8];
+                }
+            }
+        }
+    }
+        
+#undef GOut
+
+}
+
+#endif
+
+
+void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+    size_t wStepByD = fWidth * fHeight,        // step weight by input
            wStepByK = wStepByD * insz.d,       // step weight by output
+           wStepByN = wStepByK * kernel,       // step weight by batch
            inStepByD = insz.w * insz.h,        // step in by input
            inStepByN = inStepByD * insz.d,     // step in by batch
            outStepByD = outsz.w * outsz.h,     // step out by input
@@ -49,18 +359,16 @@ void Convolution::forwardCPU(const convParams& prms,
 
     size_t shareStepByN = insz.d + kernel;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
-    
-    memset(output, 0, outStepByN * insz.n * sizeof(snFloat));
-        
+     
     // by batch
 #pragma omp parallel for
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
         snFloat* outBuff = share + insz.d + shareStepByN * n;
-        
+
         for (size_t p = 0; p < outStepByD; ++p){
-        
+
             size_t ox = p % outsz.w, oy = p / outsz.w,
                 posW = ox * stride, posH = oy * stride;
 
@@ -77,62 +385,79 @@ void Convolution::forwardCPU(const convParams& prms,
                     inBuff[d] = *pIn;
                     pIn += inStepByD;
                 }
-                            
+
                 // on all out layers
                 for (size_t k = 0; k < kernel; ++k){
-                                        
+
                     // on all in layers
                     snFloat cout = 0;
                     for (size_t d = 0; d < insz.d; ++d){
                         cout += inBuff[d] * (*pW);
                         pW += wStepByD;
                     }
-                    pW += 1;           // bias;
                     outBuff[k] += cout;
                 }
             }
 
             snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
-            snFloat* pW = weight + wStepByK;
+            snFloat* pW = weight + wStepByN;
 
             // on all out layers
             for (size_t k = 0; k < kernel; ++k){
-               
-                *pOut += outBuff[k] + *(pW + k); // + bias
-               
-                pW += wStepByK;
+
+                *pOut = outBuff[k] + *(pW + k); // + bias              
+
                 pOut += outStepByD;
             }
-        }        
+        }
     }
 
-    free(share); 
+    free(share);
 }
 
-void Convolution::backwardCPU_GW(const convParams& prms,
+void Convolution::forwardCPU(const convParams& prms,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+      
+#ifdef SN_AVX
+   
+    if ((prms.fWidth == 3) && (prms.fHeight == 3))
+        forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 5) && (prms.fHeight == 5))
+        forwardAVX<5>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 7) && (prms.fHeight == 7))
+        forwardAVX<7>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else if ((prms.fWidth == 9) && (prms.fHeight == 9))
+        forwardAVX<9>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    else
+        forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+ 
+#else
+
+    forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+
+#endif
+}
+
+
+void backwardGW_BASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
-    
-    size_t kernel = prms.kernel,
-           fWidth = prms.fWidth,
-           fHeight = prms.fHeight,
-           stride = prms.stride,
-           dilate = prms.dilate,
-           wStepByD = fWidth * fHeight,         // step weight by input
-           wStepByK = wStepByD * insz.d,        // step weight by output
-           wStepByN = (wStepByK + 1) * kernel,  // step weight by batch
-           inStepByD = insz.w * insz.h,         // step in by input
-           inStepByN = inStepByD * insz.d,      // step in by batch
-           outStepByD = outsz.w * outsz.h,      // step out by input
-           outStepByN = outStepByD * outsz.d;   // step out by batch
+
+    size_t wStepByD = fWidth * fHeight,           // step weight by input
+           wStepByK = wStepByD * insz.d,          // step weight by output
+           wStepByN = wStepByK * kernel + kernel, // step weight by batch
+           inStepByD = insz.w * insz.h,           // step in by input
+           inStepByN = inStepByD * insz.d,        // step in by batch
+           outStepByD = outsz.w * outsz.h,        // step out by input
+           outStepByN = outStepByD * outsz.d;     // step out by batch
 
     size_t shareStepByN = insz.d + kernel + insz.d;      // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
     snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
-    
+
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
-    
+
     // by batch
 #pragma omp parallel for
     for (int n = 0; n < int(insz.n); ++n){
@@ -148,16 +473,14 @@ void Convolution::backwardCPU_GW(const convParams& prms,
                 posW = ox * stride, posH = oy * stride;
 
             snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
-            snFloat* pdW = wBuff + wStepByK;
+            snFloat* pdW = wBuff + wStepByK * kernel;
 
             // on all out layers
             for (size_t k = 0; k < kernel; ++k){
                 ginBuff[k] = *pGrIn;
-
                 *(pdW + k) += *pGrIn;      // + bias
 
                 pGrIn += outStepByD;
-                pdW += wStepByK;
             }
 
             // kernel conv
@@ -172,7 +495,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
                     inBuff[d] = *pIn;
                     pIn += inStepByD;
                 }
-
+          
                 memset(goutBuff, 0, insz.d * sizeof(snFloat));
 
                 // on all out layers
@@ -187,8 +510,6 @@ void Convolution::backwardCPU_GW(const convParams& prms,
                         *pdW += gin * inBuff[d];
                         pdW += wStepByD;
                     }
-                    pW += 1;           // bias;
-                    pdW += 1;
                 }
 
                 snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
@@ -200,9 +521,9 @@ void Convolution::backwardCPU_GW(const convParams& prms,
             }
         }
     }
-   
+
     if (insz.n > 1){
-        for (size_t i = 0; i < insz.n; ++i){
+        for (size_t i = 0; i < insz.n; ++i){     
             snFloat* wBuff = wgThr + wStepByN * i;
             for (size_t j = 0; j < wStepByN; ++j)
                 dWeightOut[j] += wBuff[j];
@@ -212,21 +533,44 @@ void Convolution::backwardCPU_GW(const convParams& prms,
 
         free(wgThr);
     }
-   
-    free(share); 
+
+    free(share);
+
 }
 
-void Convolution::backwardCPU_G(const convParams& prms,
+void Convolution::backwardCPU_GW(const convParams& prms,
+    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+    
+#ifdef SN_AVX
+    
+    if ((prms.fWidth == 3) && (prms.fHeight == 3))
+        backwardGW_AVX<3>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    else if ((prms.fWidth == 5) && (prms.fHeight == 5))
+        backwardGW_AVX<5>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    else if ((prms.fWidth == 7) && (prms.fHeight == 7))
+        backwardGW_AVX<7>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    else if ((prms.fWidth == 9) && (prms.fHeight == 9))
+        backwardGW_AVX<9>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    else
+        backwardGW_BASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
+           weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+    
+#else
+
+    backwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
+        weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
+#endif
+}
+
+
+void backwardG_Base(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
-    size_t kernel = prms.kernel,
-           fWidth = prms.fWidth,
-           fHeight = prms.fHeight,
-           stride = prms.stride,
-           dilate = prms.dilate,
-           wStepByD = fWidth * fHeight,         // step weight by input
-           wStepByK = wStepByD * insz.d,        // step weight by output
-           wStepByN = (wStepByK + 1) * kernel,  // step weight by batch
+    size_t wStepByD = fWidth * fHeight,         // step weight by input         
            inStepByD = insz.w * insz.h,         // step in by input
            inStepByN = inStepByD * insz.d,      // step in by batch
            outStepByD = outsz.w * outsz.h,      // step out by input
@@ -274,7 +618,6 @@ void Convolution::backwardCPU_G(const convParams& prms,
                         goutBuff[d] += gin * (*pW);
                         pW += wStepByD;
                     }
-                    pW += 1;           // bias;
                 }
 
                 snFloat* pGrOut = gradOut + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w + n * inStepByN;
@@ -288,6 +631,34 @@ void Convolution::backwardCPU_G(const convParams& prms,
     }
 
     free(share);
+}
+
+void Convolution::backwardCPU_G(const convParams& prms,
+    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
+
+#ifdef SN_AVX
+
+    if ((prms.fWidth == 3) && (prms.fHeight == 3))
+        backwardG_AVX<3>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, outsz, gradIn, gradOut);
+    else if ((prms.fWidth == 5) && (prms.fHeight == 5))
+        backwardG_AVX<5>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, outsz, gradIn, gradOut);
+    else if ((prms.fWidth == 7) && (prms.fHeight == 7))
+        backwardG_AVX<7>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, outsz, gradIn, gradOut);
+    else if ((prms.fWidth == 9) && (prms.fHeight == 9))
+        backwardG_AVX<9>(prms.kernel, prms.stride, prms.dilate,
+           weight, insz, outsz, gradIn, gradOut);
+    else
+        backwardG_Base(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
+           weight, insz, outsz, gradIn, gradOut);
+
+#else
+
+    backwardG_Base(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
+        weight, insz, outsz, gradIn, gradOut);
+#endif
 }
 
 

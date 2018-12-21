@@ -38,6 +38,7 @@
 #include "Operator/crop.h"
 #include "Operator/concat.h"
 #include "Operator/resize.h"
+#include "Operator/batchNorm.h"
 
 namespace SN_Opr{
 
@@ -60,11 +61,11 @@ namespace SN_Opr{
         else if (fname == "Crop")           ret = (SN_Base::OperatorBase*)new Crop(net, fname, node, prms);
         else if (fname == "Concat")         ret = (SN_Base::OperatorBase*)new Concat(net, fname, node, prms);
         else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
+        else if (fname == "BatchNorm")      ret = (SN_Base::OperatorBase*)new BatchNorm(net, fname, node, prms);
 
         return ret;
     }
-
-    /// освободить оператор
+    
     void freeOperator(SN_Base::OperatorBase* opr, const std::string& fname){
 
         if (opr){
@@ -82,6 +83,7 @@ namespace SN_Opr{
             else if (fname == "Crop")           delete (Crop*)opr;
             else if (fname == "Concat")         delete (Concat*)opr;
             else if (fname == "Resize")         delete (Resize*)opr;
+            else if (fname == "BatchNorm")      delete (BatchNorm*)opr;
         }
     }
 }
