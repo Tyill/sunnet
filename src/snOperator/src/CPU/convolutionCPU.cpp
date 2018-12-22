@@ -153,9 +153,9 @@ void forwardAVX(size_t kernel, size_t stride, size_t dilate,
 
                     for (int z = 0; z < wStepByD / 8; ++z){                      
                                            
-                        __m256 arIn = _mm256_load_ps(In + z * 8);
+                        __m256 arIn = _mm256_loadu_ps(In + z * 8);
 
-                        __m256 arW = _mm256_load_ps(W + z * 8);
+                        __m256 arW = _mm256_loadu_ps(W + z * 8);
 
                         arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
                     }
@@ -259,11 +259,11 @@ void backwardGW_AVX(size_t kernel, size_t stride, size_t dilate,
                     
                     for (int z = 0; z < wStepByD / 8; ++z){
                                                 
-                        __m256 arW = _mm256_load_ps(W + z * 8);
+                        __m256 arW = _mm256_loadu_ps(W + z * 8);
                         
                         arGOut[z] = _mm256_add_ps(arGOut[z], _mm256_mul_ps(arGIn, arW));
                                                                           
-                        __m256 arIn = _mm256_load_ps(In + z * 8);
+                        __m256 arIn = _mm256_loadu_ps(In + z * 8);
                         
                         arDW[z] = _mm256_mul_ps(arGIn, arIn);
                     }    
@@ -367,7 +367,7 @@ void backwardG_AVX(size_t kernel, size_t stride, size_t dilate,
 
                     for (int z = 0; z < wStepByD / 8; ++z){
 
-                        __m256 arW = _mm256_load_ps(W + z * 8);
+                        __m256 arW = _mm256_loadu_ps(W + z * 8);
 
                         arGOut[z] = _mm256_add_ps(arGOut[z], _mm256_mul_ps(arGIn, arW));                                              
                     }
