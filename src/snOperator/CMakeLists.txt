@@ -9,7 +9,6 @@ add_library(snOperator STATIC ${SRC_snOperator})
 if(USE_CUDA)
 
     set_target_properties(snOperator PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    set_target_properties(snOperator PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     target_compile_features(snOperator PUBLIC cxx_std_11)
 
     add_definitions(-DSN_CUDA)
@@ -19,11 +18,11 @@ if(USE_CUDA)
     if(GPU STREQUAL "CUDNN")
      add_definitions(-DSN_CUDNN)
 	 target_link_libraries(snOperator cudnn)
-  endif()
+    endif()
 endif()
 
 if(USE_AVX)
-    add_definitions(-DSN_AVX)
+   add_definitions(-DSN_AVX)
 endif()
 
 target_link_libraries(snOperator snAux snBase)

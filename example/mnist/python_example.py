@@ -30,7 +30,7 @@ else:
 
 # loadImg
 imgList = []
-pathImg = 'c:/C++/skyNet/example/mnist/images/'
+pathImg = '/home/alex/CLionProjects/skynet/example/mnist/images/'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 
@@ -40,6 +40,7 @@ accuratSumm = 0.
 inLayer = np.zeros((bsz, 1, 28, 28), ctypes.c_float)
 outLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
 targLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)
+imgMem = {}
 
 # cycle lern
 for n in range(1000):
@@ -49,7 +50,13 @@ for n in range(1000):
     for i in range(bsz):
         ndir = random.randint(0, 10 - 1)
         nimg = random.randint(0, len(imgList[ndir]) - 1)
-        inLayer[i][0] = imageio.imread(pathImg + str(ndir) + '/' + imgList[ndir][nimg])
+
+        nm = pathImg + str(ndir) + '/' + imgList[ndir][nimg]
+        if (nm in imgMem):
+            inLayer[i][0] = imgMem[nm]
+        else:
+            inLayer[i][0] = imageio.imread(nm)
+            imgMem[nm] = inLayer[i][0].copy()
 
         targLayer[i][0][0][ndir] = 1.
 

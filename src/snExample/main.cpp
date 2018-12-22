@@ -6,7 +6,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <map>
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include "../cpp/snNet.h"
 #include "../cpp/snTensor.h"
@@ -26,7 +26,9 @@ bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, v
     
     for (int i = 0; i < classCnt; ++i){
 
-        namespace fs = std::tr2::sys;
+      //  namespace fs = std::tr2::sys;
+
+        namespace fs = std::experimental::filesystem;
 
         if (!fs::exists(fs::path(imgPath + to_string(i) + "/"))) continue;
 
@@ -48,28 +50,29 @@ bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, v
     return true;
 }
 
+
 int main(int argc, char* argv[]){
        
     sn::Net snet;
-  
+
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, -1, sn::calcMode::CUDA), "P1")
+        .addNode("C2", sn::Convolution(25, 0, sn::calcMode::CUDA), "P1")
      //   .addNode("BN1", sn::BatchNormLayer(sn::batchNormType::byChannels), "P1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CPU), "C3")
-        .addNode("C3", sn::Convolution(25, 0, sn::calcMode::CUDA), "C4")
-        .addNode("C4", sn::Convolution(25, -1, sn::calcMode::CUDA), "P2")
+      //  .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "C3")
+      //  .addNode("C3", sn::Convolution(25, 0, sn::calcMode::CPU), "C4")
+      //  .addNode("C4", sn::Convolution(25, -1, sn::calcMode::CPU), "P2")
      //   .addNode("BN2", sn::BatchNormLayer(sn::batchNormType::byChannels), "P2")
-        .addNode("P2", sn::Pooling(sn::calcMode::CPU), "FC1")       
-        .addNode("FC1", sn::FullyConnected(1024, sn::calcMode::CPU), "FC2")
+        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC2")
+      //  .addNode("FC1", sn::FullyConnected(1024, sn::calcMode::CUDA), "FC2")
      //   .addNode("BN3", sn::BatchNormLayer(sn::batchNormType::byLayer), "FC2")
-        .addNode("FC2", sn::FullyConnected(128, sn::calcMode::CPU), "FC3")
-        .addNode("FC3", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
+        .addNode("FC2", sn::FullyConnected(256, sn::calcMode::CUDA), "FC3")
+        .addNode("FC3", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://C++//other//skyNet//example//mnist//images//";
+    string imgPath = "/home/alex/CLionProjects/skynet/example/mnist/images/";
     
-    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.0001F;
+    int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);
     vector<int> imgCntDir(classCnt);
     map<string, cv::Mat> images;
@@ -85,7 +88,8 @@ int main(int argc, char* argv[]){
     sn::Tensor inLayer(sn::snLSize(w, h, 1, batchSz));
     sn::Tensor targetLayer(sn::snLSize(classCnt, 1, 1, batchSz));
     sn::Tensor outLayer(sn::snLSize(classCnt, 1, 1, batchSz));
-       
+
+
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
