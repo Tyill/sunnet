@@ -1,0 +1,8 @@
+.svn*
+src/Lib/OpenCV_3.3.0*
+mswin/VS12/Debug*
+mswin/VS12/*.sdf
+mswin/VS12/*.suo
+mswin/VS12/Release*
+mswin/VS12/x64*
+mswin/VS12/snSharpClient

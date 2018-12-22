@@ -23,6 +23,10 @@ endif()
 
 if(USE_AVX)
    add_definitions(-DSN_AVX)
+   
+   if(WIN32)
+     target_compile_options(snOperator PRIVATE /arch:AVX2)
+   endif()
 endif()
 
 target_link_libraries(snOperator snAux snBase)

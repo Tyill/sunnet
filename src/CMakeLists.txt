@@ -46,7 +46,7 @@ if(MSVC)
   add_definitions(-DWIN32_LEAN_AND_MEAN)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-  link_directories(";$(OutDir)")
+  link_directories(";$(OutDir)")  
 endif(MSVC)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

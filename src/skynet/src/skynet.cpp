@@ -28,7 +28,10 @@
 #include "skynet/skyNet.h"
 #include "skynet/src/snet.h"
 
-#define SN_VERSION "1.0.2"
+#define SN_VERSION "1.0.2" // 22.12.2018
+// -add AVX instr for Convolution layer - +30% performance
+// -add operator 'BatchNorm'
+// -refactoring
 
 namespace SN_API{
 
