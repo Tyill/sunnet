@@ -10,7 +10,7 @@ os:
 
 compiler:
   - gcc
- # - clang
+  - clang
 
 cache:
   
@@ -36,7 +36,7 @@ env:
 
   matrix:
     - USE_AVX=OFF
-   # - USE_AVX=ON
+    - USE_AVX=ON
     
     
 matrix:
