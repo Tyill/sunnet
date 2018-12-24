@@ -1,11 +1,11 @@
 sudo: true
-dist: xenial
+#dist: xenial
 osx_image: xcode8
 
 language: cpp
 
 os:
-  - linux
+  #- linux
   - osx
 
 compiler:
@@ -18,18 +18,15 @@ addons:
   apt:
     sources:
     
-    packages:    
-    
+    packages: 
+	
 branches:
   #only:
     #- master
     
 env:
   global:
-    - BUILD_TESTS=OFF
-    - BUILD_EXAMPLES=OFF
-    - COVERALLS=OFF
-
+    
   matrix:
     - USE_AVX=OFF
     - USE_AVX=ON
@@ -37,8 +34,8 @@ env:
     
 matrix:
   exclude: # On OSX g++ is a symlink to clang++ by default
-   # - os: osx
-   #   compiler: gcc
+    - os: osx
+      compiler: gcc
 
 before_install:  
 
