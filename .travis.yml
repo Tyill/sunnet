@@ -22,7 +22,7 @@ addons:
 
 branches:
   #only:
-    #- master
+  #  - master
     
 env:
   global:
@@ -52,15 +52,22 @@ before_script:
             -DGPU=NONE .;
       ls ;
     fi
+    
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       cd src;
-      cmake -DUSE_AVX=$USE_AVX
+      cmake -G Visual Studio 14 2017 Win64
+            -DUSE_AVX=$USE_AVX
             -DGPU=NONE .;
     fi
  
 script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make -j2; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake --trace --build .; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then 
+      make -j2;
+    fi
+  
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+      cmake  --build . --config Release;
+    fi
 
 after_success:
   
