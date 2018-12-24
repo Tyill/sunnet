@@ -10,6 +10,7 @@ os:
 compiler:
   - gcc
   - clang
+  - msvc
 
 cache:
     
@@ -33,9 +34,11 @@ env:
 matrix:  
   exclude:
         - os: windows
-          compiler:
-          - gcc
-          - clang
+          compiler: gcc
+        - os: windows
+          compiler: clang
+        - os: linux
+          compiler: msvc          
   
 before_install:  
 
