@@ -17,14 +17,14 @@ cache:
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.6
+    #- ubuntu-toolchain-r-test
+    #- llvm-toolchain-precise-3.6
     packages:
-    - gcc-4.9
-    - g++-4.9
-    - clang-3.6
-    - cmake
-    - git
+    #- gcc-4.9
+    # - g++-4.9
+    # - clang-3.6
+    # - cmake
+    # - git
     
 branches:
   #only:
@@ -70,9 +70,9 @@ before_script:
       cmake -DUSE_AVX=$USE_AVX
             -DBUILD_TESTS=$BUILD_TESTS
             -DCOVERALLS=$COVERALLS
-            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
-      ls ;	
+            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
     fi
+  - ls 	
  
 script:
   - make -j2
