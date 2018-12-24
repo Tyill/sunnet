@@ -35,6 +35,7 @@ env:
     - BUILD_TESTS=OFF
     - BUILD_EXAMPLES=OFF
     - COVERALLS=OFF
+    - GPU=NONE
 
   matrix:
     - USE_AVX=ON
@@ -72,7 +73,7 @@ before_script:
             -DCOVERALLS=$COVERALLS
             -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
     fi
-  - ls 	
+  - ls -a	
  
 script:
   - make -j2
