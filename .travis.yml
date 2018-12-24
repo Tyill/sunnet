@@ -10,7 +10,7 @@ os:
 
 compiler:
   - gcc
-  - clang
+ # - clang
 
 cache:
   
@@ -35,8 +35,9 @@ env:
     - COVERALLS=OFF
 
   matrix:
-    - USE_AVX=ON
     - USE_AVX=OFF
+   # - USE_AVX=ON
+    
     
 matrix:
   exclude: # On OSX g++ is a symlink to clang++ by default
@@ -52,18 +53,13 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       cd src;
       cmake -DUSE_AVX=$USE_AVX
-            -DGPU=NONE
-            -DBUILD_TESTS=$BUILD_TESTS
-            -DCOVERALLS=$COVERALLS
-            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+            -DGPU=NONE .;
       ls ;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       cd src;
       cmake --trace -DUSE_AVX=$USE_AVX
-                    -DBUILD_TESTS=$BUILD_TESTS
-                    -DCOVERALLS=$COVERALLS
-                    -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
+                    -DGPU=NONE .;     
     fi
  
 script:
