@@ -1,12 +1,12 @@
 sudo: required
 dist: trusty
-osx_image: xcode8
+#osx_image: xcode8
 
 language: cpp
 
 os:
   - linux
-  - osx
+  #- osx
 
 compiler:
   - gcc
@@ -73,7 +73,7 @@ before_script:
             -DCOVERALLS=$COVERALLS
             -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
     fi
-  - ls -a	
+  - cd CMakeFiles	
  
 script:
   - make -j2
