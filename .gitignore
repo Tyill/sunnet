@@ -6,3 +6,4 @@ mswin/VS12/*.suo
 mswin/VS12/Release*
 mswin/VS12/x64*
 mswin/VS12/snSharpClient
+example

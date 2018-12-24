@@ -1,0 +1,73 @@
+sudo: true
+dist: xenial
+
+language: cpp
+
+os:
+  - linux
+  - windows  
+
+compiler:
+  - gcc
+  - clang
+  - msvc
+
+cache:
+    
+addons:
+  apt:
+    sources:
+    
+    packages:
+
+branches:
+  only:
+    - master
+    
+env:
+  global:
+    
+  matrix:
+    - USE_AVX=OFF
+    - USE_AVX=ON
+        
+matrix:  
+  exclude:
+        - os: windows
+          compiler: gcc
+        - os: windows
+          compiler: clang
+        - os: linux
+          compiler: msvc          
+  
+before_install:  
+
+install:   
+  - bash -x .travis/install.sh
+  
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      cd src;
+      cmake -DUSE_AVX=$USE_AVX
+            -DGPU=NONE .;
+      ls ;
+    fi
+    
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+      cd src;
+      cmake -G "Visual Studio 15 2017" -A x64
+            -DUSE_AVX=$USE_AVX
+            -DGPU=NONE .;
+    fi
+ 
+script:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then 
+      make -j2;
+    fi
+  
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+      cmake --build . --config Release;
+    fi
+
+after_success:
+  
