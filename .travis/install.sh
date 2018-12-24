@@ -1,4 +1,5 @@
 #!/bin/bash
 set -e
 
-sudo apt-get install libopenblas-dev
+sudo apt-get update
+sudo apt-get install libopenblas-base
