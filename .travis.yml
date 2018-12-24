@@ -29,9 +29,7 @@ addons:
 branches:
   #only:
     #- master
-    #- feat/xtensor_integration
-    #- feat/decouple_activations
-
+    
 env:
   global:
     - BUILD_TESTS=OFF
@@ -60,15 +58,16 @@ install:
   
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++-4.9" ]; then
-      lcov --directory . --zerocounters;
-      cmake -DUSE_AVX=$USE_AVX
-            -DBUILD_TESTS=$BUILD_TESTS
-            -DCOVERALLS=$COVERALLS
-            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+      cmake .src/ -DUSE_AVX=$USE_AVX
+                  -DBUILD_TESTS=$BUILD_TESTS
+                  -DCOVERALLS=$COVERALLS
+                  -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      cmake -DUSE_AVX=$USE_AVX
-            -DBUILD_TESTS=$BUILD_TESTS .;
+      cmake .src/ -DUSE_AVX=$USE_AVX
+                  -DBUILD_TESTS=$BUILD_TESTS
+                  -DCOVERALLS=$COVERALLS
+                  -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
     fi
  
 script:
