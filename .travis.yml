@@ -13,6 +13,10 @@ compiler:
   - clang
 
 cache:
+  directories:
+    - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/Library/Caches/Homebrew
   
 addons:
   apt:
@@ -40,7 +44,8 @@ matrix:
 before_install:  
 
 install: 
-  - travis_wait mvn install bash -x .travis/install.sh
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install ccache
+  - bash -x .travis/install.sh
   
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
