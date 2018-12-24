@@ -57,7 +57,7 @@ before_script:
  
 script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make -j2; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then - cmake --trace --build .; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake --trace --build .; fi
 
 after_success:
   
