@@ -1,3 +1,78 @@
-sudo: true
+sudo: required
+dist: trusty
+osx_image: xcode8
 
 language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+cache:
+  
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.6
+    packages:
+    - gcc-4.9
+    - g++-4.9
+    - clang-3.6
+    - cmake
+    - git
+    
+branches:
+  #only:
+    #- master
+    #- feat/xtensor_integration
+    #- feat/decouple_activations
+
+env:
+  global:
+    - BUILD_TESTS=OFF
+    - BUILD_EXAMPLES=OFF
+    - COVERALLS=OFF
+
+  matrix:
+    - USE_AVX=ON
+    - USE_AVX=OFF
+    
+matrix:
+  exclude: # On OSX g++ is a symlink to clang++ by default
+    - os: osx
+      compiler: gcc
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then
+      export CC="gcc-4.9";
+      export CXX="g++-4.9";
+    fi
+  - gcc --version
+  - g++ --version
+
+install:
+  - bash -x .travis/install.sh
+  
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++-4.9" ]; then
+      lcov --directory . --zerocounters;
+      cmake -DUSE_AVX=$USE_AVX
+            -DBUILD_TESTS=$BUILD_TESTS
+            -DCOVERALLS=$COVERALLS
+            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+    fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      cmake -DUSE_AVX=$USE_AVX
+            -DBUILD_TESTS=$BUILD_TESTS .;
+    fi
+ 
+script:
+  - make -j2
+
+after_success:
+  
