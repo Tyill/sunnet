@@ -40,6 +40,7 @@ matrix:
 before_install:  
 
 install:
+  travis_wait 30 mvn install
   - bash -x .travis/install.sh
   
 before_script:
