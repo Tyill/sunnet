@@ -68,12 +68,11 @@ before_script:
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
       cd src;
-      cmake -DUSE_AVX=$USE_AVX
-            -DBUILD_TESTS=$BUILD_TESTS
-            -DCOVERALLS=$COVERALLS
-            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
+      cmake --trace -DUSE_AVX=$USE_AVX
+                    -DBUILD_TESTS=$BUILD_TESTS
+                    -DCOVERALLS=$COVERALLS
+                    -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;     
     fi
-  - cd CMakeFiles	
  
 script:
   - make -j2
