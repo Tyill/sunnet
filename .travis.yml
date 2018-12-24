@@ -43,8 +43,7 @@ matrix:
     - os: osx
       compiler: gcc
 
-before_install:
-  - apt-get install libopenblas-dev
+before_install:  
 
 install:
   - bash -x .travis/install.sh
