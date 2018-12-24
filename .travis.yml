@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 #osx_image: xcode8
 
 language: cpp
@@ -17,12 +17,12 @@ cache:
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
-    - llvm-toolchain-precise-3.6
+    #- ubuntu-toolchain-r-test
+    #- llvm-toolchain-precise-3.6
     packages:
-    - gcc-4.9
-    - g++-4.9
-    - clang-3.6
+    #- gcc-4.9
+    #- g++-4.9
+    #- clang-3.6
     
 branches:
   #only:
@@ -33,7 +33,6 @@ env:
     - BUILD_TESTS=OFF
     - BUILD_EXAMPLES=OFF
     - COVERALLS=OFF
-    - GPU=NONE
 
   matrix:
     - USE_AVX=ON
@@ -45,12 +44,7 @@ matrix:
       compiler: gcc
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++" ]; then
-      export CC="gcc-4.9";
-      export CXX="g++-4.9";
-    fi
-  - gcc --version
-  - g++ --version
+  - 
 
 install:
   - bash -x .travis/install.sh
@@ -59,6 +53,7 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       cd src;
       cmake -DUSE_AVX=$USE_AVX
+            -DGPU=NONE
             -DBUILD_TESTS=$BUILD_TESTS
             -DCOVERALLS=$COVERALLS
             -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
