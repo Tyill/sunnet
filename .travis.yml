@@ -21,8 +21,8 @@ addons:
     packages:
 
 branches:
-  #only:
-  #  - master
+  only:
+    - master
     
 env:
   global:
