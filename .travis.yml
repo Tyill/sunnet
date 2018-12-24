@@ -1,29 +1,23 @@
 sudo: true
-#dist: xenial
-osx_image: xcode8
+dist: xenial
 
 language: cpp
 
 os:
-  #- linux
-  - osx
+  - linux
+  - windows  
 
 compiler:
   - gcc
   - clang
 
 cache:
-  directories:
-    - $HOME/.ccache
-    - $HOME/.cache/pip
-    - $HOME/Library/Caches/Homebrew
-  
+    
 addons:
   apt:
     sources:
     
-    packages: 
-    - cmake
+    packages:
 
 branches:
   #only:
@@ -35,17 +29,12 @@ env:
   matrix:
     - USE_AVX=OFF
     - USE_AVX=ON
-    
-    
+        
 matrix:
-  exclude: # On OSX g++ is a symlink to clang++ by default
-    - os: osx
-      compiler: gcc
-
+  
 before_install:  
 
-install: 
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install ccache
+install:   
   - bash -x .travis/install.sh
   
 before_script:
@@ -55,7 +44,7 @@ before_script:
             -DGPU=NONE .;
       ls ;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       cd src;
       cmake --trace -DUSE_AVX=$USE_AVX
                     -DGPU=NONE .;     
