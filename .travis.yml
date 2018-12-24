@@ -57,17 +57,19 @@ install:
   - bash -x .travis/install.sh
   
 before_script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$CXX" == "g++-4.9" ]; then
-      cmake .src/ -DUSE_AVX=$USE_AVX
-                  -DBUILD_TESTS=$BUILD_TESTS
-                  -DCOVERALLS=$COVERALLS
-                  -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+      cd src
+      cmake -DUSE_AVX=$USE_AVX
+            -DBUILD_TESTS=$BUILD_TESTS
+            -DCOVERALLS=$COVERALLS
+            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      cmake .src/ -DUSE_AVX=$USE_AVX
-                  -DBUILD_TESTS=$BUILD_TESTS
-                  -DCOVERALLS=$COVERALLS
-                  -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+      cd src
+      cmake -DUSE_AVX=$USE_AVX
+            -DBUILD_TESTS=$BUILD_TESTS
+            -DCOVERALLS=$COVERALLS
+            -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
     fi
  
 script:
