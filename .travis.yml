@@ -55,7 +55,7 @@ before_script:
     
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       cd src;
-      cmake -G Visual Studio 15 2017 Win64
+      cmake --trace -G Visual Studio 15 2017 Win64
             -DUSE_AVX=$USE_AVX
             -DGPU=NONE .;
     fi
