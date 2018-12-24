@@ -23,6 +23,7 @@ addons:
     sources:
     
     packages: 
+    - cmake
 
 branches:
   #only:
