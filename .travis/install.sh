@@ -3,8 +3,8 @@ set -e
 
 if [ "$TRAVIS_OS_NAME" == "osx" ]; then
   brew update -qq;         
-  brew install libopenblas-base -y;
-  brew install libopenblas-dev -y;  
+  brew install openblas -y;
+  brew install openblas -y;  
 fi
 
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then
