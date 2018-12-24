@@ -58,18 +58,20 @@ install:
   
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      cd src
+      cd src;
       cmake -DUSE_AVX=$USE_AVX
             -DBUILD_TESTS=$BUILD_TESTS
             -DCOVERALLS=$COVERALLS
             -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+      ls ;
     fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      cd src
+      cd src;
       cmake -DUSE_AVX=$USE_AVX
             -DBUILD_TESTS=$BUILD_TESTS
             -DCOVERALLS=$COVERALLS
             -DBUILD_EXAMPLES=$BUILD_EXAMPLES .;
+      ls ;	
     fi
  
 script:
