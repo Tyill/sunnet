@@ -3,19 +3,40 @@ dist: xenial
 
 language: cpp
 
+os:
+  - linux
+  - windows  
+
+compiler:
+  - gcc
+  - clang
+
+cache:
+    
+addons:
+  apt:
+    sources:
+    
+    packages:
+
 branches:
   #only:
     #- master
     
-matrix:
-  include:
-  - USE_AVX=OFF
-  - USE_AVX=ON    
-  - os: linux    
-      compiler:
-      - gcc
-      - clang
-
+env:
+  global:
+    
+  matrix:
+    - USE_AVX=OFF
+    - USE_AVX=ON
+        
+matrix:  
+  exclude:
+        - os: windows
+          compiler:
+          - gcc
+          - clang
+  
 before_install:  
 
 install:   
@@ -31,11 +52,12 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       cd src;
       cmake --trace -DUSE_AVX=$USE_AVX
-                    -DGPU=NONE .;     
+                    -DGPU=NONE .;
     fi
  
 script:
-  - make -j2
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then make -j2; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then - cmake --build .; fi
 
 after_success:
   
