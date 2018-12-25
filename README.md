@@ -1,9 +1,9 @@
 
 SkyNet is a deep learning library designed for both efficiency and flexibility. 
 
-| **`Linux/Windows`** |
-|------------------|
-|[![Build Status](https://travis-ci.com/Tyill/skynet.svg?branch=master)](https://travis-ci.com/Tyill/skynet)|
+| **`Linux/Windows`** | **`License`** |
+|------------------|------------------|
+|[![Build Status](https://travis-ci.com/Tyill/skynet.svg?branch=master)](https://travis-ci.com/Tyill/skynet)|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)|
 
 ## Features
 
