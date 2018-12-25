@@ -42,7 +42,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
    
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
-      
+  
     if (type == poolType::max){ // max
 
         // by batch
@@ -143,6 +143,8 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
         outStepByN = outStepByD * outsz.d,     // step out by batch
         kernelSz = kernel * kernel;
        
+    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+
     if (type == poolType::max){ // max
 
         // by batch
