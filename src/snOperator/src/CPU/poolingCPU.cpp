@@ -143,6 +143,8 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
         outStepByN = outStepByD * outsz.d,     // step out by batch
         kernelSz = kernel * kernel;
        
+    memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
+
     if (type == poolType::max){ // max
 
         // by batch
