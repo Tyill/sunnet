@@ -28,7 +28,7 @@
 
 
 /// оператор - расчет ошибки
-class LossFunction : SN_Base::OperatorBase{
+class LossFunction final : SN_Base::OperatorBase{
 
 public:
        

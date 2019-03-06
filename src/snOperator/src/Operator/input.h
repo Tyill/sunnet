@@ -28,7 +28,7 @@
 
 
 /// input layer
-class Input : SN_Base::OperatorBase{
+class Input final : SN_Base::OperatorBase{
 
 public:
 

@@ -28,7 +28,7 @@
 
 
 /// Trimming the number of layers
-class Resize : SN_Base::OperatorBase{
+class Resize final : SN_Base::OperatorBase{
 
 public:
 

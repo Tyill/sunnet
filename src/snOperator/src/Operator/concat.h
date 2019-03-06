@@ -28,7 +28,7 @@
 
 
 /// Compound layers
-class Concat : SN_Base::OperatorBase{
+class Concat final : SN_Base::OperatorBase{
 
 public:
 

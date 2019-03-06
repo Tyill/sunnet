@@ -475,12 +475,7 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
             while (ox < outsz.w){
 
                 size_t posW = ox * kernel, posH = oy * kernel;
-#pragma unroll
-                for (size_t c = 0; c < kernelSz; ++c){
-                    size_t cx = c % kernel, cy = c / kernel;
-                    gradOut[(cx + posW) + (cy + posH) * insz.w] = 0;
-                }
-                                
+                               
                 size_t c = outputInx[ox + oy * outsz.w], cx = c % kernel, cy = c / kernel;
                                       
                 gradOut[cx + posW + (cy + posH) * insz.w] = gradIn[ox + oy * outsz.w];
@@ -536,7 +531,10 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
     cuCHECK(cudaMemcpy(d_grin, gradIn, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
       
     cuCHECK(cudaMemcpy(d_idx, outputInx, osz * sizeof(snFloat), cudaMemcpyHostToDevice));
-  
+ 
+    // out
+    cuCHECK(cudaMemset(d_grout, 0, isz * sizeof(snFloat)));
+
     // run     
     dim3 dimBlock(16, 16);
     dim3 dimGrid(int(outsz.d), int(outsz.n));

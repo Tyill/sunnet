@@ -29,7 +29,7 @@
 #include"snOperator/src/mathFunctions.h"
 
 /// обратная свертка
-class Deconvolution : SN_Base::OperatorBase{
+class Deconvolution final : SN_Base::OperatorBase{
 
 public:
 

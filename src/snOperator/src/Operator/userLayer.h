@@ -28,7 +28,7 @@
 
 
 /// custom layer
-class UserLayer : SN_Base::OperatorBase{
+class UserLayer final : SN_Base::OperatorBase{
 
 public:
 

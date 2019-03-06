@@ -28,7 +28,7 @@
 
 
 /// output layer
-class Output : SN_Base::OperatorBase{
+class Output final : SN_Base::OperatorBase{
 
 public:
 

@@ -30,7 +30,7 @@
 
 
 /// pooling layer
-class Pooling : SN_Base::OperatorBase{
+class Pooling final : SN_Base::OperatorBase{
 
 public:
 

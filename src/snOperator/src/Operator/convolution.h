@@ -29,7 +29,7 @@
 #include"snOperator/src/mathFunctions.h"
 
 /// convolution layer
-class Convolution : SN_Base::OperatorBase{
+class Convolution final : SN_Base::OperatorBase{
 
 public:
 

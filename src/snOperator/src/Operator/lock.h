@@ -28,7 +28,7 @@
 
 
 /// locks further passage along the graph
-class Lock : SN_Base::OperatorBase{
+class Lock final : SN_Base::OperatorBase{
 
 public:
 

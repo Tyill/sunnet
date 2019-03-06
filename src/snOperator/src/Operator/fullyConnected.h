@@ -28,7 +28,7 @@
 #include"snOperator/src/structurs.h"
       
 /// fullyConnected layer
-class FullyConnected : SN_Base::OperatorBase{
+class FullyConnected final : SN_Base::OperatorBase{
 
 public:
 

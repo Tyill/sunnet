@@ -28,7 +28,7 @@
 
 
 /// Trimming data
-class Crop : SN_Base::OperatorBase{
+class Crop final : SN_Base::OperatorBase{
 
 public:
 

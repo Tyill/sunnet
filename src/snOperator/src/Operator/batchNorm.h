@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 #include "snOperator/src/structurs.h"
 
-class BatchNorm : SN_Base::OperatorBase{
+class BatchNorm final : SN_Base::OperatorBase{
 
 public:
 

@@ -28,7 +28,7 @@
 
 
 /// The choice of the path
-class Switch : SN_Base::OperatorBase{
+class Switch final : SN_Base::OperatorBase{
 
 public:
 

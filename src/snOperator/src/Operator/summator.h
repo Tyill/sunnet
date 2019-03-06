@@ -28,7 +28,7 @@
 
 
 /// adder of 2 and more layers
-class Summator : SN_Base::OperatorBase{
+class Summator final : SN_Base::OperatorBase{
 
 public:
 
