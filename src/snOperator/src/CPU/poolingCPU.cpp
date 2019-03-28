@@ -31,19 +31,21 @@
 using namespace std;
 using namespace SN_Base;
 
-void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx){
 
     size_t inStepByD = insz.w * insz.h,           // step in by input
-           inStepByN = inStepByD * insz.d,        // step in by batch
-           outStepByD = outsz.w * outsz.h,        // step out by output
-           outStepByN = outStepByD * outsz.d,     // step out by batch
-           kernelSz = kernel * kernel;
+        inStepByN = inStepByD * insz.d,        // step in by batch
+        outStepByD = outsz.w * outsz.h,        // step out by output
+        outStepByN = outStepByD * outsz.d,     // step out by batch
+        stride = poolPrms.stride,
+        kernel = poolPrms.kernel,
+        kernelSz = kernel * kernel;
    
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
   
-    if (type == poolType::max){ // max
+    if (poolPrms.poolType == poolType::max){ // max
 
         // by batch
 #pragma omp parallel for
@@ -55,7 +57,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
             for (size_t p = 0; p < outStepByD; ++p){
 
                 size_t ox = p % outsz.w, oy = p / outsz.w,
-                    posW = ox * kernel, posH = oy * kernel;
+                    posW = ox * stride, posH = oy * stride;
 
                 memset(outBuff, 0, insz.d * sizeof(snFloat));
                 memset(outInxBuff, 0, insz.d * sizeof(size_t));
@@ -103,7 +105,7 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
             for (size_t p = 0; p < outStepByD; ++p){
 
                 size_t ox = p % outsz.w, oy = p / outsz.w,
-                    posW = ox * kernel, posH = oy * kernel;
+                    posW = ox * stride, posH = oy * stride;
 
                 memset(outBuff, 0, insz.d * sizeof(snFloat));
               
@@ -135,17 +137,19 @@ void Pooling::forwardCPU(poolType type, size_t kernel, const snSize& insz, snFlo
     free(shareF);
 }
 
-void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* gradIn, const snSize& insz, snFloat* gradOut){
+void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* gradIn, const snSize& insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,        // step in by input
         inStepByN = inStepByD * insz.d,        // step in by batch
         outStepByD = outsz.w * outsz.h,        // step out by output
         outStepByN = outStepByD * outsz.d,     // step out by batch
+        stride = poolPrms.stride,
+        kernel = poolPrms.kernel,
         kernelSz = kernel * kernel;
        
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
-    if (type == poolType::max){ // max
+    if (poolPrms.poolType == poolType::max){ // max
 
         // by batch
 #pragma omp parallel for
@@ -154,7 +158,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
             for (size_t p = 0; p < outStepByD; ++p){
 
                 size_t ox = p % outsz.w, oy = p / outsz.w,
-                    posW = ox * kernel, posH = oy * kernel;
+                    posW = ox * stride, posH = oy * stride;
 
                 size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
@@ -187,7 +191,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
             for (size_t p = 0; p < outStepByD; ++p){
 
                 size_t ox = p % outsz.w, oy = p / outsz.w,
-                    posW = ox * kernel, posH = oy * kernel;
+                    posW = ox * stride, posH = oy * stride;
 
                 snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
@@ -219,7 +223,7 @@ void Pooling::backwardCPU(poolType type, size_t kernel, const snSize& outsz, siz
 
 #ifndef SN_CUDA
 
-void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** gpuPrm){
+void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -227,12 +231,12 @@ void Pooling::freeParamCUDA(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
     
-void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* output,
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output,
     snFloat* gradIn, const snSize& insz, snFloat* input, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
@@ -242,7 +246,7 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
 
 #ifndef SN_OpenCL
 
-void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, size_t kernel, void** gpuPrm){
+void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -250,12 +254,12 @@ void Pooling::freeParamOCL(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Pooling::forwardOCL(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+void Pooling::forwardOCL(const poolParams& poolPrms, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Pooling::backwardOCL(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx,
+void Pooling::backwardOCL(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx,
     snFloat* gradIn, const snSize& insz, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }

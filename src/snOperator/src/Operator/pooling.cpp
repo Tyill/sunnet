@@ -61,8 +61,13 @@ void Pooling::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
     
-    setIntParam("kernel", false, false, kernel_);
+    setIntParam("kernel", false, false, poolPrms_.kernel);
     
+    if (prms.find("stride") != prms.end())
+        setIntParam("stride", false, false, poolPrms_.stride);
+    else
+        poolPrms_.stride = poolPrms_.kernel;
+
     if (prms.find("gpuClearMem") != prms.end())
         gpuClearMem_ = stoi(prms["gpuClearMem"]) == 1;
 
@@ -72,8 +77,8 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     if (prms.find("pool") != prms.end()){
 
         string atype = prms["pool"];
-        if (atype == "max") poolType_ = poolType::max;
-        else if (atype == "avg") poolType_ = poolType::avg;
+        if (atype == "max") poolPrms_.poolType = poolType::max;
+        else if (atype == "avg") poolPrms_.poolType = poolType::avg;
         else
             ERROR_MESS("param 'pool' = " + atype + " indefined");
     }
@@ -136,7 +141,7 @@ void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& ope
     snFloat* in = baseInput_->getData();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, paddingW_, paddingH_, insz, inTnsExp_.getData(), baseInput_->getData());
+        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getData(), baseInput_->getData());
         insz = inDataExpSz_;
         in = inTnsExp_.getData();
     }
@@ -145,9 +150,9 @@ void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& ope
     snFloat* out = baseOut_->getData();
    
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(poolType_, kernel_, insz, in, baseOut_->size(), out, outInx_.data()); break;
-    case calcMode::CUDA:   forwardCUDA(poolType_, kernel_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(poolType_, kernel_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data()); break;
+    case calcMode::CUDA:   forwardCUDA(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
     }      
 
     if (!operPrm.isLerning && isPadding_)
@@ -168,39 +173,46 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     /// grad calculation
     switch (calcMode_){
-    case calcMode::CPU:    backwardCPU(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
-    case calcMode::CUDA:   backwardCUDA(poolType_, kernel_, baseOut_->size(), outInx_.data(), baseOut_->getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_); break;
-    case calcMode::OpenCL: backwardOCL(poolType_, kernel_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
+    case calcMode::CPU:    backwardCPU(poolPrms_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
+    case calcMode::CUDA:   backwardCUDA(poolPrms_, baseOut_->size(), outInx_.data(), baseOut_->getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_); break;
+    case calcMode::OpenCL: backwardOCL(poolPrms_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
     }
    
     if (isPadding_){
-        paddingOffs(true, paddingW_, paddingH_, inSzMem_, gradOut, baseGrad_->getData());
+        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_->getData());
         gradOutExp_.tfree();
     }
 }
 
 void Pooling::updateConfig(const snSize& newsz){
-           
+    
+    size_t& kernel = poolPrms_.kernel,
+          & paddingW = poolPrms_.paddingW,
+          & paddingH = poolPrms_.paddingH,
+          & stride = poolPrms_.stride;
+
     snSize outSz(0, 0, newsz.d, newsz.n);
-                 
-    outSz.w = (newsz.w - kernel_) / kernel_ + 1;
-    outSz.h = (newsz.h - kernel_) / kernel_ + 1;
+   
+    outSz.w = (newsz.w - kernel) / stride + 1;
+    outSz.h = (newsz.h - kernel) / stride + 1;
 
     // check correct
-    size_t resW = (newsz.w - kernel_) % kernel_, resH = (newsz.h - kernel_) % kernel_;    
+    size_t resW = (newsz.w - kernel) % stride,
+           resH = (newsz.h - kernel) % stride;
+    
     isPadding_ = (resW != 0) || (resH != 0);
 
     inDataExpSz_ = newsz;
 
     if (isPadding_){   
-      
-        paddingW_ = 1;
-        paddingH_ = 1;
+       
+        paddingW = 1;
+        paddingH = 1;
 
-        outSz.w = (newsz.w + paddingW_ * 2 - kernel_) / kernel_ + 1;
-        outSz.h = (newsz.h + paddingH_ * 2 - kernel_) / kernel_ + 1;
+        outSz.w = (newsz.w + paddingW * 2 - kernel) / stride + 1;
+        outSz.h = (newsz.h + paddingH * 2 - kernel) / stride + 1;
 
-        inDataExpSz_ = snSize(newsz.w + paddingW_ * 2, newsz.h + paddingH_ * 2, newsz.d, newsz.n);
+        inDataExpSz_ = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
     }
         
     baseOut_->resize(outSz);
@@ -209,7 +221,7 @@ void Pooling::updateConfig(const snSize& newsz){
     outInx_.resize(outSz.size(), 0);
        
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(inDataExpSz_, outSz, kernel_, &gpuParams_);
+        iniParamCUDA(inDataExpSz_, outSz, poolPrms_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(inDataExpSz_, outSz, kernel_, &gpuParams_);
+        iniParamOCL(inDataExpSz_, outSz, poolPrms_, &gpuParams_);
 }

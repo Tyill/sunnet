@@ -54,7 +54,7 @@ struct gpuParams{
     size_t inszMem = 0;
 };
 
-void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** pGpuPrm){
+void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** pGpuPrm){
     
     cudaSetDevice(gpuDeviceId_);
   
@@ -101,11 +101,11 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kerne
     cuCHECK(cudnnCreatePoolingDescriptor(&pool_desc));
 
     cudnnPoolingMode_t poolT = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    if (poolType_ == poolType::avg) 
+    if (poolPrms.poolType == poolType::avg)
         poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
-        int(kernel), int(kernel), 0, 0, int(kernel), int(kernel)));
+        int(poolPrms.kernel), int(poolPrms.kernel), 0, 0, int(poolPrms.stride), int(poolPrms.stride)));
     if (!isFirst)
         cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
     gpuPrm->pool_desc = pool_desc;
@@ -181,7 +181,7 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     cuCHECK(cudaFree(gpuPrm->d_grout));
 }
 
-void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
@@ -216,7 +216,7 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     }
 }
 
-void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
     const snSize& insz, snFloat* input, snFloat* gradOut, void* gpuPrms){
     
     cudaSetDevice(gpuDeviceId_);
@@ -287,7 +287,7 @@ struct gpuParams{
     size_t inszMem = 0;
 };
 
-void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, size_t kernel, void** pGpuPrm){
+void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** pGpuPrm){
    
     cudaSetDevice(gpuDeviceId_);
 
@@ -337,7 +337,7 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     cudaFree(gpuPrm->d_idx);  
 }
 
-__global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* input, snSize outsz, snFloat* output, size_t* outputInx){
+__global__ void cuPoolFwd(poolType type, size_t kernel, size_t stride, snSize insz, snFloat* input, snSize outsz, snFloat* output, size_t* outputInx){
 
     size_t outStepByD = outsz.w * outsz.h, // step out by output
         outStepByN = outStepByD * outsz.d, // step out by batch
@@ -360,7 +360,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
             unsigned int ox = threadIdx.x;
             while (ox < outsz.w){
                                        
-                size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * stride, posH = oy * stride;
 
                 // kernel
                 snFloat valMax = 0; size_t idx = 0;
@@ -391,7 +391,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
             unsigned int ox = threadIdx.x;
             while (ox < outsz.w){
                                         
-                size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * stride, posH = oy * stride;
 
                 // kernel
                 snFloat valMean = 0;
@@ -411,7 +411,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, snSize insz, snFloat* in
     }
 }
 
-void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrms){
    
     cudaSetDevice(gpuDeviceId_);
@@ -432,7 +432,8 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     dim3 dimGrid(int(outsz.d), int(outsz.n));
 
     cuPoolFwd <<< dimGrid, dimBlock >>>(type,
-        kernel, 
+        poolPrms.kernel,
+        poolPrms.stride,
         insz, 
         gpuPrm->d_in,
         outsz, 
@@ -450,7 +451,7 @@ void Pooling::forwardCUDA(poolType type, size_t kernel, const snSize& insz, snFl
     }
 }
 
-__global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
+__global__ void cuPoolBwd(poolType type, size_t kernel, size_t stride, snSize outsz, size_t* outputInx, snFloat* gradIn, snSize insz, snFloat* gradOut){
 
     size_t outStepByD = outsz.w * outsz.h,     // step out by output
            outStepByN = outStepByD * outsz.d,  // step out by batch
@@ -474,7 +475,7 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
             unsigned int ox = threadIdx.x;
             while (ox < outsz.w){
 
-                size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * stride, posH = oy * stride;
                                
                 size_t c = outputInx[ox + oy * outsz.w], cx = c % kernel, cy = c / kernel;
                                       
@@ -493,7 +494,7 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
             unsigned int ox = threadIdx.x;
             while (ox < outsz.w){
 
-                size_t posW = ox * kernel, posH = oy * kernel;
+                size_t posW = ox * stride, posH = oy * stride;
 
                 snFloat mean = gradIn[ox + oy * outsz.w] / kernel;
 #pragma unroll
@@ -509,7 +510,7 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, snSize outsz, size_t* ou
     }
 }
 
-void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
     const snSize& insz, SN_Base::snFloat* input, snFloat* gradOut, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
@@ -540,7 +541,8 @@ void Pooling::backwardCUDA(poolType type, size_t kernel, const snSize& outsz, si
     dim3 dimGrid(int(outsz.d), int(outsz.n));
 
     cuPoolBwd <<< dimGrid, dimBlock >>>(type,
-        kernel, 
+        poolPrms.kernel,
+        poolPrms.stride,
         outsz,
         d_idx, 
         d_grin, 

@@ -42,10 +42,15 @@ public:
     
         
 private:
-        
-    size_t kernel_ = 2;                                               ///< mask size
     
-    poolType poolType_ = poolType::max;                               ///< type
+    struct poolParams{
+        poolType poolType = poolType::max;                            ///< type
+        size_t kernel = 2;                                            ///< mask size
+        size_t stride = 2;                                            ///< step mask
+        size_t paddingH = 0, paddingW = 0;
+    };
+
+    poolParams poolPrms_;
                                                                       
     SN_Base::snSize inSzMem_;                                         ///< input size mem
     SN_Base::snSize inDataExpSz_;                                     ///< input size expand
@@ -54,7 +59,7 @@ private:
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
 
-    size_t paddingH_ = 0, paddingW_ = 0;                              
+                                
     bool isPadding_ = false;
     
     bool gpuClearMem_ = false;                                        ///< freee gpu mem
@@ -76,16 +81,14 @@ private:
 
     /// CPU ///////////////////////////
 
-    void forwardCPU(poolType type,     
-        size_t kernel,                 
+    void forwardCPU(const poolParams& poolPrms,
         const SN_Base::snSize& insz,   
         SN_Base::snFloat* input,       
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
         size_t* outputInx);            
 
-   void backwardCPU(poolType type,    
-        size_t kernel,                
+    void backwardCPU(const poolParams& poolPrms,
         const SN_Base::snSize& outsz, 
         size_t* outputInx,            
         SN_Base::snFloat* gradIn,     
@@ -95,12 +98,11 @@ private:
 
     /// CUDA ///////////////////////////
 
-    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, void** gpuPrm);
+    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, const poolParams&, void** gpuPrm);
 
     void freeParamCUDA(void* gpuPrm);
 
-    void forwardCUDA(poolType type,     
-        size_t kernel,                  
+    void forwardCUDA(const poolParams& poolPrms,
         const SN_Base::snSize& insz,    
         SN_Base::snFloat* input,        
         const SN_Base::snSize& outsz,   
@@ -109,8 +111,7 @@ private:
         void* gpuParams);
 
     /// обратный проход CUDA
-    void backwardCUDA(poolType type,    
-        size_t kernel,                  
+    void backwardCUDA(const poolParams& poolPrms,
         const SN_Base::snSize& outsz,   
         size_t* outputInx,       
         SN_Base::snFloat* output,
@@ -123,12 +124,11 @@ private:
 
     /// OpenCL ///////////////////////////
 
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, size_t kernel, void** gpuPrm);
+    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, const poolParams&, void** gpuPrm);
 
     void freeParamOCL(void* gpuPrm);
 
-    void forwardOCL(poolType type,        
-        size_t kernel,                    
+    void forwardOCL(const poolParams& poolPrms,
         const SN_Base::snSize& insz,      
         SN_Base::snFloat* input,          
         const SN_Base::snSize& outsz,     
@@ -136,8 +136,7 @@ private:
         size_t* outputInx,                
         void* gpuParams);
 
-   void backwardOCL(poolType type,       
-        size_t kernel,                   
+    void backwardOCL(const poolParams& poolPrms,
         const SN_Base::snSize& outsz,    
         size_t* outputInx,               
         SN_Base::snFloat* gradIn,        

@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
 
     snet.addNode("Input", sn::Input(), "C1")
         .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CPU), "C2")
-        .addNode("C2", sn::Convolution(25, 0, sn::calcMode::CPU), "P1")
+        .addNode("C2", sn::Convolution(25, -1, sn::calcMode::CPU), "P1")
      //   .addNode("BN1", sn::BatchNormLayer(sn::batchNormType::byChannels), "P1")
       //  .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "C3")
       //  .addNode("C3", sn::Convolution(25, 0, sn::calcMode::CPU), "C4")
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]){
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 #ifdef WIN32
-     string imgPath = "c:/C++/skyNet/example/mnist/images/";
+     string imgPath = "c:/cpp/other/skyNet/example/mnist/images/";
 #else
      string imgPath = "/home/alex/CLionProjects/skynet/example/mnist/images/";
 #endif
