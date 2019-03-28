@@ -39,6 +39,7 @@
 #include "Operator/concat.h"
 #include "Operator/resize.h"
 #include "Operator/batchNorm.h"
+#include "Operator/activation.h"
 
 namespace SN_Opr{
 
@@ -62,6 +63,7 @@ namespace SN_Opr{
         else if (fname == "Concat")         ret = (SN_Base::OperatorBase*)new Concat(net, fname, node, prms);
         else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
         else if (fname == "BatchNorm")      ret = (SN_Base::OperatorBase*)new BatchNorm(net, fname, node, prms);
+        else if (fname == "Activation")     ret = (SN_Base::OperatorBase*)new Activation(net, fname, node, prms);
 
         return ret;
     }
@@ -84,6 +86,7 @@ namespace SN_Opr{
             else if (fname == "Concat")         delete (Concat*)opr;
             else if (fname == "Resize")         delete (Resize*)opr;
             else if (fname == "BatchNorm")      delete (BatchNorm*)opr;
+            else if (fname == "Activation")     delete (Activation*)opr;
         }
     }
 }
