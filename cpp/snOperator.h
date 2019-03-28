@@ -491,6 +491,32 @@ namespace SN_API{
     };
 
     /*
+    Activation function operator
+    */
+    class Activation{
+
+    public:
+
+        active act = active::relu;                 ///< Activation function type. Optional parameter
+
+        Activation(const active& act_) : act(act_){};
+
+        ~Activation(){};
+
+        std::string getParamsJn(){
+
+            std::stringstream ss;
+            ss << "{\"active\":\"" << activeStr(act) + "\"}";
+
+            return ss.str();
+        }
+
+        std::string name(){
+            return "Activation";
+        }
+    };
+
+    /*
     Custom layer
     */
     class UserLayer{

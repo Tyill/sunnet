@@ -335,6 +335,24 @@ class Resize():
     def name(self):
         return "Resize"
 
+		
+class Activation():
+    '''
+    The operator is activation function type.
+    '''
+
+    _params = {
+        'active': active.relu.value
+    }
+
+    def __init__(self, act=active.relu):
+        self._params['active'] = act.value
+
+    def getParams(self):
+        return self._params
+
+    def name(self):
+        return "Activation"
 
 class Crop():
     '''

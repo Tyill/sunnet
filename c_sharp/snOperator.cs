@@ -521,6 +521,33 @@ namespace SN_API
     };
 
     /// <summary>
+    /// Activation function
+    /// </summary>
+    public class Activation : IOperator
+    {
+
+        public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
+
+        public Activation(active act_)
+        {
+            act = act_;
+        }
+
+        public string getParamsJn()
+        {
+
+            string ss = "{\"active\":\"" + act.str() + "\"}";
+
+            return ss;
+        }
+
+        public string name()
+        {
+            return "Activation";
+        }
+    };
+
+    /// <summary>
     /// Batch norm
     /// </summary>
     public class BatchNormLayer : IOperator
