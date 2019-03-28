@@ -101,7 +101,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolPa
     cuCHECK(cudnnCreatePoolingDescriptor(&pool_desc));
 
     cudnnPoolingMode_t poolT = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    if (poolPrms.poolType == poolType::avg)
+    if (poolPrms.type == type::avg)
         poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,

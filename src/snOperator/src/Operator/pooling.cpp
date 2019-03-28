@@ -77,8 +77,8 @@ void Pooling::load(std::map<std::string, std::string>& prms){
     if (prms.find("pool") != prms.end()){
 
         string atype = prms["pool"];
-        if (atype == "max") poolPrms_.poolType = poolType::max;
-        else if (atype == "avg") poolPrms_.poolType = poolType::avg;
+        if (atype == "max") poolPrms_.type = poolType::max;
+        else if (atype == "avg") poolPrms_.type = poolType::avg;
         else
             ERROR_MESS("param 'pool' = " + atype + " indefined");
     }

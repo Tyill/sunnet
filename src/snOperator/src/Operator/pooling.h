@@ -44,7 +44,7 @@ public:
 private:
     
     struct poolParams{
-        poolType poolType = poolType::max;                            ///< type
+        poolType type = poolType::max;                                ///< type
         size_t kernel = 2;                                            ///< mask size
         size_t stride = 2;                                            ///< step mask
         size_t paddingH = 0, paddingW = 0;

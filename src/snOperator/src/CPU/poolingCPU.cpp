@@ -45,7 +45,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
   
-    if (poolPrms.poolType == poolType::max){ // max
+    if (poolPrms.type == poolType::max){ // max
 
         // by batch
 #pragma omp parallel for
@@ -149,7 +149,7 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
        
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
-    if (poolPrms.poolType == poolType::max){ // max
+    if (poolPrms.type == poolType::max){ // max
 
         // by batch
 #pragma omp parallel for
