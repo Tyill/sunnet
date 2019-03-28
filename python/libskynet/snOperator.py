@@ -219,6 +219,7 @@ class Pooling():
 
     _params = {
         'kernel': '2',              # Square Mask Size. Optional parameter (> 0)
+		'stride': '2',              # Mask movement step. Optional parameter(> 0)
         'pool': poolType.max.value, # Operator Type. Optional parameter
         'mode': calcMode.CPU.value, # Сalculation mode. Optional parameter
         'gpuDeviceId': '0',         # GPU Id. Optional parameter

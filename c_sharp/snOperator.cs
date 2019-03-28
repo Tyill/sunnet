@@ -320,7 +320,8 @@ namespace SN_API
     public class Pooling : IOperator
     {
 
-        public uint kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
+        public uint kernel = 2;              ///< Square Mask Size. Optional parameter (> 0)
+        public uint stride = 2;              ///< Mask movement step. Optional parameter(> 0)		
         public pooling pool = new pooling(pooling.type.max);    ///< Operator Type. Optional parameter 
         public calcMode mode = new calcMode(calcMode.type.CPU); ///< Сalculation mode. Optional parameter           
         public uint gpuDeviceId = 0;         ///< GPU Id. Optional parameter
@@ -339,11 +340,12 @@ namespace SN_API
         {
 
             string ss = "{\"kernel\":\"" + kernel.ToString() + "\"," +
-                "\"pool\":\"" + pool.str() + "\"," +
-                "\"mode\":\"" + mode.str() + "\"," +
-                "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
-                "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
-                "}";
+			             "\"stride\":\"" + stride.ToString() + "\"," +
+                         "\"pool\":\"" + pool.str() + "\"," +
+                         "\"mode\":\"" + mode.str() + "\"," +
+                         "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
+                         "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
+                         "}";
 
             return ss;
         }

@@ -290,6 +290,7 @@ namespace SN_API{
     public:
             
         uint32_t kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
+        uint32_t stride = 2;              ///< Mask movement step. Optional parameter(> 0)
         poolType pool = poolType::max;    ///< Operator Type. Optional parameter 
         calcMode mode = calcMode::CPU;    ///< Сalculation mode. Optional parameter           
         uint32_t gpuDeviceId = 0;         ///< GPU Id. Optional parameter
@@ -307,7 +308,8 @@ namespace SN_API{
 
             std::stringstream ss;
             ss << "{\"kernel\":\"" << kernel << "\","
-                "\"pool\":\"" << poolTypeStr(pool) << "\","
+                "\"stride\":\"" << stride << "\","
+                "\"pool\":\"" << poolTypeStr(pool) << "\","                
                 "\"mode\":\"" << calcModeStr(mode) << "\","
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
                 "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
