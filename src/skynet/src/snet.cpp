@@ -508,11 +508,11 @@ bool SNet::saveAllWeightToFile(const char* filePath){
             data = weight_[opr.first]->getData();
             lSize = weight_[opr.first]->size();
 
-            if (!data) continue;
+            if (data){
+                ofs << opr.first << "_w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+                ofs.write((char*)data, lSize.w * lSize.h * lSize.d * sizeof(float));
+            }
 
-            ofs << opr.first <<"_w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
-            ofs.write((char*)data, lSize.w * lSize.h * lSize.d * sizeof(float));
-                        
             batchNorm bn = opr.second->getBatchNorm();
 
             size_t sz = bn.sz.size() * sizeof(float);
