@@ -29,17 +29,18 @@ from __future__ import absolute_import
 import os
 import ctypes
 
-
 from . import snNet
 from . import snType
 from . import snOperator
+from . import snTF
 
 libname = 'libskynet.so'
 if os.name == 'nt':
     libname = 'libskynet.dll'
 
-libname = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), libname))
+libpath = os.path.dirname(__file__)
+
+os.environ['PATH'] = libpath + os.pathsep + os.environ['PATH']
 
 _LIB = ctypes.CDLL(libname)
 

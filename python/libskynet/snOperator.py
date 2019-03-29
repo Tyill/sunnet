@@ -85,6 +85,12 @@ class FullyConnected():
         self._params['mode'] = mode.value
         self._params['batchNorm'] = bnorm.value
 
+    def __init__(self,
+                 kernel,
+                 act=active.relu):
+        self._params['kernel'] = str(kernel)
+        self._params['active'] = act.value
+
     def getParams(self):
         return self._params
 
@@ -141,13 +147,18 @@ class Convolution():
 
     def __init__(self,
                  kernel,
+                 kernelSz,
                  padding=0,
-                 mode=calcMode.CPU,
-                 bnorm=batchNormType.none):
+                 stride=1,
+                 bnorm=batchNormType.none,
+                 act=active.relu):
         self._params['kernel'] = str(kernel)
+        self._params['fWidth'] = str(kernelSz[0])
+        self._params['fHeight'] = str(kernelSz[1])
         self._params['padding'] = str(padding)
-        self._params['mode'] = mode.value
+        self._params['stride'] = str(stride)
         self._params['batchNorm'] = bnorm.value
+        self._params['active'] = act.value
 
     def getParams(self):
         return self._params
@@ -219,15 +230,21 @@ class Pooling():
 
     _params = {
         'kernel': '2',              # Square Mask Size. Optional parameter (> 0)
-		'stride': '2',              # Mask movement step. Optional parameter(> 0)
+        'stride': '2',              # Mask movement step. Optional parameter(> 0)
         'pool': poolType.max.value, # Operator Type. Optional parameter
         'mode': calcMode.CPU.value, # Сalculation mode. Optional parameter
         'gpuDeviceId': '0',         # GPU Id. Optional parameter
-        'gpuClearMem': '0',         # Clear memory GPU. Optional parameter
+        'gpuClearMem': '0'          # Clear memory GPU. Optional parameter
     }
 
     def __init__(self,
+                 kernel=2,
+                 stride=2,
+                 pool=poolType.max,
                  mode=calcMode.CPU):
+        self._params['kernel'] = str(kernel)
+        self._params['stride'] = str(stride)
+        self._params['pool'] = pool.value
         self._params['mode'] = mode.value
 
     def getParams(self):

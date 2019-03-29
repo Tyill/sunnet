@@ -112,7 +112,7 @@ class Net():
 
 
     def training(self, lr: float, inTns: numpy.ndarray, outTns: numpy.ndarray,
-                 trgTns: numpy.ndarray, outAccurate : []) -> bool:
+                 trgTns: numpy.ndarray, outAccurate = []) -> bool:
         """
         Training net - cycle fwd<->bwd with calc error
         :param lr: lerning rate
@@ -152,12 +152,18 @@ class Net():
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_float, snLSize, ctypes.POINTER(ctypes.c_float),
                          snLSize, ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float))
 
-        cAccurate = ctypes.c_float(0)
+        if (len(outAccurate)):
+            cAccurate = ctypes.c_float(0)
+            pAcc = snFloat_p(ctypes.addressof(cAccurate))
+        else:
+            cAccurate = 0
+            pAcc = 0
 
         ok = pfun(self._net, ctypes.c_float(lr), insz, snFloat_p(indata), outsz,
-                  snFloat_p(outdata), snFloat_p(trgdata), snFloat_p(ctypes.addressof(cAccurate)))
+                  snFloat_p(outdata), snFloat_p(trgdata), pAcc)
 
-        outAccurate[0] = cAccurate.value
+        if (len(outAccurate)):
+            outAccurate[0] = cAccurate.value
 
         return ok
 
