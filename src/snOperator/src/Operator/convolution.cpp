@@ -81,6 +81,9 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     else
         setIntParam("padding", true, false, convPrms_.paddingSet);
 
+    if (prms.find("checkPadding") != prms.end())
+        isCheckPadding_ = prms["checkPadding"] == "1";
+
     setIntParam("stride", false, false, convPrms_.stride);
     setIntParam("dilate", false, false, convPrms_.dilate);
 
@@ -410,14 +413,15 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     }
 
     // check correct
-    size_t res = (newsz.w + paddingW * 2 - fWidth - (fWidth - 1) * (dilate - 1)) % stride;
-    if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'fWidth'");
+    if (isCheckPadding_){
+        size_t res = (newsz.w + paddingW * 2 - fWidth - (fWidth - 1) * (dilate - 1)) % stride;
+        if (res != 0)
+            ERROR_MESS("not correct param 'stride' or 'fWidth'");
 
-    res = (newsz.h + paddingH * 2 - fHeight - (fHeight - 1) * (dilate - 1)) % stride;
-    if (res != 0)
-        ERROR_MESS("not correct param 'stride' or 'fHeight'");
-
+        res = (newsz.h + paddingH * 2 - fHeight - (fHeight - 1) * (dilate - 1)) % stride;
+        if (res != 0)
+            ERROR_MESS("not correct param 'stride' or 'fHeight'");
+    }
 
     expSz = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
       

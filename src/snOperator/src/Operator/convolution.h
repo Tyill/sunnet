@@ -55,7 +55,7 @@ private:
     };
 
     convParams convPrms_;
-    bool isPaddingSame_ = false;
+    bool isPaddingSame_ = false, isCheckPadding_ = false;
 
     activeType activeType_ = activeType::relu;                  ///< active type
     optimizerType optimizerType_ = optimizerType::adam;         ///< optimizer type
