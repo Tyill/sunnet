@@ -47,15 +47,14 @@ namespace SN_Eng{
         if (stsCBack_) stsCBack_(mess);
     }
         
-    /// создание потоков
-    void SNEngine::createThreads(std::map<std::string, SN_Base::Node>& nodes){
-
-        /// для forward
+    /// создание потоков для forward
+    void SNEngine::createThreadsFwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool){
+               
         set<string> thrExist;
 
         for (auto& n : nodes){
             if (n.second.oprName == "Input"){
-                thrPoolForward_->addNode(n.first);
+                thrPool->addNode(n.first);
                 thrExist.insert(n.first);
             }
         }
@@ -69,34 +68,37 @@ namespace SN_Eng{
 
                     if (thrExist.find(nn) != thrExist.end()) continue;
 
-                    thrPoolForward_->addNode(nn);
+                    thrPool->addNode(nn);
                     thrExist.insert(nn);
                 }
             }            
             if (n.second.prevNodes.size() > 1){                
-                thrPoolForward_->addNode(n.first);
+                thrPool->addNode(n.first);
                 thrExist.insert(n.first);
             }
             else{
                 if (nodes[n.second.prevNodes[0]].nextNodes.size() > 1){
-                    thrPoolForward_->addNode(n.first);
+                    thrPool->addNode(n.first);
                     thrExist.insert(n.first);
                 }
             }
         }
         /// подождем пока все запустятся
         for (auto& thr : thrExist){
-            thrPoolForward_->waitExist(thr);
-        }
+            thrPool->waitExist(thr);
+        }      
+    }
 
-        /// для backward
-        thrExist.clear();
+    /// создание потоков для backward
+    void SNEngine::createThreadsBwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool){
 
+        set<string> thrExist;
+               
         operParam_.action = SN_Base::snAction::backward;
-            
+
         for (auto& n : nodes){
             if (n.second.oprName == "Output"){
-                thrPoolBackward_->addNode(n.first);
+                thrPool->addNode(n.first);
                 thrExist.insert(n.first);
             }
         }
@@ -110,17 +112,17 @@ namespace SN_Eng{
 
                     if (thrExist.find(nn) != thrExist.end()) continue;
 
-                    thrPoolBackward_->addNode(nn);
+                    thrPool->addNode(nn);
                     thrExist.insert(nn);
                 }
             }
             if (n.second.nextNodes.size() > 1){
-                thrPoolBackward_->addNode(n.first);
+                thrPool->addNode(n.first);
                 thrExist.insert(n.first);
             }
             else{
                 if (nodes[n.second.nextNodes[0]].prevNodes.size() > 1){
-                    thrPoolBackward_->addNode(n.first);
+                    thrPool->addNode(n.first);
                     thrExist.insert(n.first);
                 }
             }
@@ -128,10 +130,10 @@ namespace SN_Eng{
 
         /// подождем пока все запустятся
         for (auto& thr : thrExist){
-            thrPoolBackward_->waitExist(thr);
+            thrPool->waitExist(thr);
         }
     }
-
+    
     SNEngine::SNEngine(Net& brNet, 
         std::function<void(const std::string&)> sts) : stsCBack_(sts){
 
@@ -139,11 +141,11 @@ namespace SN_Eng{
         nodes_ = brNet.nodes;
         for (auto& n : brNet.nodes)
             ndStates_[n.first] = ndState();
-                
-        thrPoolForward_ = new ThreadPool(bind(&SNEngine::operatorThreadForward, this, std::placeholders::_1));
-        thrPoolBackward_ = new ThreadPool(bind(&SNEngine::operatorThreadBackward, this, std::placeholders::_1));
 
-        createThreads(brNet.nodes);
+        // только для fwd, поскольку назад может и не пойдем
+        thrPoolForward_ = new ThreadPool(bind(&SNEngine::operatorThreadForward, this, std::placeholders::_1));
+       
+        createThreadsFwd(brNet.nodes, thrPoolForward_);
     }
     
     SNEngine::~SNEngine(){
@@ -179,6 +181,11 @@ namespace SN_Eng{
     bool SNEngine::backward(const SN_Base::operationParam& operPrm){
                                 
         operParam_ = operPrm;
+
+        if (!thrPoolBackward_){
+            thrPoolBackward_ = new ThreadPool(bind(&SNEngine::operatorThreadBackward, this, std::placeholders::_1));
+            createThreadsBwd(nodes_, thrPoolBackward_);
+        }
 
         /// предварительно установим готовность
         thrPoolBackward_->preStartAll();

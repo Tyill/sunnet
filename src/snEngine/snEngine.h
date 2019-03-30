@@ -66,7 +66,8 @@ namespace SN_Eng{
         void statusMess(const std::string&);
             
         /// создание потоков
-        void createThreads(std::map<std::string, SN_Base::Node>& nodes);
+        void createThreadsFwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool);
+        void createThreadsBwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool);
 
         /// выполнение оператора при движении вперед 
         void actionForward(std::map<std::string, SN_Base::Node>& nodes, const std::string& nname);
