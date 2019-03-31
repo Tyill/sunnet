@@ -43,8 +43,6 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 
 FullyConnected::~FullyConnected(){
     
-    baseInput_ = 0;
-
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else  if (calcMode_ == calcMode::OpenCL)
@@ -52,11 +50,7 @@ FullyConnected::~FullyConnected(){
 }
 
 void FullyConnected::load(std::map<std::string, std::string>& prms){
-    
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-    baseWeight_ = new Tensor();    
-    
+        
     if ((prms.find("kernel") != prms.end()) && SN_Aux::is_number(prms["kernel"])){
 
         size_t kernel = stoi(prms["kernel"]);
@@ -94,7 +88,7 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
     if (prms.find("gpuDeviceId") != prms.end())
         gpuDeviceId_ = stoi(prms["gpuDeviceId"]);
 
-    baseOut_->resize(snSize(kernel_));
+    baseOut_.resize(snSize(kernel_));
   
     // currrect params
     setInternPrm(prms);
@@ -216,26 +210,26 @@ std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            Tensor tns = *neighbOpr[0]->getGradient();
+            Tensor tns = neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (tns != *neighbOpr[i]->getGradient()){
+                if (tns != neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                tns += *neighbOpr[i]->getGradient();
+                tns += neighbOpr[i]->getGradient();
             }
-            backward(&tns, operPrm);
+            backward(tns, operPrm);
         }
     }
 
     return std::vector<std::string>();
 }
 
-void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snSize insz = inTns->size();
-    baseInput_ = inTns;
+    snSize insz = inTns.size();
+    inputMem_ = &inTns;
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
@@ -243,16 +237,16 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
     }
              
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_->getData();
+    snFloat* out = baseOut_.getData();
         
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, insz, inTns->getData(), baseWeight_->getData(), out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, insz, inTns->getData(), baseWeight_->getData(), out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, insz, inTns->getData(), baseWeight_->getData(), out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(kernel_, insz, inTns.getData(), baseWeight_.getData(), out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, insz, inTns.getData(), baseWeight_.getData(), out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, insz, inTns.getData(), baseWeight_.getData(), out, gpuParams_); break;
     }
 
     /// dropOut
-    snSize outSz = baseOut_->size();
+    snSize outSz = baseOut_.size();
     if (dropOut_ > 0.F)
         dropOut(operPrm.isLerning, dropOut_, outSz, out);
     
@@ -268,19 +262,19 @@ void FullyConnected::forward(SN_Base::Tensor* inTns, const operationParam& operP
         layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
 }
 
-void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns->getData();
+    snFloat* gradIn = inTns.getData();
 
     /// batchNorm
-    snSize gsz = inTns->size();
+    snSize gsz = inTns.size();
     if (batchNormType_ == batchNormType::postActive)
         layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // active func
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_->getData();
+        snFloat* out = baseOut_.getData();
         
         size_t osz = kernel_ * inSzMem_.n;
         activeFuncBackward(osz, out, activeType_);
@@ -294,23 +288,23 @@ void FullyConnected::backward(SN_Base::Tensor* inTns, const operationParam& oper
         layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_->getData();
-    snFloat* weight = baseWeight_->getData();
+    snFloat* gradOut = baseGrad_.getData();
+    snFloat* weight = baseWeight_.getData();
        
     if (!isFreeze_){
                 
         snFloat* dWeight = auxParams_["dWeight"].data();
        
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, baseInput_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(kernel_, weight, inSzMem_, inputMem_->getData(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(kernel_, weight, inSzMem_, inputMem_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(kernel_, weight, inSzMem_, inputMem_->getData(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
                 
         // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
-        size_t wsz = baseWeight_->size().size();
+        size_t wsz = baseWeight_.size().size();
         
         optimizer(dWeight,
                   dWPrev,
@@ -338,16 +332,16 @@ void FullyConnected::updateConfig(const snSize& newsz){
     size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
         
     // leave the existing weights as they are, initialize the remainder
-    size_t wcsz = baseWeight_->size().size();
+    size_t wcsz = baseWeight_.size().size();
     if (ntp > wcsz){
                 
-        baseWeight_->resize(snSize(kernel_, stp + 1));
-        snFloat* wd = baseWeight_->getData();
+        baseWeight_.resize(snSize(kernel_, stp + 1));
+        snFloat* wd = baseWeight_.getData();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     
-    baseOut_->resize(snSize(kernel_, 1, 1, newsz.n));
-    baseGrad_->resize(newsz);
+    baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));
+    baseGrad_.resize(newsz);
            
     // aux array
     auxParams_["dWeight"].resize(ntp, 0);

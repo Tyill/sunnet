@@ -32,18 +32,10 @@ using namespace SN_Base;
 /// The choice of the path
 Switch::Switch(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
-
-    baseGrad_ = new Tensor();
-}
-
-Switch::~Switch(){
-
-    baseOut_ = 0;
 }
 
 std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-      
-      
+            
     if (operPrm.action == snAction::forward){
 
         if (neighbOpr.size() > 1){
@@ -55,16 +47,16 @@ std::vector<std::string> Switch::Do(const operationParam& operPrm, const std::ve
     }
     else{
        
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
 
         size_t sz = neighbOpr.size();
         for (size_t i = 1; i < sz; ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }           
     }
        

@@ -40,5 +40,5 @@ public:
 private: 
        
     activeType activeType_ = activeType::relu;
-    
+
 };

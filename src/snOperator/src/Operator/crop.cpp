@@ -33,10 +33,7 @@ using namespace SN_Base;
 /// Trimming data
 Crop::Crop(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
-
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-
+       
     if (basePrms_.find("roi") != basePrms_.end()){
 
         auto nsz = SN_Aux::split(basePrms_["roi"], " ");
@@ -57,7 +54,7 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
                    
         auto nsz = SN_Aux::split(basePrms_["roi"], " ");
 
@@ -66,7 +63,7 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
             return vector < string > {"noWay"};
         }
 
-        baseSz_ = baseOut_->size();
+        baseSz_ = baseOut_.size();
       
         size_t x = max<size_t>(0, min<size_t>(stoi(nsz[0]), baseSz_.w - 1)),
                y = max<size_t>(0, min<size_t>(stoi(nsz[1]), baseSz_.h - 1)),
@@ -77,34 +74,34 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
 
         Tensor tns(snSize(w, h, baseSz_.d, baseSz_.n));
 
-        snFloat* src = baseOut_->getData(),
+        snFloat* src = baseOut_.getData(),
                * dst = tns.getData();
 
         copyTo(true, roi_, baseSz_, src, dst);
 
-        *baseOut_ = tns;
+        baseOut_ = tns;
     }
     else{ // backward
        
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
 
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
                 
         Tensor tns(baseSz_);
 
         snFloat* dst = tns.getData(),
-               * src = baseGrad_->getData();
+               * src = baseGrad_.getData();
                 
         copyTo(false, roi_, baseSz_, dst, src);
 
-        *baseGrad_ = tns;
+        baseGrad_ = tns;
     }
     
     return vector<string>();

@@ -34,7 +34,9 @@ public:
 
     Input(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
       
-    ~Input();
+    ~Input() = default;
+
+    bool setInput(const SN_Base::snFloat* data, const SN_Base::snSize& dsz) override;
 
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 };

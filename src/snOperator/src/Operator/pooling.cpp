@@ -39,14 +39,15 @@ Pooling::Pooling(void* net, const string& name, const string& node, std::map<std
 
 Pooling::~Pooling(){
 
-    baseInput_ = 0;
+    if (calcMode_ == calcMode::CUDA)
+        freeParamCUDA(gpuParams_);
+    else  if (calcMode_ == calcMode::OpenCL)
+        freeParamOCL(gpuParams_);
 }
 
 void Pooling::load(std::map<std::string, std::string>& prms){
-    
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-    
+   
+       
     auto setIntParam = [&prms, this](const string& name, bool isZero, bool checkExist, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
@@ -112,25 +113,25 @@ std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::v
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            Tensor tns = *neighbOpr[0]->getGradient();
+            Tensor tns = neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (tns != *neighbOpr[i]->getGradient()){
+                if (tns != neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                tns += *neighbOpr[i]->getGradient();
+                tns += neighbOpr[i]->getGradient();
             }
-            backward(&tns, operPrm);
+            backward(tns, operPrm);
         }
     }
     return std::vector<std::string>();
 }
 
-void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm){
+void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm){
 
-    snSize insz = inTns->size();
-    baseInput_ = inTns;
+    snSize insz = inTns.size();
+    inputMem_ = &inTns;
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
@@ -138,33 +139,33 @@ void Pooling::forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& ope
     }
        
     /// copy with offset padding for each image
-    snFloat* in = baseInput_->getData();
+    snFloat* in = inputMem_->getData();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getData(), baseInput_->getData());
+        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getData(), inputMem_->getData());
         insz = inDataExpSz_;
         in = inTnsExp_.getData();
     }
 
     /// output calculation
-    snFloat* out = baseOut_->getData();
+    snFloat* out = baseOut_.getData();
    
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data()); break;
-    case calcMode::CUDA:   forwardCUDA(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(poolPrms_, insz, in, baseOut_->size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data()); break;
+    case calcMode::CUDA:   forwardCUDA(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data(), gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data(), gpuParams_); break;
     }      
 
     if (!operPrm.isLerning && isPadding_)
         inTnsExp_.tfree();
 }
 
-void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns->getData();
+    snFloat* gradIn = inTns.getData();
         
-    snFloat* input = baseInput_->getData();
-    snFloat* gradOut = baseGrad_->getData();
+    snFloat* input = inputMem_->getData();
+    snFloat* gradOut = baseGrad_.getData();
     if (isPadding_){
         gradOutExp_.resize(inDataExpSz_);
         gradOut = gradOutExp_.getData();
@@ -173,13 +174,13 @@ void Pooling::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
 
     /// grad calculation
     switch (calcMode_){
-    case calcMode::CPU:    backwardCPU(poolPrms_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
-    case calcMode::CUDA:   backwardCUDA(poolPrms_, baseOut_->size(), outInx_.data(), baseOut_->getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_); break;
-    case calcMode::OpenCL: backwardOCL(poolPrms_, baseOut_->size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
+    case calcMode::CPU:    backwardCPU(poolPrms_, baseOut_.size(), outInx_.data(), gradIn, inDataExpSz_, gradOut); break;
+    case calcMode::CUDA:   backwardCUDA(poolPrms_, baseOut_.size(), outInx_.data(), baseOut_.getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_); break;
+    case calcMode::OpenCL: backwardOCL(poolPrms_, baseOut_.size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
     }
    
     if (isPadding_){
-        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_->getData());
+        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());
         gradOutExp_.tfree();
     }
 }
@@ -215,8 +216,8 @@ void Pooling::updateConfig(const snSize& newsz){
         inDataExpSz_ = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
     }
         
-    baseOut_->resize(outSz);
-    baseGrad_->resize(newsz);
+    baseOut_.resize(outSz);
+    baseGrad_.resize(newsz);
 
     outInx_.resize(outSz.size(), 0);
        

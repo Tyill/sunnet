@@ -32,8 +32,6 @@ using namespace SN_Base;
 UserLayer::UserLayer(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
 }
 
 std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vector<OperatorBase*>& neighbOpr){
@@ -51,40 +49,40 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
    
         snSize outSz;
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            true, baseOut_->size(), baseOut_->getData(), outSz, &outData);
+            true, baseOut_.size(), baseOut_.getData(), outSz, &outData);
 
         if (outData)
-            baseOut_->setData(outData, outSz);
+            baseOut_.setData(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }
     }
     else{
                
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
      
         snSize outSz;
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, baseGrad_->size(), baseGrad_->getData(), outSz, &outData);
+            false, baseGrad_.size(), baseGrad_.getData(), outSz, &outData);
 
         if (outData)
-            baseGrad_->setData(outData, outSz);
+            baseGrad_.setData(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }

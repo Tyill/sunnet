@@ -59,6 +59,8 @@ private:
     batchNormType batchNormType_ = batchNormType::none;         ///< batchNorm 
     SN_Base::snSize inSzMem_;                                   ///< insz mem
            
+    const SN_Base::Tensor* inputMem_ = nullptr;
+
     bool isFreeze_ = false;                                     ///< not change weight
     bool gpuClearMem_ = false;                                  ///< clear mem GPU
       
@@ -79,8 +81,8 @@ private:
 
     void updateConfig(const SN_Base::snSize& newSz);
           
-    void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
+    void forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
+    void backward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
        
     /// CPU ///////////////////////////
 

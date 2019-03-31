@@ -33,10 +33,7 @@ using namespace SN_Base;
 /// Compound layers
 Concat::Concat(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
-
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-       
+           
     if (basePrms_.find("sequence") == basePrms_.end())
         ERROR_MESS("non set param 'sequence'");    
 }
@@ -60,7 +57,7 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
             return vector<string>{"noWay"};
         }
 
-        *baseOut_ = *neighb->getOutput();
+        baseOut_ = neighb->getOutput();
 
         size_t ssz = seq.size();
         for (size_t i = 1; i < ssz; ++i){
@@ -78,32 +75,32 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
                 return vector<string>{"noWay"};
             }
 
-            snSize csz = baseOut_->size();
+            snSize csz = baseOut_.size();
 
-            snSize nbsz = neighb->getOutput()->size();
+            snSize nbsz = neighb->getOutput().size();
 
             if ((csz.w != nbsz.w) || (csz.h != nbsz.h) || (csz.n != nbsz.n)){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
 
-            Tensor buff = *baseOut_;
+            Tensor buff = baseOut_;
 
-            baseOut_->resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
+            baseOut_.resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
 
             size_t sz = csz.w * csz.h * (csz.d + nbsz.d),
                  cstp = csz.w * csz.h * csz.d,
                  nstp = nbsz.w * nbsz.h * nbsz.d;
             for (size_t j = 0; j < csz.n; ++j){
 
-                snFloat* dst = baseOut_->getData() + sz * j,
+                snFloat* dst = baseOut_.getData() + sz * j,
                     *src = buff.getData() + cstp * j;
 
                 memcpy(dst, src, cstp * sizeof(snFloat));
 
 
                 dst += cstp;
-                src = neighb->getOutput()->getData() + nstp * j;
+                src = neighb->getOutput().getData() + nstp * j;
 
                 memcpy(dst, src, nstp * sizeof(snFloat));
             }
@@ -111,14 +108,14 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
     }
     else{ // backward
               
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
     }
     

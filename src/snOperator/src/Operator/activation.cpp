@@ -33,10 +33,8 @@ using namespace SN_Base;
 
 Activation::Activation(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
-       
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-
+      
+  
     if (prms.find("active") != prms.end()){
 
         string atype = prms["active"];
@@ -59,27 +57,27 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
            
         /// active func
-        activeFuncForward(baseOut_->size().size(), baseOut_->getData(), activeType_);
+        activeFuncForward(baseOut_.size().size(), baseOut_.getData(), activeType_);
         
     }
     else{ // backward
               
-        *baseGrad_ = *neighbOpr[0]->getGradient();            
+        baseGrad_ = neighbOpr[0]->getGradient();            
        
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
 
         /// active func
-        activeFuncBackward(baseGrad_->size().size(), baseGrad_->getData(), activeType_);
+        activeFuncBackward(baseGrad_.size().size(), baseGrad_.getData(), activeType_);
     }
     
     return vector<string>();

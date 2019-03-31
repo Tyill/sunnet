@@ -34,9 +34,6 @@ using namespace SN_Base;
 BatchNorm::BatchNorm(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-
     if (basePrms_.find("bnType") != basePrms_.end()){
 
         if (basePrms_["bnType"] == "byChannels")
@@ -76,10 +73,10 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
             return std::vector < std::string > {"noWay"};
         }
 
-        *baseOut_ = *neighbOpr[0]->getOutput();
+        baseOut_ = neighbOpr[0]->getOutput();
     
-        snFloat* out = baseOut_->getData();
-        snSize outsz = baseOut_->size();
+        snFloat* out = baseOut_.getData();
+        snSize outsz = baseOut_.size();
 
         if (outsz != inSzMem_){
             inSzMem_ = outsz;
@@ -99,19 +96,19 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
     }
     else{ // backward
        
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
 
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
                
-        snFloat* out = baseGrad_->getData();
-        snSize outsz = baseGrad_->size();
+        snFloat* out = baseGrad_.getData();
+        snSize outsz = baseGrad_.size();
 
         switch (bnType_){
             case batchNormType::byChannels:

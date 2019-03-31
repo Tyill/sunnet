@@ -35,14 +35,12 @@ OperatorBase(net, name, node, prms){
     
 }
 
-Input::~Input(){
-
-    baseOut_ = 0;
+bool Input::setInput(const snFloat* data, const snSize& dsz){
+    baseOut_.setData(data, dsz);
+    return true;
 }
 
 std::vector<std::string> Input::Do(const operationParam& prm, const std::vector<OperatorBase*>& neighbOpr){
-    
-    baseOut_ = baseInput_;
-   
+       
     return std::vector<std::string>();
 }

@@ -31,10 +31,7 @@ using namespace SN_Base;
 
 
 void LossFunction::load(std::map<std::string, std::string>& prms){
-
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-
+    
     if (prms.find("loss") != prms.end()){
 
         string stype = prms["loss"];
@@ -82,12 +79,12 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
     return std::vector<std::string>();
 }
 
-void LossFunction::forward(Tensor* inTns){
+void LossFunction::forward(const Tensor& inTns){
 
-    snSize tsz = inTns->size();
-    baseOut_->setData(inTns->getData(), tsz);
+    snSize tsz = inTns.size();
+    baseOut_ = inTns;
     
-    auto out = baseOut_->getData();
+    auto out = baseOut_.getData();
 
     switch (lossType_){
     case LossFunction::lossType::softMaxACrossEntropy:{
@@ -129,10 +126,10 @@ void LossFunction::forward(Tensor* inTns){
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-           true, inTns->size(), inTns->getData(), outSz, &outData);
+           true, inTns.size(), inTns.getData(), outSz, &outData);
 
         if (outData){
-            baseOut_->setData(outData, outSz);
+            baseOut_.setData(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
@@ -148,17 +145,17 @@ void LossFunction::forward(Tensor* inTns){
 
 }
 
-void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
+void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
 
-    snSize tsz = inTns->size();        
+    snSize tsz = inTns.size();        
    
-    snSize grsz = baseGrad_->size();
+    snSize grsz = baseGrad_.size();
     if (grsz != tsz)
-        baseGrad_->resize(tsz);
+        baseGrad_.resize(tsz);
         
-    auto smOut = baseOut_->getData();    
-    auto target = inTns->getData();      
-    auto grad = baseGrad_->getData();  
+    auto smOut = baseOut_.getData();    
+    auto target = inTns.getData();      
+    auto grad = baseGrad_.getData();  
 
     switch (lossType_){
     case LossFunction::lossType::softMaxACrossEntropy:{
@@ -195,10 +192,10 @@ void LossFunction::backward(Tensor* inTns, const operationParam& operPrm){
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, inTns->size(), inTns->getData(), outSz, &outData);
+            false, inTns.size(), inTns.getData(), outSz, &outData);
 
         if (outData){
-            baseGrad_->setData(outData, outSz);
+            baseGrad_.setData(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");

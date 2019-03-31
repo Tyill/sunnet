@@ -64,6 +64,8 @@ private:
     SN_Base::snSize inSzMem_;                                   ///< insz mem
     SN_Base::snSize inDataExpSz_;                               ///< insz expansion
    
+    const SN_Base::Tensor* inputMem_ = nullptr;
+
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
    
@@ -90,8 +92,8 @@ private:
     void updateConfig(const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
          
         
-    void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
+    void forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
+    void backward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
        
     /// CPU ///////////////////////////
 

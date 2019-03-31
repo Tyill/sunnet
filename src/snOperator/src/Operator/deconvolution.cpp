@@ -42,9 +42,7 @@ Deconvolution::Deconvolution(void* net, const string& name, const string& node, 
 }
 
 Deconvolution::~Deconvolution(){
-
-    baseInput_ = 0;
-
+       
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
@@ -52,11 +50,7 @@ Deconvolution::~Deconvolution(){
 }
 
 void Deconvolution::load(std::map<std::string, std::string>& prms){
-
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-    baseWeight_ = new Tensor();    
-
+    
     auto setIntParam = [&prms, this](const string& name, bool isZero, bool checkExist, size_t& value){
 
         if ((prms.find(name) != prms.end()) && SN_Aux::is_number(prms[name])){
@@ -220,36 +214,36 @@ std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const 
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            Tensor tns = *neighbOpr[0]->getGradient();
+            Tensor tns = neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (tns != *neighbOpr[i]->getGradient()){
+                if (tns != neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                tns += *neighbOpr[i]->getGradient();
+                tns += neighbOpr[i]->getGradient();
             }
-            backward(&tns, operPrm);
+            backward(tns, operPrm);
         }
     }
 
     return std::vector<std::string>();
 }
 
-void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snSize insz = inTns->size();
-    baseInput_ = inTns;
+    snSize insz = inTns.size();
+    inputMem_ = &inTns;
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
         updateConfig(insz);
     }
 
-    snFloat* pInTns = inTns->getData();
+    snFloat* pInTns = inTns.getData();
    
-    snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
-    snSize outsz = baseOut_->size();
+    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snSize outsz = baseOut_.size();
 
     switch (calcMode_){
     case calcMode::CPU:    forwardCPU(deconvParams_, weight, insz, pInTns, outsz, out); break;
@@ -274,20 +268,20 @@ void Deconvolution::forward(SN_Base::Tensor* inTns, const operationParam& operPr
     
 }
 
-void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
     
-    snFloat* gradIn = inTns->getData();
+    snFloat* gradIn = inTns.getData();
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_->getData();
+        snFloat* out = baseOut_.getData();
         
-        size_t osz = baseOut_->size().size();
+        size_t osz = baseOut_.size().size();
         activeFuncBackward(osz, out, activeType_);
 
         // update grad
@@ -296,15 +290,15 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
-    snFloat* grOut = baseGrad_->getData();   
-    snFloat* weight = baseWeight_->getData();
-    snFloat* in = baseInput_->getData();
-    snFloat* out = baseOut_->getData();
+    snFloat* grOut = baseGrad_.getData();   
+    snFloat* weight = baseWeight_.getData();
+    snFloat* in = inputMem_->getData();
+    snFloat* out = baseOut_.getData();
 
-    snSize insz = baseInput_->size(), outsz = baseOut_->size();
+    snSize insz = inputMem_->size(), outsz = baseOut_.size();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
@@ -317,7 +311,7 @@ void Deconvolution::backward(SN_Base::Tensor* inTns, const operationParam& operP
 
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
-        size_t wsz = baseWeight_->size().size();
+        size_t wsz = baseWeight_.size().size();
                
         optimizer(dWeight,
             dWPrev,
@@ -345,11 +339,11 @@ void Deconvolution::updateConfig(const snSize& newsz){
         ntp = (stp + 1) * newsz.d;
         
     // leave the existing weights as they are, initialize the remainder
-    size_t wcsz = baseWeight_->size().size();
+    size_t wcsz = baseWeight_.size().size();
     if (ntp > wcsz){
                 
-        baseWeight_->resize(snSize(newsz.d, stp + 1));
-        snFloat* wd = baseWeight_->getData();
+        baseWeight_.resize(snSize(newsz.d, stp + 1));
+        snFloat* wd = baseWeight_.getData();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, deconvParams_.kernel, weightInitType_);
     }
         
@@ -359,8 +353,8 @@ void Deconvolution::updateConfig(const snSize& newsz){
     outSz.w = (newsz.w - 1) * deconvParams_.stride + deconvParams_.fWidth;
     outSz.h = (newsz.h - 1) * deconvParams_.stride + deconvParams_.fHeight;
     
-    baseOut_->resize(outSz);
-    baseGrad_->resize(newsz);
+    baseOut_.resize(outSz);
+    baseGrad_.resize(newsz);
         
     // aux array
     auxParams_["dWeight"].resize(ntp, 0);

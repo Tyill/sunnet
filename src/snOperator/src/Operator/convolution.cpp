@@ -43,9 +43,7 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 }
 
 Convolution::~Convolution(){
-
-    baseInput_ = 0;
-
+        
     if (calcMode_ == calcMode::CUDA)
         freeParamCUDA(gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
@@ -53,10 +51,6 @@ Convolution::~Convolution(){
 }
 
 void Convolution::load(std::map<std::string, std::string>& prms){
-
-    baseOut_ = new Tensor();
-    baseGrad_ = new Tensor();
-    baseWeight_ = new Tensor();    
 
     auto setIntParam = [&prms, this](const string& name, bool isZero, bool checkExist, size_t& value){
 
@@ -230,26 +224,26 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
             backward(neighbOpr[0]->getGradient(), operPrm);
         }
         else{
-            Tensor tns = *neighbOpr[0]->getGradient();
+            Tensor tns = neighbOpr[0]->getGradient();
             for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-                if (tns != *neighbOpr[i]->getGradient()){
+                if (tns != neighbOpr[i]->getGradient()){
                     ERROR_MESS("operators size is not equals");
                     return std::vector < std::string > {"noWay"};
                 }
-                tns += *neighbOpr[i]->getGradient();
+                tns += neighbOpr[i]->getGradient();
             }           
-            backward(&tns, operPrm);
+            backward(tns, operPrm);
         }
     }
        
     return std::vector<std::string>();
 }
 
-void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snSize insz = inTns->size();
-    baseInput_ = inTns;
+    snSize insz = inTns.size();
+    inputMem_ = &inTns;
 
     /// Has the size of the data changed?
     if (insz != inSzMem_){
@@ -258,7 +252,7 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     }
 
     /// copy with offset padding for each image
-    snFloat* in = baseInput_->getData();
+    snFloat* in = inputMem_->getData();
     bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
     if (!isSame){
         inTnsExp_.resize(inDataExpSz_);       
@@ -267,8 +261,8 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
     }
     
     /// calculation of the output values
-    snFloat* out = baseOut_->getData(), *weight = baseWeight_->getData();
-    snSize outsz = baseOut_->size();
+    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snSize outsz = baseOut_.size();
 
     switch (calcMode_){
     case calcMode::CPU:    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out); break;
@@ -295,20 +289,20 @@ void Convolution::forward(SN_Base::Tensor* inTns, const operationParam& operPrm)
         channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
 }
 
-void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm){
+void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
     
-    snFloat* gradIn = inTns->getData();
+    snFloat* gradIn = inTns.getData();
  
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // active function
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_->getData();
+        snFloat* out = baseOut_.getData();
         
-        size_t osz = baseOut_->size().size();
+        size_t osz = baseOut_.size().size();
         activeFuncBackward(osz, out, activeType_);
 
         // update grad
@@ -317,10 +311,10 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns->size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_->getData();
+    snFloat* gradOut = baseGrad_.getData();
       
     bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
     if (!isSame){
@@ -328,25 +322,25 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
         gradOut = gradOutExp_.getData();
     }
 
-    snFloat* weight = baseWeight_->getData();
+    snFloat* weight = baseWeight_.getData();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
-        snFloat* in = baseInput_->getData();
+        snFloat* in = inputMem_->getData();
         if (!isSame)
             in = inTnsExp_.getData();
         
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(convPrms_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight); break;
-        case calcMode::CUDA:   backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(convPrms_, weight, inDataExpSz_, in, baseOut_->size(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
                
         // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
         snFloat* dWGrad = auxParams_["dWGrad"].data();
-        size_t wsz = baseWeight_->size().size();
+        size_t wsz = baseWeight_.size().size();
               
         optimizer(dWeight,
             dWPrev,
@@ -361,14 +355,14 @@ void Convolution::backward(SN_Base::Tensor* inTns, const operationParam& operPrm
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_G(convPrms_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut); break;
-        case calcMode::CUDA:   backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut, gpuParams_); break;
-        case calcMode::OpenCL: backwardOCL_G(convPrms_, weight, inDataExpSz_, baseOut_->size(), gradIn, gradOut, gpuParams_); break;
+        case calcMode::CPU:    backwardCPU_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_); break;
         }
     }
 
     if (!isSame){
-        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_->getData());
+        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());
         gradOutExp_.tfree();
         inTnsExp_.tfree();
     }
@@ -388,11 +382,11 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
     size_t stp = fWidth * fHeight * newsz.d, ntp = (stp + 1) * kernel;  // + 1 - bias
         
     // leave the existing weights as they are, initialize the remainder
-    size_t wcsz = baseWeight_->size().size();
+    size_t wcsz = baseWeight_.size().size();
     if (ntp > wcsz){
                 
-        baseWeight_->resize(snSize(kernel, stp + 1));
-        snFloat* wd = baseWeight_->getData();
+        baseWeight_.resize(snSize(kernel, stp + 1));
+        snFloat* wd = baseWeight_.getData();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel, weightInitType_);     
     }
         
@@ -425,8 +419,8 @@ void Convolution::updateConfig(const snSize& newsz, SN_Base::snSize& expSz){
 
     expSz = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
       
-    baseOut_->resize(outSz);
-    baseGrad_->resize(newsz);
+    baseOut_.resize(outSz);
+    baseGrad_.resize(newsz);
         
     // aux array
     auxParams_["dWeight"].resize(ntp, 0);

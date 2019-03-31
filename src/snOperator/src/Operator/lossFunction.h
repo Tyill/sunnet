@@ -52,6 +52,6 @@ private:
 
     void load(std::map<std::string, std::string>& prms);
 
-    void forward(SN_Base::Tensor* inTns);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
+    void forward(const SN_Base::Tensor& inTns);
+    void backward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
 };

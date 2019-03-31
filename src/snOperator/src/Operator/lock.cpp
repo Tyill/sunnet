@@ -31,13 +31,7 @@ using namespace SN_Base;
 /// locks further passage along the graph
 Lock::Lock(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
-
-    baseGrad_ = new Tensor();
-}
-
-Lock::~Lock(){
-
-    baseOut_ = 0;
+        
 }
 
 std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -57,14 +51,14 @@ std::vector<std::string> Lock::Do(const operationParam& operPrm, const std::vect
     }
     else{
        
-        *baseGrad_ = *neighbOpr[0]->getGradient();
+        baseGrad_ = neighbOpr[0]->getGradient();
         for (size_t i = 1; i < neighbOpr.size(); ++i){
 
-            if (*baseGrad_ != *neighbOpr[i]->getGradient()){
+            if (baseGrad_ != neighbOpr[i]->getGradient()){
                 ERROR_MESS("operators size is not equals");
                 return std::vector < std::string > {"noWay"};
             }
-            *baseGrad_ += *neighbOpr[i]->getGradient();
+            baseGrad_ += neighbOpr[i]->getGradient();
         }
     }
 

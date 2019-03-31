@@ -59,6 +59,8 @@ private:
     SN_Base::Tensor inTnsExp_;
     SN_Base::Tensor gradOutExp_;
 
+    const SN_Base::Tensor* inputMem_ = nullptr;
+
                                 
     bool isPadding_ = false;
     
@@ -76,8 +78,8 @@ private:
         
     void updateConfig(const SN_Base::snSize& newSz);
   
-    void forward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
-    void backward(SN_Base::Tensor* inTns, const SN_Base::operationParam& operPrm);
+    void forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
+    void backward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
 
     /// CPU ///////////////////////////
 
