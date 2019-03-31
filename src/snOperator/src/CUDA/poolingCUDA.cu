@@ -101,7 +101,7 @@ void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolPa
     cuCHECK(cudnnCreatePoolingDescriptor(&pool_desc));
 
     cudnnPoolingMode_t poolT = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    if (poolPrms.type == type::avg)
+    if (poolPrms.type == poolType::avg)
         poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
@@ -431,7 +431,7 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloa
     dim3 dimBlock(16, 16);
     dim3 dimGrid(int(outsz.d), int(outsz.n));
 
-    cuPoolFwd <<< dimGrid, dimBlock >>>(type,
+    cuPoolFwd << < dimGrid, dimBlock >> >(poolPrms.type,
         poolPrms.kernel,
         poolPrms.stride,
         insz, 
@@ -540,7 +540,7 @@ void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size
     dim3 dimBlock(16, 16);
     dim3 dimGrid(int(outsz.d), int(outsz.n));
 
-    cuPoolBwd <<< dimGrid, dimBlock >>>(type,
+    cuPoolBwd << < dimGrid, dimBlock >> >(poolPrms.type,
         poolPrms.kernel,
         poolPrms.stride,
         outsz,
