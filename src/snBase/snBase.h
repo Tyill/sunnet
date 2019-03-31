@@ -227,12 +227,7 @@ namespace SN_Base{
         /// @param prms - params. Key - name param
         OperatorBase(void* Net_, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms) :
             Net(Net_), name_(name), node_(node), basePrms_(prms){}
-        virtual ~OperatorBase(){
-            if (baseInput_) delete baseInput_;
-            if (baseWeight_) delete baseWeight_;
-            if (baseGrad_) delete baseGrad_;
-            if (baseOut_) delete baseOut_;
-        } 
+        virtual ~OperatorBase(){} 
     public:
         
         /// back link to the parent network object
@@ -243,21 +238,18 @@ namespace SN_Base{
             return true;
         }
 
-        virtual bool setInput(SN_Base::Tensor* in){            
-            if (baseInput_) delete baseInput_;
-            baseInput_ = in;
+        virtual bool setInput(const snFloat* data, const snSize& dsz){
+            baseInput_.setData(data, dsz);
             return true;
         }
 
-        virtual bool setGradient(SN_Base::Tensor* grad){
-            if (baseGrad_) delete baseGrad_;
-            baseGrad_ = grad;
+        virtual bool setGradient(const snFloat* data, const snSize& dsz){
+            baseGrad_.setData(data, dsz);
             return true;
         }
         
-        virtual bool setWeight(SN_Base::Tensor* weight){
-            if (baseWeight_) delete baseWeight_;
-            baseWeight_ = weight;
+        virtual bool setWeight(const snFloat* data, const snSize& dsz){
+            baseWeight_.setData(data, dsz);
             return true;
         }
 
@@ -270,7 +262,7 @@ namespace SN_Base{
             return basePrms_;
         }
 
-        virtual SN_Base::Tensor* getWeight() const final{
+        virtual const SN_Base::Tensor& getWeight() const final{
             return baseWeight_;
         }
 
@@ -278,11 +270,11 @@ namespace SN_Base{
             return baseBatchNorm_;
         }
 
-        virtual SN_Base::Tensor* getOutput() const final{
+        virtual const SN_Base::Tensor& getOutput() const final{
             return baseOut_;
         }
 
-        virtual SN_Base::Tensor* getGradient() const final{
+        virtual const SN_Base::Tensor& getGradient() const final{
             return baseGrad_;
         }
 
@@ -306,10 +298,10 @@ namespace SN_Base{
         std::string node_;                            ///< The name of the node in which the statement is evaluated
         std::string name_;                            ///< The name of the operator is a specific implementation class
         std::map<std::string, std::string> basePrms_; ///< param's
-        SN_Base::Tensor* baseInput_ = nullptr;        ///< input
-        SN_Base::Tensor* baseWeight_ = nullptr;       ///< weight
-        SN_Base::Tensor* baseGrad_ = nullptr;         ///< gradient
-        SN_Base::Tensor* baseOut_ = nullptr;          ///< output
+        SN_Base::Tensor baseInput_ ;                  ///< input
+        SN_Base::Tensor baseWeight_;                  ///< weight
+        SN_Base::Tensor baseGrad_ ;                   ///< gradient
+        SN_Base::Tensor baseOut_ ;                    ///< output
         batchNorm baseBatchNorm_;                     ///< batch norm
     };
 

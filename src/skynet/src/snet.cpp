@@ -187,20 +187,6 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
         }
         inout_net.operats[n.first] = opr;
     }
-        
-    for (auto& opr : inout_net.operats){
-       
-        if (inout_net.nodes[opr.first].oprName == "Input"){
-            inData_[opr.first] = new SN_Base::Tensor();
-            opr.second->setInput(inData_[opr.first]);
-        }        
-       
-        gradData_[opr.first] = new SN_Base::Tensor();
-        opr.second->setGradient(gradData_[opr.first]);
-        
-        weight_[opr.first] = new SN_Base::Tensor();
-        opr.second->setWeight(weight_[opr.first]);
-    }
             
     return true;
 }
@@ -252,7 +238,7 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
     }
     
     // go back  
-    gradData_["EndNet"]->setData(targetData, osz);
+    operats_["EndNet"]->setGradient(targetData, osz);
 
     operPrm_.lr = lr;
     operPrm_.action = snAction::backward;
@@ -261,8 +247,9 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
 
     // metrics
     if (outAccurate){
+        auto setGrad = operats_["EndNet"]->getGradient();
         auto outTensor = operats_["EndNet"]->getOutput();
-        *outAccurate = calcAccurate(gradData_["EndNet"], outTensor);
+        *outAccurate = calcAccurate(setGrad, outTensor);
     }
 
     return true;
@@ -277,23 +264,23 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
     }
    
     if (isBeginNet_)
-       inData_["BeginNet"]->setData(iLayer, isz);
+        operats_["BeginNet"]->setInput(iLayer, isz);
 
     operPrm_.action = snAction::forward;
     operPrm_.isLerning = isLern;
     engine_->forward(operPrm_);
 
     if (isEndNet_){
-        Tensor* tnsOut = operats_["EndNet"]->getOutput();
+        auto tnsOut = operats_["EndNet"]->getOutput();
 
-        auto tnsOutSz = tnsOut->size();
+        auto tnsOutSz = tnsOut.size();
         if (tnsOutSz != osz){
             statusMess("forward error: tnsOutSz != osz. Must be osz: " +
                 to_string(tnsOutSz.w) + " " + to_string(tnsOutSz.h) + " " + to_string(tnsOutSz.d) + " " + to_string(tnsOutSz.n));
             return false;
         }
 
-        memcpy(outData, tnsOut->getData(), tnsOutSz.size() * sizeof(snFloat));
+        memcpy(outData, tnsOut.getData(), tnsOutSz.size() * sizeof(snFloat));
     }
 
     return true;
@@ -310,14 +297,14 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     if (isEndNet_){
         auto outTensor = operats_["EndNet"]->getOutput();
 
-        auto tsz = outTensor->size();
+        auto tsz = outTensor.size();
         if (tsz != gsz){
             statusMess("backward error: tnsOutSz != gsz. Must be gsz: " +
                 to_string(tsz.w) + " " + to_string(tsz.h) + " " + to_string(tsz.d) + " " + to_string(tsz.n));
             return false;
         }
 
-        gradData_["EndNet"]->setData(gradErr, outTensor->size());
+        operats_["EndNet"]->setGradient(gradErr, gsz);
     }
 
     operPrm_.lr = lr;
@@ -328,12 +315,12 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     return true;
 }
 
-SN_Base::snFloat SNet::calcAccurate(Tensor* targetTens, Tensor* outTens){
+SN_Base::snFloat SNet::calcAccurate(const Tensor& targetTens, const Tensor& outTens){
 
-    snFloat* targetData = targetTens->getData();
-    snFloat* outData = outTens->getData();
+    snFloat* targetData = targetTens.getData();
+    snFloat* outData = outTens.getData();
     
-    size_t accCnt = 0, osz = outTens->size().size();
+    size_t accCnt = 0, osz = outTens.size().size();
     for (size_t i = 0; i < osz; ++i){
 
         if (abs(outData[i] - targetData[i]) < 0.1)
@@ -351,7 +338,7 @@ bool SNet::setWeightNode(const char* nodeName, const SN_Base::snSize& wsz, const
         return false;
     }
         
-    weight_[nodeName]->setData((SN_Base::snFloat*)wData, wsz);
+    operats_[nodeName]->setWeight(wData, wsz);
             
     return true;
 }
@@ -364,11 +351,13 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
         return false;
     }
     
-    wsz = weight_[nodeName]->size();
+    auto weight = operats_[nodeName]->getWeight();
+
+    wsz = weight.size();
 
     *wData = (snFloat*)realloc(*wData, wsz.size() * sizeof(snFloat));
         
-    memcpy(*wData, weight_[nodeName]->getData(), wsz.size() * sizeof(snFloat));
+    memcpy(*wData, weight.getData(), wsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -413,7 +402,7 @@ bool SNet::setInputNode(const char* nodeName, const SN_Base::snSize& isz, const 
         return false;
     }
 
-    inData_[nodeName]->setData((SN_Base::snFloat*)inData, isz);
+    operats_[nodeName]->setInput(inData, isz);
 
     return true;
 }
@@ -427,13 +416,13 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
         return false;
     }
 
-    Tensor* outTns = operats_[nodeName]->getOutput();
+    auto outTns = operats_[nodeName]->getOutput();
 
-    osz = outTns->size();
+    osz = outTns.size();
 
     *outData = (snFloat*)realloc(*outData, osz.size() * sizeof(snFloat));
 
-    memcpy(*outData, outTns->getData(), osz.size() * sizeof(snFloat));
+    memcpy(*outData, outTns.getData(), osz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -452,7 +441,7 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
         return false;
     }
 
-    snSize tsz = gradData_[nodeName]->size();
+    snSize tsz = operats_[nodeName]->getGradient().size();
 
     if (tsz != gsz){
         statusMess("setGradientNode error: tsz != dsz. Must be dsz: " +
@@ -460,7 +449,7 @@ bool SNet::setGradientNode(const char* nodeName, const SN_Base::snSize& gsz, con
         return false;
     }
 
-    gradData_[nodeName]->setData((SN_Base::snFloat*)gData, gsz);
+    operats_[nodeName]->setGradient(gData, gsz);
 
     return true;
 }
@@ -474,11 +463,12 @@ bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::
         return false;
     }
 
-    gsz = gradData_[nodeName]->size();
+    auto grad = operats_[nodeName]->getGradient();
+    gsz = grad.size();
 
     *gData = (snFloat*)realloc(*gData, gsz.size() * sizeof(snFloat));
 
-    memcpy(*gData, gradData_[nodeName]->getData(), gsz.size() * sizeof(snFloat));
+    memcpy(*gData, grad.getData(), gsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -505,8 +495,8 @@ bool SNet::saveAllWeightToFile(const char* filePath){
         snSize lSize;
         for (auto opr : operats_){
 
-            data = weight_[opr.first]->getData();
-            lSize = weight_[opr.first]->size();
+            data = opr.second->getWeight().getData();
+            lSize = opr.second->getWeight().size();
 
             if (data){
                 ofs << opr.first << "_w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
@@ -575,7 +565,7 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
         if (args[1] == "w"){
             dbW.resize(dsz);
             ifs.read((char*)dbW.data(), dsz * sizeof(SN_API::snFloat));
-            weight_[nm]->setData((SN_Base::snFloat*)dbW.data(), lsz);
+            operats_[nm]->setWeight(dbW.data(), lsz);
         }
         else if (args[1] == "bn"){
             if (args[2] == "mean"){

@@ -88,9 +88,9 @@ private:
 
     std::mutex mtxCmn_;
                 
-    std::map<std::string, SN_Base::Tensor*> weight_;            ///< weight node's. key - name node
+  /*  std::map<std::string, SN_Base::Tensor*> weight_;            ///< weight node's. key - name node
     std::map<std::string, SN_Base::Tensor*> inData_;            ///< input data node's. key - name node
-    std::map<std::string, SN_Base::Tensor*> gradData_;          ///< grad data node's. key - name node
+    std::map<std::string, SN_Base::Tensor*> gradData_;          ///< grad data node's. key - name node*/
 
     /// sts callBack
     std::map<std::string, std::pair<SN_API::snUserCBack, SN_API::snUData>> userCBack_;
@@ -113,5 +113,5 @@ private:
  
     bool createNet(SN_Base::Net& inout_net, std::string& out_err);
  
-    SN_Base::snFloat calcAccurate(SN_Base::Tensor* targetTens, SN_Base::Tensor* outTens);
+    SN_Base::snFloat calcAccurate(const SN_Base::Tensor& targetTens, const SN_Base::Tensor& outTens);
 };
