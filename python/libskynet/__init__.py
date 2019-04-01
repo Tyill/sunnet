@@ -32,7 +32,7 @@ import ctypes
 from . import snNet
 from . import snType
 from . import snOperator
-from . import snTF
+from . import snWeight
 
 libname = 'libskynet.so'
 if os.name == 'nt':

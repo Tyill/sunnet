@@ -40,9 +40,15 @@ def c_str(string : str) -> ctypes.c_char_p:
 
 class snLSize(ctypes.Structure):
      _fields_ = [('w', ctypes.c_size_t),
-                ('h', ctypes.c_size_t),
-                ('ch', ctypes.c_size_t),
-                ('bsz', ctypes.c_size_t)]
+                 ('h', ctypes.c_size_t),
+                 ('ch', ctypes.c_size_t),
+                 ('bsz', ctypes.c_size_t)]
+
+class snBNorm(ctypes.Structure):
+     _fields_ = [('mean', ctypes.POINTER(ctypes.c_float)),
+                 ('varce', ctypes.POINTER(ctypes.c_float)),
+                 ('scale', ctypes.POINTER(ctypes.c_float)),
+                 ('schift', ctypes.POINTER(ctypes.c_float))]
 
 snErrCBack = ctypes.CFUNCTYPE(None, ctypes.c_char_p, ctypes.c_void_p)
 

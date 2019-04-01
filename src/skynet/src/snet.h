@@ -87,11 +87,7 @@ private:
     std::map<std::string, SN_Base::OperatorBase*> operats_;     ///< all operators. key - name node
 
     std::mutex mtxCmn_;
-                
-  /*  std::map<std::string, SN_Base::Tensor*> weight_;            ///< weight node's. key - name node
-    std::map<std::string, SN_Base::Tensor*> inData_;            ///< input data node's. key - name node
-    std::map<std::string, SN_Base::Tensor*> gradData_;          ///< grad data node's. key - name node*/
-
+  
     /// sts callBack
     std::map<std::string, std::pair<SN_API::snUserCBack, SN_API::snUData>> userCBack_;
 

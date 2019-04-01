@@ -32,6 +32,7 @@ namespace sn = SN_API;
 
 bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, vector<int>& imgCntDir, map<string, cv::Mat>& images){
     
+    bool ok = false;
     for (int i = 0; i < classCnt; ++i){
 
         if (!fs::exists(fs::path(imgPath + to_string(i) + "/"))) continue;
@@ -48,10 +49,13 @@ bool loadImage(string& imgPath, int classCnt, vector<vector<string>>& imgName, v
             ++cnt; if (cnt > 1000) break;
         }
 
+        if (cnt > 0)
+            ok = true;
+
         imgCntDir[i] = cnt;
     }
 
-    return true;
+    return ok;
 }
 
 
@@ -59,23 +63,17 @@ int main(int argc, char* argv[]){
        
     sn::Net snet;
 
-    snet.addNode("Input", sn::Input(), "C1 C3")
-        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(25, -1, sn::calcMode::CUDA), "P1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "Sum")
-        
-        .addNode("C3", sn::Convolution(15, 0, sn::calcMode::CUDA), "C4")
-        .addNode("C4", sn::Convolution(25, -1, sn::calcMode::CUDA), "P2")
-        .addNode("P2", sn::Pooling(sn::calcMode::CUDA), "Sum")
-
-        .addNode("Sum", sn::Summator(), "FC2")
-
-        .addNode("FC2", sn::FullyConnected(256, sn::calcMode::CUDA), "FC3")
-        .addNode("FC3", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+    snet.addNode("Input", sn::Input(), "C1")
+        .addNode("C1", sn::Convolution(5, 0, sn::calcMode::CPU, sn::batchNormType::beforeActive), "C2")
+        .addNode("C2", sn::Convolution(10, -1, sn::calcMode::CPU, sn::batchNormType::beforeActive), "P1")
+        .addNode("P1", sn::Pooling(sn::calcMode::CPU), "FC2")
+       
+        .addNode("FC2", sn::FullyConnected(256, sn::calcMode::CPU, sn::batchNormType::beforeActive), "FC3")
+        .addNode("FC3", sn::FullyConnected(10, sn::calcMode::CPU), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
 #ifdef WIN32
-     string imgPath = "c:/cpp/skyNet/example/mnist/images/";
+     string imgPath = "c:/cpp/other/skyNet/example/mnist/images/";
 #else
      string imgPath = "/home/alex/CLionProjects/skynet/example/mnist/images/";
 #endif
@@ -101,7 +99,7 @@ int main(int argc, char* argv[]){
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 500; ++k){
+    for (int k = 0; k < 10; ++k){
 
         targetLayer.clear();
        

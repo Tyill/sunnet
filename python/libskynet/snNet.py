@@ -378,10 +378,10 @@ class Net():
             return False
 
         wsize = snLSize()
-        wsize.bsz = weight.shape[0]
-        wsize.ch = weight.shape[1]
-        wsize.h = weight.shape[2]
-        wsize.w = weight.shape[3]
+        wsize.bsz = 1
+        wsize.ch = weight.shape[0]
+        wsize.h = weight.shape[1]
+        wsize.w = weight.shape[2]
         inw = weight.__array_interface__['data'][0]
 
         pfun = _LIB.snSetWeightNode
@@ -390,6 +390,37 @@ class Net():
                          snLSize, ctypes.POINTER(ctypes.c_float))
 
         return pfun(self._net, c_str(nodeName), wsize, snFloat_p(inw))
+
+
+    def setBNormNode(self, nodeName: str, bnvalue: [numpy.ndarray]) -> bool:
+        """
+        set batch norm of node
+        :param nodeName: node name
+        :param bnvalue: set array weight
+        :return: True ok
+        """
+
+        if (not (self._net) and not (self._createNet())):
+            return False
+
+        bnorm = snBNorm()
+        bnorm.mean = snFloat_p(bnvalue[0].__array_interface__['data'][0])
+        bnorm.varce = snFloat_p(bnvalue[1].__array_interface__['data'][0])
+        bnorm.scale = snFloat_p(bnvalue[2].__array_interface__['data'][0])
+        bnorm.schift = snFloat_p(bnvalue[3].__array_interface__['data'][0])
+
+        bnsize = snLSize()
+        bnsize.bsz = 1
+        bnsize.ch = bnvalue[0].shape[0]
+        bnsize.h = bnvalue[0].shape[1]
+        bnsize.w = bnvalue[0].shape[2]
+
+        pfun = _LIB.snSetBatchNormNode
+        pfun.restype = ctypes.c_bool
+        pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
+                         snLSize, snBNorm)
+
+        return pfun(self._net, c_str(nodeName), bnsize, bnorm)
 
 
     def loadAllWeightFromFile(self, weightPath : str) -> bool:
