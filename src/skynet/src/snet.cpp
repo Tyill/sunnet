@@ -499,7 +499,7 @@ bool SNet::saveAllWeightToFile(const char* filePath){
             lSize = opr.second->getWeight().size();
 
             if (data){
-                ofs << opr.first << "_w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+                ofs << opr.first << " w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
                 ofs.write((char*)data, lSize.w * lSize.h * lSize.d * sizeof(float));
             }
 
@@ -510,13 +510,13 @@ bool SNet::saveAllWeightToFile(const char* filePath){
 
             lSize = bn.sz;
             
-            ofs << opr.first << "_bn_mean " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs << opr.first << " bn mean " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
             ofs.write((char*)bn.mean, sz);
-            ofs << opr.first << "_bn_varce " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs << opr.first << " bn varce " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
             ofs.write((char*)bn.varce, sz);
-            ofs << opr.first << "_bn_scale " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs << opr.first << " bn scale " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
             ofs.write((char*)bn.scale, sz);
-            ofs << opr.first << "_bn_schift " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
+            ofs << opr.first << " bn schift " << lSize.w << " " << lSize.h << " " << lSize.d << endl;
             ofs.write((char*)bn.schift, sz);
         }        
     }
@@ -551,39 +551,44 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
         auto opr = SN_Aux::split(str, " ");
         if (opr.empty()) continue;
 
-        auto args = SN_Aux::split(opr[0], "_");
-        string nm = args[0];
+        string nm = opr[0];
 
         if (operats_.find(nm) == operats_.end()){
             statusMess("SN error: node '" + nm + "' not found");
             return false;
         }
-
-        size_t w = stoi(opr[1]), h = stoi(opr[2]), d = stoi(opr[3]), dsz = w * h * d;
-        snSize lsz(w, h, d);
-
-        if (args[1] == "w"){
+               
+        if (opr[1] == "w"){
+        
+            size_t w = stoi(opr[2]), h = stoi(opr[3]), d = stoi(opr[4]), dsz = w * h * d;
+            snSize lsz(w, h, d);
+            
             dbW.resize(dsz);
             ifs.read((char*)dbW.data(), dsz * sizeof(SN_API::snFloat));
             operats_[nm]->setWeight(dbW.data(), lsz);
         }
-        else if (args[1] == "bn"){
-            if (args[2] == "mean"){
+        else if (opr[1] == "bn"){
+
+            size_t w = stoi(opr[3]), h = stoi(opr[4]), d = stoi(opr[5]), dsz = w * h * d;
+            
+            bn.sz = snSize(w, h, d);
+
+            if (opr[2] == "mean"){
                 dbBNMean.resize(dsz);
                 ifs.read((char*)dbBNMean.data(), dsz * sizeof(SN_API::snFloat));
                 bn.mean = dbBNMean.data();
             }
-            else if (args[2] == "varce"){
+            else if (opr[2] == "varce"){
                 dbBNVarce.resize(dsz);
                 ifs.read((char*)dbBNVarce.data(), dsz * sizeof(SN_API::snFloat));
                 bn.varce = dbBNVarce.data();
             }
-            else if (args[2] == "scale"){
+            else if (opr[2] == "scale"){
                 dbBNScale.resize(dsz);
                 ifs.read((char*)dbBNScale.data(), dsz * sizeof(SN_API::snFloat));
                 bn.scale = dbBNScale.data();
             }
-            else if (args[2] == "schift"){
+            else if (opr[2] == "schift"){
                 dbBNShift.resize(dsz);
                 ifs.read((char*)dbBNShift.data(), dsz * sizeof(SN_API::snFloat));
                 bn.schift = dbBNShift.data();
@@ -592,7 +597,6 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
 
         if (bn.mean &&  bn.varce &&  bn.scale &&  bn.schift){
 
-            bn.sz = lsz;
             operats_[nm]->setBatchNorm(bn);
 
             bn = batchNorm();
