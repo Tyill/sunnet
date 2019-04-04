@@ -287,7 +287,7 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
 
 #ifndef SN_CUDA
 
-void Deconvolution::iniParamCUDA(const snSize& insz, const snSize& outsz, const deconvParams& prms, void** gpuPrm){
+void Deconvolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz, const deconvParams& prms, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -314,7 +314,7 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
 
 #ifndef SN_OpenCL
 
-void Deconvolution::iniParamOCL(const snSize& insz, const snSize& outsz, const deconvParams& prms, void** gpuPrm){
+void Deconvolution::iniParamOCL(bool isLern, const snSize& insz, const snSize& outsz, const deconvParams& prms, void** gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

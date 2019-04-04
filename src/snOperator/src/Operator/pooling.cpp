@@ -135,7 +135,7 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
-        updateConfig(insz);
+        updateConfig(operPrm.isLerning, insz);
     }
        
     /// copy with offset padding for each image
@@ -185,7 +185,7 @@ void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operP
     }
 }
 
-void Pooling::updateConfig(const snSize& newsz){
+void Pooling::updateConfig(bool isLern, const snSize& newsz){
     
     size_t& kernel = poolPrms_.kernel,
           & paddingW = poolPrms_.paddingW,
@@ -217,12 +217,14 @@ void Pooling::updateConfig(const snSize& newsz){
     }
         
     baseOut_.resize(outSz);
-    baseGrad_.resize(newsz);
 
     outInx_.resize(outSz.size(), 0);
-       
+    
+    if (isLern)
+       baseGrad_.resize(newsz);
+    
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(inDataExpSz_, outSz, poolPrms_, &gpuParams_);
+        iniParamCUDA(isLern, inDataExpSz_, outSz, poolPrms_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(inDataExpSz_, outSz, poolPrms_, &gpuParams_);
+        iniParamOCL(isLern, inDataExpSz_, outSz, poolPrms_, &gpuParams_);
 }

@@ -51,7 +51,7 @@ struct gpuParams{
     size_t inszMem = 0;
 };
 
-void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, void** pGpuPrm){
+void FullyConnected::iniParamCUDA(bool isLern, const snSize& insz, size_t kernel, void** pGpuPrm){
  
     cudaSetDevice(gpuDeviceId_);
 
@@ -79,8 +79,11 @@ void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, void** pGpu
             cuCHECK(cudaMalloc(&gpuPrm->d_in, bsz * ida * sizeof(snFloat)));
             cuCHECK(cudaMalloc(&gpuPrm->d_w, (ida + 1) * kernel * sizeof(snFloat)));
             cuCHECK(cudaMalloc(&gpuPrm->d_out, bsz * kernel * sizeof(snFloat)));
-            cuCHECK(cudaMalloc(&gpuPrm->d_grout, bsz * ida * sizeof(snFloat)));
-            cuCHECK(cudaMalloc(&gpuPrm->d_dw, (ida + 1) * kernel * sizeof(snFloat)));
+
+            if (isLern){
+                cuCHECK(cudaMalloc(&gpuPrm->d_grout, bsz * ida * sizeof(snFloat)));
+                cuCHECK(cudaMalloc(&gpuPrm->d_dw, (ida + 1) * kernel * sizeof(snFloat)));
+            }
         }
     }
     else if (!gpuClearMem_ && (gpuPrm->inszMem < ida * bsz)){
@@ -88,14 +91,18 @@ void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, void** pGpu
         cuCHECK(cudaFree(gpuPrm->d_in));    gpuPrm->d_in = 0;
         cuCHECK(cudaFree(gpuPrm->d_w));     gpuPrm->d_w = 0;
         cuCHECK(cudaFree(gpuPrm->d_out));   gpuPrm->d_out = 0;
-        cuCHECK(cudaFree(gpuPrm->d_grout)); gpuPrm->d_grout = 0;
-        cuCHECK(cudaFree(gpuPrm->d_dw));    gpuPrm->d_dw = 0;
-
+     
         cuCHECK(cudaMalloc(&gpuPrm->d_in, bsz * ida * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_w, (ida + 1) * kernel * sizeof(snFloat)));
         cuCHECK(cudaMalloc(&gpuPrm->d_out, bsz * kernel * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_grout, bsz * ida * sizeof(snFloat)));
-        cuCHECK(cudaMalloc(&gpuPrm->d_dw, (ida + 1) * kernel * sizeof(snFloat)));
+     
+        if (isLern){
+            cuCHECK(cudaFree(gpuPrm->d_grout)); gpuPrm->d_grout = 0;
+            cuCHECK(cudaFree(gpuPrm->d_dw));    gpuPrm->d_dw = 0;
+
+            cuCHECK(cudaMalloc(&gpuPrm->d_grout, bsz * ida * sizeof(snFloat)));
+            cuCHECK(cudaMalloc(&gpuPrm->d_dw, (ida + 1) * kernel * sizeof(snFloat)));
+        }
 
         gpuPrm->inszMem = ida * bsz;
     }
@@ -113,8 +120,11 @@ void FullyConnected::freeParamCUDA(void* gpuPrms){
     cuCHECK(cudaFree(gpuPrm->d_in));
     cuCHECK(cudaFree(gpuPrm->d_out));
     cuCHECK(cudaFree(gpuPrm->d_w));
-    cuCHECK(cudaFree(gpuPrm->d_dw));
-    cuCHECK(cudaFree(gpuPrm->d_grout));
+
+    if (gpuPrm->d_grout){ // isLern
+        cuCHECK(cudaFree(gpuPrm->d_grout));
+        cuCHECK(cudaFree(gpuPrm->d_dw));
+    }
 }
 
 __global__ void cuFwdBias(size_t kernel, snSize insz, snFloat* weight, snFloat* output){

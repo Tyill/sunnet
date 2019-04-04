@@ -237,7 +237,7 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
-        updateConfig(insz);
+        updateConfig(operPrm.isLerning, insz);
     }
 
     snFloat* pInTns = inTns.getData();
@@ -333,7 +333,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
     }        
 }
 
-void Deconvolution::updateConfig(const snSize& newsz){
+void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
     
     size_t stp = deconvParams_.fWidth * deconvParams_.fHeight * deconvParams_.kernel,
         ntp = (stp + 1) * newsz.d;
@@ -354,12 +354,15 @@ void Deconvolution::updateConfig(const snSize& newsz){
     outSz.h = (newsz.h - 1) * deconvParams_.stride + deconvParams_.fHeight;
     
     baseOut_.resize(outSz);
-    baseGrad_.resize(newsz);
-        
-    // aux array
-    auxParams_["dWeight"].resize(ntp, 0);
-    auxParams_["dWPrev"].resize(ntp, 0);
-    auxParams_["dWGrad"].resize(ntp, 0);
+
+    if (isLern){
+        baseGrad_.resize(newsz);
+
+        // aux array
+        auxParams_["dWeight"].resize(ntp, 0);
+        auxParams_["dWPrev"].resize(ntp, 0);
+        auxParams_["dWGrad"].resize(ntp, 0);
+    }
 
     size_t osz = outSz.w * outSz.h * outSz.d;
     
@@ -368,18 +371,21 @@ void Deconvolution::updateConfig(const snSize& newsz){
         auxParams_["bn_varce"].resize(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
         auxParams_["bn_scale"].resize(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
         auxParams_["bn_schift"].resize(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
-        auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_dScale"].resize(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
-        auxParams_["bn_dSchift"].resize(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"].resize(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+      
+        if (isLern){
+            auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+            auxParams_["bn_dScale"].resize(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
+            auxParams_["bn_dSchift"].resize(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
+            auxParams_["bn_onc"].resize(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+        }
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  
 
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(newsz, outSz, deconvParams_, &gpuParams_);
+        iniParamCUDA(isLern, newsz, outSz, deconvParams_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(newsz, outSz, deconvParams_, &gpuParams_);
+        iniParamOCL(isLern, newsz, outSz, deconvParams_, &gpuParams_);
 } 
 
 

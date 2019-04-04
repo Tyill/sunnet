@@ -223,7 +223,7 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
 
 #ifndef SN_CUDA
 
-void Pooling::iniParamCUDA(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
+void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -246,7 +246,7 @@ void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size
 
 #ifndef SN_OpenCL
 
-void Pooling::iniParamOCL(const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
+void Pooling::iniParamOCL(bool isLern, const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 

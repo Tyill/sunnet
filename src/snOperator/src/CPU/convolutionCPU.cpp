@@ -672,7 +672,7 @@ void Convolution::backwardCPU_G(const convParams& prms,
 #ifndef SN_CUDA
 
 /// init aux params CUDA          
-void Convolution::iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+void Convolution::iniParamCUDA(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
     const convParams&, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
@@ -703,7 +703,7 @@ void Convolution::backwardCUDA_G(const convParams&,
 #ifndef SN_OpenCL
 
 /// init aux params OpenCL          
-void Convolution::iniParamOCL(const snSize& insz, const snSize& outsz,
+void Convolution::iniParamOCL(bool isLern, const snSize& insz, const snSize& outsz,
     const convParams&, void** gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }

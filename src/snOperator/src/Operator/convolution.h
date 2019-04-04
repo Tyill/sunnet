@@ -89,7 +89,7 @@ private:
 
     void load(std::map<std::string, std::string>& prms);
 
-    void updateConfig(const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
+    void updateConfig(bool isLern, const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
          
         
     void forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);
@@ -127,7 +127,7 @@ private:
     /// CUDA ///////////////////////////
 
     /// init aux params
-    void iniParamCUDA(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+    void iniParamCUDA(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
         const convParams&, void** gpuPrm);
    
     /// free aux params
@@ -165,7 +165,7 @@ private:
     /// OpenCL ///////////////////////////
 
     /// init aux params OpenCL          
-    void iniParamOCL(const SN_Base::snSize& insz, const SN_Base::snSize& outsz, 
+    void iniParamOCL(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
         const convParams&, void** gpuPrm);
 
     /// free aux params OpenCL          

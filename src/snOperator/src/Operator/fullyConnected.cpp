@@ -233,7 +233,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
 
     if (insz != inSzMem_){
         inSzMem_ = insz;
-        updateConfig(insz);
+        updateConfig(operPrm.isLerning, insz);
     }
              
     /// calculation of the output values of neurons
@@ -327,7 +327,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     }   
 }
 
-void FullyConnected::updateConfig(const snSize& newsz){
+void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     
     size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
         
@@ -341,20 +341,23 @@ void FullyConnected::updateConfig(const snSize& newsz){
     }
     
     baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));
-    baseGrad_.resize(newsz);
-           
-    // aux array
-    auxParams_["dWeight"].resize(ntp, 0);
-    auxParams_["dWPrev"].resize(ntp, 0);
-    auxParams_["dWGrad"].resize(ntp, 0);
 
-    if (batchNormType_ != batchNormType::none){
-        auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_onc"].resize(newsz.n, 1.F);          baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+    if (isLern){
+        baseGrad_.resize(newsz);
+
+        // aux array
+        auxParams_["dWeight"].resize(ntp, 0);
+        auxParams_["dWPrev"].resize(ntp, 0);
+        auxParams_["dWGrad"].resize(ntp, 0);
+
+        if (batchNormType_ != batchNormType::none){
+            auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+            auxParams_["bn_onc"].resize(newsz.n, 1.F);          baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+        }
     }
-    
+
     if (calcMode_ == calcMode::CUDA)
-        iniParamCUDA(newsz, kernel_, &gpuParams_);
+        iniParamCUDA(isLern, newsz, kernel_, &gpuParams_);
     else if (calcMode_ == calcMode::OpenCL)
-        iniParamOCL(newsz, kernel_, &gpuParams_);
+        iniParamOCL(isLern, newsz, kernel_, &gpuParams_);
 } 

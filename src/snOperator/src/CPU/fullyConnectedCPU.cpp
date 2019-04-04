@@ -147,7 +147,7 @@ void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize&
 
 #ifndef SN_CUDA
 
-void FullyConnected::iniParamCUDA(const snSize& insz, size_t kernel, void** gpuPrm){
+void FullyConnected::iniParamCUDA(bool isLern, const snSize& insz, size_t kernel, void** gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -174,7 +174,7 @@ void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize
 
 #ifndef SN_OpenCL
 
-void FullyConnected::iniParamOCL(const SN_Base::snSize& insz, size_t kernel, void** gpuPrm){
+void FullyConnected::iniParamOCL(bool isLern, const SN_Base::snSize& insz, size_t kernel, void** gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
