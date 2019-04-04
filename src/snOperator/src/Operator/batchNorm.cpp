@@ -80,7 +80,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
 
         if (outsz != inSzMem_){
             inSzMem_ = outsz;
-            updateConfig(outsz);
+            updateConfig(operPrm.isLerning, outsz);
         }
 
         switch (bnType_){        
@@ -125,7 +125,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
     return vector<string>();
 }
 
-void BatchNorm::updateConfig(const snSize& newsz){
+void BatchNorm::updateConfig(bool isLern, const snSize& newsz){
         
     size_t osz = newsz.w * newsz.h * newsz.d;
 
@@ -133,10 +133,13 @@ void BatchNorm::updateConfig(const snSize& newsz){
     auxParams_["bn_varce"] = vector<snFloat>(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
     auxParams_["bn_scale"] = vector<snFloat>(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
     auxParams_["bn_schift"] = vector<snFloat>(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
-    auxParams_["bn_norm"] = vector<snFloat>(osz * newsz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-    auxParams_["bn_dScale"] = vector<snFloat>(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
-    auxParams_["bn_dSchift"] = vector<snFloat>(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-    auxParams_["bn_onc"] = vector<snFloat>(newsz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+ 
+    if (isLern){
+        auxParams_["bn_norm"] = vector<snFloat>(osz * newsz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
+        auxParams_["bn_onc"] = vector<snFloat>(newsz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+    }
     baseBatchNorm_.sz = newsz;
     baseBatchNorm_.sz.n = 1;
 }

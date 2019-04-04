@@ -48,5 +48,5 @@ private:
     SN_Base::snSize inSzMem_;                                         ///< insz mem
 
 
-    void updateConfig(const SN_Base::snSize& newsz);
+    void updateConfig(bool isLern, const SN_Base::snSize& newsz);
 };
