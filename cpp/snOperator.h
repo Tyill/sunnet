@@ -65,7 +65,7 @@ namespace SN_API{
 
     public:
 
-        uint32_t kernel;                           ///< Number of hidden neurons. !Required parameter [0..)
+        uint32_t units;                            ///< Number of out neurons. !Required parameter [0..)
         active act = active::relu;                 ///< Activation function type. Optional parameter
         optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
         snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -74,13 +74,14 @@ namespace SN_API{
         uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
+        bool useBias = true;                       ///< +bias. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
         snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         snFloat decayMomentWGr = 0.99F;            ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
         snFloat lmbRegular = 0.001F;               ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
         
-        FullyConnected(uint32_t kernel_,                          
+        FullyConnected(uint32_t units_,
                        active act_ = active::relu,                
                        optimizer opt_ = optimizer::adam,          
                        snFloat dropOut_ = 0.0,                    
@@ -88,18 +89,18 @@ namespace SN_API{
                        calcMode mode_ = calcMode::CPU,            
                        uint32_t gpuDeviceId_ = 0):
                        
-            kernel(kernel_), act(act_), opt(opt_), 
+            units(units_), act(act_), opt(opt_),
             dropOut(dropOut_), bnorm(bnorm_), mode(mode_), gpuDeviceId(gpuDeviceId_){};
 
-        FullyConnected(uint32_t kernel_, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
-            kernel(kernel_), mode(mode_), bnorm(bnorm_){}
+        FullyConnected(uint32_t units_, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
+            units(units_), mode(mode_), bnorm(bnorm_){}
 
         ~FullyConnected(){};
               
         std::string getParamsJn(){
 
             std::stringstream ss;
-            ss << "{\"kernel\":\"" << kernel << "\","
+            ss << "{\"units\":\"" << units << "\","
                 "\"active\":\"" << activeStr(act) << "\","
                 "\"weightInit\":\"" << weightInitStr(wini) << "\","
                 "\"batchNorm\":\"" << batchNormTypeStr(bnorm) << "\","
@@ -112,6 +113,7 @@ namespace SN_API{
                 "\"mode\":\"" << calcModeStr(mode) << "\","
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
                 "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
+                "\"useBias\":\"" << (useBias ? 1 : 0) << "\","
                 "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
                 "}";
 
@@ -130,7 +132,7 @@ namespace SN_API{
 
     public:
         
-        uint32_t kernel;                           ///< Number of output layers. !Required parameter [0..)
+        uint32_t filters;                          ///< Number of output layers. !Required parameter [0..)
         active act = active::relu;                 ///< Activation function type. Optional parameter
         optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
         snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -144,6 +146,7 @@ namespace SN_API{
         uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
+        bool useBias = true;                       ///< +bias. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
         snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         snFloat decayMomentWGr = 0.99F;            ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
@@ -151,7 +154,7 @@ namespace SN_API{
         snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
 
 
-        Convolution(uint32_t kernel_,              
+        Convolution(uint32_t filters_,              
             active act_ = active::relu,                
             optimizer opt_ = optimizer::adam,          
             snFloat dropOut_ = 0.0,                    
@@ -164,19 +167,19 @@ namespace SN_API{
             calcMode mode_ = calcMode::CPU,            
             uint32_t gpuDeviceId_ = 0):
             
-            kernel(kernel_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
+            filters(filters_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
             fWidth(fWidth_), fHeight(fHeight_), padding(padding_), stride(stride_),
             dilate(dilate_), mode(mode_), gpuDeviceId(gpuDeviceId_){}           
        
-        Convolution(uint32_t kernel_, int padding_ = 0, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
-            kernel(kernel_), padding(padding_), mode(mode_), bnorm(bnorm_){}
+        Convolution(uint32_t filters_, int padding_ = 0, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
+            filters(filters_), padding(padding_), mode(mode_), bnorm(bnorm_){}
 
         ~Convolution(){};            
       
         std::string getParamsJn(){
 
             std::stringstream ss;
-            ss << "{\"kernel\":\"" << kernel << "\","
+            ss << "{\"filters\":\"" << filters << "\","
                 "\"fWidth\":\"" << fWidth << "\","
                 "\"fHeight\":\"" << fHeight << "\","
                 "\"padding\":\"" << padding << "\","
@@ -194,6 +197,7 @@ namespace SN_API{
                 "\"mode\":\"" << calcModeStr(mode) << "\","
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
                 "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
+                "\"useBias\":\"" << (useBias ? 1 : 0) << "\","
                 "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
                 "}";
 

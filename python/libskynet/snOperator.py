@@ -41,7 +41,7 @@ class FullyConnected():
     '''Fully connected layer'''
 
     _params = {
-    'kernel': '0',                          # Number of hidden neurons. !Required parameter [0..)
+    'units': '0',                           # Number of out neurons. !Required parameter [0..)
     'active': active.relu.value,            # Activation function type. Optional parameter
     'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
     'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
@@ -49,7 +49,8 @@ class FullyConnected():
     'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
     'gpuDeviceId': '0',                     # GPU Id. Optional parameter
     'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
-    'freeze': '0',                           # Do not change weights. Optional parameter
+    'freeze': '0',                          # Do not change weights. Optional parameter
+	'useBias': '1',                         # +bias. Optional parameter
     'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
     'decayMomentDW': '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
     'decayMomentWGr': '0.99',               # Optimizer of weights moment change of prev. Optional parameter
@@ -58,7 +59,7 @@ class FullyConnected():
     }
 
     def __init__(self,
-                 kernel,
+                 units,
                  act=active.relu,
                  opt=optimizer.adam,
                  dropOut=0.0,
@@ -67,7 +68,7 @@ class FullyConnected():
                  gpuDeviceId=0,
                  gpuClearMem=False,
                  freeze=False):
-        self._params['kernel'] = str(kernel)
+        self._params['units'] = str(units)
         self._params['active'] = act.value
         self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
@@ -78,17 +79,17 @@ class FullyConnected():
         self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
-                 kernel,
+                 units,
                  mode=calcMode.CPU,
                  bnorm=batchNormType.none):
-        self._params['kernel'] = str(kernel)
+        self._params['units'] = str(units)
         self._params['mode'] = mode.value
         self._params['batchNorm'] = bnorm.value
 
     def __init__(self,
-                 kernel,
+                 units,
                  act=active.relu):
-        self._params['kernel'] = str(kernel)
+        self._params['units'] = str(units)
         self._params['active'] = act.value
 
     def getParams(self):
@@ -102,12 +103,12 @@ class Convolution():
     '''Convolution layer'''
 
     _params = {
-    'kernel': '0',                          # Number of output layers. !Required parameter [0..)
-    'fWidth': '3',                           # Width of mask. Optional parameter(> 0)
-    'fHeight': '3',                          # Height of mask. Optional parameter(> 0)
-    'padding': '0',                          # Padding around the edges. Optional parameter
-    'stride': '1',                            # Mask movement step. Optional parameter(> 0)
-    'dilate': '1',                           # Expansion mask. Optional parameter(> 0)
+    'filters': '0',                         # Number of output layers. !Required parameter [0..)
+    'fWidth': '3',                          # Width of mask. Optional parameter(> 0)
+    'fHeight': '3',                         # Height of mask. Optional parameter(> 0)
+    'padding': '0',                         # Padding around the edges. Optional parameter
+    'stride': '1',                          # Mask movement step. Optional parameter(> 0)
+    'dilate': '1',                          # Expansion mask. Optional parameter(> 0)
     'active': active.relu.value,            # Activation function type. Optional parameter
     'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
     'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
@@ -115,7 +116,8 @@ class Convolution():
     'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
     'gpuDeviceId': '0',                     # GPU Id. Optional parameter
     'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
-    'freeze': '0',                           # Do not change weights. Optional parameter
+    'freeze': '0',                          # Do not change weights. Optional parameter
+	'useBias': '1',                         # +bias. Optional parameter
     'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
     'decayMomentDW': '0.9',                 # Optimizer of weights moment change. Optional parameter [0..1.F]
     'decayMomentWGr': '0.99',               # Optimizer of weights moment change of prev. Optional parameter
@@ -124,7 +126,7 @@ class Convolution():
     }
 
     def __init__(self,
-                 kernel,
+                 filters,
                  padding=0,
                  act=active.relu,
                  opt=optimizer.adam,
@@ -134,7 +136,7 @@ class Convolution():
                  gpuDeviceId=0,
                  gpuClearMem=False,
                  freeze=False):
-        self._params['kernel'] = str(kernel)
+        self._params['filters'] = str(filters)
         self._params['padding'] = str(padding)
         self._params['active'] = act.value
         self._params['optimizer'] = opt.value
@@ -146,13 +148,13 @@ class Convolution():
         self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
-                 kernel,
+                 filters,
                  kernelSz,
                  padding=0,
                  stride=1,
                  bnorm=batchNormType.none,
                  act=active.relu):
-        self._params['kernel'] = str(kernel)
+        self._params['filters'] = str(filters)
         self._params['fWidth'] = str(kernelSz[0])
         self._params['fHeight'] = str(kernelSz[1])
         self._params['padding'] = str(padding)

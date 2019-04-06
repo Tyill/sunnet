@@ -51,16 +51,19 @@ FullyConnected::~FullyConnected(){
 
 void FullyConnected::load(std::map<std::string, std::string>& prms){
         
-    if ((prms.find("kernel") != prms.end()) && SN_Aux::is_number(prms["kernel"])){
+    if ((prms.find("units") != prms.end()) && SN_Aux::is_number(prms["units"])){
 
-        size_t kernel = stoi(prms["kernel"]);
+        size_t kernel = stoi(prms["units"]);
         if (kernel > 0)
             kernel_ = kernel;
         else
-            ERROR_MESS("param 'kernel' <= 0");
+            ERROR_MESS("param 'units' <= 0");
     }
     else
-        ERROR_MESS("not found (or not numder) param 'kernel'");
+        ERROR_MESS("not found (or not numder) param 'units'");
+
+    if (prms.find("useBias") != prms.end())
+        useBias_ = prms["useBias"] == "1";
 
     if (prms.find("batchNorm") != prms.end()){
 
@@ -235,14 +238,20 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
         inSzMem_ = insz;
         updateConfig(operPrm.isLerning, insz);
     }
-             
+    
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_.getData();
-        
+    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    
+    // +bias?
+    if (!useBias_){
+        size_t stepByN = insz.w * insz.h * insz.d * kernel_;
+        memset(weight + stepByN, 0, kernel_ * sizeof(snFloat));
+    }
+
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(kernel_, insz, inTns.getData(), baseWeight_.getData(), out); break;
-    case calcMode::CUDA:   forwardCUDA(kernel_, insz, inTns.getData(), baseWeight_.getData(), out, gpuParams_); break;
-    case calcMode::OpenCL: forwardOCL(kernel_, insz, inTns.getData(), baseWeight_.getData(), out, gpuParams_); break;
+    case calcMode::CPU:    forwardCPU(kernel_, insz, inTns.getData(), weight, out); break;
+    case calcMode::CUDA:   forwardCUDA(kernel_, insz, inTns.getData(), weight, out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(kernel_, insz, inTns.getData(), weight, out, gpuParams_); break;
     }
 
     /// dropOut

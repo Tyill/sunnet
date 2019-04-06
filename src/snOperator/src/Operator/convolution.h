@@ -52,6 +52,7 @@ private:
         size_t dilate = 1;                                       ///< expansion mask
         size_t stride = 1;                                       ///< step mask
         size_t paddingSet = 0, paddingH = 0, paddingW = 0;       ///< padding layer
+        bool useBias_ = true;
     };
 
     convParams convPrms_;

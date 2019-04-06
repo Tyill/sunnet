@@ -66,7 +66,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
         
-    setIntParam("kernel", false, true, convPrms_.kernel);
+    setIntParam("filters", false, true, convPrms_.kernel);
     setIntParam("fWidth", false, false, convPrms_.fWidth);
     setIntParam("fHeight", false, false, convPrms_.fHeight);
     
@@ -77,6 +77,9 @@ void Convolution::load(std::map<std::string, std::string>& prms){
 
     if (prms.find("checkPadding") != prms.end())
         isCheckPadding_ = prms["checkPadding"] == "1";
+
+    if (prms.find("useBias") != prms.end())
+        convPrms_.useBias_ = prms["useBias"] == "1";
 
     setIntParam("stride", false, false, convPrms_.stride);
     setIntParam("dilate", false, false, convPrms_.dilate);
@@ -263,6 +266,13 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     /// calculation of the output values
     snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
     snSize outsz = baseOut_.size();
+
+    // +bias?
+    if (!convPrms_.useBias_){
+        size_t kernel = convPrms_.kernel,
+               stepByN = convPrms_.fWidth * convPrms_.fHeight * insz.d * kernel;
+        memset(weight + stepByN, 0, kernel * sizeof(snFloat));
+    }
 
     switch (calcMode_){
     case calcMode::CPU:    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out); break;

@@ -61,7 +61,7 @@ namespace SN_API
     /// </summary>
     public class FullyConnected : IOperator
     {
-        public uint kernel;                                        ///< Number of hidden neurons. !Required parameter [0..)
+        public uint units;                                         ///< Number of out neurons. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
         public optimizer opt = new optimizer(optimizer.type.adam); ///< Optimizer of weights. Optional parameter
         public float dropOut = 0.0f;                               ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -70,13 +70,14 @@ namespace SN_API
         public uint gpuDeviceId = 0;                               ///< GPU Id. Optional parameter
         public bool gpuClearMem = false;                           ///< Clear memory GPU. Optional parameter
         public bool freeze = false;                                ///< Do not change weights. Optional parameter
+		public bool useBias = true;                                ///< +bias. Optional parameter
         public weightInit wini = new weightInit(weightInit.type.he); ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;                         ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;                       ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
         public float lmbRegular = 0.001F;                          ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;                         ///< Learning rate for batch norm coef. Optional parameter [0..)
         
-        public FullyConnected(uint kernel_,                          
+        public FullyConnected(uint units_,                          
                        active.type act_ = active.type.relu,                
                        optimizer.type opt_ = optimizer.type.adam,          
                        float dropOut_ = 0.0f,                    
@@ -84,7 +85,7 @@ namespace SN_API
                        calcMode.type mode_ = calcMode.type.CPU,            
                        uint gpuDeviceId_ = 0)
         {                                   
-            kernel = kernel_;
+            units = units_;
             act = new active(act_);
             opt = new optimizer(opt_); 
             dropOut = dropOut_;
@@ -93,10 +94,10 @@ namespace SN_API
             gpuDeviceId = gpuDeviceId_;
         }
 
-        public FullyConnected(uint kernel_, calcMode.type mode_ = calcMode.type.CPU, 
+        public FullyConnected(uint units_, calcMode.type mode_ = calcMode.type.CPU, 
             batchNormType.type bnorm_ = batchNormType.type.none)
         {        
-            kernel = kernel_;            
+            units = units_;            
             bnorm = new batchNormType(bnorm_);
             mode = new calcMode(mode_);  
         }
@@ -104,7 +105,7 @@ namespace SN_API
         public string getParamsJn()
         {
 
-            string ss = "{\"kernel\":\"" + kernel.ToString() + "\"," +
+            string ss = "{\"units\":\"" + units.ToString() + "\"," +
                          "\"active\":\"" + act.str() + "\"," +
                          "\"weightInit\":\"" + wini.str() + "\"," +
                          "\"batchNorm\":\"" + bnorm.str() + "\"," +
@@ -117,6 +118,7 @@ namespace SN_API
                          "\"mode\":\"" + mode.str() + "\"," +
                          "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                          "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
+						 "\"useBias\":\"" + (useBias ? "1" : "0") + "\"," +
                          "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
                          "}";
 
@@ -135,7 +137,7 @@ namespace SN_API
     public class Convolution : IOperator
     {
                    
-        public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
+        public uint filters;                          ///< Number of output layers. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
         public optimizer opt = new optimizer(optimizer.type.adam); ///< Optimizer of weights. Optional parameter
         public float dropOut = 0.0f;                  ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -149,13 +151,14 @@ namespace SN_API
         public uint gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
         public bool gpuClearMem = false;              ///< Clear memory GPU. Optional parameter
         public bool freeze = false;                   ///< Do not change weights. Optional parameter
+        public bool useBias = true;                   ///< +bias. Optional parameter
         public weightInit wini = new weightInit(weightInit.type.he);   ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;            ///< Optimizer of weights moment change. Optional parameter [0..1.F]
         public float decayMomentWGr = 0.99F;          ///< Optimizer of weights moment change of prev. Optional parameter [0..1.F]
         public float lmbRegular = 0.001F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;            ///< Learning rate for batch norm coef. Optional parameter [0..)
         
-        public Convolution(uint kernel_,              
+        public Convolution(uint filters_,              
             active.type act_ = active.type.relu,                
             optimizer.type opt_ = optimizer.type.adam,          
             float dropOut_ = 0.0F,                    
@@ -169,7 +172,7 @@ namespace SN_API
             uint gpuDeviceId_ = 0)
             {
                         
-            kernel = kernel_;
+            filters = filters_;
             act = new active(act_);
             opt = new optimizer(opt_);
             dropOut  =dropOut_;
@@ -183,10 +186,10 @@ namespace SN_API
             gpuDeviceId = gpuDeviceId_;
         }
        
-        public Convolution(uint kernel_, int padding_ = 0, calcMode.type mode_ = calcMode.type.CPU, 
+        public Convolution(uint filters_, int padding_ = 0, calcMode.type mode_ = calcMode.type.CPU, 
             batchNormType.type bnorm_ = batchNormType.type.none)
         {
-            kernel = kernel_;
+            filters = filters_;
             padding = padding_;
             mode = new calcMode(mode_);
             bnorm = new batchNormType(bnorm_);
@@ -195,7 +198,7 @@ namespace SN_API
         public string getParamsJn()
         {
 
-            string ss = "{\"kernel\":\"" + kernel.ToString() + "\"," +
+            string ss = "{\"filters\":\"" + filters.ToString() + "\"," +
                 "\"fWidth\":\"" + fWidth.ToString() + "\"," +
                 "\"fHeight\":\"" + fHeight.ToString() + "\"," +
                 "\"padding\":\"" + padding.ToString() + "\"," +
@@ -213,6 +216,7 @@ namespace SN_API
                 "\"mode\":\"" + mode.str() + "\"," +
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
+				"\"useBias\":\"" + (useBias ? "1" : "0") + "\"," +
                 "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
                 "}";
 

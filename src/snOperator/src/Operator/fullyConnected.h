@@ -54,6 +54,7 @@ private:
      
     const SN_Base::Tensor* inputMem_ = nullptr;
 
+    bool useBias_ = true;
     bool isFreeze_ = false;                                   ///< not change weight
     bool gpuClearMem_ = false;                                ///< free gpu mem
 
