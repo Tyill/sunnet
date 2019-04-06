@@ -173,7 +173,7 @@ class Deconvolution():
     '''Deconvolution layer'''
 
     _params = {
-        'kernel': '0',                         # Number of output layers. !Required parameter [0..)
+        'filters': '0',                        # Number of output layers. !Required parameter [0..)
         'fWidth': '3',                         # Width of mask. Optional parameter(> 0)
         'fHeight': '3',                        # Height of mask. Optional parameter(> 0)
         'stride': '2',                         # Mask movement step. Optional parameter(> 0)
@@ -193,7 +193,7 @@ class Deconvolution():
     }
 
     def __init__(self,
-                 kernel,
+                 filters,
                  act=active.relu,
                  opt=optimizer.adam,
                  dropOut=0.0,
@@ -202,7 +202,7 @@ class Deconvolution():
                  gpuDeviceId=0,
                  gpuClearMem=False,
                  freeze=False):
-        self._params['kernel'] = str(kernel)
+        self._params['filters'] = str(filters)
         self._params['active'] = act.value
         self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
@@ -213,10 +213,10 @@ class Deconvolution():
         self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
-                 kernel,
+                 filters,
                  mode=calcMode.CPU,
                  bnorm=batchNormType.none):
-        self._params['kernel'] = str(kernel)
+        self._params['filters'] = str(filters)
         self._params['mode'] = mode.value
         self._params['batchNorm'] = bnorm.value
 

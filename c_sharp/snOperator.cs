@@ -236,7 +236,7 @@ namespace SN_API
     public class Deconvolution : IOperator
     {
 
-        public uint kernel;                           ///< Number of output layers. !Required parameter [0..)
+        public uint filters;                          ///< Number of output layers. !Required parameter [0..)
         public active act = new active(active.type.relu);          ///< Activation function type. Optional parameter
         public optimizer opt = new optimizer(optimizer.type.adam); ///< Optimizer of weights. Optional parameter
         public float dropOut = 0.0f;                  ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -254,7 +254,7 @@ namespace SN_API
         public float lmbRegular = 0.001F;             ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         public float batchNormLr = 0.001F;            ///< Learning rate for batch norm coef. Optional parameter [0..)
 
-        public Deconvolution(uint kernel_,
+        public Deconvolution(uint filters_,
             active.type act_ = active.type.relu,
             optimizer.type opt_ = optimizer.type.adam,
             float dropOut_ = 0.0F,
@@ -266,7 +266,7 @@ namespace SN_API
             uint gpuDeviceId_ = 0)
         {
 
-            kernel = kernel_;
+            filters = filters_;
             act = new active(act_);
             opt = new optimizer(opt_);
             dropOut = dropOut_;
@@ -278,10 +278,10 @@ namespace SN_API
             gpuDeviceId = gpuDeviceId_;
         }
 
-        public Deconvolution(uint kernel_, calcMode.type mode_ = calcMode.type.CPU,
+        public Deconvolution(uint filters_, calcMode.type mode_ = calcMode.type.CPU,
             batchNormType.type bnorm_ = batchNormType.type.none)
         {
-            kernel = kernel_;
+            filters = filters_;
             mode = new calcMode(mode_);
             bnorm = new batchNormType(bnorm_);
         }
@@ -289,7 +289,7 @@ namespace SN_API
         public string getParamsJn()
         {
 
-            string ss = "{\"kernel\":\"" + kernel.ToString() + "\"," +
+            string ss = "{\"filters\":\"" + filters.ToString() + "\"," +
                 "\"fWidth\":\"" + fWidth.ToString() + "\"," +
                 "\"fHeight\":\"" + fHeight.ToString() + "\"," +
                 "\"stride\":\"" + stride.ToString() + "\"," +

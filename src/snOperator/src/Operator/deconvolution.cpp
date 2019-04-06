@@ -65,7 +65,7 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
         
-    setIntParam("kernel", false, true, deconvParams_.kernel);
+    setIntParam("filters", false, true, deconvParams_.kernel);
     setIntParam("fWidth", false, false, deconvParams_.fWidth);
     setIntParam("fHeight", false, false, deconvParams_.fHeight);
   

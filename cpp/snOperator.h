@@ -217,7 +217,7 @@ namespace SN_API{
 
     public:
 
-        uint32_t kernel;                           ///< Number of output layers. !Required parameter [0..)
+        uint32_t filters;                          ///< Number of output layers. !Required parameter [0..)
         active act = active::relu;                 ///< Activation function type. Optional parameter
         optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
         snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
@@ -235,7 +235,7 @@ namespace SN_API{
         snFloat lmbRegular = 0.001F;               ///< Optimizer of weights l2Norm. Optional parameter [0..1.F]
         snFloat batchNormLr = 0.001F;              ///< Learning rate for batch norm coef. Optional parameter [0..)
         
-        Deconvolution(uint32_t kernel_,
+        Deconvolution(uint32_t filters_,
             active act_ = active::relu,
             optimizer opt_ = optimizer::adam,
             snFloat dropOut_ = 0.0,
@@ -246,19 +246,19 @@ namespace SN_API{
             calcMode mode_ = calcMode::CPU,
             uint32_t gpuDeviceId_ = 0):
             
-            kernel(kernel_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
+            filters(filters_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
             fWidth(fWidth_), fHeight(fHeight_), stride(stride_),
             mode(mode_), gpuDeviceId(gpuDeviceId_){}
        
-        Deconvolution(uint32_t kernel_, calcMode mode_ = calcMode::CPU) :
-            kernel(kernel_), mode(mode_){}
+        Deconvolution(uint32_t filters_, calcMode mode_ = calcMode::CPU) :
+            filters(filters_), mode(mode_){}
 
         ~Deconvolution(){};
   
         std::string getParamsJn(){
             
             std::stringstream ss;
-            ss << "{\"kernel\":\"" << kernel << "\","
+            ss << "{\"filters\":\"" << filters << "\","
                 "\"fWidth\":\"" << fWidth << "\","
                 "\"fHeight\":\"" << fHeight << "\","
                 "\"stride\":\"" << stride << "\","
