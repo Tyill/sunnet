@@ -2,7 +2,7 @@
 from libskynet import*
 import numpy as np
 from keras.preprocessing import image
-
+from keras.applications.resnet50 import preprocess_input
 
 def idntBlock(net,
               kernelSize,
@@ -96,7 +96,7 @@ def convBlock(net,
 net = snNet.Net()
 
 net.addNode('In', snOperator.Input(), 'conv1') \
-   .addNode('conv1', snOperator.Convolution(64, (7, 7), 3, 2, snType.batchNormType.none), 'pool1_pad') \
+   .addNode('conv1', snOperator.Convolution(64, (7, 7), 3, 2, snType.batchNormType.beforeActive, snType.active.none), 'pool1_pad') \
    .addNode('pool1_pad', snOperator.Pooling(3, 2), 'res2a_branch1 res2a_branch2a')
 
 convBlock(net, (3, 3), filters=[64, 64, 256], stride=1, oprName='res2a_branch', nextOprName='res2b_branch2a res2b_branchSum')
@@ -128,29 +128,43 @@ net.addNode('avg_pool', snOperator.Pooling(7, 7, snType.poolType.avg), 'fc1000')
 
 ### Set weight
 
-weightTF = snWeight.loadHdf5Group('c:\\Users\\a.medvedev\\.keras\\models\\resnet50_weights_tf_dim_ordering_tf_kernels.h5')
+weightTF = snWeight.loadHdf5Group('c:\\Users\\Alex\\.keras\\models\\resnet50_weights_tf_dim_ordering_tf_kernels.h5')
 
 def setWeightNd(net, nm: str, w: np.ndarray, b: np.ndarray):
     if (w.ndim == 4):
-        w.resize((w.shape[0] * w.shape[1] * w.shape[2], w.shape[3]))
-    wb = np.vstack((w, b))
-    wb.resize((1, 1, wb.shape[0], wb.shape[1]))
-    net.setWeightNode(nm, wb)
+        w = np.moveaxis(w, -1, 0)
+        w = np.moveaxis(w, -1, 1).copy()
+        w = w.reshape((w.shape[1] * w.shape[2] * w.shape[3], w.shape[0]))
 
-def setBNormNd(net, nm: str, bn: np.ndarray, outSz : ()):
+        wb = np.vstack((w, b))
+        wb.resize((1, 1, wb.shape[0], wb.shape[1]))
 
-    tmp = np.zeros((bn[0].shape[0], outSz[0], outSz[1]))
+        ok = net.setWeightNode(nm, wb)
 
-    newBn = np.zeros((4, bn[0].shape[0], outSz[0], outSz[1]))
+    else:  # ndim == 2
+        wb = np.vstack((w, b)).copy()
+        wb.resize((1, 1, wb.shape[0], wb.shape[1]))
+        ok = net.setWeightNode(nm, wb)
 
-    for j in range(4):
+    return ok
+
+def setBNormNd(net, nm: str, bn: [], outSz: ()):
+   # gamma, betta, mean, varce
+
+   tmp = np.zeros((bn[0].shape[0], outSz[0], outSz[1]), np.float32)
+
+   newBn = np.zeros((4, bn[0].shape[0], outSz[0], outSz[1]), np.float32)
+
+   bn[3] = (bn[3] + 0.001) ** 0.5
+
+   for j in range(4):
       for i in range(bn[0].shape[0]):
-        tmp[i] = np.full((outSz[0], outSz[1]), bn[j][i])
+         tmp[i] = np.full((outSz[0], outSz[1]), bn[j][i])
       newBn[j] = tmp
 
-    net.setBNormNode(nm, [newBn[3], newBn[0], newBn[2], newBn[1]])
+   ok = net.setBNornNode(nm, (newBn[0], newBn[1], newBn[2], newBn[3]))
 
-    return
+   return ok
 
 def setConvWeight(net, wName, bnName, weight, outSz : (), isIdnt = True):
     wnm = wName + '2a'
@@ -204,23 +218,28 @@ setWeightNd(net, 'fc1000', weightTF['fc1000'][0], weightTF['fc1000'][1])
 
 #################################
 
-
-img_path = 'c:\\cpp\\101_ObjectCategories\\panda\\image_0001.jpg'
-
+img_path = 'c:\\cpp\\skyNet\\example\\resnet50\\images\\elephant.jpg'
 img = image.load_img(img_path, target_size=(224, 224))
-inAr = image.img_to_array(img)
-#inAr = np.transpose(inAr, (2, 1, 0))
-inAr = inAr.reshape(1, 3, 224, 224)
+x = image.img_to_array(img)
+x = np.expand_dims(x, axis=0)
+x = preprocess_input(x) # (224,224,3)
+
+x = np.moveaxis(x, -1, 1)
 
 outAr = np.zeros((1, 1, 1, 1000), ctypes.c_float)
 
-net.forward(False, inAr, outAr)
+net.forward(False, x.copy(), outAr)
 
 mx = np.argmax(outAr[0])
 
 print('Predicted:', mx, 'val', outAr[0][0][0][mx])
 
-## Compare with TF
+for j in range(1000):
+    print(j, ' val ', outAr[0][0][0][j])
+
+#################################
+
+# Compare with TF
 #from keras.applications.resnet50 import ResNet50
 #from keras.applications.resnet50 import preprocess_input, decode_predictions
 #
@@ -228,21 +247,23 @@ print('Predicted:', mx, 'val', outAr[0][0][0][mx])
 #
 #
 # img = image.load_img(img_path, target_size=(224, 224))
-# x = image.img_to_array(img)
-# x = np.expand_dims(x, axis=0)
-# x = preprocess_input(x)
+#x = image.img_to_array(img)
+#x = np.expand_dims(x, axis=0)
+#x = preprocess_input(x)
 #
-# preds = model.predict(x)
-# # decode the results into a list of tuples (class, description, probability)
-# # (one such list for each sample in the batch)
-#
-# mx = np.argmax(preds[0])
-#
-# print('Predicted:', mx, 'val', preds[0][mx])
+#preds = model.predict(x)
+#decode the results into a list of tuples (class, description, probability)
+#(one such list for each sample in the batch)
+
+#mx = np.argmax(preds[0])
+
+#print('Predicted:', mx, 'val', preds[0][mx])
 
 #print('Predicted:', decode_predictions(preds, top=3)[0])
-# Predicted: [(u'n02504013', u'Indian_elephant', 0.82658225), (u'n01871265', u'tusker', 0.1122357), (u'n02504458', u'African_elephant', 0.061040461)]
+#Predicted: [(u'n02504013', u'Indian_elephant', 0.82658225), (u'n01871265', u'tusker', 0.1122357), (u'n02504458', u'African_elephant', 0.061040461)]
 
+#for j in range(1000):
+#    print(j, ' val ', preds[0][j])
 
 
 
