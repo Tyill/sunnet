@@ -124,7 +124,7 @@ SKYNET_API bool snBackward(skyNet,
     const snFloat* grad);
 
 
-/// set weight of node
+/// set weight of node ('channels first' [bsz,ch,h,w])
 /// @param[in] skyNet - object net
 /// @param[in] nodeName - name node
 /// @param[in] wsz - size
@@ -135,7 +135,7 @@ SKYNET_API bool snSetWeightNode(skyNet,
     snLSize wsz,
     const snFloat* wData);
 
-/// get weight of node
+/// get weight of node ('channels first' [bsz,ch,h,w])
 /// @param[in] skyNet - object net
 /// @param[in] nodeName - name node
 /// @param[out] wsz - output size

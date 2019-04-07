@@ -294,7 +294,7 @@ class Net():
 
     def getOutputNode(self, nodeName: str, output: [numpy.ndarray]) -> bool:
         """
-         get Output of Node
+         get Output of Node ('channels first' [bsz,ch,h,w])
         :param nodeName: node name
         :param output: out array as list[0]
         :return: True ok
@@ -331,7 +331,7 @@ class Net():
 
     def getWeightNode(self, nodeName: str, weight: [numpy.ndarray]) -> bool:
         """
-         get Weight of Node
+         get Weight of Node ('channels first' [bsz,ch,h,w])
         :param nodeName: node name
         :param weight: out array weight as list[0]
         :return: True ok
@@ -368,7 +368,7 @@ class Net():
 
     def setWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
         """
-        set weight of node
+        set weight of node ('channels first' [bsz,ch,h,w])
         :param nodeName: node name
         :param weight: set array weight
         :return: True ok
@@ -378,10 +378,10 @@ class Net():
             return False
 
         wsize = snLSize()
-        wsize.bsz = 1
-        wsize.ch = weight.shape[0]
-        wsize.h = weight.shape[1]
-        wsize.w = weight.shape[2]
+        wsize.bsz = weight.shape[0]
+        wsize.ch = weight.shape[1]
+        wsize.h = weight.shape[2]
+        wsize.w = weight.shape[3]
         inw = weight.__array_interface__['data'][0]
 
         pfun = _LIB.snSetWeightNode
@@ -391,36 +391,35 @@ class Net():
 
         return pfun(self._net, c_str(nodeName), wsize, snFloat_p(inw))
 
-
-    def setBNormNode(self, nodeName: str, bnvalue: [numpy.ndarray]) -> bool:
+    def setBNornNode(self, nodeName: str, bnval: [numpy.ndarray]) -> bool:
         """
-        set batch norm of node
+        set batch norm of node ([gamma, beta, mean, varce)
         :param nodeName: node name
-        :param bnvalue: set array weight
+        :param bnval: set array weight
         :return: True ok
         """
 
         if (not (self._net) and not (self._createNet())):
             return False
 
-        bnorm = snBNorm()
-        bnorm.mean = snFloat_p(bnvalue[0].__array_interface__['data'][0])
-        bnorm.varce = snFloat_p(bnvalue[1].__array_interface__['data'][0])
-        bnorm.scale = snFloat_p(bnvalue[2].__array_interface__['data'][0])
-        bnorm.schift = snFloat_p(bnvalue[3].__array_interface__['data'][0])
+        bnsz = snLSize()
+        bnsz.bsz = 1
+        bnsz.ch = bnval[0].shape[0]
+        bnsz.h = bnval[0].shape[1]
+        bnsz.w = bnval[0].shape[2]
 
-        bnsize = snLSize()
-        bnsize.bsz = 1
-        bnsize.ch = bnvalue[0].shape[0]
-        bnsize.h = bnvalue[0].shape[1]
-        bnsize.w = bnvalue[0].shape[2]
+        bnorm = batchNorm()
+        bnorm.mean  = snFloat_p(bnval[2].__array_interface__['data'][0])
+        bnorm.varce = snFloat_p(bnval[3].__array_interface__['data'][0])
+        bnorm.scale = snFloat_p(bnval[0].__array_interface__['data'][0])
+        bnorm.schift = snFloat_p(bnval[1].__array_interface__['data'][0])
 
         pfun = _LIB.snSetBatchNormNode
         pfun.restype = ctypes.c_bool
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
-                         snLSize, snBNorm)
+                         snLSize, batchNorm)
 
-        return pfun(self._net, c_str(nodeName), bnsize, bnorm)
+        return pfun(self._net, c_str(nodeName), bnsz, bnorm)
 
 
     def loadAllWeightFromFile(self, weightPath : str) -> bool:
