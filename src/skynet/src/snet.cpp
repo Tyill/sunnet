@@ -553,10 +553,10 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
 
         string nm = opr[0];
 
-        if (operats_.find(nm) == operats_.end()){
+        bool oprExist = (operats_.find(nm) != operats_.end());
+               
+        if (!oprExist)
             statusMess("SN error: node '" + nm + "' not found");
-            return false;
-        }
                
         if (opr[1] == "w"){
         
@@ -565,7 +565,8 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
             
             dbW.resize(dsz);
             ifs.read((char*)dbW.data(), dsz * sizeof(SN_API::snFloat));
-            operats_[nm]->setWeight(dbW.data(), lsz);
+            if (oprExist)
+               operats_[nm]->setWeight(dbW.data(), lsz);
         }
         else if (opr[1] == "bn"){
 
@@ -576,22 +577,26 @@ bool SNet::loadAllWeightFromFile(const char* filePath){
             if (opr[2] == "mean"){
                 dbBNMean.resize(dsz);
                 ifs.read((char*)dbBNMean.data(), dsz * sizeof(SN_API::snFloat));
-                bn.mean = dbBNMean.data();
+                if (oprExist)
+                   bn.mean = dbBNMean.data();
             }
             else if (opr[2] == "varce"){
                 dbBNVarce.resize(dsz);
                 ifs.read((char*)dbBNVarce.data(), dsz * sizeof(SN_API::snFloat));
-                bn.varce = dbBNVarce.data();
+                if (oprExist)
+                   bn.varce = dbBNVarce.data();
             }
             else if (opr[2] == "scale"){
                 dbBNScale.resize(dsz);
                 ifs.read((char*)dbBNScale.data(), dsz * sizeof(SN_API::snFloat));
-                bn.scale = dbBNScale.data();
+                if (oprExist)
+                   bn.scale = dbBNScale.data();
             }
             else if (opr[2] == "schift"){
                 dbBNShift.resize(dsz);
                 ifs.read((char*)dbBNShift.data(), dsz * sizeof(SN_API::snFloat));
-                bn.schift = dbBNShift.data();
+                if (oprExist)
+                   bn.schift = dbBNShift.data();
             }
         }
 
