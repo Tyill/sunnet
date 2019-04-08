@@ -33,6 +33,7 @@ from . import snNet
 from . import snType
 from . import snOperator
 from . import snWeight
+from . import snResNet50
 
 libname = 'libskynet.so'
 if os.name == 'nt':

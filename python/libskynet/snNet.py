@@ -116,7 +116,7 @@ class Net():
         """
         Training net - cycle fwd<->bwd with calc error
         :param lr: lerning rate
-        :param inTns: in tensor
+        :param inTns: in tensor NCHW(bsz, ch, h, w)
         :param outTns: out tensor
         :param trgTns: target tensor
         :param outAccurate: accurate
@@ -172,7 +172,7 @@ class Net():
         """
         Forward action
         :param isLern: is lerning?
-        :param inTns: in tensor
+        :param inTns: in tensor NCHW(bsz, ch, h, w)
         :param outTns: out tensor
         :return: True ok
         """
@@ -294,7 +294,7 @@ class Net():
 
     def getOutputNode(self, nodeName: str, output: [numpy.ndarray]) -> bool:
         """
-         get Output of Node ('channels first' [bsz,ch,h,w])
+         get Output of Node ('channels first' NCHW(bsz, ch, h, w))
         :param nodeName: node name
         :param output: out array as list[0]
         :return: True ok
@@ -331,7 +331,7 @@ class Net():
 
     def getWeightNode(self, nodeName: str, weight: [numpy.ndarray]) -> bool:
         """
-         get Weight of Node ('channels first' [bsz,ch,h,w])
+         get Weight of Node ('channels first' NCHW(bsz, ch, h, w))
         :param nodeName: node name
         :param weight: out array weight as list[0]
         :return: True ok
@@ -368,7 +368,7 @@ class Net():
 
     def setWeightNode(self, nodeName: str, weight: numpy.ndarray) -> bool:
         """
-        set weight of node ('channels first' [bsz,ch,h,w])
+        set weight of node ('channels first' NCHW(bsz, ch, h, w))
         :param nodeName: node name
         :param weight: set array weight
         :return: True ok
@@ -393,7 +393,7 @@ class Net():
 
     def setBNornNode(self, nodeName: str, bnval: [numpy.ndarray]) -> bool:
         """
-        set batch norm of node ([gamma, beta, mean, varce)
+        set batch norm of node (gamma, beta, mean, varce)
         :param nodeName: node name
         :param bnval: set array weight
         :return: True ok
@@ -408,7 +408,7 @@ class Net():
         bnsz.h = bnval[0].shape[1]
         bnsz.w = bnval[0].shape[2]
 
-        bnorm = batchNorm()
+        bnorm = snBNorm()()
         bnorm.mean  = snFloat_p(bnval[2].__array_interface__['data'][0])
         bnorm.varce = snFloat_p(bnval[3].__array_interface__['data'][0])
         bnorm.scale = snFloat_p(bnval[0].__array_interface__['data'][0])
@@ -417,7 +417,7 @@ class Net():
         pfun = _LIB.snSetBatchNormNode
         pfun.restype = ctypes.c_bool
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
-                         snLSize, batchNorm)
+                         snLSize, snBNorm())
 
         return pfun(self._net, c_str(nodeName), bnsz, bnorm)
 

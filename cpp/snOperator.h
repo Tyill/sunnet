@@ -171,8 +171,10 @@ namespace SN_API{
             fWidth(fWidth_), fHeight(fHeight_), padding(padding_), stride(stride_),
             dilate(dilate_), mode(mode_), gpuDeviceId(gpuDeviceId_){}           
        
-        Convolution(uint32_t filters_, int padding_ = 0, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
-            filters(filters_), padding(padding_), mode(mode_), bnorm(bnorm_){}
+        Convolution(uint32_t filters_, uint32_t kernelSz, int padding_ = 0, uint32_t stride_ = 1,
+            batchNormType bnorm_ = batchNormType::none, active act_ = active::relu) :
+            filters(filters_), fWidth(kernelSz), fHeight(kernelSz), padding(padding_), stride(stride_),
+            bnorm(bnorm_), act(act_) {}
 
         ~Convolution(){};            
       
@@ -306,6 +308,9 @@ namespace SN_API{
             mode(mode_),
             gpuDeviceId(gpuDeviceId_), gpuClearMem(gpuClearMem_){}
               
+        Pooling(uint32_t kernel_, uint32_t stride_, poolType pool_ = poolType::max) :
+            kernel(kernel_), stride(stride_), pool(pool_){}
+
         ~Pooling(){};
                 
         std::string getParamsJn(){

@@ -82,7 +82,7 @@ SKYNET_API void snGetLastErrorStr(skyNet, char* outErr);
 /// @param[in] skyNet - object net
 /// @param[in] lr - learning rate
 /// @param[in] isz - input layer size
-/// @param[in] iLayer - input layer        
+/// @param[in] iLayer - input layer NCHW(bsz, ch, h, w)        
 /// @param[in] osz - size of target and result. Sets for verification
 /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
 /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
@@ -101,7 +101,7 @@ SKYNET_API bool snTraining(skyNet,
 /// @param[in] skyNet - object net
 /// @param[in] isLern - is lern?
 /// @param[in] isz - input layer size
-/// @param[in] iLayer - input layer       
+/// @param[in] iLayer - input layer NCHW(bsz, ch, h, w)      
 /// @param[in] osz - size of result. Sets for verification
 /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
 /// @return true - ok
@@ -124,7 +124,7 @@ SKYNET_API bool snBackward(skyNet,
     const snFloat* grad);
 
 
-/// set weight of node ('channels first' [bsz,ch,h,w])
+/// set weight of node ('channels first' NCHW(bsz, ch, h, w))
 /// @param[in] skyNet - object net
 /// @param[in] nodeName - name node
 /// @param[in] wsz - size
@@ -135,7 +135,7 @@ SKYNET_API bool snSetWeightNode(skyNet,
     snLSize wsz,
     const snFloat* wData);
 
-/// get weight of node ('channels first' [bsz,ch,h,w])
+/// get weight of node ('channels first' NCHW(bsz, ch, h, w))
 /// @param[in] skyNet - object net
 /// @param[in] nodeName - name node
 /// @param[out] wsz - output size

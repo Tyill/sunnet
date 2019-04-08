@@ -1,5 +1,10 @@
 import h5py
 import numpy as np
+import keras.utils as keras_utils
+
+RESNET50_W_PATH = ('https://github.com/fchollet/deep-learning-models/'
+                'releases/download/v0.2/'
+                'resnet50_weights_tf_dim_ordering_tf_kernels.h5')
 
 def _load_attributes_from_hdf5_group(group, name):
     """Loads attributes of the specified name from the HDF5 group.
@@ -27,7 +32,7 @@ def _load_attributes_from_hdf5_group(group, name):
     return data
 
 
-def loadHdf5Group(filepath):
+def getResNet50Weights():
     """Implements topological (order-based) weight loading.
 
     # Arguments
@@ -42,7 +47,13 @@ def loadHdf5Group(filepath):
     if h5py is None:
         raise ImportError('`load_weights` requires h5py.')
 
-    with h5py.File(filepath, mode='r') as f:
+    weights_path = keras_utils.get_file(
+        'resnet50_weights_tf_dim_ordering_tf_kernels.h5',
+        RESNET50_W_PATH,
+        cache_subdir='models',
+        md5_hash='a7b3fe01876f51b976af0dea6bc144eb')
+
+    with h5py.File(weights_path, mode='r') as f:
 
         layer_names = _load_attributes_from_hdf5_group(f, 'layer_names')
         filtered_layer_names = []

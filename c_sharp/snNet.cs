@@ -186,7 +186,7 @@ namespace SN_API
         /// forward action
         /// </summary>
         /// <param name="isLern"> is lerning ?</param>
-        /// <param name="inTns"> in tensor</param>
+        /// <param name="inTns"> in tensor NCHW(bsz, ch, h, w)</param>
         /// <param name="outTns"> out result tensor</param>
         /// <returns> true - ok</returns>
         public bool forward(bool isLern, Tensor inTns, Tensor outTns)
@@ -203,7 +203,7 @@ namespace SN_API
         /// backward action
         /// </summary>
         /// <param name="lr"> lerning rate</param>
-        /// <param name="gradTns"> grad error tensor</param>
+        /// <param name="gradTns"> grad error tensor NCHW(bsz, ch, h, w)</param>
         /// <returns> true - ok</returns>
         public bool backward(float lr, Tensor gradTns)
         {
@@ -221,7 +221,7 @@ namespace SN_API
         /// cycle forward-backward
         /// </summary>
         /// <param name="lr"> lerning rate</param>
-        /// <param name="inTns"> in tensor</param>
+        /// <param name="inTns"> in tensor NCHW(bsz, ch, h, w)</param>
         /// <param name="outTns"> out tensor</param>
         /// <param name="targetTns"> target tensor</param>
         /// <param name="outAccurate"> accurate error</param>
@@ -248,7 +248,7 @@ namespace SN_API
         /// set weight of node
         /// </summary>
         /// <param name="name"> name node in architecture of net</param>
-        /// <param name="weight"> set weight tensor</param>
+        /// <param name="weight"> set weight tensor NCHW(bsz, ch, h, w)</param>
         /// <returns> true - ok</returns>
         public bool setWeightNode(string name, Tensor weight)
         {
@@ -274,7 +274,7 @@ namespace SN_API
         /// get weight of node
         /// </summary>
         /// <param name="name"> name node in architecture of net</param>
-        /// <param name="outWeight"> weight tensor</param>
+        /// <param name="outWeight"> weight tensor NCHW(bsz, ch, h, w)</param>
         /// <returns> true - ok</returns>
         public bool getWeightNode(string name, ref Tensor outWeight)
         {
@@ -305,7 +305,7 @@ namespace SN_API
         /// get output of node
         /// </summary>
         /// <param name="name"> name node in architecture of net</param>
-        /// <param name="output"> output tensor</param>
+        /// <param name="output"> output tensor NCHW(bsz, ch, h, w)</param>
         /// <returns> true - ok</returns>
         public bool getOutputNode(string name, ref Tensor output)
         {

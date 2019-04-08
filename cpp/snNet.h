@@ -117,7 +117,7 @@ namespace SN_API{
 
         /// forward action
         /// @param[in] isLern - is lerning ?
-        /// @param[in] inTns - in tensor
+        /// @param[in] inTns - in tensor NCHW(bsz, ch, h, w)
         /// @param[inout] outTns - out result tensor
         /// @return true - ok
         bool forward(bool isLern, Tensor& inTns, Tensor& outTns){
@@ -129,7 +129,7 @@ namespace SN_API{
 
         /// backward action
         /// @param[in] lr - lerning rate
-        /// @param[in] gradTns - grad error tensor
+        /// @param[in] gradTns - grad error tensor NCHW(bsz, ch, h, w)
         /// @return true - ok
         bool backward(snFloat lr, Tensor& gradTns){
 
@@ -140,7 +140,7 @@ namespace SN_API{
 
         /// training action - cycle forward-backward
         /// @param[in] lr - lerning rate
-        /// @param[in] inTns - in tensor
+        /// @param[in] inTns - in tensor NCHW(bsz, ch, h, w)
         /// @param[inout] outTns - out tensor
         /// @param[in] targetTns - target tensor
         /// @param[inout] outAccurate - accurate error
@@ -156,18 +156,18 @@ namespace SN_API{
         
         /// set weight of node
         /// @param[in] name - name node in architecture of net
-        /// @param[in] weight - set weight tensor
+        /// @param[in] weight - set weight tensor NCHW(bsz, ch, h, w)
         /// @return true - ok
         bool setWeightNode(const std::string& name, Tensor& weight){
 
-            if (!net_) return false;
+            if (!net_ && !createNet()) return false;
 
             return snSetWeightNode(net_, name.c_str(), weight.size(), weight.data());
         }
 
         /// get weight of node
         /// @param[in] name - name node in architecture of net
-        /// @param[out] outWeight - weight tensor
+        /// @param[out] outWeight - weight tensor NCHW(bsz, ch, h, w)
         /// @return true - ok
         bool getWeightNode(const std::string& name, Tensor& outWeight){
 
@@ -187,7 +187,7 @@ namespace SN_API{
         
         /// get output of node
         /// @param[in] name - name node in architecture of net
-        /// @param[out] output - output tensor
+        /// @param[out] output - output tensor NCHW(bsz, ch, h, w)
         /// @return true - ok
         bool getOutputNode(const std::string& name, Tensor& output){
 
