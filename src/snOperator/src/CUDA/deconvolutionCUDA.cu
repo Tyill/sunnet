@@ -119,7 +119,7 @@ void Deconvolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& 
     cudnnConvolutionDescriptor_t conv_desc = nullptr;
     cuCHECK(cudnnCreateConvolutionDescriptor(&conv_desc));
     cuCHECK(cudnnSetConvolution2dDescriptor(conv_desc, 0, 0, int(prms.stride), int(prms.stride), 1, 1,
-        CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
+        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
     if (!isFirst)
         cuCHECK(cudnnDestroyConvolutionDescriptor((cudnnConvolutionDescriptor_t)gpuPrm->conv_desc));
     gpuPrm->conv_desc = conv_desc;
