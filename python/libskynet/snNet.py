@@ -408,7 +408,7 @@ class Net():
         bnsz.h = bnval[0].shape[1]
         bnsz.w = bnval[0].shape[2]
 
-        bnorm = snBNorm()()
+        bnorm = snBNorm()
         bnorm.mean  = snFloat_p(bnval[2].__array_interface__['data'][0])
         bnorm.varce = snFloat_p(bnval[3].__array_interface__['data'][0])
         bnorm.scale = snFloat_p(bnval[0].__array_interface__['data'][0])
@@ -417,7 +417,7 @@ class Net():
         pfun = _LIB.snSetBatchNormNode
         pfun.restype = ctypes.c_bool
         pfun.argtypes = (ctypes.c_void_p, ctypes.c_char_p,
-                         snLSize, snBNorm())
+                         snLSize, snBNorm)
 
         return pfun(self._net, c_str(nodeName), bnsz, bnorm)
 
