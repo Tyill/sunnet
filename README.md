@@ -59,7 +59,7 @@ for n in range(1000):
 
 ```
 
-## Install in Python
+## Install in Python - DEPRECATED! Do not use!
 
 * pip install libskynet  -  CPU
 
