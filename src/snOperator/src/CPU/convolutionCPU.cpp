@@ -32,7 +32,12 @@
 using namespace std;
 using namespace SN_Base;
 
-#ifdef SN_AVX
+#ifdef SN_MKLML
+
+
+
+
+#elif SN_AVX
 #include <immintrin.h>
 
 
@@ -424,8 +429,13 @@ void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, si
 
 void Convolution::forwardCPU(const convParams& prms,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
-      
-#ifdef SN_AVX
+     
+#ifdef SN_MKLML
+
+
+
+
+#elif SN_AVX
    
     if ((prms.fWidth == 3) && (prms.fHeight == 3))
         forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
@@ -548,7 +558,14 @@ void backwardGW_BASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride
 void Convolution::backwardCPU_GW(const convParams& prms,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
-#ifdef SN_AVX
+#ifdef SN_MKLML
+
+
+
+
+
+
+#elif SN_AVX
 
     if ((prms.fWidth == 3) && (prms.fHeight == 3))
         backwardGW_AVX<3>(prms.kernel, prms.stride, prms.dilate,
@@ -643,7 +660,12 @@ void backwardG_Base(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
 void Convolution::backwardCPU_G(const convParams& prms,
     snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
-#ifdef SN_AVX
+#ifdef SN_MKLML
+
+
+
+
+#elif SN_AVX
 
     if ((prms.fWidth == 3) && (prms.fHeight == 3))
         backwardG_AVX<3>(prms.kernel, prms.stride, prms.dilate,
