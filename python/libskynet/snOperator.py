@@ -88,9 +88,11 @@ class FullyConnected():
 
     def __init__(self,
                  units,
-                 act=active.relu):
+                 act=active.relu,
+                 mode=calcMode.CPU):
         self._params['units'] = str(units)
         self._params['active'] = act.value
+        self._params['mode'] = mode.value
 
     def getParams(self):
         return self._params
@@ -153,7 +155,8 @@ class Convolution():
                  padding=0,
                  stride=1,
                  bnorm=batchNormType.none,
-                 act=active.relu):
+                 act=active.relu,
+                 mode=calcMode.CPU):
         self._params['filters'] = str(filters)
         self._params['fWidth'] = str(kernelSz[0])
         self._params['fHeight'] = str(kernelSz[1])
@@ -161,6 +164,7 @@ class Convolution():
         self._params['stride'] = str(stride)
         self._params['batchNorm'] = bnorm.value
         self._params['active'] = act.value
+        self._params['mode'] = mode.value
 
     def getParams(self):
         return self._params
