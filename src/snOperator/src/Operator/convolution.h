@@ -85,7 +85,7 @@ private:
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
     
-    void* gpuParams_ = nullptr;                                       ///< gpu params 
+    void* inrParams_ = nullptr;                                       ///< cpu/gpu aux params 
 
 
     void load(std::map<std::string, std::string>& prms);
@@ -98,12 +98,20 @@ private:
        
     /// CPU ///////////////////////////
 
+    /// init aux params
+    void iniParamCPU(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        const convParams&, void** cpuPrm);
+
+    /// free aux params
+    void freeParamCPU(void* cpuPrm);
+
     void forwardCPU(const convParams&, 
         SN_Base::snFloat* weight,      
         const SN_Base::snSize& insz,   
         SN_Base::snFloat* input,       
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* output);     
+        SN_Base::snFloat* output,
+        void* cpuPrm);
 
     // calc grad and weight
     void backwardCPU_GW(const convParams&,
@@ -113,7 +121,8 @@ private:
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* gradIn,      
         SN_Base::snFloat* gradOut,     
-        SN_Base::snFloat* dWeightOut); 
+        SN_Base::snFloat* dWeightOut,
+        void* cpuPrm);
 
     // calc grad
     void backwardCPU_G(const convParams&,
@@ -121,8 +130,8 @@ private:
         const SN_Base::snSize& insz,  
         const SN_Base::snSize& outsz, 
         SN_Base::snFloat* gradIn,     
-        SN_Base::snFloat* gradOut);   
-
+        SN_Base::snFloat* gradOut,
+        void* cpuPrm);
 
 
     /// CUDA ///////////////////////////
