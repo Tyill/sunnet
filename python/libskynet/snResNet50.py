@@ -98,7 +98,7 @@ def _convBlock(net,
        .addNode(oprName + 'Act', snOperator.Activation(snType.active.relu), nextOprName)
 
 
-def createNet(mode : snType.calcMode):
+def createNet(mode = snType.calcMode.CPU):
     """
     Create net
     :return: net
