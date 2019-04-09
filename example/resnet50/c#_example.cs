@@ -131,6 +131,8 @@ namespace Test
                 }
              }
 
+            // for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+                
             Console.WriteLine("inx " + maxOutInx.ToString() + " accurate " + maxval.ToString() + " " + snet.getLastErrorStr());
             Console.ReadKey();
             return;

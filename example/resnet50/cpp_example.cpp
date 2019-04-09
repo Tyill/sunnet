@@ -140,6 +140,8 @@ int main(int argc, char* argv[]){
 
     int maxInx = distance(refOutput, max_element(refOutput, refOutput + classCnt));
 
+    // for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+    
     cout << "inx " << maxInx << " accurate " << refOutput[maxInx] << snet.getLastErrorStr() << endl;
       
     system("pause");
