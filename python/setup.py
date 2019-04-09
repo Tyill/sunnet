@@ -23,7 +23,6 @@
 # THE SOFTWARE.
 
 from __future__ import absolute_import
-import os
 import sys
 
 from setuptools import find_packages
@@ -31,36 +30,25 @@ from setuptools import find_packages
 kwargs = {}
 if "--inplace" in sys.argv:
     from distutils.core import setup
-    from distutils.extension import Extension
 else:
     from setuptools import setup
-    from setuptools.extension import Extension
-    kwargs = {'install_requires': ['numpy<=1.15.2,>=1.8.2', 'requests<2.19.0,>=2.18.4', 'graphviz<0.9.0,>=0.8.1'], 'zip_safe': False}
+    kwargs = {'install_requires': ['numpy==1.16.0', 'keras', 'h5py']}
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-CURRENT_DIR = os.path.normpath(os.path.dirname(__file__))
-
-if os.name == 'nt':
-    trgPath = 'lib/site-packages/libskynet'
-else:
-    trgPath = 'lib/python3.5/dist-packages/libskynet'
-
-dll_path = os.listdir(os.path.join(CURRENT_DIR, 'lib'))
-lib_path = [os.path.join(CURRENT_DIR, 'lib') + os.path.sep + p for p in dll_path]
-
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 setup(
     name="libskynet",
     version=__version__,
     url="https://github.com/Tyill/skynet",
     packages=find_packages(),
+    package_dir={'libskynet': 'libskynet'},
+    package_data={'libskynet': ['*.so', '*.dll']},
     description="neural net with blackjack and hookers",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    data_files=[(trgPath, lib_path)],
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",

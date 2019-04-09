@@ -59,14 +59,10 @@ for n in range(1000):
 
 ```
 
-## Install in Python - DEPRECATED! Do not use!
+## Install in Python
 
 * pip install libskynet  -  CPU
 
-* pip install libskynet-cu  -  CPU + CUDA9.2 
-
-* pip install libskynet-cudnn   -  CPU + cuDNN7.3.1
- 
  
 ## [Wiki](https://github.com/Tyill/skynet/wiki) 
 
