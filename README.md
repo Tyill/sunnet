@@ -1,5 +1,5 @@
 
-SkyNet is a deep learning library designed for both efficiency and flexibility. 
+SkyNet is a light deep learning library. 
 
 | **`Linux/Windows`** | **`License`** |
 |------------------|------------------|
@@ -61,7 +61,9 @@ for n in range(1000):
 
 ## Install in Python
 
-* pip install libskynet  -  CPU
+* pip install libskynet     -  CPU
+
+* pip install libskynet-cu  -  CPU + cuDNN7.3.1
 
  
 ## [Wiki](https://github.com/Tyill/skynet/wiki) 
