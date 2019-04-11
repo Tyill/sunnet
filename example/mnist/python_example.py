@@ -1,9 +1,6 @@
 
 import os
 
-if os.name == 'nt':
-    os.chdir('C:\\Users\\work\\AppData\\Local\\Programs\\Python\\Python37\\lib\\site-packages\\libskynet')
-
 from libskynet import*
 import numpy as np
 import imageio
@@ -15,22 +12,22 @@ import datetime
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, 0, snType.calcMode.CUDA), 'C2') \
-   .addNode('C2', snOperator.Convolution(25, 0, snType.calcMode.CUDA), 'P1') \
-   .addNode('P1', snOperator.Pooling(snType.calcMode.CUDA), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(256, snType.calcMode.CUDA), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(10, snType.calcMode.CUDA), 'LS') \
+   .addNode('C1', snOperator.Convolution(15, 0, snType.calcMode.CPU), 'C2') \
+   .addNode('C2', snOperator.Convolution(25, 0, snType.calcMode.CPU), 'P1') \
+   .addNode('P1', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(256, snType.calcMode.CPU), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(10, snType.calcMode.CPU), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
 
 # load of weight
-if (net.loadAllWeightFromFile('c:/C++/w.dat')):
-    print('weight is load')
-else:
-    print('error load weight')
+#if (net.loadAllWeightFromFile('c:/C++/w.dat')):
+ #   print('weight is load')
+#else:
+#    print('error load weight')
 
 # loadImg
 imgList = []
-pathImg = '/home/alex/CLionProjects/skynet/example/mnist/images/'
+pathImg = 'c:\\cpp\\other\\skyNet\\example\\mnist\\images\\'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 
@@ -74,7 +71,7 @@ for n in range(1000):
     print(datetime.datetime.now().strftime('%H:%M:%S'), n, "accurate", accuratSumm / (n + 1))
 
 # save weight
-if (net.saveAllWeightToFile('c:/C++/w.dat')):
+if (net.saveAllWeightToFile('c:/cpp/w.dat')):
     print('weight is save')
 else:
     print('error save weight')

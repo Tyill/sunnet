@@ -1,9 +1,6 @@
 
 import os
 
-if os.name == 'nt':
-    os.chdir('C:\\Users\\work\\AppData\\Local\\Programs\\Python\\Python37\\lib\\site-packages\\libskynet')
-
 from libskynet import*
 import numpy as np
 import imageio
@@ -14,23 +11,23 @@ import datetime
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, -1, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'C2') \
-   .addNode('C2', snOperator.Convolution(15, 0, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'P1') \
-   .addNode('P1', snOperator.Pooling(snType.calcMode.CUDA), 'C3') \
-   .addNode('C3', snOperator.Convolution(25, -1, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'C4') \
-   .addNode('C4', snOperator.Convolution(25, 0, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'P2') \
-   .addNode('P2', snOperator.Pooling(snType.calcMode.CUDA), 'C5') \
-   .addNode('C5', snOperator.Convolution(40, -1, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'C6') \
-   .addNode('C6', snOperator.Convolution(40, 0, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'P3') \
-   .addNode('P3', snOperator.Pooling(snType.calcMode.CUDA), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(2048, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(128, snType.calcMode.CUDA, snType.batchNormType.beforeActive), 'F3') \
-   .addNode('F3', snOperator.FullyConnected(10, snType.calcMode.CUDA), 'LS') \
+   .addNode('C1', snOperator.Convolution(15, -1, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'C2') \
+   .addNode('C2', snOperator.Convolution(15, 0, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'P1') \
+   .addNode('P1', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'C3') \
+   .addNode('C3', snOperator.Convolution(25, -1, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'C4') \
+   .addNode('C4', snOperator.Convolution(25, 0, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'P2') \
+   .addNode('P2', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'C5') \
+   .addNode('C5', snOperator.Convolution(40, -1, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'C6') \
+   .addNode('C6', snOperator.Convolution(40, 0, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'P3') \
+   .addNode('P3', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(2048, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(128, snType.calcMode.CPU, snType.batchNormType.beforeActive), 'F3') \
+   .addNode('F3', snOperator.FullyConnected(10, snType.calcMode.CPU), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
 
 # loadImg
 imgList = []
-pathImg = 'c:/C++/skyNet/example/cifar10/images/'
+pathImg = 'c:/cpp/other/skyNet/example/cifar10/images/'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 

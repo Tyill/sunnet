@@ -179,6 +179,9 @@ namespace SN_API{
             filters(filters_), fWidth(kernelSz), fHeight(kernelSz), padding(padding_), stride(stride_),
             bnorm(bnorm_), act(act_), mode(mode_){}
 
+        Convolution(uint32_t filters_, int padding_ = 0, calcMode mode_ = calcMode::CPU) :
+            filters(filters_), padding(padding_), mode(mode_){}
+
         ~Convolution(){};            
       
         std::string getParamsJn(){
