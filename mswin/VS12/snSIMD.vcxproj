@@ -20,13 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snSIMD\snSIMD.h" />
-    <ClInclude Include="..\..\src\snSIMD\src\threadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snSIMD\src\snSIMD.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{87E622F8-2436-40B6-A5A6-3F5DDE14BAC5}</ProjectGuid>
+    <ProjectGuid>{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SNSIMD</RootNamespace>
     <ProjectName>snSIMD</ProjectName>
