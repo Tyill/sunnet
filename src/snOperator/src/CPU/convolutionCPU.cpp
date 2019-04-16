@@ -24,7 +24,6 @@
 //
 
 #include "../stdafx.h"
-#include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/Operator/convolution.h"
 #include <omp.h>
 
@@ -32,118 +31,9 @@
 using namespace std;
 using namespace SN_Base;
 
-#ifdef dSN_MKLML
-
-#include "Lib/mklml/mkldnn.hpp"
-#include <numeric>
-
-namespace mkl = mkldnn;
-
-struct mklParams{
-
-
-
-
-
-};
-
-void Convolution::iniParamCPU(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
-    const convParams&, void** cpuPrm){
-
-    bool isFirst = false;
-
-    mklParams* mklPrm = (mklParams*)*cpuPrm;
-    if (!mklPrm){
-
-        mklPrm = new mklParams();
-
-        using tag = mkl::memory::format_tag;
-        using dt = mkl::memory::data_type;
-
-        mkl::engine eng(mkl::engine::cpu, 0);
-        mkl::stream s(eng);
-
-        std::vector<mkl::primitive> net;
-        std::vector<std::unordered_map<int, mkl::memory>> net_args;
-
-        const mkl::memory::dim batch = 1;
-
-        mkl::memory::dims conv1_src_tz = { batch, 3, 227, 227 };
-        mkl::memory::dims conv1_weights_tz = { 96, 3, 11, 11 };
-        mkl::memory::dims conv1_bias_tz = { 96 };
-        mkl::memory::dims conv1_dst_tz = { batch, 96, 55, 55 };
-        mkl::memory::dims conv1_strides = { 4, 4 };
-        mkl::memory::dims conv1_padding = { 0, 0 };
-
-        /* Allocate input and output buffers for user data */
-        std::vector<float> user_src(batch * 3 * 227 * 227);
-        std::vector<float> user_dst(batch * 1000);
-
-        /* Allocate and fill buffers for weights and bias */
-        std::vector<float> conv1_weights;//(product(conv1_weights_tz));
-        std::vector<float> conv1_bias;//(product(conv1_bias_tz));
-
-        /* create memory for user data */
-        auto user_src_memory = mkl::memory({ { conv1_src_tz }, dt::f32, tag::nchw }, eng, user_src.data());
-        auto user_weights_memory = mkl::memory({ { conv1_weights_tz }, dt::f32, tag::oihw }, eng, conv1_weights.data());
-        auto conv1_user_bias_memory = mkl::memory({ { conv1_bias_tz }, dt::f32, tag::x }, eng, conv1_bias.data());
-
-        /* create memory descriptors for convolution data w/ no specified format */
-        auto conv1_src_md = mkl::memory::desc({ conv1_src_tz }, dt::f32, tag::nchw);
-        auto conv1_bias_md = mkl::memory::desc({ conv1_bias_tz }, dt::f32, tag::nchw);
-        auto conv1_weights_md = mkl::memory::desc({ conv1_weights_tz }, dt::f32, tag::nchw);
-        auto conv1_dst_md = mkl::memory::desc({ conv1_dst_tz }, dt::f32, tag::nchw);
-
-        /* create a convolution */
-        auto conv1_desc = mkl::convolution_forward::desc(
-            mkl::prop_kind::forward_inference,
-            mkl::convolution_direct, conv1_src_md, conv1_weights_md, conv1_bias_md,
-            conv1_dst_md, conv1_strides, conv1_padding, conv1_padding,
-            mkl::padding_kind::zero);
-
-        auto conv1_prim_desc = mkl::convolution_forward::primitive_desc(conv1_desc, eng);
-
-        auto conv1_dst_memory = mkl::memory(conv1_prim_desc.dst_desc(), eng);
-
-        /* create convolution primitive and add it to net */
-        net.push_back(mkl::convolution_forward(conv1_prim_desc));
-        net_args.push_back({ { MKLDNN_ARG_SRC, user_src_memory },
-        { MKLDNN_ARG_WEIGHTS, user_weights_memory },
-        { MKLDNN_ARG_BIAS, conv1_user_bias_memory },
-        { MKLDNN_ARG_DST, conv1_dst_memory } });
-    }
-
-}
-
-void Convolution::freeParamCPU(void* cpuPrm){
-
-
-}
-
-void Convolution::forwardCPU(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* cpuPrm){
-     
-  
-
-}
-
-void Convolution::backwardCPU_GW(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* cpuPrm){
-
-
-
-}
-
-void Convolution::backwardCPU_G(const convParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* cpuPrm){
-
-}
-
-#else
-
 #ifdef SN_AVX
+#include "snSIMD/snSIMD.h"
 #include <immintrin.h>
-
 
 float horSummAVX(__m256 a) {
    
@@ -459,7 +349,6 @@ void backwardG_AVX(size_t kernel, size_t stride, size_t dilate,
 
 }
 
-
 #endif // SN_AVX
 
 void Convolution::iniParamCPU(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
@@ -548,7 +437,8 @@ void Convolution::forwardCPU(const convParams& prms,
 #ifdef SN_AVX
    
     if ((prms.fWidth == 3) && (prms.fHeight == 3))
-        forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+        //forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+        SN_SIMD::convolution_M3x3_Stride1_Dilate1(weight, insz, input, outsz, output);
     else if ((prms.fWidth == 5) && (prms.fHeight == 5))
         forwardAVX<5>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
     else if ((prms.fWidth == 7) && (prms.fHeight == 7))
@@ -692,7 +582,6 @@ void Convolution::backwardCPU_GW(const convParams& prms,
 #endif
 }
 
-
 void backwardG_Base(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
     snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
@@ -786,9 +675,6 @@ void Convolution::backwardCPU_G(const convParams& prms,
         weight, insz, outsz, gradIn, gradOut);
 #endif
 }
-
-#endif // SN_MKLML
-
 
 #ifndef SN_CUDA
 
