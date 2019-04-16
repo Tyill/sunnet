@@ -21,15 +21,9 @@
     <ClInclude Include="..\..\src\snSIMD\src\base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\snSIMD\src\SimdEnable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\snSIMD\src\SimdDefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\snSIMD\src\conv3x3Stride1Dilate1.cpp">
+    <ClCompile Include="..\..\src\snSIMD\src\convolutionFWD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

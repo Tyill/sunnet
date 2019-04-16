@@ -35,7 +35,8 @@ using namespace SN_Base;
 
 namespace SN_SIMD{
     
-    void microCacheL1_M3x3_Stride1_Dilate1(snFloat* weight,
+    template<size_t D>
+    void microCacheL1_M3x3(snFloat* weight,
         const snSize& insz, snFloat* input, snFloat& output){
 
         // NCHW
@@ -50,23 +51,12 @@ namespace SN_SIMD{
 
         snFloat* pIn = input, *pW = weight;
 
+        bool dd = Simd::Cpuid::CheckBit(Simd::Cpuid::Ordinary, Simd::Cpuid::Edx, Simd::Cpuid::FMA);
+
         switch (insz.d){
         case 1: { LOAD_1REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_1REG(M, pW, ar, arW, arO); } break;
         case 2: { LOAD_2REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_2REG(M, pW, ar, arW, arO); } break;
-        case 3: { 
-            LOAD_3REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); 
-                  
-            arW = _mm256_loadu_ps(weight); 
-            __m256 ars = _mm256_fmadd_ps(ar0, arW, arO);
-            weight += M * M;
-            
-            arW = _mm256_loadu_ps(weight); arO = _mm256_fmadd_ps(ar1, arW, arO); weight += M * M; \
-            arW = _mm256_loadu_ps(weight); arO = _mm256_fmadd_ps(ar2, arW, arO);
-            
-            //    SUMM_3REG(M, pW, ar, arW, arO); 
-        
-        } 
-                break;
+        case 3: { LOAD_3REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_3REG(M, pW, ar, arW, arO); } break;
         case 4: { LOAD_4REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_4REG(M, pW, ar, arW, arO); } break;
         case 5: { LOAD_5REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_5REG(M, pW, ar, arW, arO); } break;
         case 6: { LOAD_6REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_6REG(M, pW, ar, arW, arO); } break;
@@ -87,19 +77,25 @@ namespace SN_SIMD{
             output += (input + 2 * W + 2)[i * W * H] * weight[8 + i * M * M];
     }
 
-    void macroCacheL2_M3x3_Stride1_Dilate1(snFloat* weight,
+    template<size_t M, size_t D>
+    void microCacheL1(snFloat* weight,
+        const snSize& insz, snFloat* input, snFloat& output){
+
+        if (M == 3)
+            microCacheL1_M3x3<D>(weight, insz, input, output);
+    }
+      
+    template<size_t M, size_t S, size_t D>
+    void macroCacheL2(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
 
         // NCHW
 
-        const size_t M = 3,        // mask
-            S = 1,        // stride
-            D = 1,        // dilate
-            W = insz.w,
-            H = insz.h,   // == M
-            LAYER_CNT = min(size_t(REG_CNT - 2), min(insz.d, L1_BYTE_SZ / (sizeof(snFloat) * (W * M + M * M)))),
-            IN_L1_SIZE = LAYER_CNT * W * M,
-            W_L1_SIZE = LAYER_CNT * M * M;
+        const size_t W = insz.w,
+                     H = insz.h,   // == M
+                     LAYER_CNT = min(size_t(REG_CNT - 2), min(insz.d, L1_BYTE_SZ / (sizeof(snFloat) * (W * M + M * M)))),
+                     IN_L1_SIZE = LAYER_CNT * W * M,
+                     W_L1_SIZE = LAYER_CNT * M * M;
 
         buf_t inL1Cache(IN_L1_SIZE), wL1Cache(W_L1_SIZE);
 
@@ -116,7 +112,7 @@ namespace SN_SIMD{
             for (size_t ox = 0; ox < outsz.w; ++ox){
 
                 snFloat* pOut = output + ox;
-                microCacheL1_M3x3_Stride1_Dilate1(wL1Cache.p, inCacheSz, inL1Cache.p + ox * S, *pOut);
+                microCacheL1<M, D>(wL1Cache.p, inCacheSz, inL1Cache.p + ox * S, *pOut);
             }
         }
 
@@ -131,23 +127,21 @@ namespace SN_SIMD{
             for (size_t ox = 0; ox < outsz.w; ++ox){
 
                 snFloat* pOut = output + ox;
-                microCacheL1_M3x3_Stride1_Dilate1(wL1Cache.p, inCacheSz, inL1Cache.p + ox * S, *pOut);
+                microCacheL1<M, D>(wL1Cache.p, inCacheSz, inL1Cache.p + ox * S, *pOut);
             }
         }
     }
 
-    void macroCacheL3_M3x3_Stride1_Dilate1(snFloat* weight,
+    template<size_t M, size_t S, size_t D>
+    void macroCacheL3(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
 
         // NCHW
 
-        const size_t M = 3,              // mask
-            S = 1,              // stride
-            D = 1,              // dilate
-            W = insz.w,
-            H = insz.h,
-            LAYER_CNT = min(insz.d, L2_BYTE_SZ / (sizeof(snFloat) * (W * M * insz.d))),
-            IN_L2_SIZE = LAYER_CNT * (W * M * insz.d);
+        const size_t W = insz.w,
+                     H = insz.h,
+                     LAYER_CNT = min(insz.d, L2_BYTE_SZ / (sizeof(snFloat) * (W * M * insz.d))),
+                     IN_L2_SIZE = LAYER_CNT * (W * M * insz.d);
 
         buf_t inL2Cache(IN_L2_SIZE);
 
@@ -161,10 +155,10 @@ namespace SN_SIMD{
             for (size_t oy = 0; oy < outsz.h; ++oy){
 
                 for (size_t i = 0; i < LAYER_CNT; ++i)
-                    memcpy(inL2Cache.p + W * M * i, input + oy * S * W + W * H * (i + k), W * M * sizeof(snFloat));
+                    memcpy(inL2Cache.p + W * M * i, input + oy * S * W + W * H * (i + k * LAYER_CNT), W * M * sizeof(snFloat));
 
                 snFloat* pOut = output + oy * outsz.w;
-                macroCacheL2_M3x3_Stride1_Dilate1(weight, inCacheSz, inL2Cache.p, outsz, pOut);
+                macroCacheL2<M, S, D>(weight, inCacheSz, inL2Cache.p, outsz, pOut);
             }
         }
 
@@ -175,58 +169,88 @@ namespace SN_SIMD{
             for (size_t oy = 0; oy < outsz.h; ++oy){
 
                 for (size_t i = 0; i < inPeak; ++i)
-                    memcpy(inL2Cache.p + W * M * i, input + oy * S * W + W * H * (i + inStep), W * M * sizeof(snFloat));
+                    memcpy(inL2Cache.p + W * M * i, input + oy * S * W + W * H * (i + inStep * LAYER_CNT), W * M * sizeof(snFloat));
 
                 snFloat* pOut = output + oy * outsz.w;
-                macroCacheL2_M3x3_Stride1_Dilate1(weight, inCacheSz, inL2Cache.p, outsz, pOut);
+                macroCacheL2<M, S, D>(weight, inCacheSz, inL2Cache.p, outsz, pOut);
             }
         }
     }
 
-    void convolution_M3x3_Stride1_Dilate1(snFloat* weight,
+    template<size_t M, size_t S, size_t D>
+    void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
 
         // NCHW
-        const size_t M = 3,     // mask
-            S = 1,              // stride
-            D = 1,              // dilate
-            W = outsz.w,
-            H = outsz.h,
-            wStepByD = M * M,   // step weight by input
-            wStepByK = wStepByD * insz.d,
-            LAYER_CNT = min(outsz.d, L3_BYTE_SZ / (sizeof(snFloat) * (W * H))),
-            OUT_L3_SIZE = LAYER_CNT * (W * H);
+        const size_t oW = outsz.w,
+                     oH = outsz.h,
+                     wStepByD = M * M,   // step weight by input
+                     wStepByK = wStepByD * insz.d,
+                     LAYER_CNT = min(outsz.d, L3_BYTE_SZ / (sizeof(snFloat) * (oW * oH))),
+                     OUT_L3_SIZE = LAYER_CNT * (oW * oH);
 
         buf_t outL3Cache(OUT_L3_SIZE);
 
         snSize outCacheSz(outsz.w, outsz.h, LAYER_CNT);
 
         size_t outStep = outsz.d / LAYER_CNT,
-               outPeak = outsz.d % LAYER_CNT;
+            outPeak = outsz.d % LAYER_CNT;
 
         for (size_t k = 0; k < outStep; ++k){
 
             memcpy(outL3Cache.p, output + OUT_L3_SIZE * k, OUT_L3_SIZE * sizeof(snFloat));
 
-//#pragma omp parallel for
-            for (int i = 0; i < int(LAYER_CNT); ++i){
+            for (size_t i = 0; i < LAYER_CNT; ++i){
 
-                macroCacheL3_M3x3_Stride1_Dilate1(weight + wStepByK * i, insz, input, outCacheSz, outL3Cache.p + W * H * i);
+                macroCacheL3<M, S, D>(weight + wStepByK * (i + k * LAYER_CNT),
+                    insz, input, outCacheSz, outL3Cache.p + oW * oH * i);
             }
         }
 
         if (outPeak){
 
-            memcpy(outL3Cache.p, output + OUT_L3_SIZE * outStep, outPeak * (W * H) * sizeof(snFloat));
+            memcpy(outL3Cache.p, output + OUT_L3_SIZE * outStep, outPeak * (oW * oH) * sizeof(snFloat));
 
             outCacheSz.d = outPeak;
 
-//#pragma omp parallel for
-            for (int i = 0; i < int(outPeak); ++i){
+            for (size_t i = 0; i < outPeak; ++i){
 
-                macroCacheL3_M3x3_Stride1_Dilate1(weight + wStepByK * i, insz, input, outCacheSz, outL3Cache.p + W * H * i);
+                macroCacheL3<M, S, D>(weight + wStepByK * (i + outStep * LAYER_CNT),
+                    insz, input, outCacheSz, outL3Cache.p + oW * oH * i);
             }
         }
+    }
+
+    void convolutionFWD(size_t M, size_t S, size_t D,
+                        snFloat* weight,
+                        const snSize& insz, snFloat* input,
+                        const snSize& outsz, snFloat* output){
+
+#define cfwd(MS, SS, DS)                    \
+    if ((M == MS) && (S == SS) && (D == DS)){  \
+        convolutionFWD<MS, SS, DS>(weight, insz, input, outsz, output); return; };
+
+        cfwd(3, 1, 1)
+        cfwd(5, 1, 1)
+        cfwd(7, 1, 1)
+        cfwd(9, 1, 1)
+        
+        cfwd(3, 2, 1)
+        cfwd(5, 2, 1)
+        cfwd(7, 2, 1)
+        cfwd(9, 2, 1)
+
+        cfwd(3, 1, 2)
+        cfwd(5, 1, 2)
+        cfwd(7, 1, 2)
+        cfwd(9, 1, 2)
+        
+        cfwd(3, 2, 2)
+        cfwd(5, 2, 2)
+        cfwd(7, 2, 2)
+        cfwd(9, 2, 2)
+
+#undef cfwd
     }
 }
 

@@ -28,6 +28,13 @@
 
 namespace SN_SIMD{
     
-    void convolution_M3x3_Stride1_Dilate1(SN_Base::snFloat* weight,
-        const SN_Base::snSize& insz, SN_Base::snFloat* input, const SN_Base::snSize& outsz, SN_Base::snFloat* output);
+    void convolutionFWD(size_t M, size_t S, size_t D,
+                        SN_Base::snFloat* weight, 
+                        const SN_Base::snSize& insz, SN_Base::snFloat* input,
+                        const SN_Base::snSize& outsz, SN_Base::snFloat* output);
+
+    void convolutionBWD(size_t M, size_t S, size_t D,
+                        SN_Base::snFloat* weight,
+                        const SN_Base::snSize& insz, SN_Base::snFloat* input,
+                        const SN_Base::snSize& outsz, SN_Base::snFloat* output);
 }

@@ -184,16 +184,16 @@ namespace SN_SIMD{
          LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 13);
 
 #define SUMM_1REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 0, arW, arOut); 
+          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut);
 
 #define SUMM_2REG(m, weight, arIn, arW, arOut) \
           arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 0, arW, arOut); weight += (m) * (m); \
           arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 1, arW, arOut);
 
 #define SUMM_3REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 0, arW, arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 1, arW, arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 2, arW, arOut);
+          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
+          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
+          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut);
 
 #define SUMM_4REG(m, weight, arIn, arW, arOut) \
           arW = _mm256_loadu_ps(weight); arOut = _mm256_fmadd_ps(arIn ## 0, arW, arOut); weight += (m) * (m); \

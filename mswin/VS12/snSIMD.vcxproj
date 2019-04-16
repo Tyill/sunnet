@@ -21,11 +21,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\snSIMD\snSIMD.h" />
     <ClInclude Include="..\..\src\snSIMD\src\base.h" />
-    <ClInclude Include="..\..\src\snSIMD\src\SimdDefs.h" />
-    <ClInclude Include="..\..\src\snSIMD\src\SimdEnable.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\snSIMD\src\conv3x3Stride1Dilate1.cpp" />
+    <ClCompile Include="..\..\src\snSIMD\src\convolutionFWD.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}</ProjectGuid>
@@ -122,7 +120,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalOptions>/arch:AVX /fp:fast</AdditionalOptions>
+      <AdditionalOptions>/arch:AVX</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -158,7 +156,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)../../src</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalOptions>/arch:AVX /fp:fast</AdditionalOptions>
+      <AdditionalOptions>/arch:AVX</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
