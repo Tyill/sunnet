@@ -377,7 +377,7 @@ void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, si
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
      
     // by batch
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
@@ -436,18 +436,26 @@ void Convolution::forwardCPU(const convParams& prms,
      
 #ifdef SN_AVX
    
-    if ((prms.fWidth == 3) && (prms.fHeight == 3))
-        //forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
-        SN_SIMD::convolution_M3x3_Stride1_Dilate1(weight, insz, input, outsz, output);
-    else if ((prms.fWidth == 5) && (prms.fHeight == 5))
-        forwardAVX<5>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
-    else if ((prms.fWidth == 7) && (prms.fHeight == 7))
-        forwardAVX<7>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
-    else if ((prms.fWidth == 9) && (prms.fHeight == 9))
-        forwardAVX<9>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
-    else
-        forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
- 
+    //if ((prms.fWidth == 3) && (prms.fHeight == 3))
+    //    //forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    //    SN_SIMD::convolutionFWD(3, 1, 1, weight, insz, input, outsz, output);
+    //else if ((prms.fWidth == 5) && (prms.fHeight == 5))
+    //    forwardAVX<5>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    //else if ((prms.fWidth == 7) && (prms.fHeight == 7))
+    //    forwardAVX<7>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    //else if ((prms.fWidth == 9) && (prms.fHeight == 9))
+    //    forwardAVX<9>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    //else
+
+    PROFILE_START
+    bool isSIMD = (prms.fWidth == prms.fHeight) && (prms.fWidth == 3) &&
+        SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    
+    PROFILE_END("FWD")
+     
+    if (!isSIMD)
+       forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+   
 #else
 
     forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);

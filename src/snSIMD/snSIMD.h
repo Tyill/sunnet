@@ -28,12 +28,16 @@
 
 namespace SN_SIMD{
     
-    void convolutionFWD(size_t M, size_t S, size_t D,
+    /// @param[in] Mask := [1, 3..9], Stride := [1, 2], Dilate := [1, 2] 
+    /// @return true - ok
+    bool convolutionFWD(size_t M, size_t S, size_t D,
                         SN_Base::snFloat* weight, 
                         const SN_Base::snSize& insz, SN_Base::snFloat* input,
                         const SN_Base::snSize& outsz, SN_Base::snFloat* output);
-
-    void convolutionBWD(size_t M, size_t S, size_t D,
+    
+    /// @param[in] Mask := [1, 3..9], Stride := [1, 2], Dilate := [1, 2] 
+    /// @return true - ok
+    bool convolutionBWD(size_t M, size_t S, size_t D,
                         SN_Base::snFloat* weight,
                         const SN_Base::snSize& insz, SN_Base::snFloat* input,
                         const SN_Base::snSize& outsz, SN_Base::snFloat* output);

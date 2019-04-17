@@ -34,7 +34,7 @@
 #include "snOperator/snOperator.h"
 
 #define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) SN_PRINTMESS(std::string("Profile ") + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
+#define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
 
 #define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
 
