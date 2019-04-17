@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snEngine", "SNEngine.vcxproj", "{87E622F8-2436-40B6-A5A6-3F5DDE14BAC5}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -27,6 +27,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snOperator", "SNOperator.vcxproj", "{F3E981BD-4BA4-4538-9D21-6ACD252F4895}"
 	ProjectSection(ProjectDependencies) = postProject
 		{C993F645-29F0-4079-ACBA-033BFED8B8F6} = {C993F645-29F0-4079-ACBA-033BFED8B8F6}
+		{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6} = {30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}
 		{342D19FA-7A64-4009-A9AD-BE781192038E} = {342D19FA-7A64-4009-A9AD-BE781192038E}
 	EndProjectSection
 EndProject

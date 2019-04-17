@@ -42,11 +42,8 @@ namespace SN_SIMD{
         // NCHW
 
         const size_t M = 3, W = insz.w, H = insz.h;
-
-        snFloat IN_BUFF[M * M]{0}, OUT_BUFF[M * M]{output};
-
-        LOAD_REG(OUT_BUFF, arO);
-
+        
+        __m256 arO = _mm256_set1_ps(output);
         __m256 arW = _mm256_setzero_ps();
                 
         size_t inStep = insz.d / (REG_CNT - 2),
@@ -56,24 +53,24 @@ namespace SN_SIMD{
 
         for (size_t k = 0; k < inStep; ++k){
 
-            LOAD_14REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_14REG(M, pW, ar, arW, arO);
+            LOAD_14REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_14REG(M, pW, ar, arW, arO);
         }
                 
         switch (inPeak){
            case 0: break;
-           case 1: { LOAD_1REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_1REG(M, pW, ar, arW, arO); } break;
-           case 2: { LOAD_2REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_2REG(M, pW, ar, arW, arO); } break;
-           case 3: { LOAD_3REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_3REG(M, pW, ar, arW, arO); } break;
-           case 4: { LOAD_4REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_4REG(M, pW, ar, arW, arO); } break;
-           case 5: { LOAD_5REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_5REG(M, pW, ar, arW, arO); } break;
-           case 6: { LOAD_6REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_6REG(M, pW, ar, arW, arO); } break;
-           case 7: { LOAD_7REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_7REG(M, pW, ar, arW, arO); } break;
-           case 8: { LOAD_8REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_8REG(M, pW, ar, arW, arO); } break;
-           case 9: { LOAD_9REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_9REG(M, pW, ar, arW, arO); } break;
-           case 10: { LOAD_10REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_10REG(M, pW, ar, arW, arO); } break;
-           case 11: { LOAD_11REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_11REG(M, pW, ar, arW, arO); } break;
-           case 12: { LOAD_12REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_12REG(M, pW, ar, arW, arO); } break;
-           case 13: { LOAD_13REG_FROM_BUFF(3, 1, pIn, IN_BUFF, W, H, ar); SUMM_13REG(M, pW, ar, arW, arO); } break;
+           case 1: { LOAD_1REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_1REG(M, pW, ar, arW, arO); } break;
+           case 2: { LOAD_2REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_2REG(M, pW, ar, arW, arO); } break;
+           case 3: { LOAD_3REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_3REG(M, pW, ar, arW, arO); } break;
+           case 4: { LOAD_4REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_4REG(M, pW, ar, arW, arO); } break;
+           case 5: { LOAD_5REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_5REG(M, pW, ar, arW, arO); } break;
+           case 6: { LOAD_6REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_6REG(M, pW, ar, arW, arO); } break;
+           case 7: { LOAD_7REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_7REG(M, pW, ar, arW, arO); } break;
+           case 8: { LOAD_8REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_8REG(M, pW, ar, arW, arO); } break;
+           case 9: { LOAD_9REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_9REG(M, pW, ar, arW, arO); } break;
+           case 10: { LOAD_10REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_10REG(M, pW, ar, arW, arO); } break;
+           case 11: { LOAD_11REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_11REG(M, pW, ar, arW, arO); } break;
+           case 12: { LOAD_12REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_12REG(M, pW, ar, arW, arO); } break;
+           case 13: { LOAD_13REG_FROM_MEM(3, 1, pIn, W, H, ar); SUMM_13REG(M, pW, ar, arW, arO); } break;
            default: break;
         }
 

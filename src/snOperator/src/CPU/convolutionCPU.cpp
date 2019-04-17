@@ -26,7 +26,7 @@
 #include "../stdafx.h"
 #include "snOperator/src/Operator/convolution.h"
 #include <omp.h>
-
+#include <iostream>
 
 using namespace std;
 using namespace SN_Base;
@@ -446,12 +446,22 @@ void Convolution::forwardCPU(const convParams& prms,
     //else if ((prms.fWidth == 9) && (prms.fHeight == 9))
     //    forwardAVX<9>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
     //else
-
-    PROFILE_START
-    bool isSIMD = (prms.fWidth == prms.fHeight) && (prms.fWidth == 3) &&
-        SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+    bool isSIMD = (prms.fWidth == prms.fHeight) && (prms.fWidth == 3) && (prms.stride == 1);
     
-    PROFILE_END("FWD")
+    if (isSIMD)
+    {
+
+        PROFILE_START
+
+            isSIMD = SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+
+         cout << "SN_SIMD " << std::to_string(omp_get_wtime() - ctm) << endl; ctm = omp_get_wtime(); 
+
+        
+          forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+        
+          cout << "SN_AVX " << std::to_string(omp_get_wtime() - ctm) << endl; ctm = omp_get_wtime();
+    }
      
     if (!isSIMD)
        forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);

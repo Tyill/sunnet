@@ -40,149 +40,143 @@ namespace SN_SIMD{
     const int L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
 
 #define LOAD_REG(in, reg)  __m256 reg = _mm256_loadu_ps(in);
-#define LOAD_REG_FROM_BUFF_3x3_1DIL(in, buff, w, reg) buff[0] = *(in);               \
-                                                      buff[1] = *(in + 1);           \
-                                                      buff[2] = *(in + 2);           \
-                                                      buff[3] = *(in + (w));         \
-                                                      buff[4] = *(in + (w) + 1);     \
-                                                      buff[5] = *(in + (w) + 2);     \
-                                                      buff[6] = *(in + 2 * (w));     \
-                                                      buff[7] = *(in + 2 * (w) + 1); \
-                                                   __m256 reg = _mm256_loadu_ps(buff);
-                                                   
+#define LOAD_REG_FROM_MEM_3x3_1DIL(in, w, reg)  \
+    __m256 reg = _mm256_set_ps(*(in), *(in + 1), *(in + 2), \
+              *(in + (w)), *(in + (w) + 1), *(in + (w) + 2), \
+              *(in + 2 * (w)), *(in + 2 * (w) + 1));                                                   
 
-#define LOAD_1REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0);
+#define LOAD_1REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0);
 
-#define LOAD_2REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); 
+#define LOAD_2REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); 
 
-#define LOAD_3REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); 
+#define LOAD_3REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); 
 
-#define LOAD_4REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); 
+#define LOAD_4REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); 
 
-#define LOAD_5REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); 
+#define LOAD_5REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); 
 
-#define LOAD_6REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); 
+#define LOAD_6REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); 
 
-#define LOAD_7REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); 
+#define LOAD_7REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); 
 
-#define LOAD_8REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); 
+#define LOAD_8REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); 
 
-#define LOAD_9REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h); 
+#define LOAD_9REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h); 
 
-#define LOAD_10REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 9); in += (w) * (h); 
+#define LOAD_10REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 9); in += (w) * (h); 
 
-#define LOAD_11REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 9); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 10); in += (w) * (h); 
+#define LOAD_11REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 9); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 10); in += (w) * (h); 
 
-#define LOAD_12REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 9); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 10); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 11); in += (w) * (h); 
+#define LOAD_12REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 9); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 10); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 11); in += (w) * (h); 
 
-#define LOAD_13REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 9); in += (w) * (h);  \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 10); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 11); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 12); in += (w) * (h); 
+#define LOAD_13REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 9); in += (w) * (h);  \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 10); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 11); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 12); in += (w) * (h); 
 
-#define LOAD_14REG_FROM_BUFF(m, d, in, buff, w, h, reg) \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 0); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 1); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 2); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 3); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 4); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 5); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 6); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 7); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 8); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 9); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 10); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 11); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 12); in += (w) * (h); \
-         LOAD_REG_FROM_BUFF_ ## m ## x ## m ## _ ## d ## DIL(in, buff, w, reg ## 13); in += (w) * (h); 
+#define LOAD_14REG_FROM_MEM(m, d, in, w, h, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 0); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 1); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 2); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 3); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 4); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 5); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 6); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 7); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 8); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 9); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 10); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 11); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 12); in += (w) * (h); \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, w, reg ## 13); in += (w) * (h); 
 
 #define SUMM_1REG(m, weight, arIn, arW, arOut) \
           arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut);
