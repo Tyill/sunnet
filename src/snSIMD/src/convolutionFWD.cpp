@@ -75,7 +75,7 @@ namespace SN_SIMD{
            default: break;
         }
 
-        output = horSummReg(arO);
+        output += horSummReg(arO);
 
         // add peak
       //  for (size_t i = 0; i < insz.d; ++i)
@@ -94,7 +94,7 @@ namespace SN_SIMD{
                          cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.h, L1_BYTE_SZ / (sizeof(snFloat) * (W + W))));
 
             L1InputSz = snSize(W, 1, cacheLayerCnt);
-            L1WeightSz = snSize(W, 1, cacheLayerCnt);
+            L1WeightSz = snSize(W, 1, 1);
         };
 
         void operator()(snFloat* weight,
@@ -135,7 +135,6 @@ namespace SN_SIMD{
                          H = inHCWBuffSz.h,          // outsz.w
                          cacheLayerCnt = L1InputSz.d,
                          inL1Sz = L1InputSz.size(),
-                         wL1Sz = L1WeightSz.size(),
                          cacheStep = H / cacheLayerCnt,
                          cachePeak = H % cacheLayerCnt;
 
@@ -152,7 +151,6 @@ namespace SN_SIMD{
                 }
                 
                 pIn += inL1Sz;
-                pW += wL1Sz;
                 pOut += cacheLayerCnt;
             }
 
@@ -163,8 +161,7 @@ namespace SN_SIMD{
                 cacheSz.d = cachePeak;
 
                 pIn = inHCWBuff + inL1Sz * cacheStep;
-                pW = weight + wL1Sz * cacheStep;
-                pOut = output + cacheLayerCnt * cacheStep;
+                pOut = output +cacheLayerCnt * cacheStep;
 
                 for (size_t i = 0; i < cachePeak; ++i){
                                        
@@ -210,11 +207,12 @@ namespace SN_SIMD{
                          cacheStep = inHCWBuffSz.d / cacheLayerCnt,
                          cachePeak = inHCWBuffSz.d % cacheLayerCnt;
                 
-            snFloat* pIn = inHCWBuff;
+            snFloat* pIn = inHCWBuff,
+                   * pOut = output;
 
             for (size_t k = 0; k < cacheStep; ++k){
                                
-                snFloat* pOut = output + cacheLayerCnt * k;
+                pOut += outsz.w * cacheLayerCnt * k;
 
                 for (size_t i = 0; i < cacheLayerCnt; ++i){
                                         
@@ -224,13 +222,12 @@ namespace SN_SIMD{
             }
 
             if (cachePeak){
-                       
-                pIn = inHCWBuff + L2Sz * cacheStep;
-
+                                       
                 snSize cacheSz = L2CacheSz;
                 cacheSz.d = cachePeak;
 
-                snFloat* pOut = output + cacheLayerCnt * cacheStep;
+                pIn = inHCWBuff + L2Sz * cacheStep;
+                pOut = output + outsz.w * cacheLayerCnt * cacheStep;
 
                 for (size_t i = 0; i < cachePeak; ++i){
                    
@@ -252,10 +249,8 @@ namespace SN_SIMD{
     template<size_t M, size_t S, size_t D>
     void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
-
-             
-
-//#pragma omp parallel for
+                     
+#pragma omp parallel for
         for (int n = 0; n < int(insz.n); ++n){
         
             /// Reorder input

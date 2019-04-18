@@ -458,9 +458,9 @@ void Convolution::forwardCPU(const convParams& prms,
          cout << "SN_SIMD " << std::to_string(omp_get_wtime() - ctm) << endl; ctm = omp_get_wtime(); 
 
         
-          forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
+  //        forwardAVX<3>(prms.kernel, prms.stride, prms.dilate, weight, insz, input, outsz, output);
         
-          cout << "SN_AVX " << std::to_string(omp_get_wtime() - ctm) << endl; ctm = omp_get_wtime();
+      //    cout << "SN_AVX " << std::to_string(omp_get_wtime() - ctm) << endl; ctm = omp_get_wtime();
     }
      
     if (!isSIMD)
