@@ -31,13 +31,13 @@
 
 namespace SN_SIMD{
 
-    const int LAYER_MAX_WIDTH = 800;
-    const int LAYER_MAX_HEIGHT = 600;
-    const int REG_CNT = 16;                   // registr count
-    const int REG_BYTE_SZ = 32;               // registr byte size  (256 bit = 32 B = 8 float)
-    const int L1_BYTE_SZ = 32 * 1024;         // L1 cache byte size (32 kB)
-    const int L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256 kB)
-    const int L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
+    const size_t LAYER_MAX_WIDTH = 800;
+    const size_t LAYER_MAX_HEIGHT = 600;
+    const size_t REG_CNT = 16;                   // registr count
+    const size_t REG_BYTE_SZ = 32;               // registr byte size  (256 bit = 32 B = 8 float)
+    const size_t L1_BYTE_SZ = 16 * 1024;         // L1 cache byte size (32 kB)
+    const size_t L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256 kB)
+    const size_t L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
 
 #define LOAD_REG(in, reg)  __m256 reg = _mm256_loadu_ps(in);
 #define LOAD_REG_FROM_MEM_3x3(in, reg) __m256 reg = _mm256_loadu_ps(in);                       
@@ -139,7 +139,9 @@ namespace SN_SIMD{
     };
 
     template<size_t M>
-    void addPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW, SN_Base::snFloat& output){
+    SN_Base::snFloat getPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW){
+
+        SN_Base::snFloat ret = 0;
 
         for (size_t i = 0; i < W; i += 8){
 
@@ -151,14 +153,15 @@ namespace SN_SIMD{
                                       *(pW + 3 * M * M + (M * M - 1)),  *(pW + 4 * M * M + (M * M - 1)),  *(pW + 5 * M * M + (M * M - 1)),
                                       *(pW + 6 * M * M + (M * M - 1)),  *(pW + 7 * M * M + (M * M - 1)));                  
 
-            output += horSummReg(_mm256_mul_ps(arIn, arW));
+            ret += horSummReg(_mm256_mul_ps(arIn, arW));
 
             pIn += M * M * 8;
             pW += M * M * 8;
         }
 
         for (size_t i = 0; i < W % 8; ++i)
-            output += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
+            ret += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
         
+        return ret;
     }       
 };

@@ -36,17 +36,17 @@ using namespace SN_Base;
 namespace SN_SIMD{
       
     void microL1_M3x3(snFloat* weight,
-        const snSize& inHCWBuffSz, snFloat* inHCWBuff, snFloat& output){
+        const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
 
         // NCHW
 
         const size_t M = 3,
-                     W = inHCWBuffSz.w / (M * M);   // insz.d;
+                     cacheLayerCnt = L1CacheSz_.d;   // insz.d;
 
         __m256 arO = _mm256_set1_ps(output);
                  
-        size_t cacheStep = W / (REG_CNT - 12),
-               cachePeak = W % (REG_CNT - 12);
+        size_t cacheStep = cacheLayerCnt / (REG_CNT - 12),
+               cachePeak = cacheLayerCnt % (REG_CNT - 12);
 
         snFloat* pIn = inHCWBuff, *pW = weight;
 
@@ -63,40 +63,39 @@ namespace SN_SIMD{
            default: break;
         }
 
-        output = horSummReg(arO);
+        output += horSummReg(arO);
                      
-        addPeakOutput<M>(W, inHCWBuff, weight, output);
+        output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
     };
        
     template<size_t M>
     class microL1
     {
-        // Level 1: calc 
+        // Level 1: input calc
 
     public:
         microL1(const snSize& inHCWBuffSz){
 
-            const size_t W = inHCWBuffSz.w, // M * M * insz.d
-                         H = inHCWBuffSz.h, // outsz.w
-                         cacheLayerCnt = max(size_t(1), min(H, L1_BYTE_SZ / (sizeof(snFloat) * (W + W))));
+            const size_t D = inHCWBuffSz.w / (M * M), // insz.d              2 -< weights >       
+                         cacheLayerCnt = max(size_t(1), min(D, L1_BYTE_SZ / (M * M * sizeof(snFloat))));
 
-            L1CacheSz = snSize(W, 1, cacheLayerCnt);
+            L1CacheSz = snSize(M * M, 1, cacheLayerCnt);
         };
 
         void operator()(snFloat* weight,
-            const snSize& inHCWBuffSz, snFloat* inHCWBuff, snFloat& output){
+            const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
 
             if (M == 3)
-                microL1_M3x3(weight, inHCWBuffSz, inHCWBuff, output);
+                microL1_M3x3(weight, L1CacheSz_, inHCWBuff, output);
         };
-            
+
         snSize L1CacheSz;
     };
 
     template<size_t M>
     class macroL2
     {
-        // Level 2: input layers of width
+        // Level 2: input by depth 
 
     public:
         macroL2(const snSize& inHCWBuffSz) :
@@ -104,22 +103,87 @@ namespace SN_SIMD{
 
             const size_t W = inHCWBuffSz.w, // M * M * insz.d
                          H = inHCWBuffSz.h, // outsz.w
-                         cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.d, L2_BYTE_SZ / (sizeof(snFloat) * (W * H))));
+                         cacheLayerCnt = max(size_t(1), min(H, L2_BYTE_SZ / (W * sizeof(snFloat))));
+
+            L2CacheSz = snSize(M * M, inHCWBuffSz.w / (M * M), cacheLayerCnt);
+        };
+
+        void operator()(snFloat* weight,
+            const snSize& L2CacheSz_, snFloat* inHCWBuff, snFloat& output){
+
+            // Down to level 1
+
+            const snSize& L1CacheSz = refMicroL1_.L1CacheSz;
+
+            const size_t H = L2CacheSz_.h,           // insz.d
+                         cacheLayerCnt = L1CacheSz.d,// insz.d
+                         L1Sz = L1CacheSz.size(),
+                         cacheStep = H / cacheLayerCnt,
+                         cachePeak = H % cacheLayerCnt;
+
+            snFloat* pIn = inHCWBuff,
+                   * pW = weight;
+
+            // for only input 
+            for (size_t k = 0; k < cacheStep; ++k){
+                               
+                refMicroL1_(pW, L1CacheSz, pIn, output);
+                
+                pW += L1Sz;
+                pIn += L1Sz;
+            }
+
+            // count the remainder
+            if (cachePeak){
+
+                snSize cacheSz = L1CacheSz;
+                cacheSz.d = cachePeak;
+                   
+                const size_t L1CSz = cacheSz.size();
+
+                for (size_t i = 0; i < cachePeak; ++i){
+
+                    refMicroL1_(pW, cacheSz, pIn, output);
+
+                    pW += L1CSz;
+                    pIn += L1CSz;
+                }
+            }
+        };
+            
+        snSize L2CacheSz;
+
+    private:
+        microL1<M> refMicroL1_;
+    };
+
+    template<size_t M>
+    class macroL3
+    {
+        // Level 3: input layers of width * height
+
+    public:
+        macroL3(const snSize& inHCWBuffSz) :
+            refMacroL2_(inHCWBuffSz){
+
+            const size_t W = inHCWBuffSz.w, // M * M * insz.d
+                         H = inHCWBuffSz.h, // outsz.w
+                         cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.d, L3_BYTE_SZ / (W * H * sizeof(snFloat))));
            
-            L2CacheSz = snSize(W, H, cacheLayerCnt);
+            L3CacheSz = snSize(W, H, cacheLayerCnt);
         };
 
         void operator()(snFloat* weight, snFloat bias,
-            const snSize& inHCWBuffSz, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
+            const snSize& L3CacheSz_, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
 
-            // Down to level 1
-                       
-            const snSize& L1CacheSz = refMicroL1_.L1CacheSz;
-           
-            const size_t W = inHCWBuffSz.w,          // M * M * insz.d
-                         H = inHCWBuffSz.h,          // outsz.w
-                         cacheLayerCnt = L1CacheSz.d,// outsz.w
-                         L1Sz = L1CacheSz.size(),
+            // Down to level 2
+
+            const snSize& L2CacheSz = refMacroL2_.L2CacheSz;
+
+            const size_t W = L3CacheSz_.w,          // M * M * insz.d
+                         H = L3CacheSz_.h,          // outsz.w
+                         cacheLayerCnt = L2CacheSz.d,// outsz.w
+                         L2Sz = L2CacheSz.size(),
                          cacheStep = H / cacheLayerCnt,
                          cachePeak = H % cacheLayerCnt;
 
@@ -128,100 +192,29 @@ namespace SN_SIMD{
                    * pOut = output;
 
             for (size_t k = 0; k < cacheStep; ++k){
-                                                                
-                for (size_t i = 0; i < cacheLayerCnt; ++i){                   
-                   
-                    refMicroL1_(pW, L1CacheSz, pIn + W * i, *(pOut + i));
+
+                for (size_t i = 0; i < cacheLayerCnt; ++i){
+
+                    refMacroL2_(pW, L2CacheSz, pIn + W * i, *(pOut + i));
 
                     *(pOut + i) += bias;
                 }
-                                
-                pIn += L1Sz;
+
+                pIn += L2Sz;
                 pOut += cacheLayerCnt;
             }
 
             // count the remainder
             if (cachePeak){
 
-                snSize cacheSz = L1CacheSz;
-                cacheSz.d = cachePeak;
-
-                pIn = inHCWBuff + L1Sz * cacheStep;
-                pOut = output + cacheLayerCnt * cacheStep;
-
-                for (size_t i = 0; i < cachePeak; ++i){
-                                       
-                    refMicroL1_(pW, cacheSz, pIn + W * i, *(pOut + i));
-
-                    *(pOut + i) += bias;
-                }                               
-            }
-        };
-
-        snSize L2CacheSz;
-
-    private:
-        microL1<M> refMicroL1_;
-       
-    };
-      
-    template<size_t M>
-    class macroL3
-    {
-        // Level 3: input layers of width * height
-
-    public:
-        macroL3(const snSize& inHCWBuffSz, const snSize& outsz) :
-            refMacroL2_(inHCWBuffSz){
-
-            const size_t W = outsz.w, 
-                         H = outsz.h, 
-                         cacheLayerCnt = max(size_t(1), min(outsz.d, L3_BYTE_SZ / (sizeof(snFloat) * (W * H))));
-
-            L3CacheSz = snSize(W, H, cacheLayerCnt);
-        };
-
-        void operator()(snFloat* weight, snFloat bias,
-            const snSize& inHCWBuffSz, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
-
-            // Down to level 2
-                        
-            const snSize& L2CacheSz = refMacroL2_.L2CacheSz;
-            
-            const size_t W = L2CacheSz.w,             // M * M * insz.d
-                         H = L2CacheSz.h,             // outsz.w
-                         cacheLayerCnt = L2CacheSz.d, // outsz.h
-                         L2Sz = L2CacheSz.size(),
-                         cacheStep = inHCWBuffSz.d / cacheLayerCnt,
-                         cachePeak = inHCWBuffSz.d % cacheLayerCnt;
-                
-            snFloat* pIn = inHCWBuff,
-                   * pOut = output;
-                        
-            for (size_t k = 0; k < cacheStep; ++k){
-                  
-                for (size_t i = 0; i < cacheLayerCnt; ++i){
-                                        
-                    refMacroL2_(weight, bias, L2CacheSz, pIn + W * H * i, outsz, pOut + outsz.w * i);
-                }
-                pIn += L2Sz;
-                pOut += outsz.w * cacheLayerCnt;
-            }
-
-            if (cachePeak){
-                                       
                 snSize cacheSz = L2CacheSz;
                 cacheSz.d = cachePeak;
-
-                pIn = inHCWBuff + L2Sz * cacheStep;
-                pOut = output + outsz.w * cacheLayerCnt * cacheStep;
-
+                                
                 for (size_t i = 0; i < cachePeak; ++i){
-                   
-                    refMacroL2_(weight, bias, cacheSz, pIn, outsz, pOut);
-                
-                    pIn += W * H;
-                    pOut += outsz.w;
+
+                    refMacroL2_(pW, cacheSz, pIn + W * i, *(pOut + i));
+
+                    *(pOut + i) += bias;
                 }
             }
         };
@@ -232,67 +225,80 @@ namespace SN_SIMD{
         macroL2<M> refMacroL2_;
        
     };
+         
+    template<size_t M>
+    void macroCommon(macroL3<M>& refMacroL3, snFloat* weight, snFloat bias,
+        const snSize& inHCWBuffSz, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
             
+        // Down to level 3
+
+        const snSize& L3CacheSz = refMacroL3.L3CacheSz;
+
+        const size_t W = L3CacheSz.w,             // M * M * insz.d
+                     H = L3CacheSz.h,             // outsz.w
+                     cacheLayerCnt = L3CacheSz.d, // outsz.h
+                     L3Sz = L3CacheSz.size(),
+                     cacheStep = inHCWBuffSz.d / cacheLayerCnt,
+                     cachePeak = inHCWBuffSz.d % cacheLayerCnt;
+
+        snFloat* pIn = inHCWBuff,
+               * pOut = output;
+
+        for (size_t k = 0; k < cacheStep; ++k){
+
+            for (size_t i = 0; i < cacheLayerCnt; ++i){
+
+                refMacroL3(weight, bias, L3CacheSz, pIn + W * H * i, outsz, pOut + outsz.w * i);
+            }
+            pIn += L3Sz;
+            pOut += outsz.w * cacheLayerCnt;
+        }
+
+        if (cachePeak){
+
+            snSize cacheSz = L3CacheSz;
+            cacheSz.d = cachePeak;
+
+            for (size_t i = 0; i < cachePeak; ++i){
+
+                refMacroL3(weight, bias, cacheSz, pIn, outsz, pOut);
+
+                pIn += W * H;
+                pOut += outsz.w;
+            }
+        }
+    }
+
     template<size_t M, size_t S, size_t D>
     void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
-
-        for (int n = 0; n < int(insz.n); ++n){
-        
-            /// Reorder input
-            buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h));
-
-            snFloat* pIn = input + insz.w * insz.h * insz.d * n;
-
-            reorderCHW2HCW<M, S, D>(insz, pIn, outsz, inHCWBuff.p);
-
-            ///////////////////////////////////
-                    
-            macroL3<M> oMacroL3(inHCWBuff.sz, outsz);
-
-            const snSize& L3CacheSz = oMacroL3.L3CacheSz;
-
-            const size_t W = outsz.w,
-                         H = outsz.h,
-                         wStepByD = M * M,
-                         wStepByK = wStepByD * insz.d,
-                         wStepByN = wStepByK * outsz.d,
-                         cacheLayerCnt = L3CacheSz.d,
-                         L3Sz = L3CacheSz.size(),
-                         cacheStep = outsz.d / cacheLayerCnt,
-                         cachePeak = outsz.d % cacheLayerCnt;
-
-            ///////////////////////////////////
-
-            snFloat* pOut = output + outsz.w * outsz.h * outsz.d * n;
-            
-            for (size_t k = 0; k < cacheStep; ++k){
                 
-#pragma omp parallel for num_threads(4)
-                for (int i = 0; i < int(cacheLayerCnt); ++i){
+        /// Reorder input
+        buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h));
+                
+        reorderCHW2HCW<M, S, D>(insz, input, outsz, inHCWBuff.p);
 
-                    oMacroL3(weight + wStepByK * (i + k * cacheLayerCnt), *(weight + wStepByN + i),
-                        inHCWBuff.sz, inHCWBuff.p, L3CacheSz, pOut + W * H * i);                             
-                }
+        ///////////////////////////////////
 
-                pOut += L3Sz;
-            }
-
-            if (cachePeak){
-                               
-                snSize cacheSz = L3CacheSz;
-                cacheSz.d = cachePeak;
-
-                pOut = output + outsz.w * outsz.h * outsz.d * n + L3Sz * cacheStep;
+        const size_t W = outsz.w,
+                     H = outsz.h,
+                     wStepByD = M * M,
+                     wStepByK = wStepByD * insz.d,
+                     wStepByN = wStepByK * outsz.d;
+                 
+        macroL3<M> oMacroL3(inHCWBuff.sz);
 
 #pragma omp parallel for num_threads(4)
-                for (int i = 0; i < int(cachePeak); ++i){
+        for (int i = 0; i < int(outsz.d); ++i){
 
-                    oMacroL3(weight + wStepByK * (i + cacheStep * cacheLayerCnt), *(weight + wStepByN + i),
-                        inHCWBuff.sz, inHCWBuff.p, cacheSz, pOut + W * H * i);
-                }
-            }          
-        }
+            macroCommon(oMacroL3, 
+                        weight + wStepByK * i,
+                        *(weight + wStepByN + i),
+                        inHCWBuff.sz,
+                        inHCWBuff.p,
+                        outsz,
+                        output + W * H * i);
+        }                       
     }
 
     bool convolutionFWD(size_t M, size_t S, size_t D,
