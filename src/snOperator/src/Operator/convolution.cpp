@@ -280,10 +280,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     case calcMode::CUDA:   forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, inrParams_); break;
     case calcMode::OpenCL: forwardOCL(convPrms_, weight, inDataExpSz_, in, outsz, out, inrParams_); break;
     }
-
-    if (!operPrm.isLerning && !isSame)
-        inTnsExp_.tfree();
-       
+   
     /// dropOut
     if (dropOut_ > 0.F)
         dropOut(operPrm.isLerning, dropOut_, outsz, out);
@@ -372,11 +369,9 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         }
     }
 
-    if (!isSame){
-        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());
-        gradOutExp_.tfree();
-        inTnsExp_.tfree();
-    }
+    if (!isSame)
+        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
+    
 }
 
 void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize& expSz){

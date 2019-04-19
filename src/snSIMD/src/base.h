@@ -40,275 +40,45 @@ namespace SN_SIMD{
     const int L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
 
 #define LOAD_REG(in, reg)  __m256 reg = _mm256_loadu_ps(in);
-#define LOAD_REG_FROM_MEM_3x3_1DIL(in, reg) __m256 reg = _mm256_loadu_ps(in);                       
+#define LOAD_REG_FROM_MEM_3x3(in, reg) __m256 reg = _mm256_loadu_ps(in);                       
 
-#define LOAD_1REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0);
+#define LOAD_1REG_FROM_MEM(m, in, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 0); in += m * m;
 
-#define LOAD_2REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; 
+#define LOAD_2REG_FROM_MEM(m, in, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 0); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 1); in += m * m; 
 
-#define LOAD_3REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; 
+#define LOAD_3REG_FROM_MEM(m, in, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 0); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 1); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 2); in += m * m; 
 
-#define LOAD_4REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; 
+#define LOAD_4REG_FROM_MEM(m, in, reg) \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 0); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 1); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 2); in += m * m; \
+         LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 3); in += m * m; 
 
-#define LOAD_5REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; 
 
-#define LOAD_6REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; 
+#define SUMM_1REG(m, weight, arIn, arOut) \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
 
-#define LOAD_7REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; 
+#define SUMM_2REG(m, weight, arIn, arOut) \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
 
-#define LOAD_8REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; 
-
-#define LOAD_9REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m; 
-
-#define LOAD_10REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 9); in += m * m; 
-
-#define LOAD_11REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 9); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 10); in += m * m; 
-
-#define LOAD_12REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 9); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 10); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 11); in += m * m; 
-
-#define LOAD_13REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 9); in += m * m;  \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 10); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 11); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 12); in += m * m; 
-
-#define LOAD_14REG_FROM_MEM(m, d, in, reg) \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 0); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 1); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 2); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 3); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 4); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 5); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 6); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 7); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 8); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 9); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 10); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 11); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 12); in += m * m; \
-         LOAD_REG_FROM_MEM_ ## m ## x ## m ## _ ## d ## DIL(in, reg ## 13); in += m * m; 
-
-#define SUMM_1REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut);
-
-#define SUMM_2REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m);
-
-#define SUMM_3REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m);
+#define SUMM_3REG(m, weight, arIn, arOut) \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
          
-#define SUMM_4REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m);
-
-
-#define SUMM_5REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m);
-
-#define SUMM_6REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m);
-
-#define SUMM_7REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m);
-
-#define SUMM_8REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m);
-
-#define SUMM_9REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m);
-
-#define SUMM_10REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, arW), arOut); weight += (m) * (m);
-
-#define SUMM_11REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 10, arW), arOut); weight += (m) * (m);
-
-#define SUMM_12REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 10, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 11, arW), arOut); weight += (m) * (m);
-
-#define SUMM_13REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 10, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 11, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 12, arW), arOut); weight += (m) * (m);
-
-#define SUMM_14REG(m, weight, arIn, arW, arOut) \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 10, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 11, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 12, arW), arOut); weight += (m) * (m); \
-          arW = _mm256_loadu_ps(weight); arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 13, arW), arOut); weight += (m) * (m);
-
+#define SUMM_4REG(m, weight, arIn, arOut) \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
+          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
+    
 
     struct buf_t{
 
@@ -324,15 +94,7 @@ namespace SN_SIMD{
         ~buf_t() { 
             if (p) _mm_free(p);
         }
-                
-        void resize(const SN_Base::snSize& size){
-
-            if (p) _mm_free(p);
-
-            p = (SN_Base::snFloat*)_mm_malloc(size.size() * sizeof(SN_Base::snFloat), 64);
-
-            sz = size;
-        }
+      
     };
     
     template<typename T>
@@ -375,4 +137,28 @@ namespace SN_SIMD{
             }
         }
     };
+
+    template<size_t M>
+    void addPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW, SN_Base::snFloat& output){
+
+        for (size_t i = 0; i < W; i += 8){
+
+            auto arIn = _mm256_set_ps(*(pIn +             (M * M - 1)), *(pIn +     M * M + (M * M - 1)), *(pIn + 2 * M * M + (M * M - 1)),
+                                      *(pIn + 3 * M * M + (M * M - 1)), *(pIn + 4 * M * M + (M * M - 1)), *(pIn + 5 * M * M + (M * M - 1)),
+                                      *(pIn + 6 * M * M + (M * M - 1)), *(pIn + 7 * M * M + (M * M - 1)));                    
+
+            auto arW =  _mm256_set_ps(*(pW +             (M * M - 1)),  *(pW +     M * M + (M * M - 1)),  *(pW + 2 * M * M + (M * M - 1)),
+                                      *(pW + 3 * M * M + (M * M - 1)),  *(pW + 4 * M * M + (M * M - 1)),  *(pW + 5 * M * M + (M * M - 1)),
+                                      *(pW + 6 * M * M + (M * M - 1)),  *(pW + 7 * M * M + (M * M - 1)));                  
+
+            output += horSummReg(_mm256_mul_ps(arIn, arW));
+
+            pIn += M * M * 8;
+            pW += M * M * 8;
+        }
+
+        for (size_t i = 0; i < W % 8; ++i)
+            output += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
+        
+    }       
 };
