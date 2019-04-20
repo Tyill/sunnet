@@ -25,8 +25,6 @@
 
 
 #include <omp.h>
-#include <iostream>
-
 #include "snBase/snBase.h"
 #include "base.h"
 
@@ -34,7 +32,7 @@ using namespace std;
 using namespace SN_Base;
 
 namespace SN_SIMD{
-      
+    
     void microL1_M3x3(snFloat* weight,
         const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
 
@@ -42,12 +40,12 @@ namespace SN_SIMD{
 
         const size_t M = 3,
                      cacheLayerCnt = L1CacheSz_.d;   // insz.d;
-
-        __m256 arO = _mm256_set1_ps(output);
+        
+        __m256 arO = _mm256_setzero_ps();
                  
         size_t cacheStep = cacheLayerCnt / (REG_CNT - 12),
                cachePeak = cacheLayerCnt % (REG_CNT - 12);
-
+              
         snFloat* pIn = inHCWBuff, *pW = weight;
 
         for (size_t k = 0; k < cacheStep; ++k){
@@ -64,8 +62,9 @@ namespace SN_SIMD{
         }
 
         output += horSummReg(arO);
-                     
+                             
         output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
+        
     };
        
     template<size_t M>
@@ -74,10 +73,12 @@ namespace SN_SIMD{
         // Level 1: input calc
 
     public:
+       
         microL1(const snSize& inHCWBuffSz){
 
-            const size_t D = inHCWBuffSz.w / (M * M), // insz.d              2 -< weights >       
-                         cacheLayerCnt = max(size_t(1), min(D, L1_BYTE_SZ / (M * M * sizeof(snFloat))));
+            const size_t D = inHCWBuffSz.w / (M * M), // insz.d         
+                         memSz = L1_BYTE_SZ / (2 * sizeof(snFloat)),  //   2 - < weights >
+                         cacheLayerCnt = max(size_t(1), min(D, memSz / (M * M)));
 
             L1CacheSz = snSize(M * M, 1, cacheLayerCnt);
         };
@@ -103,11 +104,12 @@ namespace SN_SIMD{
 
             const size_t W = inHCWBuffSz.w, // M * M * insz.d
                          H = inHCWBuffSz.h, // outsz.w
-                         cacheLayerCnt = max(size_t(1), min(H, L2_BYTE_SZ / (W * sizeof(snFloat))));
+                         memSz = L2_BYTE_SZ / sizeof(snFloat),
+                         cacheLayerCnt = max(size_t(1), min(H, memSz / W));
 
             L2CacheSz = snSize(M * M, inHCWBuffSz.w / (M * M), cacheLayerCnt);
         };
-
+        
         void operator()(snFloat* weight,
             const snSize& L2CacheSz_, snFloat* inHCWBuff, snFloat& output){
 
@@ -123,8 +125,7 @@ namespace SN_SIMD{
 
             snFloat* pIn = inHCWBuff,
                    * pW = weight;
-
-            // for only input 
+                                 
             for (size_t k = 0; k < cacheStep; ++k){
                                
                 refMicroL1_(pW, L1CacheSz, pIn, output);
@@ -135,22 +136,14 @@ namespace SN_SIMD{
 
             // count the remainder
             if (cachePeak){
-
+                
                 snSize cacheSz = L1CacheSz;
                 cacheSz.d = cachePeak;
-                   
-                const size_t L1CSz = cacheSz.size();
-
-                for (size_t i = 0; i < cachePeak; ++i){
-
-                    refMicroL1_(pW, cacheSz, pIn, output);
-
-                    pW += L1CSz;
-                    pIn += L1CSz;
-                }
+                            
+                refMicroL1_(pW, cacheSz, pIn, output);
             }
         };
-            
+
         snSize L2CacheSz;
 
     private:
@@ -168,7 +161,8 @@ namespace SN_SIMD{
 
             const size_t W = inHCWBuffSz.w, // M * M * insz.d
                          H = inHCWBuffSz.h, // outsz.w
-                         cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.d, L3_BYTE_SZ / (W * H * sizeof(snFloat))));
+                         memSz = L3_BYTE_SZ / sizeof(snFloat),
+                         cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.d, memSz / (W * H)));
            
             L3CacheSz = snSize(W, H, cacheLayerCnt);
         };
@@ -190,14 +184,14 @@ namespace SN_SIMD{
             snFloat* pIn = inHCWBuff,
                    * pW = weight,
                    * pOut = output;
-
+          
             for (size_t k = 0; k < cacheStep; ++k){
 
                 for (size_t i = 0; i < cacheLayerCnt; ++i){
 
-                    refMacroL2_(pW, L2CacheSz, pIn + W * i, *(pOut + i));
+                    *(pOut + i) = bias;
 
-                    *(pOut + i) += bias;
+                    refMacroL2_(pW, L2CacheSz, pIn + W * i, *(pOut + i));
                 }
 
                 pIn += L2Sz;
@@ -212,9 +206,9 @@ namespace SN_SIMD{
                                 
                 for (size_t i = 0; i < cachePeak; ++i){
 
-                    refMacroL2_(pW, cacheSz, pIn + W * i, *(pOut + i));
+                    *(pOut + i) = bias;
 
-                    *(pOut + i) += bias;
+                    refMacroL2_(pW, cacheSz, pIn + W * i, *(pOut + i));
                 }
             }
         };
@@ -288,7 +282,7 @@ namespace SN_SIMD{
                  
         macroL3<M> oMacroL3(inHCWBuff.sz);
 
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(2)
         for (int i = 0; i < int(outsz.d); ++i){
 
             macroCommon(oMacroL3, 

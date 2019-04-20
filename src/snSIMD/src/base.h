@@ -35,7 +35,7 @@ namespace SN_SIMD{
     const size_t LAYER_MAX_HEIGHT = 600;
     const size_t REG_CNT = 16;                   // registr count
     const size_t REG_BYTE_SZ = 32;               // registr byte size  (256 bit = 32 B = 8 float)
-    const size_t L1_BYTE_SZ = 16 * 1024;         // L1 cache byte size (32 kB)
+    const size_t L1_BYTE_SZ = 32 * 1024;         // L1 cache byte size (32 kB)
     const size_t L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256 kB)
     const size_t L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
 
@@ -59,8 +59,7 @@ namespace SN_SIMD{
          LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 1); in += m * m; \
          LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 2); in += m * m; \
          LOAD_REG_FROM_MEM_ ## m ## x ## m ## (in, reg ## 3); in += m * m; 
-
-
+    
 #define SUMM_1REG(m, weight, arIn, arOut) \
           arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
 
@@ -78,8 +77,7 @@ namespace SN_SIMD{
           arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
           arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m); \
           arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, _mm256_loadu_ps(weight)), arOut); weight += (m) * (m);
-    
-
+ 
     struct buf_t{
 
         SN_Base::snFloat* p = nullptr;
@@ -142,26 +140,10 @@ namespace SN_SIMD{
     SN_Base::snFloat getPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW){
 
         SN_Base::snFloat ret = 0;
-
-        for (size_t i = 0; i < W; i += 8){
-
-            auto arIn = _mm256_set_ps(*(pIn +             (M * M - 1)), *(pIn +     M * M + (M * M - 1)), *(pIn + 2 * M * M + (M * M - 1)),
-                                      *(pIn + 3 * M * M + (M * M - 1)), *(pIn + 4 * M * M + (M * M - 1)), *(pIn + 5 * M * M + (M * M - 1)),
-                                      *(pIn + 6 * M * M + (M * M - 1)), *(pIn + 7 * M * M + (M * M - 1)));                    
-
-            auto arW =  _mm256_set_ps(*(pW +             (M * M - 1)),  *(pW +     M * M + (M * M - 1)),  *(pW + 2 * M * M + (M * M - 1)),
-                                      *(pW + 3 * M * M + (M * M - 1)),  *(pW + 4 * M * M + (M * M - 1)),  *(pW + 5 * M * M + (M * M - 1)),
-                                      *(pW + 6 * M * M + (M * M - 1)),  *(pW + 7 * M * M + (M * M - 1)));                  
-
-            ret += horSummReg(_mm256_mul_ps(arIn, arW));
-
-            pIn += M * M * 8;
-            pW += M * M * 8;
-        }
-
-        for (size_t i = 0; i < W % 8; ++i)
+                
+        for (size_t i = 0; i < W; ++i)
             ret += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
-        
+    
         return ret;
     }       
 };
