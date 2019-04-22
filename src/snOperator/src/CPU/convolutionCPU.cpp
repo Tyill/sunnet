@@ -26,8 +26,7 @@
 #include "../stdafx.h"
 #include "snOperator/src/Operator/convolution.h"
 #include <omp.h>
-#include <iostream>
-#include <fstream>
+#include <thread>
 
 #ifdef SN_AVX
 #include "snSIMD/snSIMD.h"
@@ -51,8 +50,11 @@ void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, si
     size_t shareStepByN = insz.d + kernel;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
    
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
@@ -110,10 +112,12 @@ void Convolution::forwardCPU(const convParams& prms,
     snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
      
 #ifdef SN_AVX   
-    if ((prms.fWidth != prms.fHeight) || (prms.fWidth != 3) || !SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate, weight, insz, input, outsz, output))
+
+    if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate,
+                                                 weight, insz, input, outsz, output))
+
 #endif
         forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);
-           
 }
 
 void backwardGW_BASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
@@ -135,8 +139,11 @@ void backwardGW_BASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
@@ -220,9 +227,8 @@ void Convolution::backwardCPU_GW(const convParams& prms,
     
 #ifdef SN_AVX
 
-   // if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionBWD(prms.fWidth, prms.stride, prms.dilate, weight, insz, input, outsz, output))
-   
-  //  else
+    if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionBWD_GW(prms.fWidth, prms.stride, prms.dilate,
+                                             weight, insz, input, outsz, gradIn, gradOut, dWeightOut))
 #endif
         backwardGW_BASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
            weight, insz, input, outsz, gradIn, gradOut, dWeightOut);
@@ -242,8 +248,11 @@ void backwardG_Base(size_t kernel, size_t fWidth, size_t fHeight, size_t stride,
 
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* ginBuff = share + shareStepByN * n;
@@ -299,6 +308,8 @@ void Convolution::backwardCPU_G(const convParams& prms,
 
 #ifdef SN_AVX
 
+    if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionBWD_G(prms.fWidth, prms.stride, prms.dilate,
+                                                weight, insz, outsz, gradIn, gradOut))
 #endif
     backwardG_Base(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,
         weight, insz, outsz, gradIn, gradOut);

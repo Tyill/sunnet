@@ -24,9 +24,9 @@
 //
 
 #include "../stdafx.h"
-#include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/Operator/deconvolution.h"
 #include <omp.h>
+#include <thread>
 
 using namespace std;
 using namespace SN_Base;
@@ -50,8 +50,11 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
 
     memset(output, 0, outStepByN * outsz.n * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // on batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
@@ -126,8 +129,11 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
 
     memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // по батчу
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* inBuff = share + shareStepByN * n;
@@ -228,8 +234,11 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
     size_t shareStepByN = outsz.d + insz.d;     // for local mem
     snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
   
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     // on batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
         snFloat* grinBuff = share + shareStepByN * n;

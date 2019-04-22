@@ -25,6 +25,7 @@
 
 
 #include <omp.h>
+#include <thread>
 #include "snBase/snBase.h"
 #include "base.h"
 
@@ -33,26 +34,29 @@ using namespace SN_Base;
 
 namespace SN_SIMD{
       
-    template <int R>
-    void backwardGW(size_t kernel, size_t stride, size_t dilate,
+    template <size_t M>
+    void backwardGW(size_t stride, size_t dilate,
         snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
-        const size_t wStepByD = R * R,              // step weight by input
-            wStepByK = wStepByD * insz.d,          // step weight by output
-            wStepByN = wStepByK * kernel + kernel, // step weight by batch
-            inStepByD = insz.w * insz.h,           // step in by input
-            inStepByN = inStepByD * insz.d,        // step in by batch
-            outStepByD = outsz.w * outsz.h,        // step out by input
-            outStepByN = outStepByD * outsz.d;     // step out by batch
+        const size_t kernel = outsz.d,
+                     wStepByD = M * M,                      // step weight by input
+                     wStepByK = wStepByD * insz.d,          // step weight by output
+                     wStepByN = wStepByK * kernel + kernel, // step weight by batch
+                     inStepByD = insz.w * insz.h,           // step in by input
+                     inStepByN = inStepByD * insz.d,        // step in by batch
+                     outStepByD = outsz.w * outsz.h,        // step out by input
+                     outStepByN = outStepByD * outsz.d;     // step out by batch
 
         snFloat* wgThr = (insz.n == 1) ? dWeightOut : (snFloat*)calloc(wStepByN * insz.n, sizeof(snFloat));
 
         memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
         memset(dWeightOut, 0, wStepByN * sizeof(snFloat));
 
+        auto core = std::thread::hardware_concurrency();
+        if (core == 0) core = 4;
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* wBuff = wgThr + wStepByN * n;
@@ -86,7 +90,7 @@ namespace SN_SIMD{
 
                     for (size_t c = 0; c < wStepByD; ++c){
 
-                        size_t cx = c % R, cy = c / R;
+                        size_t cx = c % M, cy = c / M;
                         In[c] = *(pIn + (cx + posW + cx * (dilate - 1)) + (cy + posH + cy * (dilate - 1)) * insz.w);
                     }
 
@@ -95,8 +99,8 @@ namespace SN_SIMD{
 
                         for (size_t c = 0; c < wStepByD; ++c){
 
-                            size_t cx = c % R, cy = c / R;
-                            W[c] = *(pW + cx + cy * R);
+                            size_t cx = c % M, cy = c / M;
+                            W[c] = *(pW + cx + cy * M);
                         }
 
                         snFloat gin = pGrIn[k * outStepByD];
@@ -114,20 +118,20 @@ namespace SN_SIMD{
                             _mm256_storeu_ps(W + z * 8, _mm256_mul_ps(arGIn, arIn));
                         }
 
-#define DW(c, r)   *(pdW + (c) + (r) * R)
+#define DW(c, r)   *(pdW + (c) + (r) * M)
 
                         for (size_t c = 0; c < (wStepByD - 1); ++c){
 
-                            size_t cx = c % R, cy = c / R;
+                            size_t cx = c % M, cy = c / M;
 
                             DW(cx, cy) += W[c];
                         }
-                        DW(R - 1, R - 1) += gin * In[wStepByD - 1];
+                        DW(M - 1, M - 1) += gin * In[wStepByD - 1];
 
 
 #define GOut(c, r) *(pGrOut + ((c) + posW + (c) * (dilate - 1)) + ((r) + posH + (r) * (dilate - 1)) * insz.w)
 
-                        GOut(R - 1, R - 1) += gin * W[wStepByD - 1];
+                        GOut(M - 1, M - 1) += gin * W[wStepByD - 1];
 
                         pW += wStepByK;
                         pdW += wStepByK;
@@ -138,7 +142,7 @@ namespace SN_SIMD{
 
                     for (size_t c = 0; c < (wStepByD - 1); ++c){
 
-                        size_t cx = c % R, cy = c / R;
+                        size_t cx = c % M, cy = c / M;
 
                         GOut(cx, cy) += mGOut[c];
                     }
@@ -163,22 +167,26 @@ namespace SN_SIMD{
 
     }
 
-    template <int R>
-    void backwardG(size_t kernel, size_t stride, size_t dilate,
+    template <size_t M>
+    void backwardG(size_t stride, size_t dilate,
         snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
-        const size_t wStepByD = R * R,             // step weight by input
-            wStepByK = wStepByD * insz.d,          // step weight by output
-            wStepByN = wStepByK * kernel + kernel, // step weight by batch
-            inStepByD = insz.w * insz.h,           // step in by input
-            inStepByN = inStepByD * insz.d,        // step in by batch
-            outStepByD = outsz.w * outsz.h,        // step out by input
-            outStepByN = outStepByD * outsz.d;     // step out by batch
+        const size_t kernel = outsz.d,
+                     wStepByD = M * M,                      // step weight by input
+                     wStepByK = wStepByD * insz.d,          // step weight by output
+                     wStepByN = wStepByK * kernel + kernel, // step weight by batch
+                     inStepByD = insz.w * insz.h,           // step in by input
+                     inStepByN = inStepByD * insz.d,        // step in by batch
+                     outStepByD = outsz.w * outsz.h,        // step out by input
+                     outStepByN = outStepByD * outsz.d;     // step out by batch
 
         memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
+        auto core = std::thread::hardware_concurrency();
+        if (core == 0) core = 4;
+
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             __m256 arGOut[wStepByD / 8];
@@ -206,8 +214,8 @@ namespace SN_SIMD{
 
                         for (size_t c = 0; c < wStepByD; ++c){
 
-                            size_t cx = c % R, cy = c / R;
-                            W[c] = *(pW + cx + cy * R);
+                            size_t cx = c % M, cy = c / M;
+                            W[c] = *(pW + cx + cy * M);
                         }
 
                         snFloat gin = pGrIn[k * outStepByD];
@@ -223,7 +231,7 @@ namespace SN_SIMD{
 
 #define GOut(c, r) *(pGrOut + ((c) + posW + (c) * (dilate - 1)) + ((r) + posH + (r) * (dilate - 1)) * insz.w)
 
-                        GOut(R - 1, R - 1) += gin * W[wStepByD - 1];
+                        GOut(M - 1, M - 1) += gin * W[wStepByD - 1];
 
                         pW += wStepByK;
                     }
@@ -233,7 +241,7 @@ namespace SN_SIMD{
 
                     for (size_t c = 0; c < (wStepByD - 1); ++c){
 
-                        size_t cx = c % R, cy = c / R;
+                        size_t cx = c % M, cy = c / M;
 
                         GOut(cx, cy) += mGOut[c];
                     }
@@ -244,16 +252,41 @@ namespace SN_SIMD{
 #undef GOut
 
     }
-
-
-    bool convolutionBWD(size_t M, size_t S, size_t D,
+    
+    bool convolutionBWD_GW(size_t M, size_t S, size_t D,
         snFloat* weight,
         const snSize& insz, snFloat* input,
-        const snSize& outsz, snFloat* output){
+        const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+   
+#define dbwd(MS)   \
+    if (M == MS){  \
+        backwardGW<MS>(S, D, weight, insz, input, outsz, gradIn, gradOut, dWeightOut); return true; };
+                
+        dbwd(3)
+        dbwd(5)
+        dbwd(7)
+        dbwd(9)
 
         return false;
 
+#undef dbwd
+    };
+    
+    bool convolutionBWD_G(size_t M, size_t S, size_t D,
+        snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
 
+#define dbwd(MS)   \
+    if (M == MS){  \
+        backwardG<MS>(S, D, weight, insz, outsz, gradIn, gradOut); return true; };
+                
+        dbwd(3)
+        dbwd(5)
+        dbwd(7)
+        dbwd(9)
+
+        return false;
+
+#undef dbwd
     };
 };
 

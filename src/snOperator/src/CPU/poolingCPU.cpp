@@ -24,9 +24,9 @@
 //
 
 #include "../stdafx.h"
-#include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/Operator/pooling.h"
 #include <omp.h>  
+#include <thread>
 
 using namespace std;
 using namespace SN_Base;
@@ -45,10 +45,13 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
   
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     if (poolPrms.type == poolType::max){ // max
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
@@ -97,7 +100,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     else{ // mean
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
@@ -149,10 +152,13 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
        
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     if (poolPrms.type == poolType::max){ // max
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             for (size_t p = 0; p < outStepByD; ++p){
@@ -183,7 +189,7 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
         snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = share + shareStepByN * n;

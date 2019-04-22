@@ -27,7 +27,6 @@
 
 #include "snBase/snBase.h"
 #include <algorithm>
-#include <iostream>
 #include <immintrin.h>
 
 namespace SN_SIMD{
@@ -137,8 +136,27 @@ namespace SN_SIMD{
     void reorderCHW2HCW(const SN_Base::snSize& insz, SN_Base::snFloat* input, const SN_Base::snSize& outsz, SN_Base::snFloat* output){
 
         SN_Base::snFloat* pOut = output;
+       
+        if (M == 1){
 
-        if ((M == 3) && (D == 1)){
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+                    
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        *pOut = *pIn;
+                    
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+        }
+
+        else if ((M == 3) && (D == 1)){
 
             for (size_t i = 0; i < outsz.h; ++i){
                  
@@ -148,9 +166,9 @@ namespace SN_SIMD{
 
                     for (size_t k = 0;  k < insz.d; ++k){
 
-                        _mm_storeu_ps(pOut, _mm_loadu_ps(pIn));
-                        _mm_storeu_ps(pOut + M, _mm_loadu_ps(pIn + insz.w));
-                        _mm_storeu_ps(pOut + 2 * M, _mm_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
 
                         pIn += insz.w * insz.h;
                         pOut += M * M;
@@ -169,11 +187,11 @@ namespace SN_SIMD{
 
                     for (size_t k = 0; k < insz.d; ++k){
 
-                        _mm_storeu_ps(pOut, _mm_loadu_ps(pIn));
-                        _mm_storeu_ps(pOut + M, _mm_loadu_ps(pIn + insz.w));
-                        _mm_storeu_ps(pOut + 2 * M, _mm_loadu_ps(pIn + 2 * insz.w));
-                        _mm_storeu_ps(pOut + 3 * M, _mm_loadu_ps(pIn + 3 * insz.w));
-                        _mm_storeu_ps(pOut + 4 * M, _mm_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
 
                         pIn += insz.w * insz.h;
                         pOut += M * M;
@@ -192,13 +210,13 @@ namespace SN_SIMD{
 
                     for (size_t k = 0; k < insz.d; ++k){
 
-                        _mm_storeu_ps(pOut, _mm_loadu_ps(pIn));
-                        _mm_storeu_ps(pOut + M, _mm_loadu_ps(pIn + insz.w));
-                        _mm_storeu_ps(pOut + 2 * M, _mm_loadu_ps(pIn + 2 * insz.w));
-                        _mm_storeu_ps(pOut + 3 * M, _mm_loadu_ps(pIn + 3 * insz.w));
-                        _mm_storeu_ps(pOut + 4 * M, _mm_loadu_ps(pIn + 4 * insz.w));
-                        _mm_storeu_ps(pOut + 5 * M, _mm_loadu_ps(pIn + 5 * insz.w));
-                        _mm_storeu_ps(pOut + 6 * M, _mm_loadu_ps(pIn + 6 * insz.w));
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
 
                         pIn += insz.w * insz.h;
                         pOut += M * M;
@@ -217,15 +235,124 @@ namespace SN_SIMD{
 
                     for (size_t k = 0; k < insz.d; ++k){
 
-                        _mm_storeu_ps(pOut, _mm_loadu_ps(pIn));
-                        _mm_storeu_ps(pOut + M, _mm_loadu_ps(pIn + insz.w));
-                        _mm_storeu_ps(pOut + 2 * M, _mm_loadu_ps(pIn + 2 * insz.w));
-                        _mm_storeu_ps(pOut + 3 * M, _mm_loadu_ps(pIn + 3 * insz.w));
-                        _mm_storeu_ps(pOut + 4 * M, _mm_loadu_ps(pIn + 4 * insz.w));
-                        _mm_storeu_ps(pOut + 5 * M, _mm_loadu_ps(pIn + 5 * insz.w));
-                        _mm_storeu_ps(pOut + 6 * M, _mm_loadu_ps(pIn + 6 * insz.w));
-                        _mm_storeu_ps(pOut + 7 * M, _mm_loadu_ps(pIn + 7 * insz.w));
-                        _mm_storeu_ps(pOut + 8 * M, _mm_loadu_ps(pIn + 8 * insz.w));
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+                        _mm256_storeu_ps(pOut + 7 * M, _mm256_loadu_ps(pIn + 7 * insz.w));
+                        _mm256_storeu_ps(pOut + 8 * M, _mm256_loadu_ps(pIn + 8 * insz.w));
+
+                        _mm_storeu_ps(pOut + 8, _mm_loadu_ps(pIn + 8));
+                        _mm_storeu_ps(pOut + M + 8, _mm_loadu_ps(pIn + insz.w + 8));
+                        _mm_storeu_ps(pOut + 2 * M + 8, _mm_loadu_ps(pIn + 2 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 3 * M + 8, _mm_loadu_ps(pIn + 3 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 4 * M + 8, _mm_loadu_ps(pIn + 4 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 5 * M + 8, _mm_loadu_ps(pIn + 5 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 6 * M + 8, _mm_loadu_ps(pIn + 6 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 7 * M + 8, _mm_loadu_ps(pIn + 7 * insz.w + 8));
+                        _mm_storeu_ps(pOut + 8 * M + 8, _mm_loadu_ps(pIn + 8 * insz.w + 8));
+
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+        }             
+
+        ///////////////////////////////////////////////////
+        
+
+        else if ((M == 3) && (D == 2)){
+
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+                                               
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+        }
+
+        else if ((M == 5) && (D == 2)){
+
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+        }
+
+        else if ((M == 7) && (D == 2)){
+
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+        }
+
+        else if ((M == 9) && (D == 2)){
+
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+                        _mm256_storeu_ps(pOut + 7 * M, _mm256_loadu_ps(pIn + 7 * insz.w));
+                        _mm256_storeu_ps(pOut + 8 * M, _mm256_loadu_ps(pIn + 8 * insz.w));
 
                         _mm_storeu_ps(pOut + 8, _mm_loadu_ps(pIn + 8));
                         _mm_storeu_ps(pOut + M + 8, _mm_loadu_ps(pIn + insz.w + 8));
@@ -244,40 +371,6 @@ namespace SN_SIMD{
             }
         }
 
-        // check border
-        size_t bordw = (insz.w - M - (M - 1) * (D - 1)) % S;
-        if (bordw != 0){
-            
-            for (size_t i = 0; i < outsz.h; ++i){
-                
-                pOut = output + (i * outsz.w + (outsz.w - 1)) * insz.d * M * M;
-
-                for (size_t j = 0; j < insz.d; ++j){
-
-                    for (size_t k = 0; k < M; ++k)
-                        pOut[M * k + M - 1] = 0;
-                    
-                    pOut += M * M;
-                }               
-            }
-        }
-
-        size_t bordh = (insz.h - M - (M - 1) * (D - 1)) % S;
-        if (bordh != 0){
-                        
-            for (size_t i = 0; i < outsz.w; ++i){
-                   
-                pOut = output + (outsz.w * (outsz.h - 1) + i) * insz.d * M * M;
-
-                for (size_t j = 0; j < insz.d; ++j){
-
-                    for (size_t k = 0; k < M; ++k)
-                        pOut[M * (M - 1) + k] = 0;
-
-                    pOut += M * M;
-                }
-            }
-        }
 
     };
 
@@ -285,9 +378,9 @@ namespace SN_SIMD{
     SN_Base::snFloat getPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW){
 
         SN_Base::snFloat ret = 0;
-                
+        
         for (size_t i = 0; i < W; ++i)
-            ret += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
+           ret += pIn[M * M * i + (M * M - 1)] * pW[M * M * i + (M * M - 1)];
     
         return ret;
     }       

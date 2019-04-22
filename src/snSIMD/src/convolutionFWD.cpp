@@ -25,7 +25,7 @@
 
 
 #include <omp.h>
-#include <iostream>
+#include <thread>
 #include "snBase/snBase.h"
 #include "base.h"
 
@@ -60,24 +60,40 @@ namespace SN_SIMD{
 
             snFloat* pIn = inHCWBuff, *pW = weight;
 
-            for (size_t k = 0; k < cacheLayerCnt; ++k){
+            if (M > 1){
+                for (size_t k = 0; k < cacheLayerCnt; ++k){
 
-                switch (M){
-                  case 1: { LOAD_1REG_MEM1x1(pIn, ar); SUMM_1REG_MEM1x1(pW, ar, arO); } break;
-                  case 3: { LOAD_1REG_MEM3x3(pIn, ar); SUMM_1REG_MEM3x3(pW, ar, arO); } break;
-                  case 5: { LOAD_3REG_MEM5x5(pIn, ar); SUMM_3REG_MEM5x5(pW, ar, arO); } break;
-                  case 7: { LOAD_6REG_MEM7x7(pIn, ar); SUMM_6REG_MEM7x7(pW, ar, arO); } break;
-                  case 9: { LOAD_10REG_MEM9x9(pIn, ar); SUMM_10REG_MEM9x9(pW, ar, arO); } break;
-                  default: break;
+                    switch (M){
+                    case 3: { LOAD_1REG_MEM3x3(pIn, ar); SUMM_1REG_MEM3x3(pW, ar, arO); } break;
+                    case 5: { LOAD_3REG_MEM5x5(pIn, ar); SUMM_3REG_MEM5x5(pW, ar, arO); } break;
+                    case 7: { LOAD_6REG_MEM7x7(pIn, ar); SUMM_6REG_MEM7x7(pW, ar, arO); } break;
+                    case 9: { LOAD_10REG_MEM9x9(pIn, ar); SUMM_10REG_MEM9x9(pW, ar, arO); } break;
+                    default: break;
+                    }
+
+                    pIn += M * M;
+                    pW += M * M;
                 }
 
-                pIn += M * M;
-                pW += M * M;
+                output += horSummReg<__m256>(arO);
+
+                output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
             }
+            else{
 
-            output += horSummReg<__m256>(arO);
+                for (size_t k = 0; k < cacheLayerCnt / 8; ++k){
 
-            output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
+                    LOAD_1REG_MEM1x1(pIn, ar); SUMM_1REG_MEM1x1(pW, ar, arO);
+                    
+                    pIn += 8;
+                    pW += 8;
+                }
+
+                output += horSummReg<__m256>(arO);
+
+                for (size_t k = 0; k < cacheLayerCnt % 8; ++k)
+                    output += pIn[k] * pW[k];
+            }          
         };
 
         snSize L1CacheSz;
@@ -256,7 +272,6 @@ namespace SN_SIMD{
     template<size_t M, size_t S, size_t D>
     void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
-                
      
         /// Reorder input
         buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
@@ -273,7 +288,10 @@ namespace SN_SIMD{
      
         macroL3<M> oMacroL3(inHCWBuff.sz);
        
-#pragma omp parallel for num_threads(2)
+        auto core = std::thread::hardware_concurrency();
+        if (core == 0) core = 4;
+
+#pragma omp parallel for num_threads(core)
         for (int i = 0; i < int(outsz.d); ++i){
 
             macroCommon(oMacroL3, 
@@ -301,8 +319,11 @@ namespace SN_SIMD{
         size_t shareStepByN = kernel;           // for local mem
         snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
+        auto core = std::thread::hardware_concurrency();
+        if (core == 0) core = 4;
+
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = share + shareStepByN * n;
@@ -382,6 +403,7 @@ namespace SN_SIMD{
         const snSize& insz, snFloat* input,
         const snSize& outsz, snFloat* output){
 
+      
         if ((insz.n > 1) || (S > 2) || (D > 2)){
   
 #define dfwd(MS)   \
@@ -398,6 +420,8 @@ namespace SN_SIMD{
         }
 #undef dfwd
 
+
+        
 #define cfwd(MS, SS, DS)                       \
     if ((M == MS) && (S == SS) && (D == DS)){  \
         convolutionFWD<MS, SS, DS>(weight, insz, input, outsz, output); return true; };
