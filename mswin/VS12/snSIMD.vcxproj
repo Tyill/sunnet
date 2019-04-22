@@ -23,7 +23,12 @@
     <ClInclude Include="..\..\src\snSIMD\src\base.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\snSIMD\src\convolutionBWD.cpp" />
     <ClCompile Include="..\..\src\snSIMD\src\convolutionFWD.cpp" />
+    <ClCompile Include="..\..\src\snSIMD\src\deconvolutionBWD.cpp" />
+    <ClCompile Include="..\..\src\snSIMD\src\deconvolutionFWD.cpp" />
+    <ClCompile Include="..\..\src\snSIMD\src\poolingBWD.cpp" />
+    <ClCompile Include="..\..\src\snSIMD\src\poolingFWD.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}</ProjectGuid>

@@ -25,6 +25,7 @@
 
 
 #include <omp.h>
+#include <iostream>
 #include "snBase/snBase.h"
 #include "base.h"
 
@@ -32,41 +33,8 @@ using namespace std;
 using namespace SN_Base;
 
 namespace SN_SIMD{
-    
-    void microL1_M3x3(snFloat* weight,
-        const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
-
-        // NCHW
-
-        const size_t M = 3,
-                     cacheLayerCnt = L1CacheSz_.d;   // insz.d;
+     
         
-        __m256 arO = _mm256_setzero_ps();
-                 
-        size_t cacheStep = cacheLayerCnt / (REG_CNT - 12),
-               cachePeak = cacheLayerCnt % (REG_CNT - 12);
-              
-        snFloat* pIn = inHCWBuff, *pW = weight;
-
-        for (size_t k = 0; k < cacheStep; ++k){
-
-            LOAD_4REG_FROM_MEM(3, pIn, ar); SUMM_4REG(M, pW, ar, arO);
-        }
-                
-        switch (cachePeak){
-           case 0: break;
-           case 1: { LOAD_1REG_FROM_MEM(3, pIn, ar); SUMM_1REG(M, pW, ar, arO); } break;
-           case 2: { LOAD_2REG_FROM_MEM(3, pIn, ar); SUMM_2REG(M, pW, ar, arO); } break;
-           case 3: { LOAD_3REG_FROM_MEM(3, pIn, ar); SUMM_3REG(M, pW, ar, arO); } break;
-           default: break;
-        }
-
-        output += horSummReg(arO);
-                             
-        output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
-        
-    };
-       
     template<size_t M>
     class microL1
     {
@@ -86,8 +54,30 @@ namespace SN_SIMD{
         void operator()(snFloat* weight,
             const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
 
-            if (M == 3)
-                microL1_M3x3(weight, L1CacheSz_, inHCWBuff, output);
+            const size_t cacheLayerCnt = L1CacheSz_.d;   // insz.d;
+
+            __m256 arO = _mm256_setzero_ps();
+
+            snFloat* pIn = inHCWBuff, *pW = weight;
+
+            for (size_t k = 0; k < cacheLayerCnt; ++k){
+
+                switch (M){
+                  case 1: { LOAD_1REG_MEM1x1(pIn, ar); SUMM_1REG_MEM1x1(pW, ar, arO); } break;
+                  case 3: { LOAD_1REG_MEM3x3(pIn, ar); SUMM_1REG_MEM3x3(pW, ar, arO); } break;
+                  case 5: { LOAD_3REG_MEM5x5(pIn, ar); SUMM_3REG_MEM5x5(pW, ar, arO); } break;
+                  case 7: { LOAD_6REG_MEM7x7(pIn, ar); SUMM_6REG_MEM7x7(pW, ar, arO); } break;
+                  case 9: { LOAD_10REG_MEM9x9(pIn, ar); SUMM_10REG_MEM9x9(pW, ar, arO); } break;
+                  default: break;
+                }
+
+                pIn += M * M;
+                pW += M * M;
+            }
+
+            output += horSummReg<__m256>(arO);
+
+            output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
         };
 
         snSize L1CacheSz;
@@ -267,8 +257,9 @@ namespace SN_SIMD{
     void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
                 
+     
         /// Reorder input
-        buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h));
+        buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
                 
         reorderCHW2HCW<M, S, D>(insz, input, outsz, inHCWBuff.p);
 
@@ -279,9 +270,9 @@ namespace SN_SIMD{
                      wStepByD = M * M,
                      wStepByK = wStepByD * insz.d,
                      wStepByN = wStepByK * outsz.d;
-                 
+     
         macroL3<M> oMacroL3(inHCWBuff.sz);
-
+       
 #pragma omp parallel for num_threads(2)
         for (int i = 0; i < int(outsz.d); ++i){
 
@@ -292,16 +283,120 @@ namespace SN_SIMD{
                         inHCWBuff.p,
                         outsz,
                         output + W * H * i);
-        }                       
+        }   
     }
+
+    template <size_t M>
+    void defaultFWD(size_t S, size_t D, snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+
+        const size_t wStepByD = M * M,          // step weight by input
+            kernel = outsz.d,
+            wStepByK = wStepByD * insz.d,       // step weight by output
+            wStepByN = wStepByK * kernel,       // step weight by batch
+            inStepByD = insz.w * insz.h,        // step in by input
+            inStepByN = inStepByD * insz.d,     // step in by batch
+            outStepByD = outsz.w * outsz.h,     // step out by input
+            outStepByN = outStepByD * outsz.d;  // step out by batch
+
+        size_t shareStepByN = kernel;           // for local mem
+        snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
+
+        // by batch
+#pragma omp parallel for
+        for (int n = 0; n < int(insz.n); ++n){
+
+            snFloat* outBuff = share + shareStepByN * n;
+            snFloat In[wStepByD], W[wStepByD];
+
+            for (size_t p = 0; p < outStepByD; ++p){
+
+                size_t ox = p % outsz.w, oy = p / outsz.w,
+                    posW = ox * S, posH = oy * S;
+
+                memset(outBuff, 0, kernel * sizeof(snFloat));
+
+                snFloat* pIn = input + inStepByN * n;
+                snFloat* pW = weight;
+
+                // on all in layers
+                for (size_t d = 0; d < insz.d; ++d){
+
+                    for (size_t c = 0; c < wStepByD; ++c){
+
+                        size_t cx = c % M, cy = c / M;
+                        In[c] = *(pIn + (cx + posW + cx * (D - 1)) + (cy + posH + cy * (D - 1)) * insz.w);
+                    }
+
+                    pW = weight + wStepByD * d;
+
+                    // on all out layers
+                    for (size_t k = 0; k < kernel; ++k){
+
+                        for (size_t c = 0; c < wStepByD; ++c){
+
+                            size_t cx = c % M, cy = c / M;
+                            W[c] = *(pW + cx + cy * M);
+                        }
+
+                        __m256 arOut = _mm256_setzero_ps();
+
+                        for (int z = 0; z < wStepByD / 8; ++z){
+
+                            __m256 arIn = _mm256_loadu_ps(In + z * 8);
+
+                            __m256 arW = _mm256_loadu_ps(W + z * 8);
+
+                            arOut = _mm256_add_ps(arOut, _mm256_mul_ps(arIn, arW));
+                        }
+
+                        outBuff[k] += horSummReg<__m256>(arOut);
+
+                        outBuff[k] += In[wStepByD - 1] * W[wStepByD - 1];
+
+                        pW += wStepByK;
+                    }
+
+                    pIn += inStepByD;
+
+                }
+
+                snFloat* pOut = output + ox + oy * outsz.w + n * outStepByN;
+                pW = weight + wStepByN;
+
+                // on all out layers
+                for (size_t k = 0; k < kernel; ++k){
+
+                    *pOut = outBuff[k] + *(pW + k); // + bias              
+
+                    pOut += outStepByD;
+                }
+            }
+        }
+
+        free(share);
+    }
+    
 
     bool convolutionFWD(size_t M, size_t S, size_t D,
         snFloat* weight,
         const snSize& insz, snFloat* input,
         const snSize& outsz, snFloat* output){
 
-        if ((insz.w > LAYER_MAX_WIDTH) || (insz.h > LAYER_MAX_HEIGHT))
+        if ((insz.n > 1) || (S > 2) || (D > 2)){
+  
+#define dfwd(MS)   \
+    if (M == MS){  \
+        defaultFWD<MS>(S, D, weight, insz, input, outsz, output); return true; };
+
+            dfwd(1)
+            dfwd(3)
+            dfwd(5)
+            dfwd(7)
+            dfwd(9)
+
             return false;
+        }
+#undef dfwd
 
 #define cfwd(MS, SS, DS)                       \
     if ((M == MS) && (S == SS) && (D == DS)){  \
@@ -324,16 +419,17 @@ namespace SN_SIMD{
             cfwd(5, 1, 2)
             cfwd(7, 1, 2)
             cfwd(9, 1, 2)
-                       
+
             cfwd(1, 2, 2)
             cfwd(3, 2, 2)
             cfwd(5, 2, 2)
             cfwd(7, 2, 2)
             cfwd(9, 2, 2)
-            
+  
+            return false;
+  
 #undef cfwd
 
-            return false;
     };
 };
 

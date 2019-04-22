@@ -56,6 +56,8 @@ namespace SN_Eng{
             if (n.second.oprName == "Input"){
                 thrPool->addNode(n.first);
                 thrExist.insert(n.first);
+
+                ndStates_[n.first].parentFW = n.first;
             }
         }
 
@@ -83,6 +85,31 @@ namespace SN_Eng{
                 }
             }
         }
+
+        for (auto& n : ndStates_){
+
+            if (n.second.parentFW.empty()){
+               
+                /// найдем начало цепочки - только там замок
+                string firts = n.first;
+                while (nodes[firts].prevNodes.size() == 1){
+
+                    string& prev = nodes[firts].prevNodes[0];
+                    auto& nn = nodes[prev].nextNodes;
+                    if (nn.size() > 1) break;            ///< развилка?
+
+                    if (!ndStates_[prev].parentFW.empty()){
+                        firts = ndStates_[prev].parentFW;
+                        break;
+                    }
+
+                    firts = prev;   ///< идем обратно дальше
+                }
+
+                n.second.parentFW = firts;
+            }
+        }
+
         /// подождем пока все запустятся
         for (auto& thr : thrExist){
             thrPool->waitExist(thr);
@@ -100,6 +127,8 @@ namespace SN_Eng{
             if (n.second.oprName == "Output"){
                 thrPool->addNode(n.first);
                 thrExist.insert(n.first);
+
+                ndStates_[n.first].parentBW = n.first;
             }
         }
 
@@ -125,6 +154,30 @@ namespace SN_Eng{
                     thrPool->addNode(n.first);
                     thrExist.insert(n.first);
                 }
+            }
+        }
+
+        for (auto& n : ndStates_){
+
+            if (n.second.parentBW.empty()){
+
+                /// найдем начало цепочки - только там замок
+                string firts = n.first;
+                while (nodes[firts].nextNodes.size() == 1){
+
+                    string& nxt = nodes[firts].nextNodes[0];
+                    auto& pn = nodes[nxt].prevNodes;
+                    if (pn.size() > 1) break;        ///< развилка?
+
+                    if (!ndStates_[nxt].parentBW.empty()){
+                        firts = ndStates_[nxt].parentBW;
+                        break;
+                    }
+
+                    firts = nxt;   ///< идем обратно дальше
+                }
+
+                n.second.parentBW = firts;
             }
         }
 
@@ -223,16 +276,7 @@ namespace SN_Eng{
             /// подождем, что все предыд операторы выполнились
             for (auto& n : prevNodes){
             
-                /// найдем начало цепочки - только там замок
-                string firts = n;
-                while (nodes[firts].prevNodes.size() == 1){
-
-                    string& prev = nodes[firts].prevNodes[0];
-                    auto& nn = nodes[prev].nextNodes;
-                    if (nn.size() > 1) break;            ///< развилка?
-                    
-                    firts = prev;   ///< идем обратно дальше
-                }
+                string& firts = ndStates_[n].parentFW;               
                 
                 SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
                 thrPoolForward_->waitFinish(firts);
@@ -280,16 +324,7 @@ namespace SN_Eng{
             /// подождем, что все пред операторы выполнились
             for (auto& n : prevNextNodes){
                 
-                /// найдем начало цепочки - только там замок
-                string firts = n;
-                while (nodes[firts].nextNodes.size() == 1){
-                    
-                    string& nxt = nodes[firts].nextNodes[0];
-                    auto& pn = nodes[nxt].prevNodes;
-                    if (pn.size() > 1) break;        ///< развилка?
-
-                    firts = nxt;   ///< идем обратно дальше
-                }
+                string& firts = ndStates_[n].parentBW;
 
                 if (!ndStates_[firts].isWasRun) continue;
                                                     

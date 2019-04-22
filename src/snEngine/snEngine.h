@@ -49,6 +49,8 @@ namespace SN_Eng{
         
         struct ndState{
             bool isWasRun = false;                             ///< был запущен на предыд итерации
+            std::string parentFW;                              ///< родительский узел, откуда запущен поток
+            std::string parentBW;
             std::vector<std::string> selectNextNodes;          ///< были выбраны на предыд итерации след узлы (множест число, тк мбыть разделение на неск параллель нитей)
         };
 
