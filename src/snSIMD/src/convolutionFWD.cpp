@@ -42,7 +42,7 @@ namespace SN_SIMD{
         /// Reorder input
         buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
                 
-        reorderCHW2HCW<M, S, D>(insz, input, outsz, inHCWBuff.p);
+        reorderCHW2HCW<M, S, D, RO>(insz, input, outsz, inHCWBuff.p);
 
         ///////////////////////////////////
 
@@ -74,66 +74,32 @@ namespace SN_SIMD{
 
                         LOAD_REG(pW, 0, arW);
                                                 
-                        SUMM_14REG(pIn, (insz.d * M * M), arIn, arW, arO);
+                        SUMM_14REG(pIn, M * M, arIn, arW, arO);
 
-                        pIn += M * M;
+                        pIn += M * M * RO;
                         pW += M * M;
                     }
+                                      
+                    pOut[0] = bias + horSummReg<__m256>(arO0);
+                    pOut[1] = bias + horSummReg<__m256>(arO1);
+                    pOut[2] = bias + horSummReg<__m256>(arO2);
+                    pOut[3] = bias + horSummReg<__m256>(arO3);
+                    pOut[4] = bias + horSummReg<__m256>(arO4);
+                    pOut[5] = bias + horSummReg<__m256>(arO5);
+                    pOut[6] = bias + horSummReg<__m256>(arO6);
+                    pOut[7] = bias + horSummReg<__m256>(arO7);
+                    pOut[8] = bias + horSummReg<__m256>(arO8);
+                    pOut[9] = bias + horSummReg<__m256>(arO9);
+                    pOut[10] = bias + horSummReg<__m256>(arO10);
+                    pOut[11] = bias + horSummReg<__m256>(arO11);
+                    pOut[12] = bias + horSummReg<__m256>(arO12);
+                    pOut[13] = bias + horSummReg<__m256>(arO13);
 
                     pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
                     pW = weight + wStepByK * od;
 
-                    pOut[0] = bias + horSummReg<__m256>(arO0) + getPeakOutput<M>(insz.d, pIn, pW);
-                    pOut[1] = bias + horSummReg<__m256>(arO1) + getPeakOutput<M>(insz.d, pIn + insz.d * M * M, pW);
-                    pOut[2] = bias + horSummReg<__m256>(arO2) + getPeakOutput<M>(insz.d, pIn + 2 * insz.d * M * M, pW);
-                    pOut[3] = bias + horSummReg<__m256>(arO3) + getPeakOutput<M>(insz.d, pIn + 3 * insz.d * M * M, pW);
-                    pOut[4] = bias + horSummReg<__m256>(arO4) + getPeakOutput<M>(insz.d, pIn + 4 * insz.d * M * M, pW);
-                    pOut[5] = bias + horSummReg<__m256>(arO5) + getPeakOutput<M>(insz.d, pIn + 5 * insz.d * M * M, pW);
-                    pOut[6] = bias + horSummReg<__m256>(arO6) + getPeakOutput<M>(insz.d, pIn + 6 * insz.d * M * M, pW);
-                    pOut[7] = bias + horSummReg<__m256>(arO7) + getPeakOutput<M>(insz.d, pIn + 7 * insz.d * M * M, pW);
-                    pOut[8] = bias + horSummReg<__m256>(arO8) + getPeakOutput<M>(insz.d, pIn + 8 * insz.d * M * M, pW);
-                    pOut[9] = bias + horSummReg<__m256>(arO9) + getPeakOutput<M>(insz.d, pIn + 9 * insz.d * M * M, pW);
-                    pOut[10] = bias + horSummReg<__m256>(arO10) + getPeakOutput<M>(insz.d, pIn + 10 * insz.d * M * M, pW);
-                    pOut[11] = bias + horSummReg<__m256>(arO11) + getPeakOutput<M>(insz.d, pIn + 11 * insz.d * M * M, pW);
-                    pOut[12] = bias + horSummReg<__m256>(arO12) + getPeakOutput<M>(insz.d, pIn + 12 * insz.d * M * M, pW);
-                    pOut[13] = bias + horSummReg<__m256>(arO13) + getPeakOutput<M>(insz.d, pIn + 13 * insz.d * M * M, pW);
-                }
-                else if (M == 5){
-
-                    CREATE_2REG(arO);
-                    CREATE_3REG(arW);
-                    CREATE_3REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_3REG(pW, 8, arW);
-                        LOAD_3REG(pIn, 8, arIn);
-
-                        SUMM_3REG(arIn, arW, arO);
-
-                        pIn += M * M;
-                        pW += M * M;
-                    }
-
-                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    pOut[0] = bias + horSummReg<__m256>(arO0) +getPeakOutput<M>(insz.d, pIn, pW);
-                    pOut[1] = bias + horSummReg<__m256>(arO1) +getPeakOutput<M>(insz.d, pIn + insz.d * M * M, pW);
-                    pOut[2] = bias + horSummReg<__m256>(arO2) +getPeakOutput<M>(insz.d, pIn + 2 * insz.d * M * M, pW);
-                    pOut[3] = bias + horSummReg<__m256>(arO3) +getPeakOutput<M>(insz.d, pIn + 3 * insz.d * M * M, pW);
-                    pOut[4] = bias + horSummReg<__m256>(arO4) +getPeakOutput<M>(insz.d, pIn + 4 * insz.d * M * M, pW);
-                    pOut[5] = bias + horSummReg<__m256>(arO5) +getPeakOutput<M>(insz.d, pIn + 5 * insz.d * M * M, pW);
-                    pOut[6] = bias + horSummReg<__m256>(arO6) +getPeakOutput<M>(insz.d, pIn + 6 * insz.d * M * M, pW);
-                    pOut[7] = bias + horSummReg<__m256>(arO7) +getPeakOutput<M>(insz.d, pIn + 7 * insz.d * M * M, pW);
-                    pOut[8] = bias + horSummReg<__m256>(arO8) +getPeakOutput<M>(insz.d, pIn + 8 * insz.d * M * M, pW);
-                    pOut[9] = bias + horSummReg<__m256>(arO9) +getPeakOutput<M>(insz.d, pIn + 9 * insz.d * M * M, pW);
-                    pOut[10] = bias + horSummReg<__m256>(arO10) +getPeakOutput<M>(insz.d, pIn + 10 * insz.d * M * M, pW);
-                    pOut[11] = bias + horSummReg<__m256>(arO11) +getPeakOutput<M>(insz.d, pIn + 11 * insz.d * M * M, pW);
-                    pOut[12] = bias + horSummReg<__m256>(arO12) +getPeakOutput<M>(insz.d, pIn + 12 * insz.d * M * M, pW);
-                    pOut[13] = bias + horSummReg<__m256>(arO13) +getPeakOutput<M>(insz.d, pIn + 13 * insz.d * M * M, pW);
-
-                }
+                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+                }                
             }
 
             if ((outsz.w * outsz.h) % RO){
@@ -152,7 +118,7 @@ namespace SN_SIMD{
                                        
                     if (M == 3){
 
-                        CREATE_REG(arO);
+                        /*CREATE_REG(arO);
                         CREATE_REG(arW);
                         CREATE_REG(arIn);
 
@@ -162,14 +128,16 @@ namespace SN_SIMD{
                             
                             SUMM_REG(pIn, 0, arIn, arW, arO);
                                                     
-                            pIn += M * M;
+                            pIn += M * M * RO;
                             pW += M * M;
                         }
 
                         pIn = inHCWBuff.p + (oi + offs) * M * M * insz.d;
                         pW = weight + wStepByK * od;
 
-                        pOut[0] = bias + horSummReg<__m256>(arO) + getPeakOutput<M>(insz.d, pIn, pW);
+                        pOut[0] = bias + horSummReg<__m256>(arO);
+
+*/
                    }
                 }
             }
