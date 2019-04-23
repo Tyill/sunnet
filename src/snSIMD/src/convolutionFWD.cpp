@@ -34,242 +34,8 @@ using namespace SN_Base;
 
 namespace SN_SIMD{
      
-        
-    template<size_t M>
-    class microL1
-    {
-        // Level 1: input calc
-
-    public:
-       
-        microL1(const snSize& inHCWBuffSz){
-
-            const size_t D = inHCWBuffSz.w / (M * M), // insz.d         
-                         memSz = L1_BYTE_SZ / (2 * sizeof(snFloat)),  //   2 - < weights >
-                         cacheLayerCnt = max(size_t(1), min(D, memSz / (M * M)));
-
-            L1CacheSz = snSize(M * M, 1, cacheLayerCnt);
-        };
-
-        void operator()(snFloat* weight,
-            const snSize& L1CacheSz_, snFloat* inHCWBuff, snFloat& output){
-
-            const size_t cacheLayerCnt = L1CacheSz_.d;   // insz.d;
-
-            __m256 arO = _mm256_setzero_ps();
-
-            snFloat* pIn = inHCWBuff, *pW = weight;
-
-            if (M > 1){
-                for (size_t k = 0; k < cacheLayerCnt; ++k){
-
-                    switch (M){
-                    case 3: { LOAD_1REG_MEM3x3(pIn, ar); SUMM_1REG_MEM3x3(pW, ar, arO); } break;
-                    case 5: { LOAD_3REG_MEM5x5(pIn, ar); SUMM_3REG_MEM5x5(pW, ar, arO); } break;
-                    case 7: { LOAD_6REG_MEM7x7(pIn, ar); SUMM_6REG_MEM7x7(pW, ar, arO); } break;
-                    case 9: { LOAD_10REG_MEM9x9(pIn, ar); SUMM_10REG_MEM9x9(pW, ar, arO); } break;
-                    default: break;
-                    }
-
-                    pIn += M * M;
-                    pW += M * M;
-                }
-
-                output += horSummReg<__m256>(arO);
-
-                output += getPeakOutput<M>(cacheLayerCnt, inHCWBuff, weight);
-            }
-            else{
-
-                for (size_t k = 0; k < cacheLayerCnt / 8; ++k){
-
-                    LOAD_1REG_MEM1x1(pIn, ar); SUMM_1REG_MEM1x1(pW, ar, arO);
-                    
-                    pIn += 8;
-                    pW += 8;
-                }
-
-                output += horSummReg<__m256>(arO);
-
-                for (size_t k = 0; k < cacheLayerCnt % 8; ++k)
-                    output += pIn[k] * pW[k];
-            }          
-        };
-
-        snSize L1CacheSz;
-    };
-
-    template<size_t M>
-    class macroL2
-    {
-        // Level 2: input by depth 
-
-    public:
-        macroL2(const snSize& inHCWBuffSz) :
-            refMicroL1_(inHCWBuffSz){
-
-            const size_t W = inHCWBuffSz.w, // M * M * insz.d
-                         H = inHCWBuffSz.h, // outsz.w
-                         memSz = L2_BYTE_SZ / sizeof(snFloat),
-                         cacheLayerCnt = max(size_t(1), min(H, memSz / W));
-
-            L2CacheSz = snSize(M * M, inHCWBuffSz.w / (M * M), cacheLayerCnt);
-        };
-        
-        void operator()(snFloat* weight,
-            const snSize& L2CacheSz_, snFloat* inHCWBuff, snFloat& output){
-
-            // Down to level 1
-
-            const snSize& L1CacheSz = refMicroL1_.L1CacheSz;
-
-            const size_t H = L2CacheSz_.h,           // insz.d
-                         cacheLayerCnt = L1CacheSz.d,// insz.d
-                         L1Sz = L1CacheSz.size(),
-                         cacheStep = H / cacheLayerCnt,
-                         cachePeak = H % cacheLayerCnt;
-
-            snFloat* pIn = inHCWBuff,
-                   * pW = weight;
-                                 
-            for (size_t k = 0; k < cacheStep; ++k){
-                               
-                refMicroL1_(pW, L1CacheSz, pIn, output);
-                
-                pW += L1Sz;
-                pIn += L1Sz;
-            }
-
-            // count the remainder
-            if (cachePeak){
-                
-                snSize cacheSz = L1CacheSz;
-                cacheSz.d = cachePeak;
-                            
-                refMicroL1_(pW, cacheSz, pIn, output);
-            }
-        };
-
-        snSize L2CacheSz;
-
-    private:
-        microL1<M> refMicroL1_;
-    };
-
-    template<size_t M>
-    class macroL3
-    {
-        // Level 3: input layers of width * height
-
-    public:
-        macroL3(const snSize& inHCWBuffSz) :
-            refMacroL2_(inHCWBuffSz){
-
-            const size_t W = inHCWBuffSz.w, // M * M * insz.d
-                         H = inHCWBuffSz.h, // outsz.w
-                         memSz = L3_BYTE_SZ / sizeof(snFloat),
-                         cacheLayerCnt = max(size_t(1), min(inHCWBuffSz.d, memSz / (W * H)));
-           
-            L3CacheSz = snSize(W, H, cacheLayerCnt);
-        };
-
-        void operator()(snFloat* weight, snFloat bias,
-            const snSize& L3CacheSz_, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
-
-            // Down to level 2
-
-            const snSize& L2CacheSz = refMacroL2_.L2CacheSz;
-
-            const size_t W = L3CacheSz_.w,          // M * M * insz.d
-                         H = L3CacheSz_.h,          // outsz.w
-                         cacheLayerCnt = L2CacheSz.d,// outsz.w
-                         L2Sz = L2CacheSz.size(),
-                         cacheStep = H / cacheLayerCnt,
-                         cachePeak = H % cacheLayerCnt;
-
-            snFloat* pIn = inHCWBuff,
-                   * pW = weight,
-                   * pOut = output;
-          
-            for (size_t k = 0; k < cacheStep; ++k){
-
-                for (size_t i = 0; i < cacheLayerCnt; ++i){
-
-                    *(pOut + i) = bias;
-
-                    refMacroL2_(pW, L2CacheSz, pIn + W * i, *(pOut + i));
-                }
-
-                pIn += L2Sz;
-                pOut += cacheLayerCnt;
-            }
-
-            // count the remainder
-            if (cachePeak){
-
-                snSize cacheSz = L2CacheSz;
-                cacheSz.d = cachePeak;
-                                
-                for (size_t i = 0; i < cachePeak; ++i){
-
-                    *(pOut + i) = bias;
-
-                    refMacroL2_(pW, cacheSz, pIn + W * i, *(pOut + i));
-                }
-            }
-        };
-
-        snSize L3CacheSz;
-
-    private:
-        macroL2<M> refMacroL2_;
-       
-    };
-         
-    template<size_t M>
-    void macroCommon(macroL3<M>& refMacroL3, snFloat* weight, snFloat bias,
-        const snSize& inHCWBuffSz, snFloat* inHCWBuff, const snSize& outsz, snFloat* output){
-            
-        // Down to level 3
-
-        const snSize& L3CacheSz = refMacroL3.L3CacheSz;
-
-        const size_t W = L3CacheSz.w,             // M * M * insz.d
-                     H = L3CacheSz.h,             // outsz.w
-                     cacheLayerCnt = L3CacheSz.d, // outsz.h
-                     L3Sz = L3CacheSz.size(),
-                     cacheStep = inHCWBuffSz.d / cacheLayerCnt,
-                     cachePeak = inHCWBuffSz.d % cacheLayerCnt;
-
-        snFloat* pIn = inHCWBuff,
-               * pOut = output;
-
-        for (size_t k = 0; k < cacheStep; ++k){
-
-            for (size_t i = 0; i < cacheLayerCnt; ++i){
-
-                refMacroL3(weight, bias, L3CacheSz, pIn + W * H * i, outsz, pOut + outsz.w * i);
-            }
-            pIn += L3Sz;
-            pOut += outsz.w * cacheLayerCnt;
-        }
-
-        if (cachePeak){
-
-            snSize cacheSz = L3CacheSz;
-            cacheSz.d = cachePeak;
-
-            for (size_t i = 0; i < cachePeak; ++i){
-
-                refMacroL3(weight, bias, cacheSz, pIn, outsz, pOut);
-
-                pIn += W * H;
-                pOut += outsz.w;
-            }
-        }
-    }
-
-    template<size_t M, size_t S, size_t D>
+   
+    template<size_t M, size_t S, size_t D, size_t RO>
     void convolutionFWD(snFloat* weight,
         const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
      
@@ -280,28 +46,135 @@ namespace SN_SIMD{
 
         ///////////////////////////////////
 
-        const size_t W = outsz.w,
-                     H = outsz.h,
-                     wStepByD = M * M,
+        const size_t wStepByD = M * M,
                      wStepByK = wStepByD * insz.d,
                      wStepByN = wStepByK * outsz.d;
-     
-        macroL3<M> oMacroL3(inHCWBuff.sz);
-       
+                     
         auto core = std::thread::hardware_concurrency();
         if (core == 0) core = 4;
-
+ 
 #pragma omp parallel for num_threads(core)
-        for (int i = 0; i < int(outsz.d); ++i){
+        for (int od = 0; od < int(outsz.d); ++od){
 
-            macroCommon(oMacroL3, 
-                        weight + wStepByK * i,
-                        *(weight + wStepByN + i),
-                        inHCWBuff.sz,
-                        inHCWBuff.p,
-                        outsz,
-                        output + W * H * i);
-        }   
+            for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
+                              
+                snFloat* pOut = output + (oi * RO) + od * (outsz.w * outsz.h),
+                       * pW = weight + wStepByK * od,
+                       * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+
+                snFloat bias = *(weight + wStepByN + od);
+                                                
+                if (M == 3){
+
+                    CREATE_14REG(arO);
+                    CREATE_REG(arW);
+                    CREATE_REG(arIn);
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        LOAD_REG(pW, 0, arW);
+                                                
+                        SUMM_14REG(pIn, (insz.d * M * M), arIn, arW, arO);
+
+                        pIn += M * M;
+                        pW += M * M;
+                    }
+
+                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+                    pW = weight + wStepByK * od;
+
+                    pOut[0] = bias + horSummReg<__m256>(arO0) + getPeakOutput<M>(insz.d, pIn, pW);
+                    pOut[1] = bias + horSummReg<__m256>(arO1) + getPeakOutput<M>(insz.d, pIn + insz.d * M * M, pW);
+                    pOut[2] = bias + horSummReg<__m256>(arO2) + getPeakOutput<M>(insz.d, pIn + 2 * insz.d * M * M, pW);
+                    pOut[3] = bias + horSummReg<__m256>(arO3) + getPeakOutput<M>(insz.d, pIn + 3 * insz.d * M * M, pW);
+                    pOut[4] = bias + horSummReg<__m256>(arO4) + getPeakOutput<M>(insz.d, pIn + 4 * insz.d * M * M, pW);
+                    pOut[5] = bias + horSummReg<__m256>(arO5) + getPeakOutput<M>(insz.d, pIn + 5 * insz.d * M * M, pW);
+                    pOut[6] = bias + horSummReg<__m256>(arO6) + getPeakOutput<M>(insz.d, pIn + 6 * insz.d * M * M, pW);
+                    pOut[7] = bias + horSummReg<__m256>(arO7) + getPeakOutput<M>(insz.d, pIn + 7 * insz.d * M * M, pW);
+                    pOut[8] = bias + horSummReg<__m256>(arO8) + getPeakOutput<M>(insz.d, pIn + 8 * insz.d * M * M, pW);
+                    pOut[9] = bias + horSummReg<__m256>(arO9) + getPeakOutput<M>(insz.d, pIn + 9 * insz.d * M * M, pW);
+                    pOut[10] = bias + horSummReg<__m256>(arO10) + getPeakOutput<M>(insz.d, pIn + 10 * insz.d * M * M, pW);
+                    pOut[11] = bias + horSummReg<__m256>(arO11) + getPeakOutput<M>(insz.d, pIn + 11 * insz.d * M * M, pW);
+                    pOut[12] = bias + horSummReg<__m256>(arO12) + getPeakOutput<M>(insz.d, pIn + 12 * insz.d * M * M, pW);
+                    pOut[13] = bias + horSummReg<__m256>(arO13) + getPeakOutput<M>(insz.d, pIn + 13 * insz.d * M * M, pW);
+                }
+                else if (M == 5){
+
+                    CREATE_2REG(arO);
+                    CREATE_3REG(arW);
+                    CREATE_3REG(arIn);
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        LOAD_3REG(pW, 8, arW);
+                        LOAD_3REG(pIn, 8, arIn);
+
+                        SUMM_3REG(arIn, arW, arO);
+
+                        pIn += M * M;
+                        pW += M * M;
+                    }
+
+                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+                    pW = weight + wStepByK * od;
+
+                    pOut[0] = bias + horSummReg<__m256>(arO0) +getPeakOutput<M>(insz.d, pIn, pW);
+                    pOut[1] = bias + horSummReg<__m256>(arO1) +getPeakOutput<M>(insz.d, pIn + insz.d * M * M, pW);
+                    pOut[2] = bias + horSummReg<__m256>(arO2) +getPeakOutput<M>(insz.d, pIn + 2 * insz.d * M * M, pW);
+                    pOut[3] = bias + horSummReg<__m256>(arO3) +getPeakOutput<M>(insz.d, pIn + 3 * insz.d * M * M, pW);
+                    pOut[4] = bias + horSummReg<__m256>(arO4) +getPeakOutput<M>(insz.d, pIn + 4 * insz.d * M * M, pW);
+                    pOut[5] = bias + horSummReg<__m256>(arO5) +getPeakOutput<M>(insz.d, pIn + 5 * insz.d * M * M, pW);
+                    pOut[6] = bias + horSummReg<__m256>(arO6) +getPeakOutput<M>(insz.d, pIn + 6 * insz.d * M * M, pW);
+                    pOut[7] = bias + horSummReg<__m256>(arO7) +getPeakOutput<M>(insz.d, pIn + 7 * insz.d * M * M, pW);
+                    pOut[8] = bias + horSummReg<__m256>(arO8) +getPeakOutput<M>(insz.d, pIn + 8 * insz.d * M * M, pW);
+                    pOut[9] = bias + horSummReg<__m256>(arO9) +getPeakOutput<M>(insz.d, pIn + 9 * insz.d * M * M, pW);
+                    pOut[10] = bias + horSummReg<__m256>(arO10) +getPeakOutput<M>(insz.d, pIn + 10 * insz.d * M * M, pW);
+                    pOut[11] = bias + horSummReg<__m256>(arO11) +getPeakOutput<M>(insz.d, pIn + 11 * insz.d * M * M, pW);
+                    pOut[12] = bias + horSummReg<__m256>(arO12) +getPeakOutput<M>(insz.d, pIn + 12 * insz.d * M * M, pW);
+                    pOut[13] = bias + horSummReg<__m256>(arO13) +getPeakOutput<M>(insz.d, pIn + 13 * insz.d * M * M, pW);
+
+                }
+            }
+
+            if ((outsz.w * outsz.h) % RO){
+
+                for (size_t oi = 0; oi < ((outsz.w * outsz.h) % RO); ++oi){
+
+                    size_t ow = oi % outsz.w, oh = oi / outsz.w;
+
+                    size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+
+                    snFloat* pOut = output + oi + offs + od * (outsz.w * outsz.h),
+                           * pW = weight + wStepByK * od,
+                           * pIn = inHCWBuff.p + (oi + offs) * M * M * insz.d;
+
+                    snFloat bias = *(weight + wStepByN + od);
+                                       
+                    if (M == 3){
+
+                        CREATE_REG(arO);
+                        CREATE_REG(arW);
+                        CREATE_REG(arIn);
+
+                        for (size_t k = 0; k < insz.d; ++k){
+
+                            LOAD_REG(pW, 0, arW);
+                            
+                            SUMM_REG(pIn, 0, arIn, arW, arO);
+                                                    
+                            pIn += M * M;
+                            pW += M * M;
+                        }
+
+                        pIn = inHCWBuff.p + (oi + offs) * M * M * insz.d;
+                        pW = weight + wStepByK * od;
+
+                        pOut[0] = bias + horSummReg<__m256>(arO) + getPeakOutput<M>(insz.d, pIn, pW);
+                   }
+                }
+            }
+        }
+               
     }
 
     template <size_t M>
@@ -422,23 +295,23 @@ namespace SN_SIMD{
 
 
         
-#define cfwd(MS, SS, DS)                       \
+#define cfwd(MS, SS, DS, RO)                  \
     if ((M == MS) && (S == SS) && (D == DS)){  \
-        convolutionFWD<MS, SS, DS>(weight, insz, input, outsz, output); return true; };
+        convolutionFWD<MS, SS, DS, RO>(weight, insz, input, outsz, output); return true; };
 
-            cfwd(1, 1, 1)
-            cfwd(3, 1, 1)
-            cfwd(5, 1, 1)
-            cfwd(7, 1, 1)
-            cfwd(9, 1, 1)
+            cfwd(1, 1, 1, 14)
+            cfwd(3, 1, 1, 14)
+            cfwd(5, 1, 1, 2)
+            cfwd(7, 1, 1, 1)
+            cfwd(9, 1, 1, 1)
 
-            cfwd(1, 2, 1)
-            cfwd(3, 2, 1)
-            cfwd(5, 2, 1)
-            cfwd(7, 2, 1)
-            cfwd(9, 2, 1)
+            cfwd(1, 2, 1, 14)
+            cfwd(3, 2, 1, 14)
+            cfwd(5, 2, 1, 2)
+            cfwd(7, 2, 1, 1)
+            cfwd(9, 2, 1, 1)
 
-            cfwd(1, 1, 2)
+            /*  cfwd(1, 1, 2)
             cfwd(3, 1, 2)
             cfwd(5, 1, 2)
             cfwd(7, 1, 2)
@@ -448,7 +321,7 @@ namespace SN_SIMD{
             cfwd(3, 2, 2)
             cfwd(5, 2, 2)
             cfwd(7, 2, 2)
-            cfwd(9, 2, 2)
+            cfwd(9, 2, 2)*/
   
             return false;
   

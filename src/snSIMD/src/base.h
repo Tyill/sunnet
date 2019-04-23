@@ -37,67 +37,60 @@ namespace SN_SIMD{
     const size_t L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256 kB)
     const size_t L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
 
-#define LOAD_1REG_MEM1x1(in, reg) \
-         __m256 reg ## 0 = _mm256_loadu_ps(in);
+#define CREATE_REG(reg) \
+    __m256 reg = _mm256_setzero_ps();
 
-#define LOAD_1REG_MEM3x3(in, reg) \
-         __m256 reg ## 0 = _mm256_loadu_ps(in);
+#define CREATE_2REG(reg) \
+    __m256 reg ## 0 = _mm256_setzero_ps(); \
+    __m256 reg ## 1 = _mm256_setzero_ps();
 
-#define LOAD_3REG_MEM5x5(in, reg) \
-         __m256 reg ## 0 = _mm256_loadu_ps(in);     \
-         __m256 reg ## 1 = _mm256_loadu_ps(in + 8); \
-         __m256 reg ## 2 = _mm256_loadu_ps(in + 16); 
+#define CREATE_3REG(reg) \
+    __m256 reg ## 0 = _mm256_setzero_ps(); \
+    __m256 reg ## 1 = _mm256_setzero_ps(); \
+    __m256 reg ## 3 = _mm256_setzero_ps();
 
-#define LOAD_6REG_MEM7x7(in, reg) \
-         __m256 reg ## 0 = _mm256_loadu_ps(in);      \
-         __m256 reg ## 1 = _mm256_loadu_ps(in + 8);  \
-         __m256 reg ## 2 = _mm256_loadu_ps(in + 16); \
-         __m256 reg ## 3 = _mm256_loadu_ps(in + 24); \
-         __m256 reg ## 4 = _mm256_loadu_ps(in + 32); \
-         __m256 reg ## 5 = _mm256_loadu_ps(in + 40); 
+#define CREATE_14REG(reg) \
+    __m256 reg ## 0 = _mm256_setzero_ps(); \
+    __m256 reg ## 1 = _mm256_setzero_ps(); \
+    __m256 reg ## 2 = _mm256_setzero_ps(); \
+    __m256 reg ## 3 = _mm256_setzero_ps(); \
+    __m256 reg ## 4 = _mm256_setzero_ps(); \
+    __m256 reg ## 5 = _mm256_setzero_ps(); \
+    __m256 reg ## 6 = _mm256_setzero_ps(); \
+    __m256 reg ## 7 = _mm256_setzero_ps(); \
+    __m256 reg ## 8 = _mm256_setzero_ps(); \
+    __m256 reg ## 9 = _mm256_setzero_ps(); \
+    __m256 reg ## 10 = _mm256_setzero_ps(); \
+    __m256 reg ## 11 = _mm256_setzero_ps(); \
+    __m256 reg ## 12 = _mm256_setzero_ps(); \
+    __m256 reg ## 13 = _mm256_setzero_ps();
 
-#define LOAD_10REG_MEM9x9(in, reg) \
-         __m256 reg ## 0 = _mm256_loadu_ps(in);      \
-         __m256 reg ## 1 = _mm256_loadu_ps(in + 8);  \
-         __m256 reg ## 2 = _mm256_loadu_ps(in + 16); \
-         __m256 reg ## 3 = _mm256_loadu_ps(in + 24); \
-         __m256 reg ## 4 = _mm256_loadu_ps(in + 32); \
-         __m256 reg ## 5 = _mm256_loadu_ps(in + 40); \
-         __m256 reg ## 6 = _mm256_loadu_ps(in + 48); \
-         __m256 reg ## 7 = _mm256_loadu_ps(in + 56); \
-         __m256 reg ## 8 = _mm256_loadu_ps(in + 64); \
-         __m256 reg ## 9 = _mm256_loadu_ps(in + 72); 
+#define LOAD_REG(in, offs, reg) \
+         reg = _mm256_loadu_ps(in + offs);
 
-#define SUMM_1REG_MEM1x1(weight, arIn, arOut) \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut);
+#define LOAD_3REG(in, offs, reg) \
+         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * offs);
 
-#define SUMM_1REG_MEM3x3(weight, arIn, arOut) \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut);
- 
-#define SUMM_3REG_MEM5x5(weight, arIn, arOut) \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut);     \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight + 8)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight + 16)), arOut);
-
-#define SUMM_6REG_MEM7x7(weight, arIn, arOut) \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut);      \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight + 8)), arOut);  \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight + 16)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, _mm256_loadu_ps(weight + 24)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, _mm256_loadu_ps(weight + 32)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, _mm256_loadu_ps(weight + 40)), arOut);
-
-#define SUMM_10REG_MEM9x9(weight, arIn, arOut) \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, _mm256_loadu_ps(weight)), arOut);      \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, _mm256_loadu_ps(weight + 8)), arOut);  \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, _mm256_loadu_ps(weight + 16)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, _mm256_loadu_ps(weight + 24)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, _mm256_loadu_ps(weight + 32)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, _mm256_loadu_ps(weight + 40)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 6, _mm256_loadu_ps(weight + 48)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 7, _mm256_loadu_ps(weight + 56)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 8, _mm256_loadu_ps(weight + 64)), arOut); \
-          arOut = _mm256_add_ps(_mm256_mul_ps(arIn ## 9, _mm256_loadu_ps(weight + 72)), arOut);
+#define SUMM_REG(in, inOffs, arIn, arW, arO) \
+        LOAD_REG(in, inOffs, arIn); arO = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO);
+    
+#define SUMM_14REG(in, inOffs, arIn, arW, arO) \
+         LOAD_REG(in, 0 * inOffs, arIn); arO ## 0 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 0); \
+         LOAD_REG(in, 1 * inOffs, arIn); arO ## 1 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 1); \
+         LOAD_REG(in, 2 * inOffs, arIn); arO ## 2 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 2); \
+         LOAD_REG(in, 3 * inOffs, arIn); arO ## 3 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 3); \
+         LOAD_REG(in, 4 * inOffs, arIn); arO ## 4 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 4); \
+         LOAD_REG(in, 5 * inOffs, arIn); arO ## 5 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 5); \
+         LOAD_REG(in, 6 * inOffs, arIn); arO ## 6 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 6); \
+         LOAD_REG(in, 7 * inOffs, arIn); arO ## 7 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 7); \
+         LOAD_REG(in, 8 * inOffs, arIn); arO ## 8 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 8); \
+         LOAD_REG(in, 9 * inOffs, arIn); arO ## 9 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 9); \
+         LOAD_REG(in, 10 * inOffs, arIn); arO ## 10 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 10); \
+         LOAD_REG(in, 11 * inOffs, arIn); arO ## 11 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 11); \
+         LOAD_REG(in, 12 * inOffs, arIn); arO ## 12 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 12); \
+         LOAD_REG(in, 13 * inOffs, arIn); arO ## 13 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 13);
 
     struct buf_t{
 
