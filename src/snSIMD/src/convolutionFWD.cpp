@@ -314,26 +314,46 @@ namespace SN_SIMD{
 
                 else if (M == 5){ // RO == 10
 
-                  /*  CREATE_REG(arO);
+                    CREATE_10REG(arO);
                     CREATE_3REG(arW);
                     CREATE_3REG(arIn);
 
                     for (size_t k = 0; k < insz.d; ++k){
 
                         LOAD_3REG(pW, 8, arW);
-                        LOAD_3REG(pIn, 8, arIn);
 
-                        SUMM_3x3REG_1OUT(arIn, arW, arO);
+                        switch (rmr){
+                         case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
+                         case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
+                         case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
+                         default: break;
+                        }
 
-                        pIn += M * M;
+                        pIn += M * M * rmr;
                         pW += M * M;
                     }
 
                     pIn = inHCWBuff.p + offs * M * M * insz.d;
                     pW = weight + wStepByK * od;
 
-                    SET_OUT(arO, pOut); 
-                    getPeakOutput<M, 1>(insz.d, pIn, pW, pOut);*/
+                    switch (rmr){
+                     case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
+                     case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
+                     case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
+                     case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
+                     case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
+                     case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
+                     case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
+                     case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
+                     case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
+                     default: break;
+                    }
                 }
 
                 else if (M == 7){ // RO == 4

@@ -198,6 +198,110 @@ namespace SN_SIMD{
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW ## 2), arO);
 
+#define SUMM_3x3REG_2OUT(pIn, inOffs, arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1);
+
+#define SUMM_3x3REG_3OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2);
+
+#define SUMM_3x3REG_4OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3);
+
+#define SUMM_3x3REG_5OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4);
+
+#define SUMM_3x3REG_6OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4); \
+         LOAD_3REG(pIn + 5 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 5);
+
+#define SUMM_3x3REG_7OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4); \
+         LOAD_3REG(pIn + 5 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 5); \
+         LOAD_3REG(pIn + 6 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 6);
+
+#define SUMM_3x3REG_8OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4); \
+         LOAD_3REG(pIn + 5 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 5); \
+         LOAD_3REG(pIn + 6 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 6); \
+         LOAD_3REG(pIn + 7 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 7);
+
+#define SUMM_3x3REG_9OUT(pIn, inOffs,arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4); \
+         LOAD_3REG(pIn + 5 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 5); \
+         LOAD_3REG(pIn + 6 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 6); \
+         LOAD_3REG(pIn + 7 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 7); \
+         LOAD_3REG(pIn + 8 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 8);
+
 #define SUMM_5x5REG_1OUT(arIn, arW, arO) \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
