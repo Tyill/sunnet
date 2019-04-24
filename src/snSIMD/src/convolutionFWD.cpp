@@ -54,7 +54,7 @@ namespace SN_SIMD{
         auto core = std::thread::hardware_concurrency();
         if (core == 0) core = 4;
  
-//#pragma omp parallel for num_threads(core)
+#pragma omp parallel for num_threads(core)
         for (int od = 0; od < int(outsz.d); ++od){
 
             for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
@@ -64,8 +64,33 @@ namespace SN_SIMD{
                        * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
 
                 snFloat bias = *(weight + wStepByN + od);
-                                                
-                if (M == 3){
+                  
+                if (M == 1){  // RO == 14
+                                      
+                    CREATE_14REG(arO);
+                    CREATE_REG(arW);
+                    CREATE_REG(arIn);
+                                      
+                    for (size_t k = 0; k < insz.d / 8; ++k){
+                    
+                        LOAD_REG(pW, 0, arW);
+                                             
+                        SUMM_14REG(pIn, insz.d, arIn, arW, arO);
+
+                        pIn += 8;
+                        pW += 8;                    
+                    }
+                 
+                    SET_14OUT(arO, pOut);
+
+                    for (size_t i = 0; i < insz.d % 8; ++i){
+
+                        for (size_t j = 0; j < RO; ++j)
+                            pOut[j] += pIn[i + j * insz.d] * pW[i];
+                    }
+                }
+            
+                else if (M == 3){  // RO == 14
 
                     CREATE_14REG(arO);
                     CREATE_REG(arW);
@@ -80,27 +105,43 @@ namespace SN_SIMD{
                         pIn += M * M * RO;
                         pW += M * M;
                     }
-                                      
-                    pOut[0] = bias + horSummReg<__m256>(arO0);
-                    pOut[1] = bias + horSummReg<__m256>(arO1);
-                    pOut[2] = bias + horSummReg<__m256>(arO2);
-                    pOut[3] = bias + horSummReg<__m256>(arO3);
-                    pOut[4] = bias + horSummReg<__m256>(arO4);
-                    pOut[5] = bias + horSummReg<__m256>(arO5);
-                    pOut[6] = bias + horSummReg<__m256>(arO6);
-                    pOut[7] = bias + horSummReg<__m256>(arO7);
-                    pOut[8] = bias + horSummReg<__m256>(arO8);
-                    pOut[9] = bias + horSummReg<__m256>(arO9);
-                    pOut[10] = bias + horSummReg<__m256>(arO10);
-                    pOut[11] = bias + horSummReg<__m256>(arO11);
-                    pOut[12] = bias + horSummReg<__m256>(arO12);
-                    pOut[13] = bias + horSummReg<__m256>(arO13);
 
+                    SET_14OUT(arO, pOut);
+                
                     pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
                     pW = weight + wStepByK * od;
 
                     getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
-                }                
+                }       
+
+                else if (M == 5){  // RO == 2
+
+                }
+
+                else if (M == 7){  // RO == 1
+
+                    CREATE_REG(arO);
+                    CREATE_6REG(arW);
+                    CREATE_6REG(arIn);
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                       LOAD_6REG(pW, 8, arW);
+                       LOAD_6REG(pIn, 8, arIn);
+                       
+                       SUMM_6x6REG_1OUT(arIn, arW, arO);
+                       
+                       pIn += M * M;
+                       pW += M * M;
+                    }
+
+                    pOut[0] = bias + horSummReg<__m256>(arO);
+
+                    pIn = inHCWBuff.p + oi * M * M * insz.d;
+                    pW = weight + wStepByK * od;
+
+                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+                }
             }
 
             size_t rmr = (outsz.w * outsz.h) % RO;
@@ -114,8 +155,63 @@ namespace SN_SIMD{
                        * pIn = inHCWBuff.p + offs * M * M * insz.d;
 
                 snFloat bias = *(weight + wStepByN + od);
-                                       
-                if (M == 3){
+                      
+                if (M == 1){ // RO == 14
+
+                    CREATE_13REG(arO);
+                    CREATE_REG(arW);
+                    CREATE_REG(arIn);
+
+                    for (size_t k = 0; k < insz.d / 8; ++k){
+
+                        LOAD_REG(pW, 0, arW);
+                                               
+                        switch (rmr){
+                        case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                        case 2: { SUMM_2REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 3: { SUMM_3REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 4: { SUMM_4REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 5: { SUMM_5REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 6: { SUMM_6REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 7: { SUMM_7REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 8: { SUMM_8REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 9: { SUMM_9REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 10: { SUMM_10REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 11: { SUMM_11REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 12: { SUMM_12REG(pIn, insz.d, arIn, arW, arO); } break;
+                        case 13: { SUMM_13REG(pIn, insz.d, arIn, arW, arO); } break;
+                        default: break;
+                        }
+
+                        pIn += 8;
+                        pW += 8;
+                    }
+
+                    switch (rmr){
+                     case 1: SET_1OUT(arO, pOut); break;
+                     case 2: SET_2OUT(arO, pOut); break;
+                     case 3: SET_3OUT(arO, pOut); break;
+                     case 4: SET_4OUT(arO, pOut); break;
+                     case 5: SET_5OUT(arO, pOut); break;
+                     case 6: SET_6OUT(arO, pOut); break;
+                     case 7: SET_7OUT(arO, pOut); break;
+                     case 8: SET_8OUT(arO, pOut); break;
+                     case 9: SET_9OUT(arO, pOut); break;
+                     case 10: SET_10OUT(arO, pOut); break;
+                     case 11: SET_11OUT(arO, pOut); break;
+                     case 12: SET_12OUT(arO, pOut); break;
+                     case 13: SET_13OUT(arO, pOut); break;
+                     default: break;
+                    }
+
+                    for (size_t i = 0; i < insz.d % 8; ++i){
+
+                        for (size_t j = 0; j < rmr; ++j)
+                            pOut[j] += pIn[i + j * insz.d] * pW[i];
+                    }
+                }
+                
+                else if (M == 3){ // RO == 14
                               
                     CREATE_13REG(arO);
                     CREATE_REG(arW);
@@ -126,20 +222,20 @@ namespace SN_SIMD{
                         LOAD_REG(pW, 0, arW);
                                                  
                         switch (rmr){
-                        case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                        case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO);} break;
-                        case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO);} break;
-                        case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO);} break;
-                        case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO);} break;
-                        default: break;
+                         case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                         case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
+                         case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO);} break;
+                         case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO);} break;
+                         case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO);} break;
+                         case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO);} break;
+                         default: break;
                         }
 
                         pIn += M * M * rmr;
@@ -150,137 +246,20 @@ namespace SN_SIMD{
                     pW = weight + wStepByK * od;
 
                     switch (rmr){
-                    case 1:{ 
-                        pOut[0] = bias + horSummReg<__m256>(arO0); 
-                        getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); 
-                    } break;
-                    case 2:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1); 
-                        getPeakOutput<M, 2>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 3:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2); 
-                        getPeakOutput<M, 3>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 4:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        getPeakOutput<M, 4>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 5:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        getPeakOutput<M, 5>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 6:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5); 
-                        getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); 
-                    } break;
-                    case 7:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        getPeakOutput<M, 7>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 8:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7); 
-                        getPeakOutput<M, 8>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 9:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7);
-                        pOut[8] = bias + horSummReg<__m256>(arO8);
-                        getPeakOutput<M, 9>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 10:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7);
-                        pOut[8] = bias + horSummReg<__m256>(arO8);
-                        pOut[9] = bias + horSummReg<__m256>(arO9); 
-                        getPeakOutput<M, 10>(insz.d, pIn, pW, pOut); 
-                    } break;
-                    case 11:{ 
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7);
-                        pOut[8] = bias + horSummReg<__m256>(arO8);
-                        pOut[9] = bias + horSummReg<__m256>(arO9);
-                        pOut[10] = bias + horSummReg<__m256>(arO10);
-                        getPeakOutput<M, 11>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 12:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7);
-                        pOut[8] = bias + horSummReg<__m256>(arO8);
-                        pOut[9] = bias + horSummReg<__m256>(arO9);
-                        pOut[10] = bias + horSummReg<__m256>(arO10);
-                        pOut[11] = bias + horSummReg<__m256>(arO11);
-                        getPeakOutput<M, 12>(insz.d, pIn, pW, pOut);
-                    } break;
-                    case 13:{
-                        pOut[0] = bias + horSummReg<__m256>(arO0);
-                        pOut[1] = bias + horSummReg<__m256>(arO1);
-                        pOut[2] = bias + horSummReg<__m256>(arO2);
-                        pOut[3] = bias + horSummReg<__m256>(arO3);
-                        pOut[4] = bias + horSummReg<__m256>(arO4);
-                        pOut[5] = bias + horSummReg<__m256>(arO5);
-                        pOut[6] = bias + horSummReg<__m256>(arO6);
-                        pOut[7] = bias + horSummReg<__m256>(arO7);
-                        pOut[8] = bias + horSummReg<__m256>(arO8);
-                        pOut[9] = bias + horSummReg<__m256>(arO9);
-                        pOut[10] = bias + horSummReg<__m256>(arO10);
-                        pOut[11] = bias + horSummReg<__m256>(arO11);
-                        pOut[12] = bias + horSummReg<__m256>(arO12);
-                        getPeakOutput<M, 13>(insz.d, pIn, pW, pOut);
-                    } break;
-                    default: break;
+                     case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
+                     case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
+                     case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
+                     case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
+                     case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
+                     case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
+                     case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
+                     case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
+                     case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
+                     case 10:{ SET_10OUT(arO, pOut); getPeakOutput<M, 10>(insz.d, pIn, pW, pOut); } break;
+                     case 11:{ SET_11OUT(arO, pOut); getPeakOutput<M, 11>(insz.d, pIn, pW, pOut); } break;
+                     case 12:{ SET_12OUT(arO, pOut); getPeakOutput<M, 12>(insz.d, pIn, pW, pOut); } break;
+                     case 13:{ SET_13OUT(arO, pOut); getPeakOutput<M, 13>(insz.d, pIn, pW, pOut); } break;
+                     default: break;
                     }                    
                 }
             }

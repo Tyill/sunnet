@@ -178,6 +178,22 @@ namespace SN_SIMD{
          reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
          reg ## 2 = _mm256_loadu_ps(in + 2 * offs);
 
+#define LOAD_6REG(in, offs, reg) \
+         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * offs); \
+         reg ## 3 = _mm256_loadu_ps(in + 3 * offs); \
+         reg ## 4 = _mm256_loadu_ps(in + 4 * offs); \
+         reg ## 5 = _mm256_loadu_ps(in + 5 * offs);
+
+#define SUMM_6x6REG_1OUT(arIn, arW, arO) \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW ## 2), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW ## 3), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW ## 4), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW ## 5), arO); 
+
 #define SUMM_REG(in, inOffs, arIn, arW, arO) \
         LOAD_REG(in, inOffs, arIn); arO = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO);
   
@@ -314,7 +330,141 @@ namespace SN_SIMD{
          LOAD_REG(in, 12 * inOffs, arIn); arO ## 12 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 12); \
          LOAD_REG(in, 13 * inOffs, arIn); arO ## 13 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 13);
 
-    struct buf_t{
+#define SET_1OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0);
+
+#define SET_2OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1);
+
+#define SET_3OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2);
+
+#define SET_4OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3);
+
+#define SET_5OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4);
+
+#define SET_6OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5);
+
+#define SET_7OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6);
+    
+#define SET_8OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7);
+
+#define SET_9OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8);
+
+#define SET_10OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8); \
+    pOut[9] = bias + horSummReg<__m256>(arO ## 9);
+
+#define SET_11OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8); \
+    pOut[9] = bias + horSummReg<__m256>(arO ## 9); \
+    pOut[10] = bias + horSummReg<__m256>(arO ## 10);
+
+#define SET_12OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8); \
+    pOut[9] = bias + horSummReg<__m256>(arO ## 9); \
+    pOut[10] = bias + horSummReg<__m256>(arO ## 10); \
+    pOut[11] = bias + horSummReg<__m256>(arO ## 11);
+
+#define SET_13OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8); \
+    pOut[9] = bias + horSummReg<__m256>(arO ## 9); \
+    pOut[10] = bias + horSummReg<__m256>(arO ## 10); \
+    pOut[11] = bias + horSummReg<__m256>(arO ## 11); \
+    pOut[12] = bias + horSummReg<__m256>(arO ## 12);
+
+#define SET_14OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO ## 0); \
+    pOut[1] = bias + horSummReg<__m256>(arO ## 1); \
+    pOut[2] = bias + horSummReg<__m256>(arO ## 2); \
+    pOut[3] = bias + horSummReg<__m256>(arO ## 3); \
+    pOut[4] = bias + horSummReg<__m256>(arO ## 4); \
+    pOut[5] = bias + horSummReg<__m256>(arO ## 5); \
+    pOut[6] = bias + horSummReg<__m256>(arO ## 6); \
+    pOut[7] = bias + horSummReg<__m256>(arO ## 7); \
+    pOut[8] = bias + horSummReg<__m256>(arO ## 8); \
+    pOut[9] = bias + horSummReg<__m256>(arO ## 9); \
+    pOut[10] = bias + horSummReg<__m256>(arO ## 10); \
+    pOut[11] = bias + horSummReg<__m256>(arO ## 11); \
+    pOut[12] = bias + horSummReg<__m256>(arO ## 12); \
+    pOut[13] = bias + horSummReg<__m256>(arO ## 13);
+
+
+     struct buf_t{
 
         SN_Base::snFloat* p = nullptr;
         SN_Base::snSize sz;
@@ -354,21 +504,21 @@ namespace SN_SIMD{
        
         if (M == 1){
 
-            /*for (size_t i = 0; i < outsz.h; ++i){
+            for (size_t i = 0; i < outsz.h; ++i){
 
                 for (size_t j = 0; j < outsz.w; ++j){
-                    
+
                     snFloat* pIn = input + S * insz.w * i + S * j;
 
                     for (size_t k = 0; k < insz.d; ++k){
 
                         *pOut = *pIn;
-                    
+
                         pIn += insz.w * insz.h;
                         pOut += M * M;
                     }
                 }
-            }*/
+            }
         }
 
         else if ((M == 3) && (D == 1)){
@@ -422,9 +572,28 @@ namespace SN_SIMD{
         }
 
         else if ((M == 7) && (D == 1)){
-           
-            
 
+            for (size_t i = 0; i < outsz.h; ++i){
+
+                for (size_t j = 0; j < outsz.w; ++j){
+
+                    snFloat* pIn = input + S * insz.w * i + S * j;
+
+                    for (size_t k = 0; k < insz.d; ++k){
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+
+                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
         }
 
         else if ((M == 9) && (D == 1)){
