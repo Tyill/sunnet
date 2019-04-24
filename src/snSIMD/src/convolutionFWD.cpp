@@ -35,10 +35,352 @@ using namespace SN_Base;
 
 namespace SN_SIMD{
      
+    template<size_t M, size_t RO>
+    void microL1(int od, size_t oi, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
+      
+        const size_t wStepByD = M * M,
+                     wStepByK = wStepByD * insz.d,
+                     wStepByN = wStepByK * outsz.d;
+
+        const snFloat bias = *(weight + wStepByN + od);
+
+        const snFloat* pW = weight + wStepByK * od,
+                     * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+
+        snFloat* pOut = output + (oi * RO) + od * (outsz.w * outsz.h);
+    
+        if (M == 1){  // RO == 14
+
+            CREATE_14REG(arO);
+            CREATE_REG(arW);
+            CREATE_REG(arIn);
+
+            for (size_t k = 0; k < insz.d / 8; ++k){
+
+                LOAD_REG(pW, 0, arW);
+
+                SUMM_14REG(pIn, insz.d, arIn, arW, arO);
+
+                pIn += 8;
+                pW += 8;
+            }
+
+            SET_14OUT(arO, pOut);
+
+            for (size_t i = 0; i < insz.d % 8; ++i){
+
+                for (size_t j = 0; j < RO; ++j)
+                    pOut[j] += pIn[i + j * insz.d] * pW[i];
+            }
+        }
+
+        else if (M == 3){  // RO == 14
+
+            CREATE_14REG(arO);
+            CREATE_REG(arW);
+            CREATE_REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_REG(pW, 0, arW);
+
+                SUMM_14REG(pIn, M * M, arIn, arW, arO);
+
+                pIn += M * M * RO;
+                pW += M * M;
+            }
+
+            SET_14OUT(arO, pOut);
+
+            pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+        }
+
+        else if (M == 5){  // RO == 10
+
+            CREATE_10REG(arO);
+            CREATE_3REG(arW);
+            CREATE_3REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_3REG(pW, 8, arW);
+
+                SUMM_3x3REG_10OUT(pIn, M * M, arIn, arW, arO);
+
+                pIn += M * M * RO;
+                pW += M * M;
+            }
+
+            SET_10OUT(arO, pOut);
+
+            pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+        }
+
+        else if (M == 7){  // RO == 4
+
+            CREATE_4REG(arO);
+            CREATE_6REG(arW);
+            CREATE_6REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_6REG(pW, 8, arW);
+
+                SUMM_6x6REG_4OUT(pIn, M * M, arIn, arW, arO);
+
+                pIn += M * M * RO;
+                pW += M * M;
+            }
+
+            SET_4OUT(arO, pOut);
+
+            pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+        }
+
+        else if (M == 9){  // RO == 1
+
+            CREATE_REG(arO);
+            CREATE_5REG(arW);
+            CREATE_5REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_5REG(pW, 8, arW);
+                LOAD_5REG(pIn, 8, arIn);
+
+                SUMM_5x5REG_1OUT(arIn, arW, arO);
+
+                LOAD_5REG(pW + 8 * 5, 8, arW);
+                LOAD_5REG(pIn + 8 * 5, 8, arIn);
+
+                SUMM_5x5REG_1OUT(arIn, arW, arO);
+
+                pIn += M * M;
+                pW += M * M;
+            }
+
+            SET_OUT(arO, pOut);
+
+            pIn = inHCWBuff.p + oi * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
+        }    
+    }
+
+    template<size_t M, size_t RO>
+    void microL1Rmr(int od, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
+       
+     
+        const size_t offs = ((outsz.w * outsz.h) / RO) * RO, 
+                     rmr = (outsz.w * outsz.h) % RO,
+                     wStepByD = M * M,
+                     wStepByK = wStepByD * insz.d,
+                     wStepByN = wStepByK * outsz.d;
+
+        const snFloat* pW = weight + wStepByK * od,
+                     * pIn = inHCWBuff.p + offs * M * M * insz.d;
+
+        snFloat* pOut = output + offs + od * (outsz.w * outsz.h);
+
+        const snFloat bias = *(weight + wStepByN + od);
+
+        if (M == 1){ // RO == 14
+
+            CREATE_13REG(arO);
+            CREATE_REG(arW);
+            CREATE_REG(arIn);
+
+            for (size_t k = 0; k < insz.d / 8; ++k){
+
+                LOAD_REG(pW, 0, arW);
+
+                switch (rmr){
+                case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                case 2: { SUMM_2REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 3: { SUMM_3REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 4: { SUMM_4REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 5: { SUMM_5REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 6: { SUMM_6REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 7: { SUMM_7REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 8: { SUMM_8REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 9: { SUMM_9REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 10: { SUMM_10REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 11: { SUMM_11REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 12: { SUMM_12REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 13: { SUMM_13REG(pIn, insz.d, arIn, arW, arO); } break;
+                default: break;
+                }
+
+                pIn += 8;
+                pW += 8;
+            }
+
+            switch (rmr){
+            case 1: SET_1OUT(arO, pOut); break;
+            case 2: SET_2OUT(arO, pOut); break;
+            case 3: SET_3OUT(arO, pOut); break;
+            case 4: SET_4OUT(arO, pOut); break;
+            case 5: SET_5OUT(arO, pOut); break;
+            case 6: SET_6OUT(arO, pOut); break;
+            case 7: SET_7OUT(arO, pOut); break;
+            case 8: SET_8OUT(arO, pOut); break;
+            case 9: SET_9OUT(arO, pOut); break;
+            case 10: SET_10OUT(arO, pOut); break;
+            case 11: SET_11OUT(arO, pOut); break;
+            case 12: SET_12OUT(arO, pOut); break;
+            case 13: SET_13OUT(arO, pOut); break;
+            default: break;
+            }
+
+            for (size_t i = 0; i < insz.d % 8; ++i){
+
+                for (size_t j = 0; j < rmr; ++j)
+                    pOut[j] += pIn[i + j * insz.d] * pW[i];
+            }
+        }
+
+        else if (M == 3){ // RO == 14
+
+            CREATE_13REG(arO);
+            CREATE_REG(arW);
+            CREATE_REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_REG(pW, 0, arW);
+
+                switch (rmr){
+                case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
+                case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
+                case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
+                case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
+                case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
+                case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
+                case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
+                case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
+                case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO); } break;
+                case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO); } break;
+                case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO); } break;
+                case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO); } break;
+                default: break;
+                }
+
+                pIn += M * M * rmr;
+                pW += M * M;
+            }
+
+            pIn = inHCWBuff.p + offs * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            switch (rmr){
+            case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
+            case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
+            case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
+            case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
+            case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
+            case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
+            case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
+            case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
+            case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
+            case 10:{ SET_10OUT(arO, pOut); getPeakOutput<M, 10>(insz.d, pIn, pW, pOut); } break;
+            case 11:{ SET_11OUT(arO, pOut); getPeakOutput<M, 11>(insz.d, pIn, pW, pOut); } break;
+            case 12:{ SET_12OUT(arO, pOut); getPeakOutput<M, 12>(insz.d, pIn, pW, pOut); } break;
+            case 13:{ SET_13OUT(arO, pOut); getPeakOutput<M, 13>(insz.d, pIn, pW, pOut); } break;
+            default: break;
+            }
+        }
+
+        else if (M == 5){ // RO == 10
+
+            CREATE_10REG(arO);
+            CREATE_3REG(arW);
+            CREATE_3REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_3REG(pW, 8, arW);
+
+                switch (rmr){
+                case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
+                case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
+                case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
+                case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
+                case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
+                case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
+                case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
+                case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
+                case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
+                default: break;
+                }
+
+                pIn += M * M * rmr;
+                pW += M * M;
+            }
+
+            pIn = inHCWBuff.p + offs * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            switch (rmr){
+            case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
+            case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
+            case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
+            case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
+            case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
+            case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
+            case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
+            case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
+            case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
+            default: break;
+            }
+        }
+
+        else if (M == 7){ // RO == 4
+
+            CREATE_4REG(arO);
+            CREATE_6REG(arW);
+            CREATE_6REG(arIn);
+
+            for (size_t k = 0; k < insz.d; ++k){
+
+                LOAD_6REG(pW, 8, arW);
+
+                switch (rmr){
+                case 1: SUMM_6x6REG_1OUT(arIn, arW, arO0); break;
+                case 2: SUMM_6x6REG_2OUT(pIn, M * M, arIn, arW, arO); break;
+                case 3: SUMM_6x6REG_3OUT(pIn, M * M, arIn, arW, arO); break;
+                default: break;
+                }
+
+                pIn += M * M * rmr;
+                pW += M * M;
+            }
+
+            pIn = inHCWBuff.p + offs * M * M * insz.d;
+            pW = weight + wStepByK * od;
+
+            switch (rmr){
+            case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
+            case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
+            case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
+            default: break;
+            }
+        }
+    }
    
     template<size_t M, size_t S, size_t D, size_t RO>
-    void convolutionFWD(snFloat* weight,
-        const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+    void convolutionFWD(const snFloat* weight,
+        const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
      
         /// Reorder input
         buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
@@ -59,340 +401,16 @@ namespace SN_SIMD{
 
             for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
                               
-                snFloat* pOut = output + (oi * RO) + od * (outsz.w * outsz.h),
-                       * pW = weight + wStepByK * od,
-                       * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-
-                snFloat bias = *(weight + wStepByN + od);
-                  
-                if (M == 1){  // RO == 14
-                                      
-                    CREATE_14REG(arO);
-                    CREATE_REG(arW);
-                    CREATE_REG(arIn);
-                                      
-                    for (size_t k = 0; k < insz.d / 8; ++k){
-                    
-                        LOAD_REG(pW, 0, arW);
-                                             
-                        SUMM_14REG(pIn, insz.d, arIn, arW, arO);
-
-                        pIn += 8;
-                        pW += 8;                    
-                    }
-                 
-                    SET_14OUT(arO, pOut);
-
-                    for (size_t i = 0; i < insz.d % 8; ++i){
-
-                        for (size_t j = 0; j < RO; ++j)
-                            pOut[j] += pIn[i + j * insz.d] * pW[i];
-                    }
-                }
-            
-                else if (M == 3){  // RO == 14
-
-                    CREATE_14REG(arO);
-                    CREATE_REG(arW);
-                    CREATE_REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_REG(pW, 0, arW);
-                                                
-                        SUMM_14REG(pIn, M * M, arIn, arW, arO);
-
-                        pIn += M * M * RO;
-                        pW += M * M;
-                    }
-
-                    SET_14OUT(arO, pOut);
-                
-                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
-                }       
-
-                else if (M == 5){  // RO == 10
-
-                    CREATE_10REG(arO);
-                    CREATE_3REG(arW);
-                    CREATE_3REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_3REG(pW, 8, arW);
-                        
-                        SUMM_3x3REG_10OUT(pIn, M * M, arIn, arW, arO);
-                                               
-                        pIn += M * M * RO;
-                        pW += M * M;
-                    }
-
-                    SET_10OUT(arO, pOut);
-
-                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
-                }
-
-                else if (M == 7){  // RO == 4
-
-                    CREATE_4REG(arO);
-                    CREATE_6REG(arW);
-                    CREATE_6REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                       LOAD_6REG(pW, 8, arW);
-                       
-                       SUMM_6x6REG_4OUT(pIn, M * M, arIn, arW, arO);
-
-                       pIn += M * M * RO;
-                       pW += M * M;
-                    }
-
-                    SET_4OUT(arO, pOut);
-
-                    pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
-                }
-
-                else if (M == 9){  // RO == 1
-
-                    CREATE_REG(arO);
-                    CREATE_5REG(arW);
-                    CREATE_5REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_5REG(pW, 8, arW);
-                        LOAD_5REG(pIn, 8, arIn);
-
-                        SUMM_5x5REG_1OUT(arIn, arW, arO);
-
-                        LOAD_5REG(pW + 8 * 5, 8, arW);
-                        LOAD_5REG(pIn + 8 * 5, 8, arIn);
-
-                        SUMM_5x5REG_1OUT(arIn, arW, arO);
-
-                        pIn += M * M;
-                        pW += M * M;
-                    }
-
-                    SET_OUT(arO, pOut);
-
-                    pIn = inHCWBuff.p + oi * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    getPeakOutput<M, RO>(insz.d, pIn, pW, pOut);
-                }
+                microL1<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
             }
-
-            size_t rmr = (outsz.w * outsz.h) % RO;
-                       
-            if (rmr){
-
-                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
-
-                snFloat* pOut = output + offs + od * (outsz.w * outsz.h),
-                    *pW = weight + wStepByK * od,
-                    *pIn = inHCWBuff.p + offs * M * M * insz.d;
-
-                snFloat bias = *(weight + wStepByN + od);
-
-                if (M == 1){ // RO == 14
-
-                    CREATE_13REG(arO);
-                    CREATE_REG(arW);
-                    CREATE_REG(arIn);
-
-                    for (size_t k = 0; k < insz.d / 8; ++k){
-
-                        LOAD_REG(pW, 0, arW);
-
-                        switch (rmr){
-                        case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                        case 2: { SUMM_2REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 3: { SUMM_3REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 4: { SUMM_4REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 5: { SUMM_5REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 6: { SUMM_6REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 7: { SUMM_7REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 8: { SUMM_8REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 9: { SUMM_9REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 10: { SUMM_10REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 11: { SUMM_11REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 12: { SUMM_12REG(pIn, insz.d, arIn, arW, arO); } break;
-                        case 13: { SUMM_13REG(pIn, insz.d, arIn, arW, arO); } break;
-                        default: break;
-                        }
-
-                        pIn += 8;
-                        pW += 8;
-                    }
-
-                    switch (rmr){
-                    case 1: SET_1OUT(arO, pOut); break;
-                    case 2: SET_2OUT(arO, pOut); break;
-                    case 3: SET_3OUT(arO, pOut); break;
-                    case 4: SET_4OUT(arO, pOut); break;
-                    case 5: SET_5OUT(arO, pOut); break;
-                    case 6: SET_6OUT(arO, pOut); break;
-                    case 7: SET_7OUT(arO, pOut); break;
-                    case 8: SET_8OUT(arO, pOut); break;
-                    case 9: SET_9OUT(arO, pOut); break;
-                    case 10: SET_10OUT(arO, pOut); break;
-                    case 11: SET_11OUT(arO, pOut); break;
-                    case 12: SET_12OUT(arO, pOut); break;
-                    case 13: SET_13OUT(arO, pOut); break;
-                    default: break;
-                    }
-
-                    for (size_t i = 0; i < insz.d % 8; ++i){
-
-                        for (size_t j = 0; j < rmr; ++j)
-                            pOut[j] += pIn[i + j * insz.d] * pW[i];
-                    }
-                }
-
-                else if (M == 3){ // RO == 14
-
-                    CREATE_13REG(arO);
-                    CREATE_REG(arW);
-                    CREATE_REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_REG(pW, 0, arW);
-
-                        switch (rmr){
-                        case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                        case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO); } break;
-                        case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO); } break;
-                        default: break;
-                        }
-
-                        pIn += M * M * rmr;
-                        pW += M * M;
-                    }
-
-                    pIn = inHCWBuff.p + offs * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    switch (rmr){
-                    case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
-                    case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
-                    case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
-                    case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
-                    case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
-                    case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
-                    case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
-                    case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
-                    case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
-                    case 10:{ SET_10OUT(arO, pOut); getPeakOutput<M, 10>(insz.d, pIn, pW, pOut); } break;
-                    case 11:{ SET_11OUT(arO, pOut); getPeakOutput<M, 11>(insz.d, pIn, pW, pOut); } break;
-                    case 12:{ SET_12OUT(arO, pOut); getPeakOutput<M, 12>(insz.d, pIn, pW, pOut); } break;
-                    case 13:{ SET_13OUT(arO, pOut); getPeakOutput<M, 13>(insz.d, pIn, pW, pOut); } break;
-                    default: break;
-                    }
-                }
-
-                else if (M == 5){ // RO == 10
-
-                    CREATE_10REG(arO);
-                    CREATE_3REG(arW);
-                    CREATE_3REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_3REG(pW, 8, arW);
-
-                        switch (rmr){
-                         case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
-                         case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
-                         case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
-                         default: break;
-                        }
-
-                        pIn += M * M * rmr;
-                        pW += M * M;
-                    }
-
-                    pIn = inHCWBuff.p + offs * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    switch (rmr){
-                     case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
-                     case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
-                     case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
-                     case 4:{ SET_4OUT(arO, pOut); getPeakOutput<M, 4>(insz.d, pIn, pW, pOut); } break;
-                     case 5:{ SET_5OUT(arO, pOut); getPeakOutput<M, 5>(insz.d, pIn, pW, pOut); } break;
-                     case 6:{ SET_6OUT(arO, pOut); getPeakOutput<M, 6>(insz.d, pIn, pW, pOut); } break;
-                     case 7:{ SET_7OUT(arO, pOut); getPeakOutput<M, 7>(insz.d, pIn, pW, pOut); } break;
-                     case 8:{ SET_8OUT(arO, pOut); getPeakOutput<M, 8>(insz.d, pIn, pW, pOut); } break;
-                     case 9:{ SET_9OUT(arO, pOut); getPeakOutput<M, 9>(insz.d, pIn, pW, pOut); } break;
-                     default: break;
-                    }
-                }
-
-                else if (M == 7){ // RO == 4
-
-                    CREATE_4REG(arO);
-                    CREATE_6REG(arW);
-                    CREATE_6REG(arIn);
-
-                    for (size_t k = 0; k < insz.d; ++k){
-
-                        LOAD_6REG(pW, 8, arW);
-
-                        switch (rmr){
-                        case 1: SUMM_6x6REG_1OUT(arIn, arW, arO0); break;
-                        case 2: SUMM_6x6REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                        case 3: SUMM_6x6REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                        default: break;
-                        }
-
-                        pIn += M * M * rmr;
-                        pW += M * M;
-                    }
-
-                    pIn = inHCWBuff.p + offs * M * M * insz.d;
-                    pW = weight + wStepByK * od;
-
-                    switch (rmr){
-                    case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, pIn, pW, pOut); } break;
-                    case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, pIn, pW, pOut); } break;
-                    case 3:{ SET_3OUT(arO, pOut); getPeakOutput<M, 3>(insz.d, pIn, pW, pOut); } break;
-                    default: break;
-                    }
-                }
-            }
+                                   
+            if ((outsz.w * outsz.h) % RO)
+                microL1Rmr<M, RO>(od, weight, insz, inHCWBuff, outsz, output);
         }      
     }
 
     template <size_t M>
-    void defaultFWD(size_t S, size_t D, snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+    void defaultFWD(size_t S, size_t D, const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
 
         const size_t wStepByD = M * M,          // step weight by input
             kernel = outsz.d,
@@ -423,8 +441,8 @@ namespace SN_SIMD{
 
                 memset(outBuff, 0, kernel * sizeof(snFloat));
 
-                snFloat* pIn = input + inStepByN * n;
-                snFloat* pW = weight;
+                const snFloat* pIn = input + inStepByN * n,
+                             * pW = weight;
 
                 // on all in layers
                 for (size_t d = 0; d < insz.d; ++d){
@@ -486,8 +504,8 @@ namespace SN_SIMD{
     
 
     bool convolutionFWD(size_t M, size_t S, size_t D,
-        snFloat* weight,
-        const snSize& insz, snFloat* input,
+        const snFloat* weight,
+        const snSize& insz, const snFloat* input,
         const snSize& outsz, snFloat* output){
 
       

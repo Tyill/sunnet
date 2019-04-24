@@ -32,7 +32,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output){
+void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output){
 
     size_t imSz = insz.w * insz.h * insz.d;
 
@@ -65,8 +65,8 @@ void FullyConnected::forwardCPU(size_t kernel, const snSize& insz, snFloat* inpu
     }
 }
 
-void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
-    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
+void FullyConnected::backwardCPU_GW(size_t kernel, const snFloat* weight,
+    const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut){
 
     size_t imSz = insz.w * insz.h * insz.d;
 
@@ -112,7 +112,8 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
     dWOut += imSz * kernel;
     for (size_t i = 0; i < kernel; ++i){
 
-        snFloat* grin = gradIn + i, b = 0;
+        const snFloat* grin = gradIn + i;
+        snFloat b = 0;
         for (size_t j = 0; j < insz.n; ++j)
             b += grin[kernel * j];
 
@@ -120,7 +121,7 @@ void FullyConnected::backwardCPU_GW(size_t kernel, snFloat* weight,
     }
 }
 
-void FullyConnected::backwardCPU_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut){
+void FullyConnected::backwardCPU_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut){
 
     size_t imSz = insz.w * insz.h * insz.d;
 
@@ -155,16 +156,16 @@ void FullyConnected::freeParamCUDA(void* auxPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, void* gpuPrm){
+void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
-    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrm){
+void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
+    const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
+void FullyConnected::backwardCUDA_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -182,16 +183,16 @@ void FullyConnected::freeParamOCL(void* auxPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void FullyConnected::forwardOCL(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, void* gpuPrm){
+void FullyConnected::forwardOCL(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void FullyConnected::backwardOCL_GW(size_t kernel, snFloat* weight,
-    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrm){
+void FullyConnected::backwardOCL_GW(size_t kernel, const snFloat* weight,
+    const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void FullyConnected::backwardOCL_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
+void FullyConnected::backwardOCL_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

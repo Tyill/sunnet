@@ -30,20 +30,20 @@ namespace SN_SIMD{
     /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
     /// @return true - ok
     bool convolutionFWD(size_t M, size_t S, size_t D,
-        SN_Base::snFloat* weight,
-        const SN_Base::snSize& insz, SN_Base::snFloat* input,
+        const SN_Base::snFloat* weight,
+        const SN_Base::snSize& insz, const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz, SN_Base::snFloat* output);
 
     /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
     /// @return true - ok
     bool convolutionBWD_GW(size_t M, size_t S, size_t D,
-        SN_Base::snFloat* weight,
-        const SN_Base::snSize& insz, SN_Base::snFloat* input,
-        const SN_Base::snSize& outsz, SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut, SN_Base::snFloat* dWeightOut);
+        const SN_Base::snFloat* weight,
+        const SN_Base::snSize& insz, const SN_Base::snFloat* input,
+        const SN_Base::snSize& outsz, const SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut, SN_Base::snFloat* dWeightOut);
 
     /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
     /// @return true - ok
     bool convolutionBWD_G(size_t M, size_t S, size_t D,
-        SN_Base::snFloat* weight, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
-        SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut);
+        const SN_Base::snFloat* weight, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        const SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut);
 };

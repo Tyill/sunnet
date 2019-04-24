@@ -36,7 +36,7 @@ namespace SN_SIMD{
       
     template <size_t M>
     void backwardGW(size_t stride, size_t dilate,
-        snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+        const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
 
         const size_t kernel = outsz.d,
                      wStepByD = M * M,                      // step weight by input
@@ -68,7 +68,8 @@ namespace SN_SIMD{
                 size_t ox = p % outsz.w, oy = p / outsz.w,
                     posW = ox * stride, posH = oy * stride;
 
-                snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                const snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                   
                 snFloat* pdW = wBuff + wStepByK * kernel;
 
                 // on all out layers
@@ -79,10 +80,10 @@ namespace SN_SIMD{
                 // on all in layers               
                 for (size_t d = 0; d < insz.d; ++d){
 
-                    snFloat* pIn = input + inStepByD * d + inStepByN * n;
+                    const snFloat* pIn = input + inStepByD * d + inStepByN * n;
                     snFloat* pGrOut = gradOut + inStepByD * d + inStepByN * n;
 
-                    snFloat* pW = weight + wStepByD * d;
+                    const snFloat* pW = weight + wStepByD * d;
                     pdW = wBuff + wStepByD * d;
 
                     for (int z = 0; z < wStepByD / 8; ++z)
@@ -169,7 +170,7 @@ namespace SN_SIMD{
 
     template <size_t M>
     void backwardG(size_t stride, size_t dilate,
-        snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
+        const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut){
 
         const size_t kernel = outsz.d,
                      wStepByD = M * M,                      // step weight by input
@@ -197,14 +198,14 @@ namespace SN_SIMD{
                 size_t ox = p % outsz.w, oy = p / outsz.w,
                     posW = ox * stride, posH = oy * stride;
 
-                snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                const snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
                 // on all in layers               
                 for (size_t d = 0; d < insz.d; ++d){
 
                     snFloat* pGrOut = gradOut + inStepByD * d + inStepByN * n;
 
-                    snFloat* pW = weight + wStepByD * d;
+                    const snFloat* pW = weight + wStepByD * d;
 
                     for (int z = 0; z < wStepByD / 8; ++z)
                         arGOut[z] = _mm256_setzero_ps();
@@ -254,9 +255,9 @@ namespace SN_SIMD{
     }
     
     bool convolutionBWD_GW(size_t M, size_t S, size_t D,
-        snFloat* weight,
-        const snSize& insz, snFloat* input,
-        const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+        const snFloat* weight,
+        const snSize& insz, const snFloat* input,
+        const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
    
 #define dbwd(MS)   \
     if (M == MS){  \
@@ -273,7 +274,7 @@ namespace SN_SIMD{
     };
     
     bool convolutionBWD_G(size_t M, size_t S, size_t D,
-        snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
+        const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut){
 
 #define dbwd(MS)   \
     if (M == MS){  \

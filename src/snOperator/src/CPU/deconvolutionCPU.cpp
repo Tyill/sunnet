@@ -33,7 +33,7 @@ using namespace SN_Base;
 
 
 void Deconvolution::forwardCPU(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
    
     size_t fWidth = prms.fWidth,
            fHeight = prms.fHeight,
@@ -65,7 +65,7 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
             size_t ix = p % insz.w, iy = p / insz.w,
                 posW = ix * stride, posH = iy * stride;
 
-            snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
+            const snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
@@ -77,7 +77,7 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pW = weight + cx + cy * fWidth;
+                const snFloat* pW = weight + cx + cy * fWidth;
                                 
                 memset(outBuff, 0, outsz.d * sizeof(snFloat));
 
@@ -108,7 +108,7 @@ void Deconvolution::forwardCPU(const deconvParams& prms,
 }
 
 void Deconvolution::backwardCPU_GW(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut){
     
     size_t fWidth = prms.fWidth,
            fHeight = prms.fHeight,
@@ -146,7 +146,7 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
             size_t ix = p % insz.w, iy = p / insz.w,
                 posW = ix * stride, posH = iy * stride;
 
-            snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
+            const snFloat* pIn = input + ix + iy * insz.w + n * inStepByN;
             snFloat* pdW = wBuff + wStepByK * insz.d;
 
             // on all input layers
@@ -163,8 +163,8 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pGrIn = gradIn + (cx + posW) + (cy + posH) * outsz.w + n * outStepByN;
-                snFloat* pW = weight + cx + cy * fWidth;
+                const snFloat* pGrIn = gradIn + (cx + posW) + (cy + posH) * outsz.w + n * outStepByN,
+                             * pW = weight + cx + cy * fWidth;
                 snFloat* pdW = wBuff + cx + cy * fWidth;
 
                 for (size_t k = 0; k < kernel; ++k){
@@ -190,7 +190,7 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
             }
 
             snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
-            snFloat* pW = weight + wStepByK * insz.d;
+            const snFloat* pW = weight + wStepByK * insz.d;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
@@ -218,7 +218,7 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
 }
 
 void Deconvolution::backwardCPU_G(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut){
 
     size_t fWidth = prms.fWidth,
            fHeight = prms.fHeight,
@@ -255,8 +255,8 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
             for (size_t c = 0; c < (fWidth * fHeight); ++c){
 
                 size_t cx = c % fWidth, cy = c / fWidth;
-                snFloat* pGrIn = gradIn + (cx + posW) + (cy + posH) * outsz.w + n * outStepByN;
-                snFloat* pW = weight + cx + cy * fWidth;
+                const snFloat* pGrIn = gradIn + (cx + posW) + (cy + posH) * outsz.w + n * outStepByN,
+                             * pW = weight + cx + cy * fWidth;
 
                 for (size_t k = 0; k < kernel; ++k){
                     grinBuff[k] = *pGrIn;
@@ -278,7 +278,7 @@ void Deconvolution::backwardCPU_G(const deconvParams& prms,
             }
 
             snFloat* pOut = gradOut + ix + iy * insz.w + n * inStepByN;
-            snFloat* pW = weight + wStepByK * insz.d;
+            const snFloat* pW = weight + wStepByK * insz.d;
 
             // on all input layers
             for (size_t d = 0; d < insz.d; ++d){
@@ -305,17 +305,17 @@ void Deconvolution::freeParamCUDA(void* gpuPrm){
 }
 
 void Deconvolution::forwardCUDA(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
 void Deconvolution::backwardCUDA_G(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -332,17 +332,17 @@ void Deconvolution::freeParamOCL(void* gpuPrm){
 }
 
 void Deconvolution::forwardOCL(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Deconvolution::backwardOCL_GW(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
 void Deconvolution::backwardOCL_G(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

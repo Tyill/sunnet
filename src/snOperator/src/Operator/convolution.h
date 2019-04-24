@@ -99,28 +99,28 @@ private:
     /// CPU ///////////////////////////
         
     void forwardCPU(const convParams&, 
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output);
 
     // calc grad and weight
     void backwardCPU_GW(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* gradIn,      
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut,     
         SN_Base::snFloat* dWeightOut);
 
     // calc grad
     void backwardCPU_G(const convParams&,
-        SN_Base::snFloat* weight,     
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,  
         const SN_Base::snSize& outsz, 
-        SN_Base::snFloat* gradIn,     
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut);
 
 
@@ -134,30 +134,30 @@ private:
     void freeParamCUDA(void* gpuPrm);
 
     void forwardCUDA(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
         void* gpuPrm);
 
     /// calc grad and weight
     void backwardCUDA_GW(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* gradIn,      
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut,     
         SN_Base::snFloat* dWeightOut,  
         void* gpuPrm);
 
     /// calc grad
     void backwardCUDA_G(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* gradIn,      
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut,     
         void* gpuPrm);
 
@@ -172,30 +172,30 @@ private:
     void freeParamOCL(void* gpuPrm);
 
     void forwardOCL(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
         void* gpuPrm);
 
     /// calc grad and weight
     void backwardOCL_GW(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* gradIn,      
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut,     
         SN_Base::snFloat* dWeightOut,  
         void* gpuPrm);
 
     /// calc grad
     void backwardOCL_G(const convParams&,
-        SN_Base::snFloat* weight,      
+        const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* gradIn,      
+        const SN_Base::snFloat* gradIn,
         SN_Base::snFloat* gradOut,     
         void* gpuPrm);
 };
