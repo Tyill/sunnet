@@ -678,22 +678,79 @@ namespace SN_SIMD{
        
         if (M == 1){
 
-            for (size_t i = 0; i < outsz.h; ++i){
+            for (size_t i = 0; i < (outsz.w * outsz.h) / RO; ++i){
 
-                for (size_t j = 0; j < outsz.w; ++j){
+                for (size_t j = 0; j < insz.d / 8; ++j){
 
-                    const snFloat* pIn = input + S * insz.w * i + S * j;
+                    for (size_t k = 0; k < RO; ++k){
 
-                    for (size_t k = 0; k < insz.d; ++k){
+                        for (size_t t = 0; t < 8; ++t){
+
+                            size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
+
+                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
+
+                            *pOut = *pIn;
+
+                            pOut += M * M;
+                        }
+                    }
+                }
+
+                for (size_t k = 0; k < RO; ++k){
+
+                    for (size_t t = 0; t < insz.d % 8; ++t){
+
+                        size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
+
+                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
 
                         *pOut = *pIn;
 
-                        pIn += insz.w * insz.h;
+                        pOut += M * M;
+                    }
+                }
+            }
+
+            size_t rmr = (outsz.w * outsz.h) % RO;
+            if (rmr){
+
+                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+
+                for (size_t j = 0; j < insz.d / 8; ++j){
+
+                    for (size_t k = 0; k < rmr; ++k){
+
+                        for (size_t t = 0; t < 8; ++t){
+
+                            size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
+
+                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
+
+                            *pOut = *pIn;
+
+                            pOut += M * M;
+                        }
+                    }
+                }
+                
+                for (size_t k = 0; k < rmr; ++k){
+
+                    for (size_t t = 0; t < insz.d % 8; ++t){
+
+                        size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
+
+                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
+
+                        *pOut = *pIn;
+
                         pOut += M * M;
                     }
                 }
             }
         }
+
+        /////////////////////////////////////////////
 
         else if ((M == 3) && (D == 1)){
 
@@ -738,6 +795,8 @@ namespace SN_SIMD{
                 }
             }
         }
+
+        /////////////////////////////////////////////
 
         else if ((M == 5) && (D == 1)){
 
@@ -786,6 +845,8 @@ namespace SN_SIMD{
                 }
             }
         }
+
+        /////////////////////////////////////////////
 
         else if ((M == 7) && (D == 1)){
 
@@ -839,6 +900,8 @@ namespace SN_SIMD{
             }
         }
 
+        /////////////////////////////////////////////
+
         else if ((M == 9) && (D == 1)){
 
             for (size_t i = 0; i < outsz.h; ++i){
@@ -870,7 +933,6 @@ namespace SN_SIMD{
         
 
         else if ((M == 3) && (D == 2)){
-
           
         }
 

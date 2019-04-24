@@ -36,7 +36,7 @@ using namespace SN_Base;
 namespace SN_SIMD{
      
     template<size_t M, size_t RO>
-    void microL1(int od, size_t oi, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
+    void micro(int od, size_t oi, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
       
         const size_t wStepByD = M * M,
                      wStepByK = wStepByD * insz.d,
@@ -54,23 +54,23 @@ namespace SN_SIMD{
             CREATE_14REG(arO);
             CREATE_REG(arW);
             CREATE_REG(arIn);
-
+           
             for (size_t k = 0; k < insz.d / 8; ++k){
 
                 LOAD_REG(pW, 0, arW);
 
-                SUMM_14REG(pIn, insz.d, arIn, arW, arO);
+                SUMM_14REG(pIn, 8, arIn, arW, arO);
 
-                pIn += 8;
+                pIn += 8 * RO;
                 pW += 8;
             }
 
             SET_14OUT(arO, pOut);
 
-            for (size_t i = 0; i < insz.d % 8; ++i){
+            for (size_t i = 0; i < RO; ++i){
 
-                for (size_t j = 0; j < RO; ++j)
-                    pOut[j] += pIn[i + j * insz.d] * pW[i];
+                for (size_t j = 0; j < insz.d % 8; ++j)
+                    pOut[i] += pIn[j + i * (insz.d % 8)] * pW[j];
             }
         }
 
@@ -79,7 +79,7 @@ namespace SN_SIMD{
             CREATE_14REG(arO);
             CREATE_REG(arW);
             CREATE_REG(arIn);
-
+            
             for (size_t k = 0; k < insz.d; ++k){
 
                 LOAD_REG(pW, 0, arW);
@@ -178,7 +178,7 @@ namespace SN_SIMD{
     }
 
     template<size_t M, size_t RO>
-    void microL1Rmr(int od, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
+    void microRmr(int od, const snFloat* weight, const snSize& insz, const buf_t& inHCWBuff, const snSize& outsz, snFloat* output){
        
      
         const size_t offs = ((outsz.w * outsz.h) / RO) * RO, 
@@ -206,22 +206,22 @@ namespace SN_SIMD{
 
                 switch (rmr){
                 case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                case 2: { SUMM_2REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 3: { SUMM_3REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 4: { SUMM_4REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 5: { SUMM_5REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 6: { SUMM_6REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 7: { SUMM_7REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 8: { SUMM_8REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 9: { SUMM_9REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 10: { SUMM_10REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 11: { SUMM_11REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 12: { SUMM_12REG(pIn, insz.d, arIn, arW, arO); } break;
-                case 13: { SUMM_13REG(pIn, insz.d, arIn, arW, arO); } break;
+                case 2: { SUMM_2REG(pIn, 8, arIn, arW, arO); } break;
+                case 3: { SUMM_3REG(pIn, 8, arIn, arW, arO); } break;
+                case 4: { SUMM_4REG(pIn, 8, arIn, arW, arO); } break;
+                case 5: { SUMM_5REG(pIn, 8, arIn, arW, arO); } break;
+                case 6: { SUMM_6REG(pIn, 8, arIn, arW, arO); } break;
+                case 7: { SUMM_7REG(pIn, 8, arIn, arW, arO); } break;
+                case 8: { SUMM_8REG(pIn, 8, arIn, arW, arO); } break;
+                case 9: { SUMM_9REG(pIn, 8, arIn, arW, arO); } break;
+                case 10: { SUMM_10REG(pIn, 8, arIn, arW, arO); } break;
+                case 11: { SUMM_11REG(pIn, 8, arIn, arW, arO); } break;
+                case 12: { SUMM_12REG(pIn, 8, arIn, arW, arO); } break;
+                case 13: { SUMM_13REG(pIn, 8, arIn, arW, arO); } break;
                 default: break;
                 }
 
-                pIn += 8;
+                pIn += 8 * rmr;
                 pW += 8;
             }
 
@@ -242,10 +242,11 @@ namespace SN_SIMD{
             default: break;
             }
 
-            for (size_t i = 0; i < insz.d % 8; ++i){
+            for (size_t i = 0; i < rmr; ++i){
 
-                for (size_t j = 0; j < rmr; ++j)
-                    pOut[j] += pIn[i + j * insz.d] * pW[i];
+               for (size_t j = 0; j < insz.d % 8; ++j)                
+              
+                   pOut[i] += pIn[j + i * (insz.d % 8)] * pW[j];
             }
         }
 
@@ -400,12 +401,15 @@ namespace SN_SIMD{
         for (int od = 0; od < int(outsz.d); ++od){
 
             for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
-                              
-                microL1<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
+                     
+
+                // M1x1 : цикл insz.d / 8 : (pIn 14 reg каждый через insz.d + pW 1 reg)
+
+                micro<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
             }
                                    
             if ((outsz.w * outsz.h) % RO)
-                microL1Rmr<M, RO>(od, weight, insz, inHCWBuff, outsz, output);
+                microRmr<M, RO>(od, weight, insz, inHCWBuff, outsz, output);
         }      
     }
 
@@ -509,7 +513,7 @@ namespace SN_SIMD{
         const snSize& outsz, snFloat* output){
 
       
-        if ((insz.n > 1) || (S > 2) || (D > 2)){
+        if ((insz.n > 1) || (S > 2) || (D > 1)){
   
 #define dfwd(MS)   \
     if (M == MS){  \
@@ -543,17 +547,17 @@ namespace SN_SIMD{
             cfwd(7, 2, 1, 4)
             cfwd(9, 2, 1, 1)
 
-            /*  cfwd(1, 1, 2)
-            cfwd(3, 1, 2)
-            cfwd(5, 1, 2)
-            cfwd(7, 1, 2)
-            cfwd(9, 1, 2)
+            /*cfwd(1, 1, 2, 14)
+            cfwd(3, 1, 2, 14)
+            cfwd(5, 1, 2, 10)
+            cfwd(7, 1, 2, 4)
+            cfwd(9, 1, 2, 1)
 
-            cfwd(1, 2, 2)
-            cfwd(3, 2, 2)
-            cfwd(5, 2, 2)
-            cfwd(7, 2, 2)
-            cfwd(9, 2, 2)*/
+            cfwd(1, 2, 2, 14)
+            cfwd(3, 2, 2, 14)
+            cfwd(5, 2, 2, 10)
+            cfwd(7, 2, 2, 4)
+            cfwd(9, 2, 2, 1)*/
   
             return false;
   
