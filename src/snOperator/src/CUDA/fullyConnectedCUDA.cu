@@ -141,7 +141,7 @@ __global__ void cuFwdBias(size_t kernel, snSize insz, snFloat* weight, snFloat* 
     }   
 }
 
-void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, snFloat* input, snFloat* weight, snFloat* output, void* gpuPrms){
+void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output, void* gpuPrms){
    
     cudaSetDevice(gpuDeviceId_);
        
@@ -206,8 +206,8 @@ __global__ void cuBwdBias(size_t kernel, snSize insz, snFloat* gradIn, snFloat* 
     }
 }
 
-void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
-    const snSize& insz, snFloat* input, snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrms){
+void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
+    const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrms){
    
     cudaSetDevice(gpuDeviceId_);
         
@@ -289,7 +289,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, snFloat* weight,
     }
 }
 
-void FullyConnected::backwardCUDA_G(size_t kernel, snFloat* weight, const snSize& insz, snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
+void FullyConnected::backwardCUDA_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
 

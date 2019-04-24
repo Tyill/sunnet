@@ -192,7 +192,7 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     }
 }
 
-void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
@@ -227,8 +227,8 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloa
     }
 }
 
-void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
-    const snSize& insz, snFloat* input, snFloat* gradOut, void* gpuPrms){
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, const size_t* outputInx, const snFloat* output, const snFloat* gradIn,
+    const snSize& insz, const snFloat* input, snFloat* gradOut, void* gpuPrms){
     
     cudaSetDevice(gpuDeviceId_);
 
@@ -422,7 +422,7 @@ __global__ void cuPoolFwd(poolType type, size_t kernel, size_t stride, snSize in
     }
 }
 
-void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrms){
    
     cudaSetDevice(gpuDeviceId_);
@@ -521,8 +521,8 @@ __global__ void cuPoolBwd(poolType type, size_t kernel, size_t stride, snSize ou
     }
 }
 
-void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output, snFloat* gradIn,
-    const snSize& insz, SN_Base::snFloat* input, snFloat* gradOut, void* gpuPrms){
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, const size_t* outputInx, const snFloat* output, const snFloat* gradIn,
+    const snSize& insz, const SN_Base::snFloat* input, snFloat* gradOut, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
 
