@@ -178,6 +178,13 @@ namespace SN_SIMD{
          reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
          reg ## 2 = _mm256_loadu_ps(in + 2 * offs);
 
+#define LOAD_5REG(in, offs, reg) \
+         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * offs); \
+         reg ## 3 = _mm256_loadu_ps(in + 3 * offs); \
+         reg ## 4 = _mm256_loadu_ps(in + 4 * offs);
+
 #define LOAD_6REG(in, offs, reg) \
          reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
          reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
@@ -186,6 +193,18 @@ namespace SN_SIMD{
          reg ## 4 = _mm256_loadu_ps(in + 4 * offs); \
          reg ## 5 = _mm256_loadu_ps(in + 5 * offs);
 
+#define SUMM_3x3REG_1OUT(arIn, arW, arO) \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW ## 2), arO);
+
+#define SUMM_5x5REG_1OUT(arIn, arW, arO) \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 2, arW ## 2), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW ## 3), arO); \
+         arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW ## 4), arO);   
+
 #define SUMM_6x6REG_1OUT(arIn, arW, arO) \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 1, arW ## 1), arO); \
@@ -193,6 +212,53 @@ namespace SN_SIMD{
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 3, arW ## 3), arO); \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 4, arW ## 4), arO); \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 5, arW ## 5), arO); 
+
+#define SUMM_6x6REG_2OUT(pIn, inOffs, arIn, arW, arO) \
+         LOAD_6REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_6REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 1);
+
+#define SUMM_6x6REG_3OUT(pIn, inOffs, arIn, arW, arO) \
+         LOAD_6REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_6REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_6REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 2);
+
+#define SUMM_6x6REG_4OUT(pIn, inOffs, arIn, arW, arO) \
+         LOAD_6REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_6REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_6REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_6REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_6x6REG_1OUT(arIn, arW, arO ## 3);
+    
+#define SUMM_3x3REG_10OUT(pIn, inOffs, arIn, arW, arO) \
+         LOAD_3REG(pIn + 0 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 0); \
+         LOAD_3REG(pIn + 1 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 1); \
+         LOAD_3REG(pIn + 2 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 2); \
+         LOAD_3REG(pIn + 3 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 3); \
+         LOAD_3REG(pIn + 4 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 4); \
+         LOAD_3REG(pIn + 5 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 5); \
+         LOAD_3REG(pIn + 6 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 6); \
+         LOAD_3REG(pIn + 7 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 7); \
+         LOAD_3REG(pIn + 8 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 8); \
+         LOAD_3REG(pIn + 9 * inOffs, 8, arIn);  \
+         SUMM_3x3REG_1OUT(arIn, arW, arO ## 9);
+
 
 #define SUMM_REG(in, inOffs, arIn, arW, arO) \
         LOAD_REG(in, inOffs, arIn); arO = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO);
@@ -329,6 +395,10 @@ namespace SN_SIMD{
          LOAD_REG(in, 11 * inOffs, arIn); arO ## 11 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 11); \
          LOAD_REG(in, 12 * inOffs, arIn); arO ## 12 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 12); \
          LOAD_REG(in, 13 * inOffs, arIn); arO ## 13 = _mm256_add_ps(_mm256_mul_ps(arIn, arW), arO ## 13);
+
+
+#define SET_OUT(arO, pOut) \
+    pOut[0] = bias + horSummReg<__m256>(arO);
 
 #define SET_1OUT(arO, pOut) \
     pOut[0] = bias + horSummReg<__m256>(arO ## 0);
@@ -567,11 +637,105 @@ namespace SN_SIMD{
 
         else if ((M == 5) && (D == 1)){
 
-         
+            for (size_t i = 0; i < (outsz.w * outsz.h) / RO; ++i){
 
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    for (size_t k = 0; k < RO; ++k){
+
+                        size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
+
+                        snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+
+                        pOut += M * M;
+                    }
+                }
+            }
+
+            size_t rmr = (outsz.w * outsz.h) % RO;
+            if (rmr){
+
+                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    for (size_t k = 0; k < rmr; ++k){
+
+                        size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
+
+                        snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+
+                        pOut += M * M;
+                    }
+                }
+            }
         }
 
         else if ((M == 7) && (D == 1)){
+
+            for (size_t i = 0; i < (outsz.w * outsz.h) / RO; ++i){
+
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    for (size_t k = 0; k < RO; ++k){
+
+                        size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
+
+                        snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+
+                        pOut += M * M;
+                    }
+                }
+            }
+
+            size_t rmr = (outsz.w * outsz.h) % RO;
+            if (rmr){
+
+                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    for (size_t k = 0; k < rmr; ++k){
+
+                        size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
+
+                        snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+
+                        _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
+                        _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
+                        _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
+                        _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
+                        _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                        _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
+                        _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
+
+                        pOut += M * M;
+                    }
+                }
+            }
+        }
+
+        else if ((M == 9) && (D == 1)){
 
             for (size_t i = 0; i < outsz.h; ++i){
 
@@ -588,17 +752,14 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
                         _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
                         _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
-
+                        _mm256_storeu_ps(pOut + 7 * M, _mm256_loadu_ps(pIn + 7 * insz.w));
+                        _mm256_storeu_ps(pOut + 8 * M, _mm256_loadu_ps(pIn + 8 * insz.w));
+                     
                         pIn += insz.w * insz.h;
                         pOut += M * M;
                     }
                 }
             }
-        }
-
-        else if ((M == 9) && (D == 1)){
-
-
         }             
 
         ///////////////////////////////////////////////////
@@ -621,8 +782,6 @@ namespace SN_SIMD{
 
             
         }
-
-
     };
 
     template<size_t M, size_t RO>
