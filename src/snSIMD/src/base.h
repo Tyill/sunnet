@@ -32,10 +32,10 @@
 namespace SN_SIMD{
 
     const size_t REG_CNT = 16;                   // registr count
-    const size_t REG_BYTE_SZ = 32;               // registr byte size  (256 bit = 32 B = 8 float)
-    const size_t L1_BYTE_SZ = 32 * 1024;         // L1 cache byte size (32 kB)
-    const size_t L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256 kB)
-    const size_t L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (2 MB/core)
+    const size_t REG_BYTE_SZ = 32;               // registr byte size  (256bit = 32B = 8float)
+    const size_t L1_BYTE_SZ = 32 * 1024;         // L1 cache byte size (32kB / core)
+    const size_t L2_BYTE_SZ = 256 * 1024;        // L2 cache byte size (256kB / core)
+    const size_t L3_BYTE_SZ = 8 * 1024 * 1024;   // L3 cache byte size (8MB / all core)
 
 #define CREATE_REG(reg) \
     __m256 reg = _mm256_setzero_ps();
@@ -697,25 +697,27 @@ namespace SN_SIMD{
                     }
                 }
 
-                for (size_t k = 0; k < RO; ++k){
+                if (insz.d % 8){
+                    for (size_t k = 0; k < RO; ++k){
 
-                    for (size_t t = 0; t < insz.d % 8; ++t){
+                        for (size_t t = 0; t < insz.d % 8; ++t){
 
-                        size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
+                            size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
+                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
 
-                        *pOut = *pIn;
+                            *pOut = *pIn;
 
-                        pOut += M * M;
+                            pOut += M * M;
+                        }
                     }
                 }
             }
 
-            size_t rmr = (outsz.w * outsz.h) % RO;
+            const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
 
-                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+                const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
                 for (size_t j = 0; j < insz.d / 8; ++j){
 
@@ -734,17 +736,19 @@ namespace SN_SIMD{
                     }
                 }
                 
-                for (size_t k = 0; k < rmr; ++k){
+                if (insz.d % 8){
+                    for (size_t k = 0; k < rmr; ++k){
 
-                    for (size_t t = 0; t < insz.d % 8; ++t){
+                        for (size_t t = 0; t < insz.d % 8; ++t){
 
-                        size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
+                            size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
+                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
 
-                        *pOut = *pIn;
+                            *pOut = *pIn;
 
-                        pOut += M * M;
+                            pOut += M * M;
+                        }
                     }
                 }
             }
@@ -773,10 +777,10 @@ namespace SN_SIMD{
                 }
             }
                        
-            size_t rmr = (outsz.w * outsz.h) % RO;
+            const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
 
-                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+                const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
                 for (size_t j = 0; j < insz.d; ++j){
 
@@ -821,10 +825,10 @@ namespace SN_SIMD{
                 }
             }
 
-            size_t rmr = (outsz.w * outsz.h) % RO;
+            const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
 
-                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+                const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
                 for (size_t j = 0; j < insz.d; ++j){
 
@@ -873,10 +877,10 @@ namespace SN_SIMD{
                 }
             }
 
-            size_t rmr = (outsz.w * outsz.h) % RO;
+            const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
 
-                size_t offs = ((outsz.w * outsz.h) / RO) * RO;
+                const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
                 for (size_t j = 0; j < insz.d; ++j){
 
