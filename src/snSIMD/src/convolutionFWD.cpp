@@ -125,24 +125,36 @@ namespace SN_SIMD{
                        
 
             for (size_t i = 0; i < (insz.d / L3Sz); ++i){
-                                
                 // L3
+                const snFloat* pInL3 = pIn + i * L3Sz * M * M * RO;
+                const snFloat* pWL3 = pW + i * L3Sz * M * M;
+
                 for (size_t j = 0; j < (L3Sz / L2Sz); ++j){
                     // L2                   
+                    const snFloat* pInL2 = pInL3 + j * L2Sz * M * M * RO;
+                    const snFloat* pWL2 = pWL3 + j * L2Sz * M * M;
+
                     for (size_t k = 0; k < (L2Sz / L1Sz); ++k){
                         // L1
+                        const snFloat* pInL1 = pInL2 + k * L1Sz * M * M * RO;
+                        const snFloat* pWL1 = pWL2 + k * L1Sz * M * M;
+
                         for (size_t t = 0; t < L1Sz; ++t){
 
-                            LOAD_REG(pW, 0, arW);
+                            LOAD_REG(pWL1, 0, arW);
 
-                            SUMM_14REG(pIn, M * M, arIn, arW, arO);
+                            SUMM_14REG(pInL1, M * M, arIn, arW, arO);
 
-                            pIn += M * M * RO;
-                            pW += M * M;
+                            pInL1 += M * M * RO;
+                            pWL1 += M * M;
+
+                       
                         }
                     }
                 }
             }
+
+            
       
             if (insz.d % L1Sz){
                 for (size_t i = 0; i < insz.d % L1Sz; ++i){

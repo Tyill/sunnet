@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
-project(snEngine)
+project(snSIMD)
 
-FILE(GLOB_RECURSE SRC_snEngine "*.cpp" "*.h")
+FILE(GLOB_RECURSE SRC_snSIMD "*.cpp" "*.h")
 
-add_library(snEngine STATIC ${SRC_snEngine})
+add_library(snSIMD STATIC ${SRC_snSIMD})
 
-target_link_libraries(snEngine snAux snBase)
+if(WIN32)
+   target_compile_options(snSIMD PRIVATE /arch:AVX)
+endif()
+
+target_link_libraries(snSIMD snBase)
