@@ -6,5 +6,6 @@ mswin/VS12/*.suo
 mswin/VS12/Release*
 mswin/VS12/x64*
 mswin/VS12/snSharpClient
+mswin/VS12/My Amplifier Results*
 example/*
 convert2TF
