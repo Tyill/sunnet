@@ -257,11 +257,9 @@ namespace SN_SIMD{
         }    
     }
 
-    template<size_t M, size_t RO>
-    void microRmr(const snFloat* weight, snFloat bias, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
+    template<size_t M>
+    void microRmr(size_t rmr, const snFloat* weight, snFloat bias, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
          
-        const size_t rmr = (outsz.w * outsz.h) % RO;
-
         const snFloat* pIn = input,
                      * pW = weight;
       
@@ -574,20 +572,17 @@ namespace SN_SIMD{
 
         const size_t wStepByD = M * M,
                      wStepByK = wStepByD * insz.d,
-                     wStepByN = wStepByK * outsz.d;
-                     
+                     wStepByN = wStepByK * outsz.d,                     
+                     rmr = (outsz.w * outsz.h) % RO;
+
         auto core = std::thread::hardware_concurrency();
         if (core == 0) core = 4;
         
 #pragma omp parallel for num_threads(core)
         for (int od = 0; od < int(outsz.d); ++od){
-
-           const size_t wStepByD = M * M,
-                        wStepByK = wStepByD * insz.d,
-                        wStepByN = wStepByK * outsz.d;
-
+                        
             const snFloat bias = *(weight + wStepByN + od);
-            
+          
             for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
 
                 const snFloat* pW = weight + wStepByK * od,
@@ -597,86 +592,18 @@ namespace SN_SIMD{
 
                 micro<M, RO>(pW, bias, insz, pIn, outsz, pOut);
             }
-            
-            //const size_t allOutSz = (outsz.w * outsz.h) / RO,
-            //             outSzW = allOutSz / outsz.h,
-            //             //                                     In     W    Out                 In          W      Out 
-            //             kernel = (M == 1) ? ((insz.d / 8) * (8 * RO + 8) + RO) : (insz.d * (M * M * RO + M * M) + RO),
-
-            //             L2 = L2_BYTE_SZ / sizeof(snFloat),
-            //             L2Sz = max<size_t>(1, min<size_t>(outSzW, L2 / kernel)),
-
-            //             L3 = L3_BYTE_SZ / (core * sizeof(snFloat)),
-            //             L3Sz = max<size_t>(1, min<size_t>(outsz.h, L3 / (L2Sz * kernel)));
-
-            //// L3 cache 
-            //for (size_t i = 0; i < outsz.h / L3Sz; ++i){
-
-            //    // L2 cache              
-            //    for (size_t j = 0; j < outSzW / L2Sz; ++j){
-
-            //        for (size_t k = 0; k < L2Sz; ++k){
-            //         
-            //            size_t oi = k + j * L2Sz * kernel + i * L3Sz * L2Sz * kernel;
-            //            
-            //            const snFloat* pW = weight + wStepByK * od,
-            //                         * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
-
-            //            snFloat* pOut = output + (oi * RO) + od * (outsz.w * outsz.h);
-
-            //            micro<M, RO>(pW, bias insz, pIn, outsz, pOut);
-            //        }
-            //    }
-
-               /* for (size_t k = 0; k < outSzW % L2Sz; ++k){
-                 
-                    size_t oi = k + (outSzW / L2Sz) * L2Sz + i * (outSzW / L2Sz + outSzW % L2Sz) * L2Sz;
-
-                    micro<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
-
-                }*/
-                // L2 /////////
-           // }
-
-            //for (size_t i = 0; i < outsz.h % L3Sz; ++i){
-
-            //    // L2 cache              
-            //    for (size_t j = 0; j < outSzW / L2Sz; ++j){
-
-            //        for (size_t k = 0; k < L2Sz; ++k){
-
-            //            size_t oi = k + j * L2Sz + i * (outSzW / L2Sz + outSzW % L2Sz) * L2Sz;
-
-            //            micro<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
-            //        }
-            //    }
-
-            //    for (size_t k = 0; k < outSzW % L2Sz; ++k){
-
-            //        size_t oi = k + (outSzW / L2Sz) * L2Sz + i * (outSzW / L2Sz + outSzW % L2Sz) * L2Sz;
-
-            //        micro<M, RO>(od, oi, weight, insz, inHCWBuff, outsz, output);
-
-            //    }
-            //    // L2 /////////
-            //}
-            //// L3 /////////
-
-            
-
-
-            if ((outsz.w * outsz.h) % RO){
-
+                             
+            if (rmr){
+                
                 const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
-
+                
                 const snFloat* pW = weight + wStepByK * od,
                              * pIn = inHCWBuff.p + offs * M * M * insz.d;
-
+                        
                 snFloat* pOut = output + offs + od * (outsz.w * outsz.h);
-                               
-                microRmr<M, RO>(pW, bias, insz, pIn, outsz, pOut);
-            }
-                
+                            
+                microRmr<M>(rmr, pW, bias, insz, pIn, outsz, pOut);
+            }                      
         }      
     }
 
