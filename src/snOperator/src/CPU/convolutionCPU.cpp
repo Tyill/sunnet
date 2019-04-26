@@ -113,7 +113,7 @@ void Convolution::forwardCPU(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
      
 #ifdef SN_AVX   
-    if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate,
+    if ((prms.fWidth != prms.fHeight) || (prms.fWidth != 3) || !SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate,
                                                  weight, insz, input, outsz, output))
 
 #endif
