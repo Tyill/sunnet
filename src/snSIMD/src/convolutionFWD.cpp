@@ -49,49 +49,15 @@ namespace SN_SIMD{
             CREATE_14REG(arO);
             CREATE_REG(arW);
             CREATE_REG(arIn);
+                      
+            for (size_t i = 0; i < insz.d / 8; ++i){
 
-            //                     In      W    
-            const size_t kernel = 8 * RO + 8,
+                LOAD_REG(pW, 0, arW);
 
-                         L3 = L3_BYTE_SZ / (core * sizeof(snFloat)),
-                         L3Sz = max<size_t>(1, min<size_t>(insz.d / 8, L3 / kernel)),
-                        
-                         L2 = L2_BYTE_SZ / sizeof(snFloat),
-                         L2Sz = max<size_t>(1, min<size_t>(L3Sz, L2 / kernel)),
-                        
-                         L1 = L1_BYTE_SZ / sizeof(snFloat),
-                         L1Sz = max<size_t>(1, min<size_t>(L2Sz, L1 / kernel));
+                SUMM_14REG(pIn, 8, arIn, arW, arO);
 
-
-            for (size_t i = 0; i < ((insz.d / 8) / L3Sz); ++i){
-                // L3
-                for (size_t j = 0; j < (L3Sz / L2Sz); ++j){
-                    // L2                   
-                    for (size_t k = 0; k < (L2Sz / L1Sz); ++k){
-                        // L1
-                        for (size_t t = 0; t < L1Sz; ++t){
-
-                            LOAD_REG(pW, 0, arW);
-
-                            SUMM_14REG(pIn, 8, arIn, arW, arO);
-
-                            pIn += 8 * RO;
-                            pW += 8;
-                        }
-                    }
-                }
-            }
-
-            if ((insz.d / 8) % L1Sz){
-                for (size_t i = 0; i < (insz.d / 8) % L1Sz; ++i){
-
-                    LOAD_REG(pW, 0, arW);
-
-                    SUMM_14REG(pIn, 8, arIn, arW, arO);
-
-                    pIn += 8 * RO;
-                    pW += 8;
-                }
+                pIn += 8 * RO;
+                pW += 8;
             }
 
             SET_14OUT(arO, pOut);
@@ -110,63 +76,17 @@ namespace SN_SIMD{
             CREATE_14REG(arO);
             CREATE_REG(arW);
             CREATE_REG(arIn);
-                    
-            //                        In         W    
-            const size_t kernel = M * M * RO + M * M,
-                         
-                         L3 = L3_BYTE_SZ / (core * sizeof(snFloat)),
-                         L3Sz = max<size_t>(1, min<size_t>(insz.d, L3 / kernel)),
+           
+            for (size_t i = 0; i < insz.d; ++i){
 
-                         L2 = L2_BYTE_SZ / sizeof(snFloat),
-                         L2Sz = max<size_t>(1, min<size_t>(L3Sz, L2 / kernel)),
+                LOAD_REG(pW, 0, arW);
 
-                         L1 = L1_BYTE_SZ / sizeof(snFloat),  
-                         L1Sz = max<size_t>(1, min<size_t>(L2Sz, L1 / kernel));
-                       
+                SUMM_14REG(pIn, M * M, arIn, arW, arO);
 
-            for (size_t i = 0; i < (insz.d / L3Sz); ++i){
-                // L3
-                const snFloat* pInL3 = pIn + i * L3Sz * M * M * RO;
-                const snFloat* pWL3 = pW + i * L3Sz * M * M;
+                pIn += M * (M - 1) * RO;
+                pW += M * M;
 
-                for (size_t j = 0; j < (L3Sz / L2Sz); ++j){
-                    // L2                   
-                    const snFloat* pInL2 = pInL3 + j * L2Sz * M * M * RO;
-                    const snFloat* pWL2 = pWL3 + j * L2Sz * M * M;
-
-                    for (size_t k = 0; k < (L2Sz / L1Sz); ++k){
-                        // L1
-                        const snFloat* pInL1 = pInL2 + k * L1Sz * M * M * RO;
-                        const snFloat* pWL1 = pWL2 + k * L1Sz * M * M;
-
-                        for (size_t t = 0; t < L1Sz; ++t){
-
-                            LOAD_REG(pWL1, 0, arW);
-
-                            SUMM_14REG(pInL1, M * M, arIn, arW, arO);
-
-                            pInL1 += M * M * RO;
-                            pWL1 += M * M;
-
-                       
-                        }
-                    }
-                }
-            }
-
-            
-      
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_REG(pW, 0, arW);
-
-                    SUMM_14REG(pIn, M * M, arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
-            }
+            }            
                 
             SET_14OUT(arO, pOut);
                      
@@ -178,35 +98,17 @@ namespace SN_SIMD{
             CREATE_10REG(arO);
             CREATE_3REG(arW);
             CREATE_3REG(arIn);
+                     
+            for (size_t i = 0; i < insz.d; ++i){
 
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                In        W      
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * RO + M * M)));
-            
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
+                LOAD_3REG(pW, 8, arW);
 
-                for (size_t k = 0; k < L1Sz; ++k){
+                SUMM_3x3REG_10OUT(pIn, M * M, arIn, arW, arO);
 
-                    LOAD_3REG(pW, 8, arW);
-
-                    SUMM_3x3REG_10OUT(pIn, M * M, arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
+                pIn += M * M * RO;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_3REG(pW, 8, arW);
-
-                    SUMM_3x3REG_10OUT(pIn, M * M, arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
-            }
-
+                        
             SET_10OUT(arO, pOut);
 
             getPeakOutput<M, RO>(insz.d, input, weight, pOut);
@@ -217,35 +119,17 @@ namespace SN_SIMD{
             CREATE_4REG(arO);
             CREATE_6REG(arW);
             CREATE_6REG(arIn);
-                   
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                In        W      
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * RO + M * M)));
+            
+            for (size_t i = 0; i < insz.d; ++i){
 
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
+                LOAD_6REG(pW, 8, arW);
 
-                for (size_t k = 0; k < L1Sz; ++k){
+                SUMM_6x6REG_4OUT(pIn, M * M, arIn, arW, arO);
 
-                    LOAD_6REG(pW, 8, arW);
-
-                    SUMM_6x6REG_4OUT(pIn, M * M, arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
+                pIn += M * M * RO;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_6REG(pW, 8, arW);
-
-                    SUMM_6x6REG_4OUT(pIn, M * M, arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
-            }
-
+                        
             SET_4OUT(arO, pOut);
                         
             getPeakOutput<M, RO>(insz.d, input, weight, pOut);
@@ -256,47 +140,23 @@ namespace SN_SIMD{
             CREATE_REG(arO);
             CREATE_5REG(arW);
             CREATE_5REG(arIn);
-                   
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                In        W      
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * RO + M * M)));
+            
+            for (size_t i = 0; i < insz.d; ++i){
 
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
+                LOAD_5REG(pW, 8, arW);
+                LOAD_5REG(pIn, 8, arIn);
 
-                for (size_t k = 0; k < L1Sz; ++k){
+                SUMM_5x5REG_1OUT(arIn, arW, arO);
 
-                    LOAD_5REG(pW, 8, arW);
-                    LOAD_5REG(pIn, 8, arIn);
+                LOAD_5REG(pW + 8 * 5, 8, arW);
+                LOAD_5REG(pIn + 8 * 5, 8, arIn);
 
-                    SUMM_5x5REG_1OUT(arIn, arW, arO);
+                SUMM_5x5REG_1OUT(arIn, arW, arO);
 
-                    LOAD_5REG(pW + 8 * 5, 8, arW);
-                    LOAD_5REG(pIn + 8 * 5, 8, arIn);
-
-                    SUMM_5x5REG_1OUT(arIn, arW, arO);
-
-                    pIn += M * M * RO;
-                    pW += M * M;
-                }
+                pIn += M * M * RO;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_5REG(pW, 8, arW);
-                    LOAD_5REG(pIn, 8, arIn);
-
-                    SUMM_5x5REG_1OUT(arIn, arW, arO);
-
-                    LOAD_5REG(pW + 8 * 5, 8, arW);
-                    LOAD_5REG(pIn + 8 * 5, 8, arIn);
-
-                    SUMM_5x5REG_1OUT(arIn, arW, arO);
-
-                    pIn += M * M;
-                    pW += M * M;
-                }
-            }
-
+            
             SET_OUT(arO, pOut);
                      
             getPeakOutput<M, RO>(insz.d, input, weight, pOut);
@@ -316,65 +176,32 @@ namespace SN_SIMD{
             CREATE_13REG(arO);
             CREATE_REG(arW);
             CREATE_REG(arIn);
+                      
+            for (size_t i = 0; i < (insz.d / 8); ++i){
 
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                 In      W             
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d / 8, L1 / (8 * peak + 8)));
+                LOAD_REG(pW, 0, arW);
 
-            for (size_t i = 0; i < (insz.d / 8) / L1Sz; ++i){
-
-                for (size_t k = 0; k < L1Sz; ++k){
-
-                    LOAD_REG(pW, 0, arW);
-
-                    switch (peak){
-                    case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                    case 2: { SUMM_2REG(pIn, 8, arIn, arW, arO); } break;
-                    case 3: { SUMM_3REG(pIn, 8, arIn, arW, arO); } break;
-                    case 4: { SUMM_4REG(pIn, 8, arIn, arW, arO); } break;
-                    case 5: { SUMM_5REG(pIn, 8, arIn, arW, arO); } break;
-                    case 6: { SUMM_6REG(pIn, 8, arIn, arW, arO); } break;
-                    case 7: { SUMM_7REG(pIn, 8, arIn, arW, arO); } break;
-                    case 8: { SUMM_8REG(pIn, 8, arIn, arW, arO); } break;
-                    case 9: { SUMM_9REG(pIn, 8, arIn, arW, arO); } break;
-                    case 10: { SUMM_10REG(pIn, 8, arIn, arW, arO); } break;
-                    case 11: { SUMM_11REG(pIn, 8, arIn, arW, arO); } break;
-                    case 12: { SUMM_12REG(pIn, 8, arIn, arW, arO); } break;
-                    case 13: { SUMM_13REG(pIn, 8, arIn, arW, arO); } break;
-                    default: break;
-                    }
-
-                    pIn += 8 * peak;
-                    pW += 8;
+                switch (peak){
+                case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                case 2: { SUMM_2REG(pIn, 8, arIn, arW, arO); } break;
+                case 3: { SUMM_3REG(pIn, 8, arIn, arW, arO); } break;
+                case 4: { SUMM_4REG(pIn, 8, arIn, arW, arO); } break;
+                case 5: { SUMM_5REG(pIn, 8, arIn, arW, arO); } break;
+                case 6: { SUMM_6REG(pIn, 8, arIn, arW, arO); } break;
+                case 7: { SUMM_7REG(pIn, 8, arIn, arW, arO); } break;
+                case 8: { SUMM_8REG(pIn, 8, arIn, arW, arO); } break;
+                case 9: { SUMM_9REG(pIn, 8, arIn, arW, arO); } break;
+                case 10: { SUMM_10REG(pIn, 8, arIn, arW, arO); } break;
+                case 11: { SUMM_11REG(pIn, 8, arIn, arW, arO); } break;
+                case 12: { SUMM_12REG(pIn, 8, arIn, arW, arO); } break;
+                case 13: { SUMM_13REG(pIn, 8, arIn, arW, arO); } break;
+                default: break;
                 }
+
+                pIn += 8 * peak;
+                pW += 8;
             }
-
-            if ((insz.d / 8) % L1Sz){
-                for (size_t i = 0; i < (insz.d / 8) % L1Sz; ++i){
-                                      
-                    LOAD_REG(pW, 0, arW);
-
-                    switch (peak){
-                    case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                    case 2: { SUMM_2REG(pIn, 8, arIn, arW, arO); } break;
-                    case 3: { SUMM_3REG(pIn, 8, arIn, arW, arO); } break;
-                    case 4: { SUMM_4REG(pIn, 8, arIn, arW, arO); } break;
-                    case 5: { SUMM_5REG(pIn, 8, arIn, arW, arO); } break;
-                    case 6: { SUMM_6REG(pIn, 8, arIn, arW, arO); } break;
-                    case 7: { SUMM_7REG(pIn, 8, arIn, arW, arO); } break;
-                    case 8: { SUMM_8REG(pIn, 8, arIn, arW, arO); } break;
-                    case 9: { SUMM_9REG(pIn, 8, arIn, arW, arO); } break;
-                    case 10: { SUMM_10REG(pIn, 8, arIn, arW, arO); } break;
-                    case 11: { SUMM_11REG(pIn, 8, arIn, arW, arO); } break;
-                    case 12: { SUMM_12REG(pIn, 8, arIn, arW, arO); } break;
-                    case 13: { SUMM_13REG(pIn, 8, arIn, arW, arO); } break;
-                    default: break;
-                    }
-
-                    pIn += 8 * peak;
-                    pW += 8;                    
-                }
-            }
-
+                        
             switch (peak){
             case 1: SET_1OUT(arO, pOut); break;
             case 2: SET_2OUT(arO, pOut); break;
@@ -406,64 +233,31 @@ namespace SN_SIMD{
             CREATE_REG(arW);
             CREATE_REG(arIn);
            
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                 In        W             
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * peak + M * M)));
+            for (size_t i = 0; i < insz.d; ++i){
+                         
+                LOAD_REG(pW, 0, arW);
 
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
-
-                for (size_t k = 0; k < L1Sz; ++k){
-
-                    LOAD_REG(pW, 0, arW);
-
-                    switch (peak){
-                    case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                    case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO); } break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;
+                switch (peak){
+                case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
+                case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
+                case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
+                case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
+                case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
+                case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
+                case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
+                case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
+                case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
+                case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO); } break;
+                case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO); } break;
+                case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO); } break;
+                case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO); } break;
+                default: break;
                 }
+
+                pIn += M * (M - 1) * peak;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-                                       
-                    LOAD_REG(pW, 0, arW);
-
-                    switch (peak){
-                    case 1: { SUMM_1REG(pIn, 0, arIn, arW, arO); } break;
-                    case 2: { SUMM_2REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 3: { SUMM_3REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 4: { SUMM_4REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 5: { SUMM_5REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 6: { SUMM_6REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 7: { SUMM_7REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 8: { SUMM_8REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 9: { SUMM_9REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 10: { SUMM_10REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 11: { SUMM_11REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 12: { SUMM_12REG(pIn, M * M, arIn, arW, arO); } break;
-                    case 13: { SUMM_13REG(pIn, M * M, arIn, arW, arO); } break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;                   
-                }
-            }
-                     
+                             
             switch (peak){
             case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, input, weight, pOut); } break;
             case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, input, weight, pOut); } break;
@@ -487,57 +281,28 @@ namespace SN_SIMD{
             CREATE_10REG(arO);
             CREATE_3REG(arW);
             CREATE_3REG(arIn);
+                       
+            for (size_t i = 0; i < insz.d; ++i){
 
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                 In        W             
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * peak + M * M)));
+                LOAD_3REG(pW, 8, arW);
 
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
-
-                for (size_t k = 0; k < L1Sz; ++k){
-
-                    LOAD_3REG(pW, 8, arW);
-
-                    switch (peak){
-                    case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
-                    case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;
+                switch (peak){
+                case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
+                case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
+                case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
+                case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
+                case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
+                case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
+                case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
+                case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
+                case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
+                default: break;
                 }
+
+                pIn += M * M * peak;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_3REG(pW, 8, arW);
-
-                    switch (peak){
-                    case 1: SUMM_3x3REG_1OUT(arIn, arW, arO0); break;
-                    case 2: SUMM_3x3REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 3: SUMM_3x3REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 4: SUMM_3x3REG_4OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 5: SUMM_3x3REG_5OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 6: SUMM_3x3REG_6OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 7: SUMM_3x3REG_7OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 8: SUMM_3x3REG_8OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 9: SUMM_3x3REG_9OUT(pIn, M * M, arIn, arW, arO); break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;
-                }
-            }
-                     
+                                             
             switch (peak){
             case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, input, weight, pOut); } break;
             case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, input, weight, pOut); } break;
@@ -557,45 +322,22 @@ namespace SN_SIMD{
             CREATE_4REG(arO);
             CREATE_6REG(arW);
             CREATE_6REG(arIn);
+                        
+            for (size_t i = 0; i < insz.d; ++i){
 
-            const size_t L1 = L1_BYTE_SZ / sizeof(snFloat), //                 In        W             
-                         L1Sz = max<size_t>(1, min<size_t>(insz.d, L1 / (M * M * peak + M * M)));
+                LOAD_6REG(pW, 8, arW);
 
-            for (size_t i = 0; i < insz.d / L1Sz; ++i){
-
-                for (size_t k = 0; k < L1Sz; ++k){
-
-                    LOAD_6REG(pW, 8, arW);
-
-                    switch (peak){
-                    case 1: SUMM_6x6REG_1OUT(arIn, arW, arO0); break;
-                    case 2: SUMM_6x6REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 3: SUMM_6x6REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;
+                switch (peak){
+                case 1: SUMM_6x6REG_1OUT(arIn, arW, arO0); break;
+                case 2: SUMM_6x6REG_2OUT(pIn, M * M, arIn, arW, arO); break;
+                case 3: SUMM_6x6REG_3OUT(pIn, M * M, arIn, arW, arO); break;
+                default: break;
                 }
+
+                pIn += M * M * peak;
+                pW += M * M;
             }
-
-            if (insz.d % L1Sz){
-                for (size_t i = 0; i < insz.d % L1Sz; ++i){
-
-                    LOAD_6REG(pW, 8, arW);
-
-                    switch (peak){
-                    case 1: SUMM_6x6REG_1OUT(arIn, arW, arO0); break;
-                    case 2: SUMM_6x6REG_2OUT(pIn, M * M, arIn, arW, arO); break;
-                    case 3: SUMM_6x6REG_3OUT(pIn, M * M, arIn, arW, arO); break;
-                    default: break;
-                    }
-
-                    pIn += M * M * peak;
-                    pW += M * M;
-                }
-            }                     
-
+                        
             switch (peak){
             case 1:{ SET_1OUT(arO, pOut); getPeakOutput<M, 1>(insz.d, input, weight, pOut); } break;
             case 2:{ SET_2OUT(arO, pOut); getPeakOutput<M, 2>(insz.d, input, weight, pOut); } break;
@@ -612,7 +354,11 @@ namespace SN_SIMD{
         /// Reorder input
         buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
                 
-        reorderCHW2HCW<M, S, D, RO>(insz, input, outsz, inHCWBuff.p);
+        reorderInputCHW2HCW<M, S, D, RO>(insz, input, outsz, inHCWBuff.p);
+
+        /*buf_t inHCWBuff(snSize(M * M * insz.d, outsz.w, outsz.h), 8);
+
+        reorderInputCHW2HCW<M, S, D, RO>(insz, input, outsz, inHCWBuff.p);*/
 
         ///////////////////////////////////
 

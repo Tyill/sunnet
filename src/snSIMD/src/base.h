@@ -672,7 +672,7 @@ namespace SN_SIMD{
     };
 
     template<size_t M, size_t S, size_t D, size_t RO>
-    void reorderCHW2HCW(const SN_Base::snSize& insz, const SN_Base::snFloat* input, const SN_Base::snSize& outsz, SN_Base::snFloat* output){
+    void reorderInputCHW2HCW(const SN_Base::snSize& insz, const SN_Base::snFloat* input, const SN_Base::snSize& outsz, SN_Base::snFloat* output){
 
         SN_Base::snFloat* pOut = output;
        
@@ -692,7 +692,7 @@ namespace SN_SIMD{
 
                             *pOut = *pIn;
 
-                            pOut += M * M;
+                            pOut += M * (M - 1);
                         }
                     }
                 }
@@ -708,7 +708,7 @@ namespace SN_SIMD{
 
                             *pOut = *pIn;
 
-                            pOut += M * M;
+                            pOut += M * (M - 1);
                         }
                     }
                 }
@@ -731,7 +731,7 @@ namespace SN_SIMD{
 
                             *pOut = *pIn;
 
-                            pOut += M * M;
+                            pOut += M * (M - 1);
                         }
                     }
                 }
@@ -747,7 +747,7 @@ namespace SN_SIMD{
 
                             *pOut = *pIn;
 
-                            pOut += M * M;
+                            pOut += M * (M - 1);
                         }
                     }
                 }
@@ -772,7 +772,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));   
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }               
                 }
             }
@@ -794,7 +794,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -820,7 +820,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
                         _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -844,7 +844,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
                         _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -872,7 +872,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
                         _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -898,7 +898,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
                         _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
 
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -906,7 +906,7 @@ namespace SN_SIMD{
 
         /////////////////////////////////////////////
 
-        else if ((M == 9) && (D == 1)){
+        else if ((M == 9) && (D == 1)){  // RO == 1
 
             for (size_t i = 0; i < outsz.h; ++i){
 
@@ -927,7 +927,7 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 8 * M, _mm256_loadu_ps(pIn + 8 * insz.w));
                      
                         pIn += insz.w * insz.h;
-                        pOut += M * M;
+                        pOut += M * (M - 1);
                     }
                 }
             }
@@ -953,6 +953,25 @@ namespace SN_SIMD{
             
         }
     };
+
+    template<size_t M>
+    void reorderWeight9To8(const SN_Base::snSize& insz, const SN_Base::snFloat* input, const SN_Base::snSize& outsz, SN_Base::snFloat* output){
+
+        SN_Base::snFloat* pOut = output,
+                        * pEnd = output;
+
+        if (M == 1){
+
+
+
+        }
+
+        else if (M == 3){
+
+
+
+        }
+    }
 
     template<size_t M, size_t RO>
     void getPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW, SN_Base::snFloat* pOut){
