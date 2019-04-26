@@ -90,25 +90,23 @@ namespace SN_SIMD{
             SET_14OUT(arO, pOut);
                                   
             for (size_t i = 0; i < insz.d; ++i){
-             
-                snFloat w = pW[0];
-
-                pOut[0] +=  w * pIn[0];
-                pOut[1] +=  w * pIn[1];
-                pOut[2] +=  w * pIn[2];
-                pOut[3] +=  w * pIn[3];
-                pOut[4] +=  w * pIn[4];
-                pOut[5] +=  w * pIn[5];
-                pOut[6] +=  w * pIn[6];
-                pOut[7] +=  w * pIn[7];
-                pOut[8] +=  w * pIn[8];
-                pOut[9] +=  w * pIn[9];
-                pOut[10] += w * pIn[10];
-                pOut[11] += w * pIn[11];
-                pOut[12] += w * pIn[12];
-                pOut[13] += w * pIn[13];
+                            
+                pOut[0] +=  pW[0] * pIn[0];
+                pOut[1] +=  pW[0] * pIn[1];
+                pOut[2] +=  pW[0] * pIn[2];
+                pOut[3] +=  pW[0] * pIn[3];
+                pOut[4] +=  pW[0] * pIn[4];
+                pOut[5] +=  pW[0] * pIn[5];
+                pOut[6] +=  pW[0] * pIn[6];
+                pOut[7] +=  pW[0] * pIn[7];
+                pOut[8] +=  pW[0] * pIn[8];
+                pOut[9] +=  pW[0] * pIn[9];
+                pOut[10] += pW[0] * pIn[10];
+                pOut[11] += pW[0] * pIn[11];
+                pOut[12] += pW[0] * pIn[12];
+                pOut[13] += pW[0] * pIn[13];
                                 
-                pIn += 14;
+                pIn += RO;
                 pW++;
             }              
         }
@@ -294,21 +292,20 @@ namespace SN_SIMD{
             case 13:{ SET_13OUT(arO, pOut); getPeakOutput<M, 13>(insz.d, input, weight, pOut); } break;
             default: break;
             }*/
+                        
             SET_7OUT(arO, pOut);
             for (size_t i = 0; i < insz.d; ++i){
-
-                snFloat w = pW[0];
-
-                pOut[0] += w * pIn[0];
-                pOut[1] += w * pIn[1];
-                pOut[2] += w * pIn[2];
-                pOut[3] += w * pIn[3];
-                pOut[4] += w * pIn[4];
-                pOut[5] += w * pIn[5];
-                pOut[6] += w * pIn[6];
+                                
+                pOut[0] += pW[0] * pIn[0];
+                pOut[1] += pW[0] * pIn[1];
+                pOut[2] += pW[0] * pIn[2];
+                pOut[3] += pW[0] * pIn[3];
+                pOut[4] += pW[0] * pIn[4];
+                pOut[5] += pW[0] * pIn[5];
+                pOut[6] += pW[0] * pIn[6];
                
-                pIn += 7;
-                pW += 1;
+                pIn += peak;
+                pW++;
             }
         }
 
@@ -407,7 +404,7 @@ namespace SN_SIMD{
         auto core = std::thread::hardware_concurrency();
         if (core == 0) core = 4;
         
-//#pragma omp parallel for num_threads(core)
+#pragma omp parallel for num_threads(core)
         for (int od = 0; od < int(outsz.d); ++od){
              
             const snFloat bias = *(wBuff.p + wStepByN + od);
