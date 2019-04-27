@@ -227,7 +227,7 @@ void Convolution::backwardCPU_GW(const convParams& prms,
     
 #ifdef SN_AVX
 
-    if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionBWD_GW(prms.fWidth, prms.stride, prms.dilate,
+    if ((prms.fWidth != prms.fHeight) || (prms.fWidth != 3) || !SN_SIMD::convolutionBWD_GW(prms.fWidth, prms.stride, prms.dilate,
                                              weight, insz, input, outsz, gradIn, gradOut, dWeightOut))
 #endif
         backwardGW_BASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate,

@@ -819,7 +819,7 @@ namespace SN_SIMD{
                         if (isBord)
                             _mm256_storeu_ps(pOut, arMem);                           
                     }
-                }
+                }                
             }
         }
 
@@ -837,19 +837,32 @@ namespace SN_SIMD{
 
                         const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
+                        bool isBord = (j == (insz.d - 1)) && (k == (RO - 1));
+                        if (isBord)
+                            arMem = _mm256_loadu_ps(pOut + M * M - 1);
+
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
                         _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
                         _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
+                                                
+                        pOut += (M * M - 1);
 
-                        pOut += M * (M - 1);
+                        pEnd[k + j * RO] = pOut[0];
+
+                        if (isBord)
+                            _mm256_storeu_ps(pOut, arMem);
                     }
                 }
+                pOut += insz.d * RO;
+                pEnd = pOut + insz.d * RO * (M * M - 1);
             }
 
             const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
+
+                pEnd = pOut + insz.d * rmr * (M * M - 1);
 
                 const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
@@ -861,13 +874,22 @@ namespace SN_SIMD{
 
                         const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
+                        bool isBord = (j == (insz.d - 1)) && (k == (rmr - 1));
+                        if (isBord)
+                            arMem = _mm256_loadu_ps(pOut + M * M - 1);
+
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
                         _mm256_storeu_ps(pOut + 3 * M, _mm256_loadu_ps(pIn + 3 * insz.w));
                         _mm256_storeu_ps(pOut + 4 * M, _mm256_loadu_ps(pIn + 4 * insz.w));
 
-                        pOut += M * (M - 1);
+                        pOut += (M * M - 1);
+
+                        pEnd[k + j * rmr] = pOut[0];
+
+                        if (isBord)
+                            _mm256_storeu_ps(pOut, arMem);
                     }
                 }
             }
@@ -887,6 +909,10 @@ namespace SN_SIMD{
 
                         const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
+                        bool isBord = (j == (insz.d - 1)) && (k == (RO - 1));
+                        if (isBord)
+                            arMem = _mm256_loadu_ps(pOut + M * M - 1);
+
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
@@ -895,13 +921,22 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
                         _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
 
-                        pOut += M * (M - 1);
+                        pOut += (M * M - 1);
+
+                        pEnd[k + j * RO] = pOut[0];
+
+                        if (isBord)
+                            _mm256_storeu_ps(pOut, arMem);
                     }
                 }
+                pOut += insz.d * RO;
+                pEnd = pOut + insz.d * RO * (M * M - 1);
             }
 
             const size_t rmr = (outsz.w * outsz.h) % RO;
             if (rmr){
+
+                pEnd = pOut + insz.d * rmr * (M * M - 1);
 
                 const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
 
@@ -913,6 +948,10 @@ namespace SN_SIMD{
 
                         const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
+                        bool isBord = (j == (insz.d - 1)) && (k == (rmr - 1));
+                        if (isBord)
+                            arMem = _mm256_loadu_ps(pOut + M * M - 1);
+
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
@@ -921,7 +960,12 @@ namespace SN_SIMD{
                         _mm256_storeu_ps(pOut + 5 * M, _mm256_loadu_ps(pIn + 5 * insz.w));
                         _mm256_storeu_ps(pOut + 6 * M, _mm256_loadu_ps(pIn + 6 * insz.w));
 
-                        pOut += M * (M - 1);
+                        pOut += (M * M - 1);
+
+                        pEnd[k + j * rmr] = pOut[0];
+
+                        if (isBord)
+                            _mm256_storeu_ps(pOut, arMem);
                     }
                 }
             }
@@ -939,6 +983,10 @@ namespace SN_SIMD{
 
                     for (size_t k = 0; k < insz.d; ++k){
 
+                        bool isBord = (k == (insz.d - 1));
+                        if (isBord)
+                            arMem = _mm256_loadu_ps(pOut + M * M - 1);
+
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
                         _mm256_storeu_ps(pOut + 2 * M, _mm256_loadu_ps(pIn + 2 * insz.w));
@@ -951,7 +999,14 @@ namespace SN_SIMD{
                      
                         pIn += insz.w * insz.h;
                         pOut += M * (M - 1);
+
+                        pEnd[k] = pOut[0];
+
+                        if (isBord)
+                            _mm256_storeu_ps(pOut, arMem);
                     }
+                    pOut += insz.d;
+                    pEnd = pOut + insz.d * (M * M - 1);
                 }
             }
         }             
@@ -984,8 +1039,13 @@ namespace SN_SIMD{
                         
         SN_Base::snFloat* pOut = output,
                         * pEnd = output + insz.d * (M * M - 1);
-                
-        if (M == 3){
+         
+        if (M == 1){
+
+            memcpy(pOut, pIn, (insz.d * outsz.d * M * M + outsz.d) * sizeof(snFloat));
+        }
+
+        else if (M == 3){
 
             for (size_t i = 0; i < outsz.d; ++i){
 
@@ -1003,19 +1063,51 @@ namespace SN_SIMD{
             }
 
             memcpy(pOut, pIn, outsz.d * sizeof(snFloat));
+        } 
+
+        else if (M == 5){
+
+            for (size_t i = 0; i < outsz.d; ++i){
+
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    _mm256_store_ps(pOut, _mm256_loadu_ps(pIn));
+                    _mm256_store_ps(pOut + 8, _mm256_loadu_ps(pIn + 8));
+                    _mm256_store_ps(pOut + 16, _mm256_loadu_ps(pIn + 16));
+
+                    pEnd[j] = pIn[M * M - 1];
+
+                    pOut += M * M - 1;
+                    pIn += M * M;
+                }
+                pOut += insz.d;
+                pEnd = pOut + insz.d * (M * M - 1);
+            }
+
+            memcpy(pOut, pIn, outsz.d * sizeof(snFloat));
         }
-        else
-            memcpy(pOut, pIn, (insz.d * outsz.d * M * M + outsz.d) * sizeof(snFloat));
+
+        else if (M == 7){
+
+            for (size_t i = 0; i < outsz.d; ++i){
+
+                for (size_t j = 0; j < insz.d; ++j){
+
+                    _mm256_store_ps(pOut, _mm256_loadu_ps(pIn));
+                    _mm256_store_ps(pOut + 8, _mm256_loadu_ps(pIn + 8));
+                    _mm256_store_ps(pOut + 16, _mm256_loadu_ps(pIn + 16));
+
+                    pEnd[j] = pIn[M * M - 1];
+
+                    pOut += M * M - 1;
+                    pIn += M * M;
+                }
+                pOut += insz.d;
+                pEnd = pOut + insz.d * (M * M - 1);
+            }
+
+            memcpy(pOut, pIn, outsz.d * sizeof(snFloat));
+        }
     }
-
-
-    template<size_t M, size_t RO>
-    void getPeakOutput(size_t W, const SN_Base::snFloat* pIn, const SN_Base::snFloat* pW, SN_Base::snFloat* pOut){
-                
-        for (size_t i = 0; i < W; ++i){
-
-            for (size_t j = 0; j < RO; ++j)
-              pOut[j] += pIn[M * M * j + (M * M - 1) + i * RO * M * M] * pW[M * M * i + (M * M - 1)];
-        }
-    }       
+             
 };
