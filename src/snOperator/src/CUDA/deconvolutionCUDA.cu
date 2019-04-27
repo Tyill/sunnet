@@ -629,7 +629,7 @@ __global__ void cuDeconvFwd(size_t fWidth, size_t fHeight, size_t stride,
 }
 
 void Deconvolution::forwardCUDA(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
     
     cudaSetDevice(gpuDeviceId_);
           
@@ -757,7 +757,7 @@ __global__ void cuDeconvWeightMean(size_t kernel, size_t fWidth, size_t fHeight,
 }
 
 void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
     
     cudaSetDevice(gpuDeviceId_);
 
@@ -868,7 +868,7 @@ __global__ void cuDeconvBwd_G(size_t fWidth, size_t fHeight, size_t stride,
 }
 
 void Deconvolution::backwardCUDA_G(const deconvParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
     
     cudaSetDevice(gpuDeviceId_);
 

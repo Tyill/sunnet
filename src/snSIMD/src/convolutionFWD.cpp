@@ -418,12 +418,10 @@ namespace SN_SIMD{
         reorderInputCHW2HCW<M, S, D, RO>(insz, input, outsz, inHCWBuff.p);
       
         /// Reorder weight
-        buf_t wBuff(M > 1 ? snSize(M * M, insz.d, outsz.d) : snSize(0), M > 1 ? outsz.d : 0);
+        buf_t wBuff(snSize(M * M, insz.d, outsz.d), outsz.d);
                 
-        if (M > 1)
-           reorderWeight<M>(insz, weight, outsz, wBuff.p);
+        reorderWeight<M>(insz, weight, outsz, wBuff.p);
         
-        const snFloat* pWeight = M > 1 ? wBuff.p : weight;
 
         ///////////////////////////////////
       
@@ -438,11 +436,11 @@ namespace SN_SIMD{
 #pragma omp parallel for num_threads(core)
         for (int od = 0; od < int(outsz.d); ++od){
              
-            const snFloat bias = *(pWeight + wStepByN + od);
+            const snFloat bias = *(wBuff.p + wStepByN + od);
                      
             for (size_t oi = 0; oi < (outsz.w * outsz.h) / RO; ++oi){
 
-                const snFloat* pW = pWeight + wStepByK * od,
+                const snFloat* pW = wBuff.p + wStepByK * od,
                              * pIn = inHCWBuff.p + (oi * RO) * M * M * insz.d;
 
                 snFloat* pOut = output + (oi * RO) + od * (outsz.w * outsz.h);
@@ -454,7 +452,7 @@ namespace SN_SIMD{
                 
                 const size_t offs = ((outsz.w * outsz.h) / RO) * RO;
                 
-                const snFloat* pW = pWeight + wStepByK * od,
+                const snFloat* pW = wBuff.p + wStepByK * od,
                              * pIn = inHCWBuff.p + offs * M * M * insz.d;
                         
                 snFloat* pOut = output + offs + od * (outsz.w * outsz.h);
@@ -597,19 +595,7 @@ namespace SN_SIMD{
             cfwd(5, 2, 1, 10)
             cfwd(7, 2, 1, 4)
             cfwd(9, 2, 1, 1)
-
-            /*cfwd(1, 1, 2, 14)
-            cfwd(3, 1, 2, 14)
-            cfwd(5, 1, 2, 10)
-            cfwd(7, 1, 2, 4)
-            cfwd(9, 1, 2, 1)
-
-            cfwd(1, 2, 2, 14)
-            cfwd(3, 2, 2, 14)
-            cfwd(5, 2, 2, 10)
-            cfwd(7, 2, 2, 4)
-            cfwd(9, 2, 2, 1)*/
-  
+             
             return false;
   
 #undef cfwd

@@ -51,14 +51,14 @@ int main(int argc, char* argv[]){
     sn::Net snet;
         
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
+        .addNode("C1", sn::Convolution(15, 3, 0, 1, sn::batchNormType::none, sn::active::relu, sn::calcMode::CUDA), "C2")
+        .addNode("C2", sn::Convolution(15, 3, 0, 1, sn::batchNormType::none, sn::active::relu, sn::calcMode::CUDA), "P1")
         .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
         .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
         .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://C++//skyNet//example//mnist//images//";
+    string imgPath = "c://cpp//skyNet//example//mnist//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);
@@ -70,6 +70,9 @@ int main(int argc, char* argv[]){
         system("pause");
         return -1;
     }
+
+    snet.loadAllWeightFromFile("c:\\cpp\\w.dat");
+
 
     sn::Tensor inLayer(sn::snLSize(w, h, 1, batchSz));
     sn::Tensor targetLayer(sn::snLSize(classCnt, 1, 1, batchSz));
@@ -146,6 +149,8 @@ int main(int argc, char* argv[]){
         cout << k << " accurate " << accuratSumm / k << " " << snet.getLastErrorStr() << endl;        
     }
     
+    snet.saveAllWeightToFile("c:\\cpp\\w.dat");
+
     system("pause");
     return 0;
 }
