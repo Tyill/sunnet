@@ -650,11 +650,12 @@ namespace SN_SIMD{
       
     };
     
+
     template<typename T>
     float horSummReg(T a);
 
     template<>
-    static float horSummReg<__m256>(__m256 a){
+    inline float horSummReg<__m256>(__m256 a){
 
         __m128 hi = _mm256_extractf128_ps(a, 1);
         __m128 lo = _mm256_extractf128_ps(a, 0);
@@ -683,7 +684,7 @@ namespace SN_SIMD{
 
                             size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
+                            const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
 
                             *pOut = *pIn;
 
@@ -699,7 +700,7 @@ namespace SN_SIMD{
 
                             size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
+                            const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
 
                             *pOut = *pIn;
 
@@ -722,7 +723,7 @@ namespace SN_SIMD{
 
                             size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
+                            const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + j * 8);
 
                             *pOut = *pIn;
 
@@ -738,7 +739,7 @@ namespace SN_SIMD{
 
                             size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                            const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
+                            const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * (t + (insz.d / 8) * 8);
 
                             *pOut = *pIn;
 
@@ -761,7 +762,7 @@ namespace SN_SIMD{
 
                         size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -783,7 +784,7 @@ namespace SN_SIMD{
 
                         size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -807,7 +808,7 @@ namespace SN_SIMD{
 
                         size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -831,7 +832,7 @@ namespace SN_SIMD{
 
                         size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -857,7 +858,7 @@ namespace SN_SIMD{
 
                         size_t ci = (i * RO + k) % outsz.w, cr = (i * RO + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -883,7 +884,7 @@ namespace SN_SIMD{
 
                         size_t ci = (offs + k) % outsz.w, cr = (offs + k) / outsz.w;
 
-                        const snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
+                        const SN_Base::snFloat* pIn = input + S * insz.w * cr + S * ci + insz.w * insz.h * j;
 
                         _mm256_storeu_ps(pOut, _mm256_loadu_ps(pIn));
                         _mm256_storeu_ps(pOut + M, _mm256_loadu_ps(pIn + insz.w));
@@ -907,7 +908,7 @@ namespace SN_SIMD{
 
                 for (size_t j = 0; j < outsz.w; ++j){
 
-                    const snFloat* pIn = input + S * insz.w * i + S * j;
+                    const SN_Base::snFloat* pIn = input + S * insz.w * i + S * j;
 
                     for (size_t k = 0; k < insz.d; ++k){
 
