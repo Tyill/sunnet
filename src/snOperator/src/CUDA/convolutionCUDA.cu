@@ -304,7 +304,7 @@ __global__ void cuFwdBias(snSize outsz, snFloat* bias, snFloat* output){
 }
 
 void Convolution::forwardCUDA(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
 
     cudaSetDevice(gpuDeviceId_);
 
@@ -359,7 +359,7 @@ void Convolution::forwardCUDA(const convParams& prms,
 }
 
 void Convolution::backwardCUDA_GW(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
 
     cudaSetDevice(gpuDeviceId_);
 
@@ -444,7 +444,7 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
 }
 
 void Convolution::backwardCUDA_G(const convParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
 
     cudaSetDevice(gpuDeviceId_);
 
@@ -647,7 +647,7 @@ __global__ void cuConvFwd(size_t fWidth, size_t fHeight, size_t dilate, size_t s
 }
 
 void Convolution::forwardCUDA(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
 
     cudaSetDevice(gpuDeviceId_);
 
@@ -770,7 +770,7 @@ __global__ void cuConvWeightMean(size_t kernel, size_t fWidth, size_t fHeight, s
 }
 
 void Convolution::backwardCUDA_GW(const convParams& prms,
-    snFloat* weight, const snSize& insz, snFloat* input, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
   
     cudaSetDevice(gpuDeviceId_);
 
@@ -881,7 +881,7 @@ __global__ void cuConvBwd_G(size_t fWidth, size_t fHeight, size_t dilate, size_t
 }
 
 void Convolution::backwardCUDA_G(const convParams& prms,
-    snFloat* weight, const snSize& insz, const snSize& outsz, snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
+    const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
     cudaSetDevice(gpuDeviceId_);
 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;

@@ -45,9 +45,8 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 Convolution::~Convolution(){
         
     switch (calcMode_){
-       case calcMode::CPU:    freeParamCPU(inrParams_); break;
-       case calcMode::CUDA:   freeParamCUDA(inrParams_); break;
-       case calcMode::OpenCL: freeParamOCL(inrParams_); break;
+       case calcMode::CUDA:   freeParamCUDA(gpuParams_); break;
+       case calcMode::OpenCL: freeParamOCL(gpuParams_); break;
     }
 }
 
@@ -276,14 +275,11 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     }
 
     switch (calcMode_){
-    case calcMode::CPU:    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out, inrParams_); break;
-    case calcMode::CUDA:   forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, inrParams_); break;
-    case calcMode::OpenCL: forwardOCL(convPrms_, weight, inDataExpSz_, in, outsz, out, inrParams_); break;
+    case calcMode::CPU:    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out); break;
+    case calcMode::CUDA:   forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, gpuParams_); break;
+    case calcMode::OpenCL: forwardOCL(convPrms_, weight, inDataExpSz_, in, outsz, out, gpuParams_); break;
     }
-
-    if (!operPrm.isLerning && !isSame)
-        inTnsExp_.tfree();
-       
+   
     /// dropOut
     if (dropOut_ > 0.F)
         dropOut(operPrm.isLerning, dropOut_, outsz, out);
@@ -343,9 +339,9 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
             in = inTnsExp_.getData();
         
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, inrParams_); break;
-        case calcMode::CUDA:   backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, inrParams_); break;
-        case calcMode::OpenCL: backwardOCL_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, inrParams_); break;
+        case calcMode::CPU:    backwardCPU_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight); break;
+        case calcMode::CUDA:   backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_); break;
         }
                
         // correct weight
@@ -366,17 +362,15 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     }
     else{ // isFreeze
         switch (calcMode_){
-        case calcMode::CPU:    backwardCPU_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, inrParams_); break;
-        case calcMode::CUDA:   backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, inrParams_); break;
-        case calcMode::OpenCL: backwardOCL_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, inrParams_); break;
+        case calcMode::CPU:    backwardCPU_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut); break;
+        case calcMode::CUDA:   backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_); break;
+        case calcMode::OpenCL: backwardOCL_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_); break;
         }
     }
 
-    if (!isSame){
-        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());
-        gradOutExp_.tfree();
-        inTnsExp_.tfree();
-    }
+    if (!isSame)
+        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
+    
 }
 
 void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize& expSz){
@@ -460,8 +454,7 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
     }  
 
     switch (calcMode_){
-       case calcMode::CPU:    iniParamCPU(isLern, expSz, outSz, convPrms_, &inrParams_); break;
-       case calcMode::CUDA:   iniParamCUDA(isLern, expSz, outSz, convPrms_, &inrParams_); break;
-       case calcMode::OpenCL: iniParamOCL(isLern, expSz, outSz, convPrms_, &inrParams_); break;
+       case calcMode::CUDA:   iniParamCUDA(isLern, expSz, outSz, convPrms_, &gpuParams_); break;
+       case calcMode::OpenCL: iniParamOCL(isLern, expSz, outSz, convPrms_, &gpuParams_); break;
     }    
 } 

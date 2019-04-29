@@ -24,14 +24,14 @@
 //
 
 #include "../stdafx.h"
-#include "Lib/OpenBLAS/cblas.h"
 #include "snOperator/src/Operator/pooling.h"
 #include <omp.h>  
+#include <thread>
 
 using namespace std;
 using namespace SN_Base;
 
-void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat* input,
+void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx){
 
     size_t inStepByD = insz.w * insz.h,           // step in by input
@@ -45,10 +45,13 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     size_t* shareI = (size_t*)calloc(insz.d * insz.n, sizeof(size_t));
     snFloat* shareF = (snFloat*)calloc(insz.d * insz.n, sizeof(snFloat));
   
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     if (poolPrms.type == poolType::max){ // max
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
@@ -66,7 +69,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
                 for (size_t c = 0; c < kernelSz; ++c){
 
                     size_t cx = c % kernel, cy = c / kernel;
-                    snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                    const snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
                     // on all input layers
                     for (size_t d = 0; d < insz.d; ++d){
@@ -97,7 +100,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     else{ // mean
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = shareF + insz.d * n;
@@ -113,7 +116,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
                 for (size_t c = 0; c < kernelSz; ++c){
 
                     size_t cx = c % kernel, cy = c / kernel;
-                    snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
+                    const snFloat* pIn = input + (cx + posW) + (cy + posH) * insz.w + n * inStepByN;
 
                     // on all input layers
                     for (size_t d = 0; d < insz.d; ++d){
@@ -137,7 +140,7 @@ void Pooling::forwardCPU(const poolParams& poolPrms, const snSize& insz, snFloat
     free(shareF);
 }
 
-void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* gradIn, const snSize& insz, snFloat* gradOut){
+void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, const size_t* outputInx, const snFloat* gradIn, const snSize& insz, snFloat* gradOut){
 
     size_t inStepByD = insz.w * insz.h,        // step in by input
         inStepByN = inStepByD * insz.d,        // step in by batch
@@ -149,10 +152,13 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
        
     memset(gradOut, 0, inStepByN * insz.n * sizeof(snFloat));
 
+    auto core = std::thread::hardware_concurrency();
+    if (core == 0) core = 4;
+
     if (poolPrms.type == poolType::max){ // max
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             for (size_t p = 0; p < outStepByD; ++p){
@@ -160,8 +166,8 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
                 size_t ox = p % outsz.w, oy = p / outsz.w,
                     posW = ox * stride, posH = oy * stride;
 
-                size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
-                snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                const size_t* pOutInx = outputInx + ox + oy * outsz.w + n * outStepByN;
+                const snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
                 snFloat* pGrOut = gradOut + n * inStepByN;
               
                 // on all input layers
@@ -183,7 +189,7 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
         snFloat* share = (snFloat*)calloc(shareStepByN * insz.n, sizeof(snFloat));
 
         // by batch
-#pragma omp parallel for
+#pragma omp parallel for num_threads(core)
         for (int n = 0; n < int(insz.n); ++n){
 
             snFloat* outBuff = share + shareStepByN * n;
@@ -193,7 +199,7 @@ void Pooling::backwardCPU(const poolParams& poolPrms, const snSize& outsz, size_
                 size_t ox = p % outsz.w, oy = p / outsz.w,
                     posW = ox * stride, posH = oy * stride;
 
-                snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
+                const snFloat* pGrIn = gradIn + ox + oy * outsz.w + n * outStepByN;
 
                 // on all output layers
                 for (size_t k = 0; k < outsz.d; ++k){
@@ -231,13 +237,13 @@ void Pooling::freeParamCUDA(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, snFloat* input,
+void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
     
-void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx, snFloat* output,
-    snFloat* gradIn, const snSize& insz, snFloat* input, snFloat* gradOut, void* gpuPrm){
+void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, const size_t* outputInx, const snFloat* output,
+    const snFloat* gradIn, const snSize& insz, const snFloat* input, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
@@ -254,13 +260,13 @@ void Pooling::freeParamOCL(void* gpuPrm){
     ERROR_MESS("CUDA non compiler");
 }
 
-void Pooling::forwardOCL(const poolParams& poolPrms, const snSize& insz, snFloat* input,
+void Pooling::forwardOCL(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 
-void Pooling::backwardOCL(const poolParams& poolPrms, const snSize& outsz, size_t* outputInx,
-    snFloat* gradIn, const snSize& insz, snFloat* gradOut, void* gpuPrm){
+void Pooling::backwardOCL(const poolParams& poolPrms, const snSize& outsz, const size_t* outputInx,
+    const snFloat* gradIn, const snSize& insz, snFloat* gradOut, void* gpuPrm){
     ERROR_MESS("OpenCL non compiler");
 }
 

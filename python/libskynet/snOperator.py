@@ -61,38 +61,13 @@ class FullyConnected():
     def __init__(self,
                  units,
                  act=active.relu,
-                 opt=optimizer.adam,
-                 dropOut=0.0,
+                 mode=calcMode.CPU,
                  bnorm=batchNormType.none,
-                 mode=calcMode.CPU,
-                 gpuDeviceId=0,
-                 gpuClearMem=False,
-                 freeze=False):
-        self._params['units'] = str(units)
-        self._params['active'] = act.value
-        self._params['optimizer'] = opt.value
-        self._params['dropOut'] = str(dropOut)
-        self._params['batchNorm'] = bnorm.value
-        self._params['mode'] = mode.value
-        self._params['gpuDeviceId'] = str(gpuDeviceId)
-        self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
-        self._params['freeze'] = '1' if freeze else '0'
-
-    def __init__(self,
-                 units,
-                 mode=calcMode.CPU,
-                 bnorm=batchNormType.none):
+                 ):
         self._params['units'] = str(units)
         self._params['mode'] = mode.value
         self._params['batchNorm'] = bnorm.value
-
-    def __init__(self,
-                 units,
-                 act=active.relu,
-                 mode=calcMode.CPU):
-        self._params['units'] = str(units)
         self._params['active'] = act.value
-        self._params['mode'] = mode.value
 
     def getParams(self):
         return self._params
@@ -126,28 +101,6 @@ class Convolution():
     'lmbRegular': '0.001',                  # Optimizer of weights l2Norm. Optional parameter [0..1.F]
     'batchNormLr': '0.001'                  # Learning rate for batch norm coef. Optional parameter [0..)
     }
-
-    def __init__(self,
-                 filters,
-                 padding=0,
-                 act=active.relu,
-                 opt=optimizer.adam,
-                 dropOut=0.0,
-                 bnorm=batchNormType.none,
-                 mode=calcMode.CPU,
-                 gpuDeviceId=0,
-                 gpuClearMem=False,
-                 freeze=False):
-        self._params['filters'] = str(filters)
-        self._params['padding'] = str(padding)
-        self._params['active'] = act.value
-        self._params['optimizer'] = opt.value
-        self._params['dropOut'] = str(dropOut)
-        self._params['batchNorm'] = bnorm.value
-        self._params['mode'] = mode.value
-        self._params['gpuDeviceId'] = str(gpuDeviceId)
-        self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
-        self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
                  filters,

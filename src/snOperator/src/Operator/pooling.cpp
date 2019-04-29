@@ -154,10 +154,7 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
     case calcMode::CPU:    forwardCPU(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data()); break;
     case calcMode::CUDA:   forwardCUDA(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data(), gpuParams_); break;
     case calcMode::OpenCL: forwardOCL(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data(), gpuParams_); break;
-    }      
-
-    if (!operPrm.isLerning && isPadding_)
-        inTnsExp_.tfree();
+    }  
 }
 
 void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
@@ -179,10 +176,8 @@ void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operP
     case calcMode::OpenCL: backwardOCL(poolPrms_, baseOut_.size(), outInx_.data(), gradIn, inDataExpSz_, gradOut, gpuParams_); break;
     }
    
-    if (isPadding_){
-        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());
-        gradOutExp_.tfree();
-    }
+    if (isPadding_)
+        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
 }
 
 void Pooling::updateConfig(bool isLern, const snSize& newsz){

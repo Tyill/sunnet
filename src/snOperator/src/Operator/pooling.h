@@ -85,15 +85,15 @@ private:
 
     void forwardCPU(const poolParams& poolPrms,
         const SN_Base::snSize& insz,   
-        SN_Base::snFloat* input,       
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
         SN_Base::snFloat* output,      
         size_t* outputInx);            
 
     void backwardCPU(const poolParams& poolPrms,
         const SN_Base::snSize& outsz, 
-        size_t* outputInx,            
-        SN_Base::snFloat* gradIn,     
+        const size_t* outputInx,
+        const SN_Base::snFloat* gradIn,
         const SN_Base::snSize& insz,  
         SN_Base::snFloat* gradOut);  
 
@@ -106,7 +106,7 @@ private:
 
     void forwardCUDA(const poolParams& poolPrms,
         const SN_Base::snSize& insz,    
-        SN_Base::snFloat* input,        
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,   
         SN_Base::snFloat* output,       
         size_t* outputInx,              
@@ -115,11 +115,11 @@ private:
     /// обратный проход CUDA
     void backwardCUDA(const poolParams& poolPrms,
         const SN_Base::snSize& outsz,   
-        size_t* outputInx,       
-        SN_Base::snFloat* output,
-        SN_Base::snFloat* gradIn,       
+        const size_t* outputInx,
+        const SN_Base::snFloat* output,
+        const SN_Base::snFloat* gradIn,
         const SN_Base::snSize& insz,
-        SN_Base::snFloat* input,
+        const SN_Base::snFloat* input,
         SN_Base::snFloat* gradOut,      
         void* gpuParams);
 
@@ -132,7 +132,7 @@ private:
 
     void forwardOCL(const poolParams& poolPrms,
         const SN_Base::snSize& insz,      
-        SN_Base::snFloat* input,          
+        const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,     
         SN_Base::snFloat* output,         
         size_t* outputInx,                
@@ -140,8 +140,8 @@ private:
 
     void backwardOCL(const poolParams& poolPrms,
         const SN_Base::snSize& outsz,    
-        size_t* outputInx,               
-        SN_Base::snFloat* gradIn,        
+        const size_t* outputInx,
+        const SN_Base::snFloat* gradIn,
         const SN_Base::snSize& insz,     
         SN_Base::snFloat* gradOut,       
         void* gpuParams);

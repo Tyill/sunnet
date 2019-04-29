@@ -23,22 +23,27 @@
 // THE SOFTWARE.
 //
 
-#pragma once
-
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <omp.h>
 #include "snBase/snBase.h"
-#include "snOperator/snOperator.h"
 
-#define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
+namespace SN_SIMD{
 
-#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
+    /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
+    /// @return true - ok
+    bool convolutionFWD(size_t M, size_t S, size_t D,
+        const SN_Base::snFloat* weight,
+        const SN_Base::snSize& insz, const SN_Base::snFloat* input,
+        const SN_Base::snSize& outsz, SN_Base::snFloat* output);
 
-void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
+    /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
+    /// @return true - ok
+    bool convolutionBWD_GW(size_t M, size_t S, size_t D,
+        const SN_Base::snFloat* weight,
+        const SN_Base::snSize& insz, const SN_Base::snFloat* input,
+        const SN_Base::snSize& outsz, const SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut, SN_Base::snFloat* dWeightOut);
 
-void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
-    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+    /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
+    /// @return true - ok
+    bool convolutionBWD_G(size_t M, size_t S, size_t D,
+        const SN_Base::snFloat* weight, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        const SN_Base::snFloat* gradIn, SN_Base::snFloat* gradOut);
+};
