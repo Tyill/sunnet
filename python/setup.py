@@ -37,7 +37,7 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'
 
 setup(
     name="libskynet",
