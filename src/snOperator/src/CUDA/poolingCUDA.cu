@@ -192,6 +192,21 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     }
 }
 
+__global__ void cuFiltrNegative(snSize outsz, snFloat* out){
+
+    out += blockIdx.x * outsz.w * outsz.h * outsz.d;
+       
+    unsigned int k = threadIdx.x;
+    while (k < outsz.d){
+
+        snFloat* pOut = out + outsz.w * outsz.h * k;
+        for (size_t j = 0; j < (outsz.w * outsz.h); ++j)
+            if (pOut[j] < 0) pOut[j] = 0.0;
+
+        k += blockDim.x;
+    }    
+}
+
 void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, size_t* outputInx, void* gpuPrms){
   
@@ -206,7 +221,7 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const 
 
     // input
     cuCHECK(cudaMemcpy(gpuPrm->d_in, input, isz * sizeof(snFloat), cudaMemcpyHostToDevice));
-      
+     
     // run
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnPoolingForward(gpuPrm->cudnn,
@@ -218,9 +233,15 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const 
         gpuPrm->out_desc,
         gpuPrm->d_out));
    
+    // filtrNegative
+    dim3 dimBlock(256);
+    dim3 dimGrid(int(outsz.n));
+
+    cuFiltrNegative <<< dimGrid, dimBlock >>>(outsz, gpuPrm->d_out);
+
     // result
     cuCHECK(cudaMemcpy(output, gpuPrm->d_out, osz * sizeof(snFloat), cudaMemcpyDeviceToHost));
-
+  
     if (gpuClearMem_){
         cuCHECK(cudaFree(gpuPrm->d_in));   gpuPrm->d_in = 0;
         cuCHECK(cudaFree(gpuPrm->d_out));  gpuPrm->d_out = 0;
