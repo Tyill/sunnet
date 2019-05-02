@@ -166,27 +166,27 @@ namespace SN_SIMD{
     __m256 reg ## 13 = _mm256_setzero_ps();
 
 #define LOAD_REG(in, offs, reg) \
-         reg = _mm256_loadu_ps(in + offs);
+         reg = _mm256_loadu_ps(in + (offs));
 
 #define LOAD_3REG(in, offs, reg) \
-         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
-         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
-         reg ## 2 = _mm256_loadu_ps(in + 2 * offs);
+         reg ## 0 = _mm256_loadu_ps(in + 0 * (offs)); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * (offs)); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * (offs));
 
 #define LOAD_5REG(in, offs, reg) \
-         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
-         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
-         reg ## 2 = _mm256_loadu_ps(in + 2 * offs); \
-         reg ## 3 = _mm256_loadu_ps(in + 3 * offs); \
-         reg ## 4 = _mm256_loadu_ps(in + 4 * offs);
+         reg ## 0 = _mm256_loadu_ps(in + 0 * (offs)); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * (offs)); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * (offs)); \
+         reg ## 3 = _mm256_loadu_ps(in + 3 * (offs)); \
+         reg ## 4 = _mm256_loadu_ps(in + 4 * (offs));
 
 #define LOAD_6REG(in, offs, reg) \
-         reg ## 0 = _mm256_loadu_ps(in + 0 * offs); \
-         reg ## 1 = _mm256_loadu_ps(in + 1 * offs); \
-         reg ## 2 = _mm256_loadu_ps(in + 2 * offs); \
-         reg ## 3 = _mm256_loadu_ps(in + 3 * offs); \
-         reg ## 4 = _mm256_loadu_ps(in + 4 * offs); \
-         reg ## 5 = _mm256_loadu_ps(in + 5 * offs);
+         reg ## 0 = _mm256_loadu_ps(in + 0 * (offs)); \
+         reg ## 1 = _mm256_loadu_ps(in + 1 * (offs)); \
+         reg ## 2 = _mm256_loadu_ps(in + 2 * (offs)); \
+         reg ## 3 = _mm256_loadu_ps(in + 3 * (offs)); \
+         reg ## 4 = _mm256_loadu_ps(in + 4 * (offs)); \
+         reg ## 5 = _mm256_loadu_ps(in + 5 * (offs));
 
 #define SUMM_3x3REG_1OUT(arIn, arW, arO) \
          arO = _mm256_add_ps(_mm256_mul_ps(arIn ## 0, arW ## 0), arO); \
