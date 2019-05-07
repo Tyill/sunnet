@@ -7,7 +7,7 @@ SkyNet is a light deep learning library.
 
 <img src="https://github.com/Tyill/skynet/blob/master/docs/resnetExample.gif" width="600" height="300" />
 
-[ResNetExample](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
+[ResNet example for Win](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
 
 
 ## Features
