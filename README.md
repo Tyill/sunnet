@@ -5,6 +5,9 @@ SkyNet is a light deep learning library.
 |------------------|------------------|
 |[![Build Status](https://travis-ci.com/Tyill/skynet.svg?branch=master)](https://travis-ci.com/Tyill/skynet)|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)|
 
+![GUI](https://github.com/Tyill/skynet/blob/master/docs/resnetExample.gif)
+[ResNet example](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
+
 ## Features
 
 * the library is written from scratch in C++ (only STL + OpenBLAS for calculation), C-interface
