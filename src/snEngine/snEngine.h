@@ -26,7 +26,6 @@
 
 #include <mutex>
 #include "snBase/snBase.h"
-#include "snOperator/snOperator.h"
 #include "src/threadPool.h"
 
 namespace SN_Eng{

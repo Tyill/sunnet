@@ -30,6 +30,7 @@
 #include "snAux/auxFunc.h"
 #include "snBase/snBase.h"
 #include "snet.h"
+#include "snOperatorCPU/snOperator.h"
 
 using namespace std;
 using namespace SN_Base;

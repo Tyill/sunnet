@@ -72,23 +72,15 @@ namespace SN_Base{
     };
         
     /// tensor - input data and output data of each node of the network.
+    /// snOperatorCPU/tensor.cpp - implementation CPU
+    /// snOperatorCUDA/tensor.cu - implementation CUDA
     struct Tensor{
-                
-        explicit Tensor(const snSize& sz = snSize(0,0,0,0,0)) : sz_(sz){
-
-            size_t ssz = sz.size();
         
-            if (ssz > 0)
-                data_ = (snFloat*)calloc(ssz, sizeof(snFloat));
-        }
+        explicit Tensor(const snSize& sz = snSize(0, 0, 0, 0, 0));
 
-        ~Tensor(){            
-            if (data_) free(data_);
-        }
+        ~Tensor();
 
-        Tensor(const Tensor& other){
-            setData(other.getData(), other.size());
-        }
+        Tensor(const Tensor& other);
         
         friend bool operator==(const Tensor& left, const Tensor& right){
                         
@@ -100,81 +92,28 @@ namespace SN_Base{
             return left.sz_ != right.sz_;
         }
 
-        Tensor& operator=(const Tensor& other){
-
-            setData(other.getData(), other.size());
-
-            return *this;
-        }
+        Tensor& operator=(const Tensor& other);
         
-        Tensor& operator+=(const Tensor& other){
+        Tensor& operator+=(const Tensor& other);
 
-            assert(other == *this);
+        Tensor& operator-=(const Tensor& other);
+             
+        // !!! do not use directly !!!
+        snFloat* getData() const;
+     
+        // !!! do not use directly !!!
+        void setData(const snFloat* data, const snSize& nsz);
 
-            auto od = other.getData();
+        void getDataForCPU(snFloat* out, const snSize& osz) const;
 
-            size_t sz = this->size().size();
-            for (size_t i = 0; i < sz; ++i){
-                data_[i] += od[i];
-            }
-            
-            return *this;
-        }
-
-        Tensor& operator-=(const Tensor& other){
-
-            assert(other == *this);
-
-            auto od = other.getData();
-
-            size_t sz = this->size().size();
-            for (size_t i = 0; i < sz; ++i){
-                data_[i] -= od[i];
-            }
-
-            return *this;
-        }
-                              
-        snFloat* getData() const{
-                
-            return data_;
-        }
-                
-        void setData(const snFloat* data, const snSize& nsz){
-
-            size_t nnsz = nsz.size();
-            assert(data && (nnsz > 0));
-            
-            if (sz_.size() < nnsz)
-                data_ = (snFloat*)realloc(data_, nnsz * sizeof(snFloat));
-        
-            memcpy(data_, data, nnsz * sizeof(snFloat));
-            sz_ = nsz;
-        }
-
-        void resize(const snSize& nsz){
-
-            size_t nnsz = nsz.size(), csz = sz_.size();
-            assert(nnsz > 0);
-
-            if (csz < nnsz){
-                data_ = (snFloat*)realloc(data_, nnsz * sizeof(snFloat));
-                memset(data_ + csz, 0, (nnsz - csz) * sizeof(snFloat));
-            }
-            
-            sz_ = nsz;
-        }
+        void resize(const snSize& nsz);
                 
         snSize size() const{
 
             return sz_;
         }
 
-        void tfree(){
-            if (data_) free(data_);
-            data_ = nullptr;
-            sz_ = snSize(0, 0, 0, 0, 0);
-        }
+        void tfree();
 
     private:
         snFloat* data_ = nullptr;
