@@ -66,10 +66,7 @@ private:
     SN_Base::snSize inDataExpSz_;                               ///< insz expansion
    
     const SN_Base::Tensor* inputMem_ = nullptr;
-
-    SN_Base::Tensor inTnsExp_;
-    SN_Base::Tensor gradOutExp_;
-   
+         
     bool isFreeze_ = false;                                     ///< not change weight
 
     uint32_t gpuDeviceId_ = 0;                                  ///< gpu id

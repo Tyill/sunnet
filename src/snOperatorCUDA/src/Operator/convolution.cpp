@@ -240,24 +240,11 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
 
     /// copy with offset padding for each image
     snFloat* in = inputMem_->getData();
-    bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
-    if (!isSame){
-        inTnsExp_.resize(inDataExpSz_);       
-        paddingOffs(false, convPrms_.paddingW, convPrms_.paddingH, insz, inTnsExp_.getData(), in);
-        in = inTnsExp_.getData();
-    }
-    
+  
     /// calculation of the output values
     snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
     snSize outsz = baseOut_.size();
-
-    // +bias?
-    if (!convPrms_.useBias_){
-        size_t kernel = convPrms_.kernel,
-               stepByN = convPrms_.fWidth * convPrms_.fHeight * insz.d * kernel;
-        memset(weight + stepByN, 0, kernel * sizeof(snFloat));
-    }
-
+       
     // calculation
     forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, gpuParams_);
       
@@ -303,22 +290,14 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_.getData();
-      
-    bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
-    if (!isSame){
-        gradOutExp_.resize(inDataExpSz_);
-        gradOut = gradOutExp_.getData();
-    }
-
+         
     snFloat* weight = baseWeight_.getData();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
         snFloat* in = inputMem_->getData();
-        if (!isSame)
-            in = inTnsExp_.getData();
-        
+       
         // calculation
         backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_);
                        
@@ -340,11 +319,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     }
     else{ // isFreeze
         backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_);
-    }
-
-    if (!isSame)
-        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
-    
+    }   
 }
 
 void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize& expSz){
@@ -365,8 +340,8 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
     if (ntp > wcsz){
                 
         baseWeight_.resize(snSize(kernel, stp + 1));
-        snFloat* wd = baseWeight_.getData();
-        weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel, weightInitType_);     
+
+        weightInit(baseWeight_, ntp - wcsz, stp + 1, kernel, weightInitType_);
     }
         
     snSize outSz(0, 0, kernel, newsz.n);
@@ -412,10 +387,10 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
     size_t osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-        auxParams_["bn_mean"].resize(osz, 0);         baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-        auxParams_["bn_varce"].resize(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
-        auxParams_["bn_scale"].resize(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
-        auxParams_["bn_schift"].resize(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+        auxParams_["bn_mean"].resize(osz, 0);             baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+        auxParams_["bn_varce"].resize(osz, 1);            baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+        auxParams_["bn_scale"].resize(osz, 1);            baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+        auxParams_["bn_schift"].resize(osz, 0);           baseBatchNorm_.schift = auxParams_["bn_schift"].data();
       
         if (isLern){
             auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
@@ -427,6 +402,5 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
         baseBatchNorm_.sz.n = 1;
     }  
 
-    iniParamCUDA(isLern, expSz, outSz, convPrms_, &gpuParams_);
-        
+    iniParamCUDA(isLern, expSz, outSz, convPrms_, &gpuParams_);        
 } 

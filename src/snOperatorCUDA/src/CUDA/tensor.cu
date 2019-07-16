@@ -85,12 +85,19 @@ void Tensor::setData(const snFloat* data, const snSize& nsz){
     sz_ = nsz;
 }
 
+void Tensor::setDataCPU2GPU(const snFloat* data, const snSize& nsz, const size_t& offset){
+
+    assert(sz_.size() == (nsz.size() + offset));
+
+    cuCHECK(cudaMemcpy(data_ + offset, data, nsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+}
+
 snFloat* Tensor::getData() const{
 
     return data_;
 }
 
-void Tensor::getDataForCPU(snFloat* out, const snSize& osz) const{
+void Tensor::getDataGPU2CPU(snFloat* out, const snSize& osz) const{
     
     assert(sz_ == osz);
 

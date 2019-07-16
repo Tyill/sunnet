@@ -103,8 +103,10 @@ namespace SN_Base{
      
         // !!! do not use directly !!!
         void setData(const snFloat* data, const snSize& nsz);
+        
+        void setDataCPU2GPU(const snFloat* data, const snSize& nsz, const size_t& offset);
 
-        void getDataForCPU(snFloat* out, const snSize& osz) const;
+        void getDataGPU2CPU(snFloat* out, const snSize& osz) const;
 
         void resize(const snSize& nsz);
                 
@@ -246,7 +248,6 @@ namespace SN_Base{
 
     /// node in the symbol structure of the NN
     struct Node{
-
         std::string name;                             ///< the name of the node is to be unique within the branch, without the '' and '-'. "Begin", "End" are reserved as the beginning, the end of the network
         std::string oprName;                          ///< the node operator that is executed at the node. One operator per node.
         std::map<std::string, std::string> oprPrms;   ///< parameters of the operator (specifies the user when creating the net)
