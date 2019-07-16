@@ -42,3 +42,7 @@ void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
 
 void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
     bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+
+#define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
+
+#define cuCHECKFree(func) if (func != 0){ g_statusMess(nullptr, "CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}

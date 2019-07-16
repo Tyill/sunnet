@@ -179,4 +179,9 @@
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\snOperatorCUDA\src\CUDA\dropOut.cu">
+      <Filter>CUDA</Filter>
+    </None>
+  </ItemGroup>
 </Project>
