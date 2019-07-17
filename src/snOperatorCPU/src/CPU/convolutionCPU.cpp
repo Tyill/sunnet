@@ -25,9 +25,7 @@
 
 #include "../stdafx.h"
 #include "snOperatorCPU/src/Operator/convolution.h"
-#include <omp.h>
 #include <thread>
-#include <iostream>
 
 #ifdef SN_AVX
 #include "snSIMD/snSIMD.h"

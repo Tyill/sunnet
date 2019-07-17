@@ -123,16 +123,16 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
     }
        
     /// copy with offset padding for each image
-    snFloat* in = inputMem_->getData();
+    snFloat* in = inputMem_->getDataGPU();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getData(), inputMem_->getData());
+        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getDataGPU(), inputMem_->getDataGPU());
         insz = inDataExpSz_;
-        in = inTnsExp_.getData();
+        in = inTnsExp_.getDataGPU();
     }
 
     /// output calculation
-    snFloat* out = baseOut_.getData();
+    snFloat* out = baseOut_.getDataGPU();
    
     // calculation
     forwardCUDA(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data(), gpuParams_);
@@ -141,21 +141,21 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
 
 void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataGPU();
         
-    snFloat* input = inputMem_->getData();
-    snFloat* gradOut = baseGrad_.getData();
+    snFloat* input = inputMem_->getDataGPU();
+    snFloat* gradOut = baseGrad_.getDataGPU();
     if (isPadding_){
         gradOutExp_.resize(inDataExpSz_);
-        gradOut = gradOutExp_.getData();
-        input = inTnsExp_.getData();
+        gradOut = gradOutExp_.getDataGPU();
+        input = inTnsExp_.getDataGPU();
     }
 
     /// grad calculation
-    backwardCUDA(poolPrms_, baseOut_.size(), outInx_.data(), baseOut_.getData(), gradIn, inDataExpSz_, input, gradOut, gpuParams_);   
+    backwardCUDA(poolPrms_, baseOut_.size(), outInx_.data(), baseOut_.getDataGPU(), gradIn, inDataExpSz_, input, gradOut, gpuParams_);   
    
     if (isPadding_)
-        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
+        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getDataGPU());      
 }
 
 void Pooling::updateConfig(bool isLern, const snSize& newsz){

@@ -224,7 +224,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
     
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snFloat* out = baseOut_.getDataGPU(), *weight = baseWeight_.getDataGPU();
     
     // +bias?
     if (!useBias_){
@@ -233,7 +233,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
 
     // calculation
-    forwardCUDA(kernel_, insz, inTns.getData(), weight, out, gpuParams_);
+    forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
    
     /// dropOut
     snSize outSz = baseOut_.size();
@@ -254,7 +254,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
 
 void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataGPU();
 
     /// batchNorm
     snSize gsz = inTns.size();
@@ -264,7 +264,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     // active func
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataGPU();
         
         size_t osz = kernel_ * inSzMem_.n;
         activeFuncBackward(osz, out, activeType_);
@@ -278,15 +278,15 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
         layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_.getData();
-    snFloat* weight = baseWeight_.getData();
+    snFloat* gradOut = baseGrad_.getDataGPU();
+    snFloat* weight = baseWeight_.getDataGPU();
        
     if (!isFreeze_){
                 
         snFloat* dWeight = auxParams_["dWeight"].data();
        
         // calculation
-        backwardCUDA_GW(kernel_, weight, inSzMem_, inputMem_->getData(), gradIn, gradOut, dWeight, gpuParams_);
+        backwardCUDA_GW(kernel_, weight, inSzMem_, inputMem_->getDataGPU(), gradIn, gradOut, dWeight, gpuParams_);
                         
         // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -319,8 +319,9 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     if (ntp > wcsz){
                 
         baseWeight_.resize(snSize(kernel_, stp + 1));
-        snFloat* wd = baseWeight_.getData();
-        weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel_, weightInitType_);
+        
+        if (wcsz == 0)
+            weightInit(baseWeight_, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     
     baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));

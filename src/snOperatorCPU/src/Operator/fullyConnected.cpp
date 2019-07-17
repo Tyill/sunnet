@@ -221,7 +221,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
     
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
     
     // +bias?
     if (!useBias_){
@@ -230,7 +230,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
 
     // calculation
-    forwardCPU(kernel_, insz, inTns.getData(), weight, out);     
+    forwardCPU(kernel_, insz, inTns.getDataCPU(), weight, out);     
 
     /// dropOut
     snSize outSz = baseOut_.size();
@@ -251,7 +251,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
 
 void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataCPU();
 
     /// batchNorm
     snSize gsz = inTns.size();
@@ -261,7 +261,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     // active func
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = kernel_ * inSzMem_.n;
         activeFuncBackward(osz, out, activeType_);
@@ -275,15 +275,15 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
         layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_.getData();
-    snFloat* weight = baseWeight_.getData();
+    snFloat* gradOut = baseGrad_.getDataCPU();
+    snFloat* weight = baseWeight_.getDataCPU();
        
     if (!isFreeze_){
                 
         snFloat* dWeight = auxParams_["dWeight"].data();
       
         // calculation
-        backwardCPU_GW(kernel_, weight, inSzMem_, inputMem_->getData(), gradIn, gradOut, dWeight);
+        backwardCPU_GW(kernel_, weight, inSzMem_, inputMem_->getDataCPU(), gradIn, gradOut, dWeight);
                       
         // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -316,7 +316,7 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     if (ntp > wcsz){
                 
         baseWeight_.resize(snSize(kernel_, stp + 1));
-        snFloat* wd = baseWeight_.getData();
+        snFloat* wd = baseWeight_.getDataCPU();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     

@@ -25,7 +25,6 @@
 
 #include "../stdafx.h"
 #include "snOperatorCPU/src/Operator/deconvolution.h"
-#include <omp.h>
 #include <thread>
 
 using namespace std;

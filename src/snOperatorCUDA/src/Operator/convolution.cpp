@@ -44,7 +44,8 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 
 Convolution::~Convolution(){
         
-    freeParamCUDA(gpuParams_);   
+    freeParamCUDA(convGPUParams_);
+    dropOutFree(gpuDeviceId_, dropGPUParams_);
 }
 
 void Convolution::load(std::map<std::string, std::string>& prms){
@@ -239,18 +240,18 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     }
 
     /// copy with offset padding for each image
-    snFloat* in = inputMem_->getData();
+    snFloat* in = inputMem_->getDataGPU();
   
     /// calculation of the output values
-    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snFloat* out = baseOut_.getDataGPU(), *weight = baseWeight_.getDataGPU();
     snSize outsz = baseOut_.size();
        
     // calculation
-    forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, gpuParams_);
-      
+    forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, convGPUParams_);
+
     /// dropOut
     if (dropOut_ > 0.F)
-        dropOut(operPrm.isLerning, dropOut_, outsz, out);
+        dropOutForward(dropOut_, out, outsz, gpuDeviceId_, &dropGPUParams_);
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
@@ -266,16 +267,17 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
 
 void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
     
-    snFloat* gradIn = inTns.getData();
- 
+    snFloat* gradIn = inTns.getDataGPU(); 
+    snSize insz = inTns.size();
+
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
     
     // active function
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataGPU();
         
         size_t osz = baseOut_.size().size();
         activeFuncBackward(osz, out, activeType_);
@@ -286,20 +288,24 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
     
+    /// dropOut
+    if (dropOut_ > 0.F)
+        dropOutBackward(dropOut_, gradIn, insz, gpuDeviceId_, &dropGPUParams_);
+
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_.getData();
+    snFloat* gradOut = baseGrad_.getDataGPU();
          
-    snFloat* weight = baseWeight_.getData();
+    snFloat* weight = baseWeight_.getDataGPU();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
-        snFloat* in = inputMem_->getData();
+        snFloat* in = inputMem_->getDataGPU();
        
         // calculation
-        backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, gpuParams_);
+        backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, convGPUParams_);
                        
         // correct weight
         snFloat* dWPrev = auxParams_["dWPrev"].data();
@@ -318,7 +324,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
             optimizerType_);
     }
     else{ // isFreeze
-        backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, gpuParams_);
+        backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, convGPUParams_);
     }   
 }
 
@@ -341,7 +347,8 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
                 
         baseWeight_.resize(snSize(kernel, stp + 1));
 
-        weightInit(baseWeight_, ntp - wcsz, stp + 1, kernel, weightInitType_);
+        if (wcsz == 0)
+           weightInit(baseWeight_, ntp, stp + 1, kernel, weightInitType_);
     }
         
     snSize outSz(0, 0, kernel, newsz.n);
@@ -402,5 +409,5 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
         baseBatchNorm_.sz.n = 1;
     }  
 
-    iniParamCUDA(isLern, expSz, outSz, convPrms_, &gpuParams_);        
+    iniParamCUDA(isLern, expSz, outSz, convPrms_, &convGPUParams_);
 } 

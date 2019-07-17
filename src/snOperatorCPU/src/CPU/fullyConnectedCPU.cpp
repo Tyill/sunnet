@@ -26,7 +26,6 @@
 #include "../stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
 #include "snOperatorCPU/src/Operator/fullyConnected.h"
-#include <omp.h>  
 
 using namespace std;
 using namespace SN_Base;

@@ -45,7 +45,7 @@ void weightInit(SN_Base::Tensor& ioW, size_t sz, size_t fan_in, size_t fan_out, 
       case weightInitType::xavier:wi_xavier(buff.data(), sz, fan_in, fan_out); break;
     }
 
-    ioW.setDataCPU2GPU(buff.data(), sz, ioW.size().size());
+    ioW.setDataCPU(buff.data(), sz);
 }
 
 void wi_uniform(snFloat* ioW, size_t sz){

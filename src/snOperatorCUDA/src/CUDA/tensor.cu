@@ -1,6 +1,4 @@
 
-#include <iostream>
-
 #include <cuda_runtime.h>
 #include <cudnn.h>
 
@@ -8,9 +6,6 @@
 
 using namespace SN_Base;
 
-#ifndef cuCHECK
-#define cuCHECK(func) if (func != 0){ std::cout << "CUDA error: " << cudaGetErrorString(cudaGetLastError()) << std::endl; return;}
-#endif
 
 /// tensor - input data and output data of each node of the network.
 
@@ -18,24 +13,28 @@ Tensor::Tensor(const snSize& sz) : sz_(sz){
 
     size_t ssz = sz.size();
 
-    if (ssz > 0){
-        cuCHECK(cudaMalloc(&data_, ssz * sizeof(snFloat)));
-        cuCHECK(cudaMemset(data_, 0, ssz * sizeof(snFloat)));
+    if (ssz > 0){               
+        cuAssert(cudaMalloc(&dataGPU_, ssz * sizeof(snFloat)));
+        cuAssert(cudaMemset(dataGPU_, 0, ssz * sizeof(snFloat)));        
     }
 }
 
 Tensor::~Tensor(){
-    if (data_)
-        cuCHECK(cudaFree(data_)); 
+    if (dataGPU_)
+        cuAssert(cudaFree(dataGPU_));
+
+    if (dataCPU_)
+        free(dataCPU_);
 }
 
 Tensor::Tensor(const Tensor& other){
-    setData(other.getData(), other.size());
+
+    setDataGPU(other.getDataGPU(), other.size());
 }
       
 Tensor& Tensor::operator=(const Tensor& other){
 
-    setData(other.getData(), other.size());
+    setDataGPU(other.getDataGPU(), other.size());
 
     return *this;
 }
@@ -43,14 +42,8 @@ Tensor& Tensor::operator=(const Tensor& other){
 Tensor& Tensor::operator+=(const Tensor& other){
 
     assert(other == *this);
-
-    auto od = other.getData();
-
-    //size_t sz = this->size().size();
-    //for (size_t i = 0; i < sz; ++i){
-    //    data_[i] += od[i];
-    //}
-
+       
+   
     return *this;
 }
 
@@ -58,50 +51,58 @@ Tensor& Tensor::operator-=(const Tensor& other){
 
     assert(other == *this);
 
-    auto od = other.getData();
-
-   /* size_t sz = this->size().size();
-    for (size_t i = 0; i < sz; ++i){
-        data_[i] -= od[i];
-    }*/
-
+    
     return *this;
 }
 
-void Tensor::setData(const snFloat* data, const snSize& nsz){
+void Tensor::setDataGPU(const snFloat* data, const snSize& nsz){
 
     size_t nnsz = nsz.size();
     assert(data && (nnsz > 0));
 
     if (sz_.size() < nnsz){
      
-        if (data_)
-            cuCHECK(cudaFree(data_));
+        if (dataGPU_)
+            cuAssert(cudaFree(dataGPU_));
  
-        cuCHECK(cudaMalloc(&data_, nnsz * sizeof(snFloat)));
+        cuAssert(cudaMalloc(&dataGPU_, nnsz * sizeof(snFloat)));
     }
 
-    cuCHECK(cudaMemcpy(data_, data, nnsz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+    cuAssert(cudaMemcpy(dataGPU_, data, nnsz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
     sz_ = nsz;
 }
 
-void Tensor::setDataCPU2GPU(const snFloat* data, const snSize& nsz, const size_t& offset){
+void Tensor::setDataCPU(const snFloat* data, const snSize& nsz){
 
-    assert(sz_.size() == (nsz.size() + offset));
+    size_t nnsz = nsz.size();
+    assert(data && (nnsz > 0));
 
-    cuCHECK(cudaMemcpy(data_ + offset, data, nsz.size() * sizeof(snFloat), cudaMemcpyHostToDevice));
+    if (sz_.size() < nnsz){
+
+        if (dataGPU_)
+            cuAssert(cudaFree(dataGPU_));
+
+        cuAssert(cudaMalloc(&dataGPU_, nnsz * sizeof(snFloat)));
+    }
+
+    cuAssert(cudaMemcpy(dataGPU_, data, nnsz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyHostToDevice));
+    sz_ = nsz;
 }
 
-snFloat* Tensor::getData() const{
+snFloat* Tensor::getDataGPU() const{
 
-    return data_;
+    return dataGPU_;
 }
 
-void Tensor::getDataGPU2CPU(snFloat* out, const snSize& osz) const{
-    
-    assert(sz_ == osz);
+snFloat* Tensor::getDataCPU() const{
+      
+    size_t csz = sz_.size();
 
-    cuCHECK(cudaMemcpy(out, data_, sz_.size() * sizeof(snFloat), cudaMemcpyDeviceToHost));
+    dataCPU_ = (snFloat*)realloc(dataCPU_, csz * sizeof(snFloat));
+
+    cuAssert(cudaMemcpy(dataCPU_, dataGPU_, csz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToHost));
+
+    return dataCPU_;
 }
 
 void Tensor::resize(const snSize& nsz){
@@ -112,24 +113,16 @@ void Tensor::resize(const snSize& nsz){
     if (csz < nnsz){
 
         snFloat* mem = nullptr;
-        cuCHECK(cudaMalloc(&mem, nnsz * sizeof(snFloat)));
+        cuAssert(cudaMalloc(&mem, nnsz * sizeof(snFloat)));
 
-        if (data_){
-            cuCHECK(cudaMemcpy(mem, data_, csz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
-            cuCHECK(cudaFree(data_));
+        if (dataGPU_){
+            cuAssert(cudaMemcpy(mem, dataGPU_, csz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+            cuAssert(cudaFree(dataGPU_));
         }
-        data_ = mem;
+        dataGPU_ = mem;
 
-        cuCHECK(cudaMemset(data_ + csz, 0, (nnsz - csz) * sizeof(snFloat)));
+        cuAssert(cudaMemset(dataGPU_ + csz, 0, (nnsz - csz) * sizeof(snFloat)));
     }
 
     sz_ = nsz;
-}
-
-void Tensor::tfree(){
-    if (data_)
-        cuCHECK(cudaFree(data_));
-
-    data_ = nullptr;
-    sz_ = snSize(0, 0, 0, 0, 0);
 }

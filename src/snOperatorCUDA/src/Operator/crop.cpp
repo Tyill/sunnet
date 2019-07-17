@@ -74,8 +74,8 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
 
         Tensor tns(snSize(w, h, baseSz_.d, baseSz_.n));
 
-        snFloat* src = baseOut_.getData(),
-               * dst = tns.getData();
+        snFloat* src = baseOut_.getDataGPU(),
+               * dst = tns.getDataGPU();
 
         copyTo(true, roi_, baseSz_, src, dst);
 
@@ -96,8 +96,8 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
                 
         Tensor tns(baseSz_);
 
-        snFloat* dst = tns.getData(),
-               * src = baseGrad_.getData();
+        snFloat* dst = tns.getDataGPU(),
+               * src = baseGrad_.getDataGPU();
                 
         copyTo(false, roi_, baseSz_, dst, src);
 

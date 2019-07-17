@@ -75,7 +75,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
 
         baseOut_ = neighbOpr[0]->getOutput();
     
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataGPU();
         snSize outsz = baseOut_.size();
 
         if (outsz != inSzMem_){
@@ -107,7 +107,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
             baseGrad_ += neighbOpr[i]->getGradient();
         }
                
-        snFloat* out = baseGrad_.getData();
+        snFloat* out = baseGrad_.getDataGPU();
         snSize outsz = baseGrad_.size();
 
         switch (bnType_){

@@ -97,16 +97,14 @@ namespace SN_Base{
         Tensor& operator+=(const Tensor& other);
 
         Tensor& operator-=(const Tensor& other);
-             
-        // !!! do not use directly !!!
-        snFloat* getData() const;
-     
-        // !!! do not use directly !!!
-        void setData(const snFloat* data, const snSize& nsz);
         
-        void setDataCPU2GPU(const snFloat* data, const snSize& nsz, const size_t& offset);
+        void setDataGPU(const snFloat* data, const snSize& nsz);
 
-        void getDataGPU2CPU(snFloat* out, const snSize& osz) const;
+        snFloat* getDataGPU() const;
+        
+        void setDataCPU(const snFloat* data, const snSize& nsz);
+
+        snFloat* getDataCPU() const;
 
         void resize(const snSize& nsz);
                 
@@ -114,11 +112,10 @@ namespace SN_Base{
 
             return sz_;
         }
-
-        void tfree();
-
+        
     private:
-        snFloat* data_ = nullptr;
+        mutable snFloat* dataCPU_,
+                       * dataGPU_ = nullptr;
 
         snSize sz_;
     };
@@ -180,17 +177,17 @@ namespace SN_Base{
         }
 
         virtual bool setInput(const snFloat* data, const snSize& dsz){
-            baseInput_.setData(data, dsz);
+            baseInput_.setDataCPU(data, dsz);
             return true;
         }
 
         virtual bool setGradient(const snFloat* data, const snSize& dsz){
-            baseGrad_.setData(data, dsz);
+            baseGrad_.setDataCPU(data, dsz);
             return true;
         }
         
         virtual bool setWeight(const snFloat* data, const snSize& dsz){
-            baseWeight_.setData(data, dsz);
+            baseWeight_.setDataCPU(data, dsz);
             return true;
         }
 

@@ -73,8 +73,8 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                     cstp = csz.w * csz.h * csz.d;
                 for (size_t j = 0; j < csz.n; ++j){
 
-                    snFloat* dst = baseOut_.getData() + sz * j,
-                        *src = buff.getData() + cstp * j + offset;
+                    snFloat* dst = baseOut_.getDataGPU() + sz * j,
+                        *src = buff.getDataGPU() + cstp * j + offset;
 
                     memcpy(dst, src, sz * sizeof(snFloat));
                 }
@@ -119,8 +119,8 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                     cstp = csz.w * csz.h * csz.d;
                 for (size_t j = 0; j < csz.n; ++j){
 
-                    snFloat* dst = baseGrad_.getData() + sz * j,
-                        *src = buff.getData() + cstp * j + offset;
+                    snFloat* dst = baseGrad_.getDataGPU() + sz * j,
+                        *src = buff.getDataGPU() + cstp * j + offset;
 
                     memcpy(dst, src, sz * sizeof(snFloat));
                 }

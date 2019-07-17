@@ -79,7 +79,8 @@ private:
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
     
-    void* gpuParams_ = nullptr;                                       ///< gpu aux params 
+    void* convGPUParams_ = nullptr,                                   ///< gpu aux params 
+        * dropGPUParams_ = nullptr;
 
 
     void load(std::map<std::string, std::string>& prms);

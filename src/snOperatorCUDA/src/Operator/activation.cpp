@@ -60,7 +60,7 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
         baseOut_ = neighbOpr[0]->getOutput();
            
         /// active func
-        activeFuncForward(baseOut_.size().size(), baseOut_.getData(), activeType_);
+        activeFuncForward(baseOut_.size().size(), baseOut_.getDataGPU(), activeType_);
         
     }
     else{ // backward
@@ -77,7 +77,7 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
         }
 
         /// active func
-        activeFuncBackward(baseGrad_.size().size(), baseGrad_.getData(), activeType_);
+        activeFuncBackward(baseGrad_.size().size(), baseGrad_.getDataGPU(), activeType_);
     }
     
     return vector<string>();

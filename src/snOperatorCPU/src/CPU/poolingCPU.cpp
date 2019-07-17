@@ -25,7 +25,6 @@
 
 #include "../stdafx.h"
 #include "snOperatorCPU/src/Operator/pooling.h"
-#include <omp.h>  
 #include <thread>
 
 using namespace std;

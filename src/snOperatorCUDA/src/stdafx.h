@@ -45,4 +45,8 @@ void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const st
 
 #define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
 
-#define cuCHECKFree(func) if (func != 0){ g_statusMess(nullptr, "CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
+#define cuAssert(func) \
+   if (func != 0){                                                                            \
+     std::string mess = std::string("CUDA error: ") + cudaGetErrorString(cudaGetLastError()); \
+     assert(!mess.c_str());                                                                   \
+   }

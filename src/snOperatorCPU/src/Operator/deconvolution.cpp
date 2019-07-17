@@ -221,9 +221,9 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
         updateConfig(operPrm.isLerning, insz);
     }
 
-    snFloat* pInTns = inTns.getData();
+    snFloat* pInTns = inTns.getDataCPU();
    
-    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
     snSize outsz = baseOut_.size();
 
     // calculation
@@ -248,7 +248,7 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
 
 void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
     
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataCPU();
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
@@ -257,7 +257,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
     /// active func
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = baseOut_.size().size();
         activeFuncBackward(osz, out, activeType_);
@@ -271,10 +271,10 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
         channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
-    snFloat* grOut = baseGrad_.getData();   
-    snFloat* weight = baseWeight_.getData();
-    snFloat* in = inputMem_->getData();
-    snFloat* out = baseOut_.getData();
+    snFloat* grOut = baseGrad_.getDataCPU();   
+    snFloat* weight = baseWeight_.getDataCPU();
+    snFloat* in = inputMem_->getDataCPU();
+    snFloat* out = baseOut_.getDataCPU();
 
     snSize insz = inputMem_->size(), outsz = baseOut_.size();
   
@@ -314,7 +314,7 @@ void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
     if (ntp > wcsz){
                 
         baseWeight_.resize(snSize(newsz.d, stp + 1));
-        snFloat* wd = baseWeight_.getData();
+        snFloat* wd = baseWeight_.getDataCPU();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, deconvParams_.kernel, weightInitType_);
     }
         

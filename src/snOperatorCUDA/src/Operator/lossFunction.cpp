@@ -84,7 +84,7 @@ void LossFunction::forward(const Tensor& inTns){
     snSize tsz = inTns.size();
     baseOut_ = inTns;
     
-    auto out = baseOut_.getData();
+    auto out = baseOut_.getDataGPU();
 
     switch (lossType_){
     case LossFunction::lossType::softMaxACrossEntropy:{
@@ -126,7 +126,7 @@ void LossFunction::forward(const Tensor& inTns){
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-           true, inTns.size(), inTns.getData(), outSz, &outData);
+           true, inTns.size(), inTns.getDataGPU(), outSz, &outData);
 
         if (outData){
             baseOut_.setData(outData, outSz);
@@ -153,9 +153,9 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
     if (grsz != tsz)
         baseGrad_.resize(tsz);
         
-    auto smOut = baseOut_.getData();    
-    auto target = inTns.getData();      
-    auto grad = baseGrad_.getData();  
+    auto smOut = baseOut_.getDataGPU();    
+    auto target = inTns.getDataGPU();      
+    auto grad = baseGrad_.getDataGPU();  
 
     switch (lossType_){
     case LossFunction::lossType::softMaxACrossEntropy:{
@@ -192,7 +192,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, inTns.size(), inTns.getData(), outSz, &outData);
+            false, inTns.size(), inTns.getDataGPU(), outSz, &outData);
 
         if (outData){
             baseGrad_.setData(outData, outSz);

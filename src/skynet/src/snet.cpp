@@ -281,7 +281,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
             return false;
         }
 
-        memcpy(outData, tnsOut.getData(), tnsOutSz.size() * sizeof(snFloat));
+        memcpy(outData, tnsOut.getDataCPU(), tnsOutSz.size() * sizeof(snFloat));
     }
 
     return true;
@@ -318,8 +318,8 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
 
 SN_Base::snFloat SNet::calcAccurate(const Tensor& targetTens, const Tensor& outTens){
 
-    snFloat* targetData = targetTens.getData();
-    snFloat* outData = outTens.getData();
+    snFloat* targetData = targetTens.getDataCPU();
+    snFloat* outData = outTens.getDataCPU();
     
     size_t accCnt = 0, osz = outTens.size().size();
     for (size_t i = 0; i < osz; ++i){
@@ -358,7 +358,7 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
 
     *wData = (snFloat*)realloc(*wData, wsz.size() * sizeof(snFloat));
         
-    memcpy(*wData, weight.getData(), wsz.size() * sizeof(snFloat));
+    memcpy(*wData, weight.getDataCPU(), wsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -423,7 +423,7 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
 
     *outData = (snFloat*)realloc(*outData, osz.size() * sizeof(snFloat));
 
-    memcpy(*outData, outTns.getData(), osz.size() * sizeof(snFloat));
+    memcpy(*outData, outTns.getDataCPU(), osz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -469,7 +469,7 @@ bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::
 
     *gData = (snFloat*)realloc(*gData, gsz.size() * sizeof(snFloat));
 
-    memcpy(*gData, grad.getData(), gsz.size() * sizeof(snFloat));
+    memcpy(*gData, grad.getDataCPU(), gsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -496,7 +496,7 @@ bool SNet::saveAllWeightToFile(const char* filePath){
         snSize lSize;
         for (auto opr : operats_){
 
-            data = opr.second->getWeight().getData();
+            data = opr.second->getWeight().getDataCPU();
             lSize = opr.second->getWeight().size();
 
             if (data){

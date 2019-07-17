@@ -83,9 +83,9 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
 
 void Summator::mean(const Tensor& one, const Tensor& two, Tensor& out){
    
-    snFloat* done = one.getData(),
-           * dtwo = two.getData(),
-           * dout = out.getData();
+    snFloat* done = one.getDataGPU(),
+           * dtwo = two.getDataGPU(),
+           * dout = out.getDataGPU();
 
     size_t sz = one.size().size();
     for (size_t i = 0; i < sz; ++i){

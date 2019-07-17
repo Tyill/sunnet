@@ -235,16 +235,16 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     }
 
     /// copy with offset padding for each image
-    snFloat* in = inputMem_->getData();
+    snFloat* in = inputMem_->getDataCPU();
     bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
     if (!isSame){
         inTnsExp_.resize(inDataExpSz_);       
-        paddingOffs(false, convPrms_.paddingW, convPrms_.paddingH, insz, inTnsExp_.getData(), in);
-        in = inTnsExp_.getData();
+        paddingOffs(false, convPrms_.paddingW, convPrms_.paddingH, insz, inTnsExp_.getDataCPU(), in);
+        in = inTnsExp_.getDataCPU();
     }
     
     /// calculation of the output values
-    snFloat* out = baseOut_.getData(), *weight = baseWeight_.getData();
+    snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
     snSize outsz = baseOut_.size();
 
     // +bias?
@@ -275,7 +275,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
 
 void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
     
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataCPU();
  
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
@@ -284,7 +284,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     // active function
     if (activeType_ != activeType::none){
 
-        snFloat* out = baseOut_.getData();
+        snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = baseOut_.size().size();
         activeFuncBackward(osz, out, activeType_);
@@ -298,22 +298,22 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
-    snFloat* gradOut = baseGrad_.getData();
+    snFloat* gradOut = baseGrad_.getDataCPU();
       
     bool isSame = (convPrms_.paddingW == 0) && (convPrms_.paddingH == 0);
     if (!isSame){
         gradOutExp_.resize(inDataExpSz_);
-        gradOut = gradOutExp_.getData();
+        gradOut = gradOutExp_.getDataCPU();
     }
 
-    snFloat* weight = baseWeight_.getData();
+    snFloat* weight = baseWeight_.getDataCPU();
   
     if (!isFreeze_){
         snFloat* dWeight = auxParams_["dWeight"].data();
         
-        snFloat* in = inputMem_->getData();
+        snFloat* in = inputMem_->getDataCPU();
         if (!isSame)
-            in = inTnsExp_.getData();
+            in = inTnsExp_.getDataCPU();
         
         // calculation
         backwardCPU_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight);
@@ -339,7 +339,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     }
 
     if (!isSame)
-        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
+        paddingOffs(true, convPrms_.paddingW, convPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getDataCPU());      
     
 }
 
@@ -361,7 +361,7 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
     if (ntp > wcsz){
                 
         baseWeight_.resize(snSize(kernel, stp + 1));
-        snFloat* wd = baseWeight_.getData();
+        snFloat* wd = baseWeight_.getDataCPU();
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel, weightInitType_);     
     }
         

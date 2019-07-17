@@ -93,14 +93,14 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
                  nstp = nbsz.w * nbsz.h * nbsz.d;
             for (size_t j = 0; j < csz.n; ++j){
 
-                snFloat* dst = baseOut_.getData() + sz * j,
-                    *src = buff.getData() + cstp * j;
+                snFloat* dst = baseOut_.getDataGPU() + sz * j,
+                    *src = buff.getDataGPU() + cstp * j;
 
                 memcpy(dst, src, cstp * sizeof(snFloat));
 
 
                 dst += cstp;
-                src = neighb->getOutput().getData() + nstp * j;
+                src = neighb->getOutput().getDataGPU() + nstp * j;
 
                 memcpy(dst, src, nstp * sizeof(snFloat));
             }

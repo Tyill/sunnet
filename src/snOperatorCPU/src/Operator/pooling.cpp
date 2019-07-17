@@ -119,16 +119,16 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
     }
        
     /// copy with offset padding for each image
-    snFloat* in = inputMem_->getData();
+    snFloat* in = inputMem_->getDataCPU();
     if (isPadding_){
         inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getData(), inputMem_->getData());
+        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getDataCPU(), inputMem_->getDataCPU());
         insz = inDataExpSz_;
-        in = inTnsExp_.getData();
+        in = inTnsExp_.getDataCPU();
     }
 
     /// output calculation
-    snFloat* out = baseOut_.getData();
+    snFloat* out = baseOut_.getDataCPU();
    
     // calculation
     forwardCPU(poolPrms_, insz, in, baseOut_.size(), out, outInx_.data());
@@ -137,21 +137,21 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
 
 void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snFloat* gradIn = inTns.getData();
+    snFloat* gradIn = inTns.getDataCPU();
         
-    snFloat* input = inputMem_->getData();
-    snFloat* gradOut = baseGrad_.getData();
+    snFloat* input = inputMem_->getDataCPU();
+    snFloat* gradOut = baseGrad_.getDataCPU();
     if (isPadding_){
         gradOutExp_.resize(inDataExpSz_);
-        gradOut = gradOutExp_.getData();
-        input = inTnsExp_.getData();
+        gradOut = gradOutExp_.getDataCPU();
+        input = inTnsExp_.getDataCPU();
     }
 
     /// calculation
     backwardCPU(poolPrms_, baseOut_.size(), outInx_.data(), gradIn, inDataExpSz_, gradOut);
        
     if (isPadding_)
-        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getData());      
+        paddingOffs(true, poolPrms_.paddingW, poolPrms_.paddingH, inSzMem_, gradOut, baseGrad_.getDataCPU());      
 }
 
 void Pooling::updateConfig(bool isLern, const snSize& newsz){

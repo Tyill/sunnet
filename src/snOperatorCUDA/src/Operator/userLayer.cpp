@@ -55,7 +55,7 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            true, baseOut_.size(), baseOut_.getData(), outSz, &outData);
+            true, baseOut_.size(), baseOut_.getDataGPU(), outSz, &outData);
 
         if (outData)
             baseOut_.setData(outData, outSz);
@@ -79,7 +79,7 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, baseGrad_.size(), baseGrad_.getData(), outSz, &outData);
+            false, baseGrad_.size(), baseGrad_.getDataGPU(), outSz, &outData);
 
         if (outData)
             baseGrad_.setData(outData, outSz);
