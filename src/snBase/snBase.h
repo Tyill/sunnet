@@ -114,7 +114,7 @@ namespace SN_Base{
         }
         
     private:
-        mutable snFloat* dataCPU_,
+        mutable snFloat* dataCPU_ = nullptr,
                        * dataGPU_ = nullptr;
 
         snSize sz_;
