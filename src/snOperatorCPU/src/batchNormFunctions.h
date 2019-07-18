@@ -22,22 +22,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <omp.h>
 #include "snBase/snBase.h"
 
-#define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
+void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
 
-#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
+void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
 
-void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
+void batchNormForward(const SN_Base::snSize& insz,
+    SN_Base::snFloat* in,
+    SN_Base::snFloat* out,
+    SN_Base::batchNorm);
 
-void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
-    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+void batchNormBackward(const SN_Base::snSize& insz,
+    SN_Base::snFloat* gradIn,
+    SN_Base::snFloat* gradOut,
+    SN_Base::batchNorm);

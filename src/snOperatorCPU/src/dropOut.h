@@ -22,22 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <omp.h>
 #include "snBase/snBase.h"
 
-#define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
-
-#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
-
-void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
-
-void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
-    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);

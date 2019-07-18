@@ -29,7 +29,9 @@
 #include "snOperatorCPU/src/activeFunctions.h"
 #include "snOperatorCPU/src/optimizer.h"
 #include "snOperatorCPU/src/structurs.h"
-#include "snOperatorCPU/src/mathFunctions.h"
+#include "snOperatorCPU/src/batchNormFunctions.h"
+#include "snOperatorCPU/src/dropOut.h"
+
 
 using namespace std;
 using namespace SN_Base;

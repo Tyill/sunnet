@@ -36,7 +36,7 @@ OperatorBase(net, name, node, prms){
 }
 
 bool Input::setInput(const snFloat* data, const snSize& dsz){
-    baseOut_.setData(data, dsz);
+    baseOut_.setDataGPU(data, dsz);
     return true;
 }
 

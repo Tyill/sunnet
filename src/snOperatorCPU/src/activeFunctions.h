@@ -24,7 +24,7 @@
 //
 #pragma once
 
-#include "stdafx.h"
+#include "snBase/snBase.h"
 #include "structurs.h"
 
 // fv - value, df - deriv

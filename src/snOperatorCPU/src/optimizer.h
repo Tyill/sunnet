@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "stdafx.h"
+#include "snBase/snBase.h"
 #include "structurs.h"
 
 void optimizer(SN_Base::snFloat* dWeight,

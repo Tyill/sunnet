@@ -24,8 +24,6 @@
 //
 #pragma once
 
-#include "snBase/snBase.h"
-
 /// тип ф-ии активации
 enum class activeType{
     none = -1,

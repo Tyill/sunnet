@@ -24,7 +24,6 @@
 //
 #include "../stdafx.h"
 #include "snOperatorCUDA/src/Operator/batchNorm.h"
-#include "snOperatorCUDA/src/mathFunctions.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;
@@ -85,10 +84,10 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
 
         switch (bnType_){        
             case batchNormType::byChannels:
-                channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+          //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
                 break;
             case batchNormType::byLayer:
-                layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+           //     layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
                 break;
             default:
                 break;
@@ -112,10 +111,10 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
 
         switch (bnType_){
             case batchNormType::byChannels:
-                channelBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+          //      channelBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
                 break;
             case batchNormType::byLayer:
-                layerBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+          //      layerBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
                 break;
             default:
                 break;

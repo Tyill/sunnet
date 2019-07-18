@@ -120,7 +120,7 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloa
         krn));                         // Out, step to next Y (Y21 - Y11) 
     
     // +bias
-    cuFwdBias <<< int(insz.n), 128 >>> (kernel, insz, gpuPrm->d_w, gpuPrm->d_out);
+//    cuFwdBias <<< int(insz.n), 128 >>> (kernel, insz, gpuPrm->d_w, gpuPrm->d_out);
     
 }
 
@@ -173,7 +173,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
         krn));                   // dW, step to next 
  
     // bias
-    cuBwdBias <<< 1, 128 >>> (kernel, insz, d_grin, gpuPrm->d_dw);
+//    cuBwdBias <<< 1, 128 >>> (kernel, insz, d_grin, gpuPrm->d_dw);
      
 //    cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, gpuPrm->d_w, ida));
 

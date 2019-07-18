@@ -1,17 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -25,23 +17,10 @@
     <ProjectName>snOperatorCPU</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -52,36 +31,18 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetExt>.lib</TargetExt>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
     <TargetExt>.lib</TargetExt>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
-    <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -89,67 +50,6 @@
     <TargetExt>.lib</TargetExt>
     <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; SN_CUDA;SN_CUDNN;_DEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>
-      </MultiProcessorCompilation>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <CudaCompile>
-      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
-      <UseHostInclude>true</UseHostInclude>
-      <Keep>false</Keep>
-      <KeepDir>$(CudaIntDir)</KeepDir>
-      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
-      <NvccCompilation>compile</NvccCompilation>
-      <CudaRuntime>Static</CudaRuntime>
-      <TargetMachinePlatform>32</TargetMachinePlatform>
-      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
-      <GenerateLineInfo>false</GenerateLineInfo>
-      <MaxRegCount>0</MaxRegCount>
-      <PtxAsOptionV>false</PtxAsOptionV>
-      <UseHostDefines>true</UseHostDefines>
-      <Emulation>false</Emulation>
-      <HostDebugInfo>
-      </HostDebugInfo>
-      <FastMath>false</FastMath>
-      <Optimization>InheritFromHost</Optimization>
-      <Runtime>InheritFromHost</Runtime>
-      <RuntimeChecks>InheritFromHost</RuntimeChecks>
-      <TypeInfo>InheritFromHost</TypeInfo>
-      <Warning>InheritFromHost</Warning>
-      <Defines>
-      </Defines>
-    </CudaCompile>
-    <CudaLink>
-      <PerformDeviceLink>true</PerformDeviceLink>
-      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
-      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
-      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
-      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
-      <Optimization>InheritFromProject</Optimization>
-    </CudaLink>
-    <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libopenblas.lib;</AdditionalDependencies>
-    </Lib>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -212,71 +112,6 @@
       <AdditionalDependencies>
       </AdditionalDependencies>
     </CudaLink>
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;SN_DEBUG; SN_AVX; SN_CUDA;SN_CUDNN;NDEBUG;_CRT_SECURE_NO_WARNINGS;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir);$(SolutionDir)../../src</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>
-      </MultiProcessorCompilation>
-      <OpenMPSupport>true</OpenMPSupport>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SNAux.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <CudaCompile>
-      <CompileOut>$(IntDir)%(Filename)%(Extension).obj</CompileOut>
-      <UseHostInclude>true</UseHostInclude>
-      <Keep>false</Keep>
-      <KeepDir>$(CudaIntDir)</KeepDir>
-      <GenerateRelocatableDeviceCode>false</GenerateRelocatableDeviceCode>
-      <NvccCompilation>compile</NvccCompilation>
-      <CudaRuntime>Static</CudaRuntime>
-      <TargetMachinePlatform>32</TargetMachinePlatform>
-      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
-      <CodeGeneration>compute_30,sm_30</CodeGeneration>
-      <GenerateLineInfo>false</GenerateLineInfo>
-      <MaxRegCount>0</MaxRegCount>
-      <PtxAsOptionV>false</PtxAsOptionV>
-      <UseHostDefines>true</UseHostDefines>
-      <Emulation>false</Emulation>
-      <HostDebugInfo>
-      </HostDebugInfo>
-      <FastMath>false</FastMath>
-      <Optimization>InheritFromHost</Optimization>
-      <Runtime>InheritFromHost</Runtime>
-      <RuntimeChecks>InheritFromHost</RuntimeChecks>
-      <TypeInfo>InheritFromHost</TypeInfo>
-      <Warning>InheritFromHost</Warning>
-      <Defines>
-      </Defines>
-    </CudaCompile>
-    <CudaLink>
-      <PerformDeviceLink>true</PerformDeviceLink>
-      <LinkOut>$(IntDir)$(TargetName).device-link.obj</LinkOut>
-      <UseHostLibraryDirectories>true</UseHostLibraryDirectories>
-      <UseHostLibraryDependencies>true</UseHostLibraryDependencies>
-      <GPUDebugInfo>InheritFromProject</GPUDebugInfo>
-      <Optimization>InheritFromProject</Optimization>
-    </CudaLink>
-    <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libopenblas.lib;</AdditionalDependencies>
-    </Lib>
     <PreBuildEvent>
       <Command>
       </Command>
@@ -351,7 +186,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\snOperatorCPU\snOperator.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\activeFunctions.h" />
-    <ClInclude Include="..\..\src\snOperatorCPU\src\mathFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCPU\src\batchNormFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCPU\src\dropOut.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\activation.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\concat.h" />
@@ -369,6 +205,7 @@
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\switch.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\userLayer.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\optimizer.h" />
+    <ClInclude Include="..\..\src\snOperatorCPU\src\paddingOffs.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\random.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\stdafx.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\structurs.h" />
@@ -376,12 +213,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCPU\src\activeFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperatorCPU\src\batchNormFunctions.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\convolutionCPU.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\deconvolutionCPU.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\fullyConnectedCPU.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\poolingCPU.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\tensor.cpp" />
-    <ClCompile Include="..\..\src\snOperatorCPU\src\mathFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperatorCPU\src\dropOut.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\activation.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\batchNorm.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\concat.cpp" />
@@ -399,6 +237,7 @@
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\switch.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\userLayer.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\optimizer.cpp" />
+    <ClCompile Include="..\..\src\snOperatorCPU\src\paddingOffs.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\random.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\snOperator.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\weightInit.cpp" />

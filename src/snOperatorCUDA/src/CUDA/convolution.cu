@@ -295,7 +295,7 @@ void Convolution::forwardCUDA(const convParams& prms,
         output));
 
     // +bias
-    cuFwdBias <<< int(insz.n), 128 >>> (outsz, gpuPrm->d_bias, gpuPrm->d_out);   
+//    cuFwdBias <<< int(insz.n), 128 >>> (outsz, gpuPrm->d_bias, gpuPrm->d_out);   
 }
 
 void Convolution::backwardCUDA_GW(const convParams& prms,

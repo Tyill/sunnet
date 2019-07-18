@@ -26,7 +26,6 @@
 
 #include "snBase/snBase.h"
 #include"snOperatorCPU/src/structurs.h"
-#include"snOperatorCPU/src/mathFunctions.h"
 
 /// convolution layer
 class Convolution final : SN_Base::OperatorBase{

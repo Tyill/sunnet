@@ -24,7 +24,7 @@
 //
 #include "../stdafx.h"
 #include "snOperatorCUDA/src/Operator/activation.h"
-#include "snOperatorCUDA/src/activeFunctions.h"
+#include "snOperatorCUDA/src/activationFunctions.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;
@@ -60,7 +60,7 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
         baseOut_ = neighbOpr[0]->getOutput();
            
         /// active func
-        activeFuncForward(baseOut_.size().size(), baseOut_.getDataGPU(), activeType_);
+    //    activeFuncForward(baseOut_.size().size(), baseOut_.getDataGPU(), activeType_);
         
     }
     else{ // backward
@@ -77,7 +77,7 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
         }
 
         /// active func
-        activeFuncBackward(baseGrad_.size().size(), baseGrad_.getDataGPU(), activeType_);
+    //    activeFuncBackward(baseGrad_.size().size(), baseGrad_.getDataGPU(), activeType_);
     }
     
     return vector<string>();

@@ -23,21 +23,44 @@
 // THE SOFTWARE.
 //
 
-#pragma once
+#include "stdafx.h"
 
-#include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <omp.h>
-#include "snBase/snBase.h"
+using namespace std;
+using namespace SN_Base;
 
-#define PROFILE_START double ctm = omp_get_wtime(); 
-#define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
 
-#define ERROR_MESS(mess) g_statusMess(this, name_ + " '" + node_ + "' error: " + mess);
+void paddingOffs(bool in2out, size_t paddW, size_t paddH, const snSize& insz, snFloat* in, snFloat* out){
 
-void g_statusMess(SN_Base::OperatorBase* opr, const std::string& mess);
+    /// copy with offset padding for each image    
+    size_t sz = insz.h * insz.d * insz.n, stW = insz.w, stH = insz.h;
+    if (in2out){
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
 
-void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const std::string& node,
-    bool fwBw, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snSize& outsz, SN_Base::snFloat** out);
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                out[j] = in[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+    else{
+        in += (stW + paddW * 2) * paddH;
+        for (size_t i = 0; i < sz; ++i){
+
+            if ((i % stH == 0) && (i > 0))
+                in += (stW + paddW * 2) * paddH * 2;
+
+            in += paddW;
+            for (size_t j = 0; j < stW; ++j)
+                in[j] = out[j];
+            in += paddW + stW;
+
+            out += stW;
+        }
+    }
+}

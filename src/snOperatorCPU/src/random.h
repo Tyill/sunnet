@@ -24,8 +24,6 @@
 //
 #pragma once
 
-#include <random>
-#include <ctime>
 #include "snBase/snBase.h"
 
 void rnd_uniformReal(SN_Base::snFloat* ioVal, size_t sz, SN_Base::snFloat min, SN_Base::snFloat max);

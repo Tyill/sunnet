@@ -25,8 +25,7 @@
 
 #include "stdafx.h"
 #include "Lib/OpenBLAS/cblas.h"
-#include "snOperatorCUDA/src/mathFunctions.h"
-#include "snOperatorCUDA/src/random.h"
+#include "batchNormFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -199,5 +198,3 @@ void batchNormBackward(const SN_Base::snSize& insz, snFloat* gradIn, snFloat* gr
     }
   
 }
-
-

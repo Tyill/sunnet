@@ -143,9 +143,6 @@
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\userLayer.cpp">
       <Filter>Operator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snOperatorCUDA\src\mathFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\optimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

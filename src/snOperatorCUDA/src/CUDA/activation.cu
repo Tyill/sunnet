@@ -7,7 +7,7 @@
 
 #include "../stdafx.h"
 #include "../structurs.h"
-#include "../activeFunctions.h"
+#include "../activationFunctions.h"
 
 using namespace SN_Base;
 

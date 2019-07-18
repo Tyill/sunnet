@@ -26,10 +26,9 @@
 #include "snOperatorCUDA/src/Operator/deconvolution.h"
 #include "snAux/auxFunc.h"
 #include "snOperatorCUDA/src/weightInit.h"
-#include "snOperatorCUDA/src/activeFunctions.h"
+#include "snOperatorCUDA/src/activationFunctions.h"
 #include "snOperatorCUDA/src/optimizer.h"
 #include "snOperatorCUDA/src/structurs.h"
-#include "snOperatorCUDA/src/mathFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -235,19 +234,19 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
     forwardCUDA(deconvParams_, weight, insz, pInTns, outsz, out, gpuParams_);
    
     /// dropOut
-    if (dropOut_ > 0.F)
-        dropOut(operPrm.isLerning, dropOut_, outsz, out);
+ //   if (dropOut_ > 0.F)
+   //     dropOut(operPrm.isLerning, dropOut_, outsz, out);
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+   // if (batchNormType_ == batchNormType::beforeActive)
+  //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
     /// active func
-    activeFuncForward(outsz.size(), out, activeType_);
+  //  activeFuncForward(outsz.size(), out, activeType_);
     
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    //if (batchNormType_ == batchNormType::postActive)
+   //     channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
 }
 
@@ -256,8 +255,8 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
     snFloat* gradIn = inTns.getDataGPU();
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+ //   if (batchNormType_ == batchNormType::postActive)
+  //      channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
@@ -265,15 +264,15 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
         snFloat* out = baseOut_.getDataGPU();
         
         size_t osz = baseOut_.size().size();
-        activeFuncBackward(osz, out, activeType_);
+   //     activeFuncBackward(osz, out, activeType_);
 
         // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
     }
 
     /// batchNorm
-    if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+  //  if (batchNormType_ == batchNormType::beforeActive)
+  //      channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_.getDataGPU();   

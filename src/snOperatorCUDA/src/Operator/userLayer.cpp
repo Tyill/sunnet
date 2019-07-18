@@ -58,7 +58,7 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
             true, baseOut_.size(), baseOut_.getDataGPU(), outSz, &outData);
 
         if (outData)
-            baseOut_.setData(outData, outSz);
+            baseOut_.setDataGPU(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }
@@ -82,7 +82,7 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
             false, baseGrad_.size(), baseGrad_.getDataGPU(), outSz, &outData);
 
         if (outData)
-            baseGrad_.setData(outData, outSz);
+            baseGrad_.setDataGPU(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }

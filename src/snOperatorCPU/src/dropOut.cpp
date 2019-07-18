@@ -22,24 +22,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-#pragma once
 
-#include "snBase/snBase.h"
+#include "stdafx.h"
+#include "snOperatorCPU/src/random.h"
 
-void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
+using namespace std;
+using namespace SN_Base;
 
-void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
+void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
+        
+    if (isLern){
+        size_t sz = size_t(outsz.size() * dropOut);
+        vector<int> rnd(sz);
+        rnd_uniformInt(rnd.data(), sz, 0, int(outsz.size()));
 
-void batchNormForward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
-
-void batchNormBackward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
-
-void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out);
-
-void paddingOffs(bool in2out, size_t paddingW, size_t paddingH, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out);
+        for (auto i : rnd) out[i] = 0;
+    }
+    else{
+        size_t sz = outsz.size();
+        for (size_t i = 0; i < sz; ++i)
+            out[i] *= (1.F - dropOut);
+    }
+}

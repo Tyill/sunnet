@@ -26,6 +26,7 @@
 #include "snAux/auxFunc.h"
 #include "snOperatorCPU/src/Operator/pooling.h"
 #include "snOperatorCPU/src/structurs.h"
+#include "snOperatorCPU/src/paddingOffs.h"
 
 using namespace std;
 using namespace SN_Base;

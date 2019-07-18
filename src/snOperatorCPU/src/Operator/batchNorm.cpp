@@ -25,7 +25,7 @@
 #include "../stdafx.h"
 #include "snAux/auxFunc.h"
 #include "snOperatorCPU/src/Operator/batchNorm.h"
-#include "snOperatorCPU/src/mathFunctions.h"
+#include "snOperatorCPU/src/batchNormFunctions.h"
 
 using namespace std;
 using namespace SN_Base;

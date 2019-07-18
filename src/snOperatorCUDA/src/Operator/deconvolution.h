@@ -26,7 +26,6 @@
 
 #include "snBase/snBase.h"
 #include"snOperatorCUDA/src/structurs.h"
-#include"snOperatorCUDA/src/mathFunctions.h"
 
 /// deconvolution layer
 class Deconvolution final : SN_Base::OperatorBase{

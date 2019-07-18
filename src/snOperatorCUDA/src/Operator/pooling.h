@@ -26,8 +26,6 @@
 
 #include "snBase/snBase.h"
 #include"snOperatorCUDA/src/structurs.h"
-#include"snOperatorCUDA/src/mathFunctions.h"
-
 
 /// pooling layer
 class Pooling final : SN_Base::OperatorBase{

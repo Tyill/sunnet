@@ -332,7 +332,7 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
         gpuPrm->d_bias));*/
 
     // +bias
-    cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
+  //  cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
      
 }
 
@@ -360,6 +360,6 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
         gradOut));
 
     // +bias
-    cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
+  //  cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
        
 }

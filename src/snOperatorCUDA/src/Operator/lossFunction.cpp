@@ -24,7 +24,6 @@
 //
 #include "../stdafx.h"
 #include "snOperatorCUDA/src/Operator/lossFunction.h"
-#include "snOperatorCUDA/src/activeFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -129,7 +128,7 @@ void LossFunction::forward(const Tensor& inTns){
            true, inTns.size(), inTns.getDataGPU(), outSz, &outData);
 
         if (outData){
-            baseOut_.setData(outData, outSz);
+            baseOut_.setDataGPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
@@ -195,7 +194,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
             false, inTns.size(), inTns.getDataGPU(), outSz, &outData);
 
         if (outData){
-            baseGrad_.setData(outData, outSz);
+            baseGrad_.setDataGPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
