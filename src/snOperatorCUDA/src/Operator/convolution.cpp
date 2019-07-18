@@ -29,7 +29,8 @@
 #include "snOperatorCUDA/src/activeFunctions.h"
 #include "snOperatorCUDA/src/optimizer.h"
 #include "snOperatorCUDA/src/structurs.h"
-#include "snOperatorCUDA/src/mathFunctions.h"
+#include "snOperatorCUDA/src/dropOut.h"
+#include "snOperatorCUDA/src/activeFunctions.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -46,6 +47,7 @@ Convolution::~Convolution(){
         
     freeParamCUDA(convGPUParams_);
     dropOutFree(gpuDeviceId_, dropGPUParams_);
+    activationFree(gpuDeviceId_, activGPUParams_);
 }
 
 void Convolution::load(std::map<std::string, std::string>& prms){
@@ -258,7 +260,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
         channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
         
     /// active function
-    activeFuncForward(outsz.size(), out, activeType_);
+    activationForward(activeType_, out, outsz.size(), gpuDeviceId_, &activGPUParams_);
            
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
@@ -276,14 +278,10 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     
     // active function
     if (activeType_ != activeType::none){
-
-        snFloat* out = baseOut_.getDataGPU();
-        
+               
         size_t osz = baseOut_.size().size();
-        activeFuncBackward(osz, out, activeType_);
-
-        // update grad
-        for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
+        activationBackward(inputMem_->getDataGPU(), baseOut_.getDataGPU(), gradIn, osz, gpuDeviceId_, activGPUParams_);
+              
     }
 
     /// batchNorm
@@ -292,7 +290,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     
     /// dropOut
     if (dropOut_ > 0.F)
-        dropOutBackward(dropOut_, gradIn, insz, gpuDeviceId_, &dropGPUParams_);
+        dropOutBackward(gradIn, insz, gpuDeviceId_, dropGPUParams_);
 
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_.getDataGPU();
@@ -313,15 +311,15 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         size_t wsz = baseWeight_.size().size();
               
         optimizer(dWeight,
-            dWPrev,
-            dWGrad,
-            weight,
-            wsz,
-            operPrm.lr,
-            optLmbRegular_,
-            optDecayMomentDW_,
-            optDecayMomentWGr_,
-            optimizerType_);
+                  dWPrev,
+                  dWGrad,
+                  weight,
+                  wsz,
+                  operPrm.lr,
+                  optLmbRegular_,
+                  optDecayMomentDW_,
+                  optDecayMomentWGr_,
+                  optimizerType_);
     }
     else{ // isFreeze
         backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, convGPUParams_);

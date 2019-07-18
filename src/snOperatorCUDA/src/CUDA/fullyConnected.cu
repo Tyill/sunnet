@@ -30,12 +30,7 @@
 
 using namespace std;
 using namespace SN_Base;
-         
-#ifndef cuCHECK
-#define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
-#endif
-
-
+        
 struct gpuParams{
 
     cublasHandle_t cuBLAS = 0;

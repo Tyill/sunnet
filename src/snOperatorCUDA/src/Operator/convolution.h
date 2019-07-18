@@ -26,7 +26,6 @@
 
 #include "snBase/snBase.h"
 #include "snOperatorCUDA/src/structurs.h"
-#include "snOperatorCUDA/src/mathFunctions.h"
 
 /// convolution layer
 class Convolution final : SN_Base::OperatorBase{
@@ -76,13 +75,9 @@ private:
     SN_Base::snFloat optDecayMomentDW_ = 0.9F,                  ///< optimiz weight
                      optDecayMomentWGr_ = 0.99F,
                      optLmbRegular_ = 0.001F;
-
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
-    
-    void* convGPUParams_ = nullptr,                                   ///< gpu aux params 
-        * dropGPUParams_ = nullptr;
-
-
+        
+    void* convGPUParams_ = nullptr;                             ///< gpu aux params 
+        
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(bool isLern, const SN_Base::snSize& newSz, SN_Base::snSize& expSz);

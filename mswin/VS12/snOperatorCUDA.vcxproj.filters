@@ -24,9 +24,6 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\activeFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\snOperatorCUDA\src\mathFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\snOperatorCUDA\src\optimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,6 +90,9 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\userLayer.h">
       <Filter>Operator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\dropOut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\activation.cpp">
@@ -143,9 +143,6 @@
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\userLayer.cpp">
       <Filter>Operator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snOperatorCUDA\src\activeFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\mathFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -163,19 +160,25 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\convolutionCUDA.cu">
-      <Filter>CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\deconvolutionCUDA.cu">
-      <Filter>CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\fullyConnectedCUDA.cu">
-      <Filter>CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\poolingCUDA.cu">
-      <Filter>CUDA</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\tensor.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\activation.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\convolution.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\deconvolution.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\fullyConnected.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\pooling.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\batchNorm.cu">
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

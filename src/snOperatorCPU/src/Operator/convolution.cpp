@@ -284,7 +284,8 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         activeFuncBackward(osz, out, activeType_);
 
         // update grad
-        for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
+        for (size_t i = 0; i < osz; ++i) 
+            gradIn[i] *= out[i];
     }
 
     /// batchNorm

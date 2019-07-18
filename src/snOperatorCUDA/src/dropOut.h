@@ -26,23 +26,6 @@
 
 #include "snBase/snBase.h"
 
-void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
+void dropOutForward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId);
 
-void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
-
-void batchNormForward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* in,
-    SN_Base::snFloat* out,
-    SN_Base::batchNorm);
-
-void batchNormBackward(const SN_Base::snSize& insz,
-    SN_Base::snFloat* gradIn,
-    SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
-
-
-void dropOutFree(uint32_t deviceId, void* pGpuPrm);
-
-void dropOutForward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& outsz, uint32_t deviceId, void** pGpuPrm);
-
-void dropOutBackward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& outsz, uint32_t deviceId, void** pGpuPrm);
+void dropOutBackward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId);
