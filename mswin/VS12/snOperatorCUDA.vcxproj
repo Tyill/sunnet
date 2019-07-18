@@ -188,7 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snOperatorCUDA\snOperator.h" />
-    <ClInclude Include="..\..\src\snOperatorCUDA\src\activeFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\activationFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\dropOut.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\activation.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\batchNorm.h" />

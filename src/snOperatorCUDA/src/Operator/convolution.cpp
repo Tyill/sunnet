@@ -208,24 +208,26 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
 
 void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    snSize insz = inTns.size();
-    inputMem_ = &inTns;
+    //snSize insz = inTns.size();
+    //inputMem_ = &inTns;
 
-    /// Has the size of the data changed?
-    if (insz != inSzMem_){
-        inSzMem_ = insz;
-        updateConfig(operPrm.isLerning, insz, inDataExpSz_);
-    }
+    ///// Has the size of the data changed?
+    //if (insz != inSzMem_){
+    //    inSzMem_ = insz;
+    //    updateConfig(operPrm.isLerning, insz, inDataExpSz_);
+    //}
 
-    /// copy with offset padding for each image
-    snFloat* in = inputMem_->getDataGPU();
+    ///// copy with offset padding for each image
+    //snFloat* in = inputMem_->getDataGPU();
   
-    /// calculation of the output values
-    snFloat* out = baseOut_.getDataGPU(), *weight = baseWeight_.getDataGPU();
+    ///// calculation of the output values
+    snFloat* out = baseOut_.getDataGPU(),
+           * weight = baseWeight_.getDataGPU();
+
     snSize outsz = baseOut_.size();
-       
-    // calculation
-    forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, convGPUParams_);
+    //   
+    //// calculation
+    //forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, convGPUParams_);
 
     /// dropOut
     //if (dropOut_ > 0.F)
@@ -236,7 +238,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
   //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
         
     /// active function
-  //  activationForward(activeType_, out, outsz.size(), gpuDeviceId_, &activGPUParams_);
+    activationForward(outsz, out, activeType_, gpuDeviceId_);
            
     /// batchNorm
   //  if (batchNormType_ == batchNormType::postActive)
