@@ -55,7 +55,14 @@ private:
         bool useBias_ = true;
     };
 
+    struct CPUParams{
+
+        SN_Base::snFloat* buffMemFWD = nullptr;
+    };
+
     convParams convPrms_;
+
+    CPUParams cpuParams_;                                             ///< cpu aux params 
 
     bool isPaddingSame_ = false,
          isCheckPadding_ = false;
@@ -79,7 +86,7 @@ private:
     SN_Base::snFloat optDecayMomentDW_ = 0.9F,                        ///< optimiz weight
                      optDecayMomentWGr_ = 0.99F,
                      optLmbRegular_ = 0.001F;
-
+        
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
    
 
@@ -93,12 +100,20 @@ private:
        
     /// CPU ///////////////////////////
         
+    /// init aux params
+    void iniParamCPU(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+        const convParams&, CPUParams& cpuPrm);
+
+    /// free aux params
+    void freeParamCPU(CPUParams& cpuPrm);
+
     void forwardCPU(const convParams&, 
         const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz,   
         const SN_Base::snFloat* input,
         const SN_Base::snSize& outsz,  
-        SN_Base::snFloat* output);
+        SN_Base::snFloat* output,
+        CPUParams& cpuPrm);
 
     // calc grad and weight
     void backwardCPU_GW(const convParams&,

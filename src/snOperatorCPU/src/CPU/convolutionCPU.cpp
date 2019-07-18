@@ -35,6 +35,27 @@ using namespace std;
 using namespace SN_Base;
 
 
+
+void Convolution::iniParamCPU(bool isLern, const snSize& insz, const snSize& outsz,
+    const convParams& prms, CPUParams& cpuPrm){
+
+    if (!isLern && (insz.n == 1)){
+               
+        // M * M * insz.d * outsz.w * outsz.h
+        size_t sz = prms.fWidth * prms.fHeight * insz.d * outsz.w * outsz.h;
+
+        cpuPrm.buffMemFWD = (snFloat*)realloc(cpuPrm.buffMemFWD, sz * sizeof(snFloat));
+    }
+}
+
+void Convolution::freeParamCPU(CPUParams& cpuPrm){
+
+    if (cpuPrm.buffMemFWD){
+
+        free(cpuPrm.buffMemFWD);
+    }
+}
+
 void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, size_t dilate,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
 
@@ -108,11 +129,12 @@ void forwardBASE(size_t kernel, size_t fWidth, size_t fHeight, size_t stride, si
 }
 
 void Convolution::forwardCPU(const convParams& prms,
-    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output){
+    const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, CPUParams& cpuPrm){
      
 #ifdef SN_AVX   
+        
     if ((prms.fWidth != prms.fHeight) || !SN_SIMD::convolutionFWD(prms.fWidth, prms.stride, prms.dilate,
-                                                 weight, insz, input, outsz, output))
+                                             weight, insz, input, outsz, output, cpuPrm.buffMemFWD))
 
 #endif
         forwardBASE(prms.kernel, prms.fWidth, prms.fHeight, prms.stride, prms.dilate, weight, insz, input, outsz, output);

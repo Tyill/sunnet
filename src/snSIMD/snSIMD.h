@@ -26,13 +26,16 @@
 #include "snBase/snBase.h"
 
 namespace SN_SIMD{
+     
 
     /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
+    /// @param[in] buffMem size := M * M * insz.d * outsz.w * outsz.h
     /// @return true - ok
-    bool convolutionFWD(size_t M, size_t S, size_t D,
+    bool convolutionFWD(size_t M, size_t S, size_t D,        
         const SN_Base::snFloat* weight,
         const SN_Base::snSize& insz, const SN_Base::snFloat* input,
-        const SN_Base::snSize& outsz, SN_Base::snFloat* output);
+        const SN_Base::snSize& outsz, SN_Base::snFloat* output,
+        SN_Base::snFloat* buffMem);
 
     /// @param[in] Mask := [1, 3..9], Stride := [1, ..), Dilate := [1, ..) 
     /// @return true - ok

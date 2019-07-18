@@ -44,6 +44,7 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 
 Convolution::~Convolution(){
   
+    freeParamCPU(cpuParams_);
 }
 
 void Convolution::load(std::map<std::string, std::string>& prms){
@@ -246,16 +247,9 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     /// calculation of the output values
     snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
     snSize outsz = baseOut_.size();
-
-    // +bias?
-    if (!convPrms_.useBias_){
-        size_t kernel = convPrms_.kernel,
-               stepByN = convPrms_.fWidth * convPrms_.fHeight * insz.d * kernel;
-        memset(weight + stepByN, 0, kernel * sizeof(snFloat));
-    }
-
+        
     // calculation
-    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out);
+    forwardCPU(convPrms_, weight, inDataExpSz_, in, outsz, out, cpuParams_);
       
     /// dropOut
     if (dropOut_ > 0.F)
@@ -365,6 +359,11 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
         weightInit(wd + wcsz, ntp - wcsz, stp + 1, kernel, weightInitType_);     
     }
         
+    // +bias?
+    if (!convPrms_.useBias_){        
+        memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
+    }
+
     snSize outSz(0, 0, kernel, newsz.n);
           
     if (isPaddingSame_){
@@ -422,4 +421,6 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  
+
+    iniParamCPU(isLern, expSz, outSz, convPrms_, cpuParams_);
 } 

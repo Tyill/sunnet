@@ -27,7 +27,6 @@
 #include <omp.h>
 #include <thread>
 #include "snBase/snBase.h"
-#include "base.h"
 
 using namespace std;
 using namespace SN_Base;
