@@ -49,5 +49,5 @@ private:
     sType sType_ = sType::summ;
 
 
-    void mean(const SN_Base::Tensor& one, const SN_Base::Tensor& two, SN_Base::Tensor& out);
+    void mean(SN_Base::Tensor& inout, const SN_Base::Tensor& two);
 };

@@ -3,6 +3,7 @@
 #include <cudnn.h>
 
 #include "../stdafx.h"
+#include "../arithmetic.h"
 
 using namespace SN_Base;
 
@@ -43,6 +44,7 @@ Tensor& Tensor::operator+=(const Tensor& other){
 
     ASSERT_MESS(other == *this, "");
        
+    summ(sz_, dataGPU_, other->getDataGPU());
    
     return *this;
 }
@@ -51,6 +53,7 @@ Tensor& Tensor::operator-=(const Tensor& other){
 
     ASSERT_MESS(other == *this, "");
 
+    difference(sz_, dataGPU_, other->getDataGPU());
     
     return *this;
 }

@@ -26,25 +26,8 @@
 
 #include "snBase/snBase.h"
 
+void summ(const SN_Base::snSize& sz, SN_Base::snFloat* inout, const SN_Base::snFloat* two);
 
-/// adder of 2 and more layers
-class Summator final : SN_Base::OperatorBase{
+void difference(const SN_Base::snSize& sz, SN_Base::snFloat* inout, const SN_Base::snFloat* two);
 
-public:
-
-    Summator(void* net, const std::string& name, const std::string& node, std::map<std::string, std::string>& prms);
-
-    ~Summator() = default;
-                
-    std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
-
-private:
-
-    enum class sType{
-        summ = 0,
-        diff = 1,
-        mean = 2,
-    };
-
-    sType sType_ = sType::summ;
-};
+void mean(const SN_Base::snSize& sz, SN_Base::snFloat* inout, const SN_Base::snFloat* two);

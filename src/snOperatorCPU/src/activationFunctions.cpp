@@ -31,7 +31,7 @@ using namespace SN_Base;
 
 // fv - value, df - deriv
 
-void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType active){
+void activationForward(size_t sz, SN_Base::snFloat* data, activeType active){
 
     switch (active){
     case activeType::sigmoid:   fv_sigmoid(data, sz); break;
@@ -42,7 +42,7 @@ void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType active){
     }
 }
 
-void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType active){
+void activationBackward(size_t sz, SN_Base::snFloat* data, activeType active){
 
     switch (active){
     case activeType::sigmoid:   df_sigmoid(data, sz); break;

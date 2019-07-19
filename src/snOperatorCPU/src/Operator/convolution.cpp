@@ -263,7 +263,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
         channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
         
     /// active function
-    activeFuncForward(outsz.size(), out, activeType_);
+    activationForward(outsz.size(), out, activeType_);
            
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
@@ -284,7 +284,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = baseOut_.size().size();
-        activeFuncBackward(osz, out, activeType_);
+        activationBackward(osz, out, activeType_);
 
         // update grad
         for (size_t i = 0; i < osz; ++i) 

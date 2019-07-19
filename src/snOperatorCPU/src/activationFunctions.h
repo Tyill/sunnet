@@ -29,9 +29,9 @@
 
 // fv - value, df - deriv
 
-void activeFuncForward(size_t sz, SN_Base::snFloat* data, activeType);
+void activationForward(size_t sz, SN_Base::snFloat* data, activeType);
 
-void activeFuncBackward(size_t sz, SN_Base::snFloat* data, activeType);
+void activationBackward(size_t sz, SN_Base::snFloat* data, activeType);
 
 void fv_sigmoid(SN_Base::snFloat* ioVal, size_t sz);
 void df_sigmoid(SN_Base::snFloat* inSigm, size_t sz);

@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../arithmetic.h"
 #include "snOperatorCUDA/src/Operator/summator.h"
 
 using namespace std;
@@ -58,7 +59,9 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
             switch (sType_){
             case Summator::sType::summ: baseOut_ += neighbOpr[i]->getOutput(); break;
             case Summator::sType::diff: baseOut_ -= neighbOpr[i]->getOutput(); break;
-            case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput(), baseOut_); break;
+            case Summator::sType::mean: mean(baseOut_.size(),
+                                             baseOut_.getDataGPU(),
+                                             neighbOpr[i]->getOutput().getDataGPU()); break;
             }                
         }
     }
@@ -79,16 +82,4 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
     
 
     return std::vector<std::string>();
-}
-
-void Summator::mean(const Tensor& one, const Tensor& two, Tensor& out){
-   
-    snFloat* done = one.getDataGPU(),
-           * dtwo = two.getDataGPU(),
-           * dout = out.getDataGPU();
-
-    size_t sz = one.size().size();
-    for (size_t i = 0; i < sz; ++i){
-        dout[i] = (done[i] + dtwo[i]) / 2;
-    }
 }

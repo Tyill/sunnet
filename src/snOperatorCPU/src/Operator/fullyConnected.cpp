@@ -244,7 +244,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
         layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
     /// active func
-    activeFuncForward(kernel_ * insz.n, out, activeType_);
+    activationForward(kernel_ * insz.n, out, activeType_);
        
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
@@ -266,7 +266,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
         snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = kernel_ * inSzMem_.n;
-        activeFuncBackward(osz, out, activeType_);
+        activationBackward(osz, out, activeType_);
                 
         // update grad
         for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];

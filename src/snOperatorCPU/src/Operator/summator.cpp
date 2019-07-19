@@ -58,7 +58,7 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
             switch (sType_){
             case Summator::sType::summ: baseOut_ += neighbOpr[i]->getOutput(); break;
             case Summator::sType::diff: baseOut_ -= neighbOpr[i]->getOutput(); break;
-            case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput(), baseOut_); break;
+            case Summator::sType::mean: mean(baseOut_, neighbOpr[i]->getOutput()); break;
             }                
         }
     }
@@ -81,14 +81,13 @@ std::vector<std::string> Summator::Do(const operationParam& operPrm, const std::
     return std::vector<std::string>();
 }
 
-void Summator::mean(const Tensor& one, const Tensor& two, Tensor& out){
+void Summator::mean(SN_Base::Tensor& inout, const SN_Base::Tensor& two){
    
-    snFloat* done = one.getDataCPU(),
-           * dtwo = two.getDataCPU(),
-           * dout = out.getDataCPU();
+    snFloat* done = inout.getDataCPU(),
+           * dtwo = two.getDataCPU();
 
-    size_t sz = one.size().size();
+    size_t sz = inout.size().size();
     for (size_t i = 0; i < sz; ++i){
-        dout[i] = (done[i] + dtwo[i]) / 2;
+        done[i] = (done[i] + dtwo[i]) / 2;
     }
 }
