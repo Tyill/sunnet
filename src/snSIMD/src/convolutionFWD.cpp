@@ -25,12 +25,13 @@
 
 #include <omp.h>
 #include <thread>
-
+#include <iostream>
 #include "snBase/snBase.h"
 #include "Lib/OpenBLAS/cblas.h"
 
 using namespace std;
 using namespace SN_Base;
+
 
 namespace SN_SIMD{
       
@@ -173,38 +174,48 @@ namespace SN_SIMD{
     template<size_t M>
     void convolutionFWD(size_t S, const snFloat* weight,
         const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, snFloat* buff){
-
-        /// Reorder input
-        reorderInputCHW2HCW<M>(S, insz, input, outsz, buff);
                
         const size_t wStepByD = M * M,
                      wStepByK = wStepByD * insz.d,
-                     wStepByN = wStepByK * outsz.d;
+                     wStepByN = wStepByK * outsz.d,
+                     inStepByD = insz.w * insz.h,     
+                     inStepByN = inStepByD * insz.d,  
+                     outStepByD = outsz.w * outsz.h,  
+                     outStepByN = outStepByD * outsz.d;
+        
+        for (size_t i = 0; i < insz.n; ++i){
+                        
+            /// Reorder input
+            reorderInputCHW2HCW<M>(S, insz, input, outsz, buff);
 
-        cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
-                    CBLAS_TRANSPOSE::CblasNoTrans,
-                    CBLAS_TRANSPOSE::CblasTrans,
-                    blasint(outsz.d),                      // W, rows
-                    blasint(outsz.w * outsz.h),            // In, cols
-                    blasint(wStepByK),                     // W, cols, In, rows              
-                    1.0F,                                  // α
-                    weight,                                // W
-                    blasint(wStepByK),                     // W, step to next W
-                    buff,                                  // In
-                    blasint(wStepByK),                     // In, step to next In (In21 - In11) 
-                    0.0,                                   // β
-                    output,                                // Out
-                    blasint(outsz.w * outsz.h));           // Out, step to next Out (Y21 - Y11) 
+            cblas_sgemm(CBLAS_ORDER::CblasRowMajor,
+                CBLAS_TRANSPOSE::CblasNoTrans,
+                CBLAS_TRANSPOSE::CblasTrans,
+                blasint(outsz.d),                      // W, rows
+                blasint(outsz.w * outsz.h),            // In, cols
+                blasint(wStepByK),                     // W, cols, In, rows              
+                1.0F,                                  // α
+                weight,                                // W
+                blasint(wStepByK),                     // W, step to next W
+                buff,                                  // In
+                blasint(wStepByK),                     // In, step to next In (In21 - In11) 
+                0.0,                                   // β
+                output,                                // Out
+                blasint(outsz.w * outsz.h));           // Out, step to next Out (Y21 - Y11) 
 
-        // +bias on all out layers
-        weight += wStepByN;
-        for (size_t i = 0; i < outsz.d; ++i){
+            // +bias on all out layers
+            const snFloat* pW = weight + wStepByN;
+            for (size_t i = 0; i < outsz.d; ++i){
 
-            snFloat* pOut = output + (outsz.w * outsz.h) * i;
-            float bias = *(weight + i);
-            for (size_t j = 0; j < (outsz.w * outsz.h); ++j)
-                pOut[j] += bias;
-        }
+                snFloat* pOut = output + (outsz.w * outsz.h) * i;
+                float bias = *(pW + i);
+                for (size_t j = 0; j < (outsz.w * outsz.h); ++j)
+                    pOut[j] += bias;
+            }
+
+            input += inStepByN;
+            output += outStepByN;
+        }        
     }
 
     template <size_t M>
@@ -306,7 +317,21 @@ namespace SN_SIMD{
         const snSize& insz, const snFloat* input,
         const snSize& outsz, snFloat* output, snFloat* buff){
         
-        if ((insz.n > 1) || (D > 1)){
+        if (D == 1){
+
+#define cfwd(MS)   \
+    if (M == MS){  \
+        convolutionFWD<MS>(S, weight, insz, input, outsz, output, buff); return true; };
+
+            cfwd(1)
+            cfwd(3)
+            cfwd(5)
+            cfwd(7)
+            cfwd(9)
+
+            return false;
+        }
+        else{
 
 #define dfwd(MS)   \
     if (M == MS){  \
@@ -320,22 +345,7 @@ namespace SN_SIMD{
 
             return false;
         }
-#undef dfwd
-
-
-#define cfwd(MS)   \
-    if (M == MS){  \
-        convolutionFWD<MS>(S, weight, insz, input, outsz, output, buff); return true; };
-
-        cfwd(1)
-        cfwd(3)
-        cfwd(5)
-        cfwd(7)
-        cfwd(9)
-
-        return false;
-
 #undef cfwd
-
+#undef dfwd
     };
 }

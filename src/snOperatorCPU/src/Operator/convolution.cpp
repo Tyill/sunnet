@@ -247,7 +247,8 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     }
     
     /// calculation of the output values
-    snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
+    snFloat* out = baseOut_.getDataCPU(),
+           * weight = baseWeight_.getDataCPU();
     snSize outsz = baseOut_.size();
         
     // calculation
