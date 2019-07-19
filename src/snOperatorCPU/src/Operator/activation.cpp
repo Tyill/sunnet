@@ -77,7 +77,16 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
         }
 
         /// active func
-        activeFuncBackward(baseGrad_.size().size(), baseGrad_.getDataCPU(), activeType_);
+        snFloat* gradIn = baseGrad_.getDataCPU(),
+               * out = baseOut_.getDataCPU();
+
+        size_t osz = baseGrad_.size().size();
+
+        activeFuncBackward(osz, out, activeType_);
+
+        // update grad
+        for (size_t i = 0; i < osz; ++i)
+            gradIn[i] *= out[i];
     }
     
     return vector<string>();

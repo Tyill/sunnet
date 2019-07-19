@@ -55,10 +55,10 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            true, baseOut_.size(), baseOut_.getDataGPU(), outSz, &outData);
+            true, baseOut_.size(), baseOut_.getDataCPU(), outSz, &outData);
 
         if (outData)
-            baseOut_.setDataGPU(outData, outSz);
+            baseOut_.setDataCPU(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }
@@ -79,10 +79,10 @@ std::vector<std::string> UserLayer::Do(const operationParam& opr, const std::vec
         snFloat* outData = nullptr;
 
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, baseGrad_.size(), baseGrad_.getDataGPU(), outSz, &outData);
+            false, baseGrad_.size(), baseGrad_.getDataCPU(), outSz, &outData);
 
         if (outData)
-            baseGrad_.setDataGPU(outData, outSz);
+            baseGrad_.setDataCPU(outData, outSz);
         else{
             ERROR_MESS("not set 'outData' in userCBack");
         }

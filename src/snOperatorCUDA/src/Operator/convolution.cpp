@@ -294,7 +294,7 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     
     // active function
     if (activeType_ != activeType::none)        
-        activationBackward(baseOut_.size(), baseOut_.getDataGPU(), activeType_);
+        activationBackward(baseOut_.size(), baseOut_.getDataGPU(), gradIn, activeType_);
     
     // batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
@@ -316,13 +316,12 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
         // correct weight
         snFloat* dWPrev = auxGPUParams_["dWPrev"];
         snFloat* dWGrad = auxGPUParams_["dWGrad"];
-        size_t wsz = baseWeight_.size().size();
               
         optimizer(dWeight,
                   dWPrev,
                   dWGrad,
                   weight,
-                  snSize(convPrms_.fWidth, convPrms_.fHeight, insz.d, convPrms_.kernel),
+                  baseWeight_.size(),
                   operPrm.lr,
                   optLmbRegular_,
                   optDecayMomentDW_,

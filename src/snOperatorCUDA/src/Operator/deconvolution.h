@@ -41,6 +41,8 @@ public:
     bool setInternPrm(std::map<std::string, std::string>& prms) override;
     
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
+   
+    SN_Base::batchNorm getBatchNorm() override;
 
 private:
       
@@ -70,7 +72,9 @@ private:
                      optDecayMomentWGr_ = 0.99F,
                      optLmbRegular_ = 0.001F;
   
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
+    std::map<std::string, SN_Base::snFloat*> auxGPUParams_;           ///< aux data 
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
+
     void* gpuParams_ = nullptr;                                       ///< aux GPU
 
     void load(std::map<std::string, std::string>& prms);

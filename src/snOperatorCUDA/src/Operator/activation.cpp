@@ -59,8 +59,8 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
 
         baseOut_ = neighbOpr[0]->getOutput();
            
-        /// active func
-    //    activeFuncForward(baseOut_.size().size(), baseOut_.getDataGPU(), activeType_);
+        // active func
+        activationForward(baseOut_.size(), baseOut_.getDataGPU(), activeType_);
         
     }
     else{ // backward
@@ -76,8 +76,8 @@ std::vector<std::string> Activation::Do(const operationParam& operPrm, const std
             baseGrad_ += neighbOpr[i]->getGradient();
         }
 
-        /// active func
-    //    activeFuncBackward(baseGrad_.size().size(), baseGrad_.getDataGPU(), activeType_);
+        // active func
+        activationBackward(baseOut_.size(), baseOut_.getDataGPU(), baseGrad_.getDataGPU(), activeType_);
     }
     
     return vector<string>();

@@ -29,7 +29,7 @@ __global__ void fv_sigmoid(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_sigmoid(const snSize& outsz, snFloat* output){
+__global__ void df_sigmoid(const snSize& outsz, snFloat* output, snFloat* grad){
         
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -43,6 +43,8 @@ __global__ void df_sigmoid(const snSize& outsz, snFloat* output){
     while (i < outStepByD){
 
         output[i] = output[i] * (1.F - output[i]);
+
+        grad[i] *= output[i];
 
         i += blockDim.x;
     }
@@ -66,7 +68,7 @@ __global__ void fv_relu(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 };
-__global__ void df_relu(const snSize& outsz, snFloat* output){
+__global__ void df_relu(const snSize& outsz, snFloat* output, snFloat* grad){
       
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -80,6 +82,8 @@ __global__ void df_relu(const snSize& outsz, snFloat* output){
     while (i < outStepByD){
 
         output[i] = output[i] >= 0 ? 1.F : 0.F;
+
+        grad[i] *= output[i];
 
         i += blockDim.x;
     }
@@ -103,7 +107,7 @@ __global__ void fv_leakyRelu(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_leakyRelu(const snSize& outsz, snFloat* output){
+__global__ void df_leakyRelu(const snSize& outsz, snFloat* output, snFloat* grad){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -117,6 +121,8 @@ __global__ void df_leakyRelu(const snSize& outsz, snFloat* output){
     while (i < outStepByD){
 
         output[i] = output[i] >= 0 ? 1 : 0.01F;
+
+        grad[i] *= output[i];
 
         i += blockDim.x;
     }
@@ -140,7 +146,7 @@ __global__ void fv_elu(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_elu(const snSize& outsz, snFloat* output){
+__global__ void df_elu(const snSize& outsz, snFloat* output, snFloat* grad){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -154,6 +160,8 @@ __global__ void df_elu(const snSize& outsz, snFloat* output){
     while (i < outStepByD){
 
         output[i] = output[i] >= 0 ? 1 : output[i] + 0.01F;
+
+        grad[i] *= output[i];
 
         i += blockDim.x;
     }
@@ -173,16 +181,16 @@ void activationForward(const snSize& sz, snFloat* data, activeType active){
     }
 }
 
-void activeFuncBackward(const snSize& sz, snFloat* data, activeType active){
+void activationBackward(const snSize& sz, snFloat* data, snFloat* gradIn, activeType active){
 
     dim3 dimBlock(128);
     dim3 dimGrid(int(sz.d), int(sz.n));
 
     switch (active){
-      case activeType::sigmoid:   df_sigmoid   <<< dimGrid, dimBlock >>>(sz, data); break;
-      case activeType::relu:      df_relu      <<< dimGrid, dimBlock >>>(sz, data); break;
-      case activeType::leakyRelu: df_leakyRelu <<< dimGrid, dimBlock >>>(sz, data); break;
-      case activeType::elu:       df_elu       <<< dimGrid, dimBlock >>>(sz, data); break;
+      case activeType::sigmoid:   df_sigmoid   <<< dimGrid, dimBlock >>>(sz, data, gradIn); break;
+      case activeType::relu:      df_relu      <<< dimGrid, dimBlock >>>(sz, data, gradIn); break;
+      case activeType::leakyRelu: df_leakyRelu <<< dimGrid, dimBlock >>>(sz, data, gradIn); break;
+      case activeType::elu:       df_elu       <<< dimGrid, dimBlock >>>(sz, data, gradIn); break;
       default: break;
     }
 }

@@ -9,12 +9,11 @@ using namespace SN_Base;
 /// adaptive gradient method
 __global__ void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat eps){
 
-    size_t wStepByD = sz.w * sz.h,     
-           wStepByN = wStepByD * sz.d;      
+    size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
                    
-    ioWGr += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    ioW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    dW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
+    ioWGr += blockIdx.x * wStepByD;
+    ioW += blockIdx.x * wStepByD;
+    dW += blockIdx.x * wStepByD;
 
     unsigned int i = threadIdx.x;
     while (i < wStepByD){
@@ -29,12 +28,11 @@ __global__ void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snS
 /// RMSprop
 __global__ void opt_RMSprop(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mu, snFloat eps){
 
-    size_t wStepByD = sz.w * sz.h,
-           wStepByN = wStepByD * sz.d;
+    size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
-    ioWGr += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    ioW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    dW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
+    ioWGr += blockIdx.x * wStepByD;
+    ioW += blockIdx.x * wStepByD;
+    dW += blockIdx.x * wStepByD;
 
     unsigned int i = threadIdx.x;
     while (i < wStepByD){
@@ -49,13 +47,12 @@ __global__ void opt_RMSprop(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snS
 /// adam
 __global__ void opt_adam(snFloat* dW, snFloat* iodWPrev, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mudW, snFloat muGr, snFloat eps){
 
-    size_t wStepByD = sz.w * sz.h,
-           wStepByN = wStepByD * sz.d;
+    size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
-    iodWPrev += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    ioWGr += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    ioW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    dW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
+    iodWPrev += blockIdx.x * wStepByD;
+    ioWGr += blockIdx.x * wStepByD;
+    ioW += blockIdx.x * wStepByD;
+    dW += blockIdx.x * wStepByD;
 
     unsigned int i = threadIdx.x;
     while (i < wStepByD){
@@ -74,11 +71,10 @@ __global__ void opt_adam(snFloat* dW, snFloat* iodWPrev, snFloat* ioWGr, snFloat
 /// SGD without momentum
 __global__ void opt_sgd(snFloat* dW, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda){
     
-    size_t wStepByD = sz.w * sz.h,
-           wStepByN = wStepByD * sz.d;
+    size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
-    ioW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    dW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
+    ioW += blockIdx.x * wStepByD;
+    dW += blockIdx.x * wStepByD;
 
     unsigned int i = threadIdx.x;
     while (i < wStepByD){
@@ -92,12 +88,11 @@ __global__ void opt_sgd(snFloat* dW, snFloat* ioW, const snSize& sz, snFloat alp
 /// SGD with momentum
 __global__ void opt_sgdMoment(snFloat* dW, snFloat* iodWPrev, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mu){
 
-    size_t wStepByD = sz.w * sz.h,
-           wStepByN = wStepByD * sz.d;
+    size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
-    iodWPrev += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    ioW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
-    dW += blockIdx.x * wStepByD + blockIdx.y * wStepByN;
+    iodWPrev += blockIdx.x * wStepByD;
+    ioW += blockIdx.x * wStepByD;
+    dW += blockIdx.x * wStepByD;
 
     unsigned int i = threadIdx.x;
     while (i < wStepByD){
@@ -111,8 +106,8 @@ __global__ void opt_sgdMoment(snFloat* dW, snFloat* iodWPrev, snFloat* ioW, cons
 
 void optimizer(snFloat* dWeight, snFloat* dWPrev, snFloat* dWGrad, snFloat* weight, const SN_Base::snSize& wsz, snFloat alpha, snFloat lambda, snFloat mudW, snFloat muGr, optimizerType otype){
 
-    dim3 dimBlock(128);
-    dim3 dimGrid(int(wsz.d), int(wsz.n));
+    dim3 dimBlock(256);
+    dim3 dimGrid(int(wsz.w)); // wsz.w := kernel
 
     switch (otype){
       case optimizerType::sgd:       opt_sgd       <<<dimGrid, dimBlock>>> (dWeight, weight, wsz, alpha, lambda); break;

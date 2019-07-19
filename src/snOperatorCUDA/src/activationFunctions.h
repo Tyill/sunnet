@@ -31,4 +31,4 @@
 
 void activationForward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType);
 
-void activationBackward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType);
+void activationBackward(const SN_Base::snSize& sz, SN_Base::snFloat* data, SN_Base::snFloat* gradIn, activeType);

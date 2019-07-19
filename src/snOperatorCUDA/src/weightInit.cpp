@@ -34,6 +34,32 @@ using namespace SN_Base;
 
 // инициализация весов
 
+
+void wi_uniform(snFloat* ioW, size_t sz){
+
+    rnd_uniformReal(ioW, sz, -1.F, 1.F);
+};
+
+void wi_xavier(snFloat* ioW, size_t sz, size_t fan_in, size_t fan_out){
+    snFloat wbase = std::sqrt(6.F / (fan_in + fan_out));
+
+    rnd_uniformReal(ioW, sz, -wbase, wbase);
+};
+
+void wi_lecun(snFloat* ioW, size_t sz, size_t fan_out){
+
+    snFloat wbase = 1.F / std::sqrt(snFloat(fan_out));
+
+    rnd_uniformReal(ioW, sz, -wbase, wbase);
+}
+
+void wi_he(snFloat* ioW, size_t sz, size_t fan_in){
+
+    snFloat sigma = std::sqrt(2.F / fan_in);
+
+    rnd_gaussian(ioW, sz, 0.0F, sigma);
+}
+
 void weightInit(SN_Base::Tensor& ioW, size_t sz, size_t fan_in, size_t fan_out, weightInitType wtype){
 
     vector<snFloat> buff(sz);
@@ -47,29 +73,3 @@ void weightInit(SN_Base::Tensor& ioW, size_t sz, size_t fan_in, size_t fan_out, 
 
     ioW.setDataCPU(buff.data(), sz);
 }
-
-void wi_uniform(snFloat* ioW, size_t sz){
-    
-    rnd_uniformReal(ioW, sz, -1.F, 1.F);
-};
-
-void wi_xavier(snFloat* ioW, size_t sz, size_t fan_in, size_t fan_out){
-    snFloat wbase = std::sqrt(6.F / (fan_in + fan_out));
-
-    rnd_uniformReal(ioW, sz, -wbase, wbase);
-};
-
-void wi_lecun(snFloat* ioW, size_t sz, size_t fan_out){
-        
-    snFloat wbase = 1.F / std::sqrt(snFloat(fan_out));
-
-    rnd_uniformReal(ioW, sz, -wbase, wbase);
-}
-
-void wi_he(snFloat* ioW, size_t sz, size_t fan_in){
-
-    snFloat sigma = std::sqrt(2.F / fan_in);
-
-    rnd_gaussian(ioW, sz, 0.0F, sigma);
-}
-

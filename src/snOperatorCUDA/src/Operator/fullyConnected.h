@@ -42,6 +42,8 @@ public:
         
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
+    SN_Base::batchNorm getBatchNorm() override;
+
 private:
         
     size_t kernel_ = 10;                                      ///< number of hidden neurons
@@ -67,10 +69,11 @@ private:
                      optLmbRegular_ = 0.001F;
 
     
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data
-    void* gpuParams_ = nullptr;                                       ///< gpu data
+    std::map<std::string, SN_Base::snFloat*> auxGPUParams_;           ///< aux data 
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
 
-    
+    void* gpuParams_ = nullptr;                                       ///< gpu data
+        
 
     void load(std::map<std::string, std::string>& prms);
 

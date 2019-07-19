@@ -127,17 +127,8 @@ void Pooling::forward(const SN_Base::Tensor& inTns, const SN_Base::operationPara
         updateConfig(operPrm.isLerning, insz);
     }
        
-    /// copy with offset padding for each image
-    snFloat* in = inputMem_->getDataGPU();
-  /*  if (isPadding_){
-        inTnsExp_.resize(inDataExpSz_);
-        paddingOffs(false, poolPrms_.paddingW, poolPrms_.paddingH, insz, inTnsExp_.getDataGPU(), inputMem_->getDataGPU());
-        insz = inDataExpSz_;
-        in = inTnsExp_.getDataGPU();
-    }*/
-
-    /// output calculation
-    snFloat* out = baseOut_.getDataGPU();
+    snFloat* in = inputMem_->getDataGPU(),
+           * out = baseOut_.getDataGPU();
    
     // calculation
     forwardCUDA(poolPrms_, insz, in, baseOut_.size(), out, gpuParams_);
@@ -148,17 +139,11 @@ void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operP
 
     snFloat* gradIn = inTns.getDataGPU();
         
-    snFloat* input = inputMem_->getDataGPU();
-    snFloat* gradOut = baseGrad_.getDataGPU();
-    if (isPadding_){
-        gradOutExp_.resize(inDataExpSz_);
-        gradOut = gradOutExp_.getDataGPU();
-        input = inTnsExp_.getDataGPU();
-    }
+    snFloat* input = inputMem_->getDataGPU(),
+           * gradOut = baseGrad_.getDataGPU();    
 
     /// grad calculation
-    backwardCUDA(poolPrms_, baseOut_.size(), baseOut_.getDataGPU(), gradIn, inDataExpSz_, input, gradOut, gpuParams_);   
-       
+    backwardCUDA(poolPrms_, baseOut_.size(), baseOut_.getDataGPU(), gradIn, inDataExpSz_, input, gradOut, gpuParams_);
 }
 
 void Pooling::updateConfig(bool isLern, const snSize& newsz){
