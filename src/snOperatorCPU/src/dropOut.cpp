@@ -36,7 +36,8 @@ void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz
         vector<int> rnd(sz);
         rnd_uniformInt(rnd.data(), sz, 0, int(outsz.size()));
 
-        for (auto i : rnd) out[i] = 0;
+        for (auto i : rnd)
+            out[i] = 0;
     }
     else{
         size_t sz = outsz.size();

@@ -38,9 +38,7 @@ struct gpuParams{
 };
 
 void FullyConnected::iniParamCUDA(bool isLern, const snSize& insz, size_t kernel, void** pGpuPrm){
- 
-    cudaSetDevice(gpuDeviceId_);
-
+    
     size_t ida = insz.w * insz.h * insz.d, bsz = insz.n;
 
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
@@ -64,9 +62,7 @@ void FullyConnected::iniParamCUDA(bool isLern, const snSize& insz, size_t kernel
 }
          
 void FullyConnected::freeParamCUDA(void* gpuPrms){
-       
-    cudaSetDevice(gpuDeviceId_);
-
+    
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
@@ -89,9 +85,7 @@ __global__ void cuFwdBias(size_t kernel, snSize insz, snFloat* weight, snFloat* 
 }
 
 void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output, void* gpuPrms){
-        
-    cudaSetDevice(gpuDeviceId_);
-
+    
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
    
@@ -141,9 +135,7 @@ __global__ void cuBwdBias(size_t kernel, snSize insz, snFloat* gradIn, snFloat* 
 
 void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
     const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrms){
-       
-    cudaSetDevice(gpuDeviceId_);
-
+  
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
    /*
@@ -200,9 +192,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
 }
 
 void FullyConnected::backwardCUDA_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
-      
-    cudaSetDevice(gpuDeviceId_);
-
+        
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
         

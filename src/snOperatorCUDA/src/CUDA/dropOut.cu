@@ -1,22 +1,83 @@
 
 #include <cuda_runtime.h>
-#include <cudnn.h>
+#include <curand.h>
 
 #include "../stdafx.h"
 
 using namespace SN_Base;
 
-void dropOutForward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId){
-       
-    cudaSetDevice(deviceId);
+__global__ dropOutLern(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* rnd, SN_Base::snFloat* out){
+    
+    size_t outStepByD = outsz.w * outsz.h,     // step out by input
+           outStepByN = outStepByD * outsz.d;  // step out by batch       
 
-            
+    // gridDim.x - number of out layers
+    // gridDim.y - batch size
+
+    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+
+    unsigned int i = threadIdx.x;
+    
+    if (rnd[i] < dropOut){
+
+        while (i < outStepByD){
+
+            out[i] = 0.F;
+
+            i += blockDim.x;
+        }
+    }
 }
 
-void dropOutBackward(SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId){
+__global__ dropOutInf(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
 
-    cudaSetDevice(deviceId);
- 
-   
+    size_t outStepByD = outsz.w * outsz.h,     // step out by input
+           outStepByN = outStepByD * outsz.d;  // step out by batch       
 
+    // gridDim.x - number of out layers
+    // gridDim.y - batch size
+
+    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+
+    unsigned int i = threadIdx.x;
+
+    while (i < outStepByD){
+
+        out[i] *= (1.F - dropOut);
+
+        i += blockDim.x;
+    }
+}
+
+
+void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* inout){
+       
+    if (isLern){
+        int blockSz = 128;
+
+        float* rndData = nullptr;
+        cuAssert(cudaMalloc((void**)&rndData, blockSz * sizeof(float)));
+
+        curandGenerator_t gen;
+        cuAssert(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT));
+
+        cuAssert(curandSetPseudoRandomGeneratorSeed(gen, 1234ULL));
+
+        cuAssert(curandGenerateUniform(gen, rndData, blockSz));
+
+        dim3 dimBlock(blockSz);
+        dim3 dimGrid(int(outsz.d), int(outsz.n));
+               
+        dropOutLern <<< dimGrid, dimBlock >>>(dropOut, outsz, rndData, out);
+        
+        cuAssert(curandDestroyGenerator(gen));
+        cuAssert(cudaFree(rndData));
+    }
+    else{
+     
+        dim3 dimBlock(128);
+        dim3 dimGrid(int(outsz.d), int(outsz.n));
+        
+        dropOutInf << <dimGrid, dimBlock >> >(dropOut, outsz, out);
+    }
 }

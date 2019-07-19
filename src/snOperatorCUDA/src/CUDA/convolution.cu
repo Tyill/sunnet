@@ -60,9 +60,7 @@ struct gpuParams{
 
 void Convolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz,
     const convParams& prms, void** pGpuPrm){
-
-    cudaSetDevice(gpuDeviceId_);
-    
+         
     bool isFirst = false;
 
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
@@ -225,9 +223,7 @@ void Convolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& ou
 }
 
 void Convolution::freeParamCUDA(void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
-
+      
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
@@ -271,9 +267,7 @@ __global__ void cuFwdBias(snSize outsz, snFloat* bias, snFloat* output){
 
 void Convolution::forwardCUDA(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
-      
-    cudaSetDevice(gpuDeviceId_);
-
+ 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
        
     size_t isz = insz.size(), osz = outsz.size();
@@ -300,9 +294,7 @@ void Convolution::forwardCUDA(const convParams& prms,
 
 void Convolution::backwardCUDA_GW(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
-
+       
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     size_t isz = insz.size(), osz = outsz.size();
         
@@ -348,9 +340,7 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
 
 void Convolution::backwardCUDA_G(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
-     
-    cudaSetDevice(gpuDeviceId_);
-
+    
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     size_t isz = insz.size(), osz = outsz.size();
   

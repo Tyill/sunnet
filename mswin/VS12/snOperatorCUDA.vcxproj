@@ -189,6 +189,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\snOperatorCUDA\snOperator.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\activationFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\batchNormFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\cudaCommon.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\dropOut.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\activation.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\batchNorm.h" />
@@ -229,7 +231,6 @@
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\summator.cpp" />
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\switch.cpp" />
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\userLayer.cpp" />
-    <ClCompile Include="..\..\src\snOperatorCUDA\src\optimizer.cpp" />
     <ClCompile Include="..\..\src\snOperatorCUDA\src\random.cpp" />
     <ClCompile Include="..\..\src\snOperatorCUDA\src\snOperator.cpp" />
     <ClCompile Include="..\..\src\snOperatorCUDA\src\weightInit.cpp" />
@@ -237,9 +238,11 @@
   <ItemGroup>
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\activation.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\batchNorm.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\common.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\convolution.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\deconvolution.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\fullyConnected.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\optimizer.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\pooling.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\tensor.cu" />
   </ItemGroup>

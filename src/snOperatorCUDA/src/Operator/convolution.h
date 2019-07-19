@@ -42,6 +42,8 @@ public:
     
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
+    batchNorm getBatchNorm() override;
+
 private:
     
     struct convParams{
@@ -57,27 +59,30 @@ private:
     convParams convPrms_;
     bool isPaddingSame_ = false, isCheckPadding_ = false;
 
-    activeType activeType_ = activeType::relu;                  ///< active type
-    optimizerType optimizerType_ = optimizerType::adam;         ///< optimizer type
-    weightInitType weightInitType_ = weightInitType::he;        ///< init weight type
-    batchNormType batchNormType_ = batchNormType::none;         ///< batchNorm 
-    SN_Base::snSize inSzMem_;                                   ///< insz mem
-    SN_Base::snSize inDataExpSz_;                               ///< insz expansion
+    activeType activeType_ = activeType::relu;              ///< active type
+    optimizerType optimizerType_ = optimizerType::adam;     ///< optimizer type
+    weightInitType weightInitType_ = weightInitType::he;    ///< init weight type
+    batchNormType batchNormType_ = batchNormType::none;     ///< batchNorm 
+    SN_Base::snSize inSzMem_;                               ///< insz mem
+    SN_Base::snSize inDataExpSz_;                           ///< insz expansion
    
     const SN_Base::Tensor* inputMem_ = nullptr;
          
-    bool isFreeze_ = false;                                     ///< not change weight
+    bool isFreeze_ = false;                                 ///< not change weight
 
-    uint32_t gpuDeviceId_ = 0;                                  ///< gpu id
+    uint32_t gpuDeviceId_ = 0;                              ///< gpu id
  
-    SN_Base::snFloat dropOut_ = 0.F;                            ///< random off out
+    SN_Base::snFloat dropOut_ = 0.F;                        ///< random off out
 
-    SN_Base::snFloat optDecayMomentDW_ = 0.9F,                  ///< optimiz weight
+    SN_Base::snFloat optDecayMomentDW_ = 0.9F,              ///< optimiz weight
                      optDecayMomentWGr_ = 0.99F,
                      optLmbRegular_ = 0.001F;
         
-    void* convGPUParams_ = nullptr;                             ///< gpu aux params 
+    void* convGPUParams_ = nullptr;                         ///< gpu aux params 
         
+    std::map<std::string, SN_Base::snFloat*> auxGPUParams_; ///< aux data 
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
+
     void load(std::map<std::string, std::string>& prms);
 
     void updateConfig(bool isLern, const SN_Base::snSize& newSz, SN_Base::snSize& expSz);

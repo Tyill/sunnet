@@ -25,16 +25,17 @@
 #pragma once
 
 #include <cstdint>
-#include <cstring>
-#include <cassert>
+#include <string>
 #include <vector>
+#include <iostream>
 #include <map>
 
-#ifdef SN_DEBUG
-#define SN_PRINTMESS(mess) printf("%s \n", (mess).c_str());
-#else
-#define SN_PRINTMESS(mess);
-#endif
+#define ASSERT_MESS(condition, message)                                   \
+      if (!(condition)) {                                                 \
+         std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+         << " line " << __LINE__ << ": " << (message) << std::endl;       \
+         std::abort();                                                    \
+      }
 
 namespace SN_Base{
     
@@ -204,7 +205,7 @@ namespace SN_Base{
             return baseWeight_;
         }
 
-        virtual batchNorm getBatchNorm() const final{
+        virtual batchNorm getBatchNorm(){
             return baseBatchNorm_;
         }
 

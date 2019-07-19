@@ -24,49 +24,14 @@
 //
 #pragma once
 
-/// тип ф-ии активации
-enum class activeType{
-    none = -1,
-    sigmoid = 0,
-    relu = 1,
-    leakyRelu = 2,
-    elu = 3,
-};
+void setDeviceId(int);
 
-/// тип инициализации весов
-enum class weightInitType{
-    uniform = 0,
-    he = 1,
-    lecun = 2,
-    xavier = 3,
-};
+SN_Base::snFloat* memAlloc(size_t sz, int initVal);
 
-/// тип оптимизации весов
-enum class optimizerType{
-    sgd = 0,
-    sgdMoment = 1,
-    adagrad = 2,
-    RMSprop = 3,
-    adam = 4,
-};
+SN_Base::snFloat* memRealloc(size_t csz, size_t nsz, SN_Base::snFloat*, int initVal);
 
-/// batchNorm
-enum class batchNormType{
-    none = -1,
-    beforeActive = 0,
-    postActive = 1,
-    byChannels = 2,
-    byLayer = 3,
-};
+void memCpyCPU2GPU(size_t dstSz, SN_Base::snFloat* dstGPU, size_t srcSz, SN_Base::snFloat* srcCPU);
 
-/// pooling
-enum class poolType{
-    max = 0,
-    avg = 1,
-};
+void memCpyGPU2CPU(size_t dstSz, SN_Base::snFloat* dstCPU, size_t srcSz, SN_Base::snFloat* srcGPU);
 
-enum class calcMode{
-    CPU = 0,
-    CUDA = 1,
-    OpenCL = 2,
-};
+void memFree(SN_Base::snFloat*);

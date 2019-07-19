@@ -26,6 +26,4 @@
 
 #include "snBase/snBase.h"
 
-void dropOutForward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId);
-
-void dropOutBackward(SN_Base::snFloat dropOut, SN_Base::snFloat* inout, const SN_Base::snSize& iosz, uint32_t deviceId);
+void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& iosz, SN_Base::snFloat* inout);

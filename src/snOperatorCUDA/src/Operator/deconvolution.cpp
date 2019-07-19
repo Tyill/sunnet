@@ -29,6 +29,8 @@
 #include "snOperatorCUDA/src/activationFunctions.h"
 #include "snOperatorCUDA/src/optimizer.h"
 #include "snOperatorCUDA/src/structurs.h"
+#include "snOperatorCUDA/src/cudaCommon.h"
+#include "snOperatorCUDA/src/dropOut.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -42,8 +44,9 @@ Deconvolution::Deconvolution(void* net, const string& name, const string& node, 
 
 Deconvolution::~Deconvolution(){
        
-    freeParamCUDA(gpuParams_);
-   
+    setDeviceId(gpuDeviceId_);
+
+    freeParamCUDA(gpuParams_);   
 }
 
 void Deconvolution::load(std::map<std::string, std::string>& prms){
@@ -185,6 +188,8 @@ bool Deconvolution::setBatchNorm(const batchNorm& bn){
 
 std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
+    setDeviceId(gpuDeviceId_);
+
     if (operPrm.action == snAction::forward){
 
         if (neighbOpr.size() > 1){
@@ -234,8 +239,8 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
     forwardCUDA(deconvParams_, weight, insz, pInTns, outsz, out, gpuParams_);
    
     /// dropOut
- //   if (dropOut_ > 0.F)
-   //     dropOut(operPrm.isLerning, dropOut_, outsz, out);
+    if (dropOut_ > 0.F)
+        dropOut(operPrm.isLerning, dropOut_, outsz, out);
 
     /// batchNorm
    // if (batchNormType_ == batchNormType::beforeActive)

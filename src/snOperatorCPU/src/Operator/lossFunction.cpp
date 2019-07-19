@@ -24,7 +24,7 @@
 //
 #include "../stdafx.h"
 #include "snOperatorCPU/src/Operator/lossFunction.h"
-#include "snOperatorCPU/src/activeFunctions.h"
+#include "snOperatorCPU/src/activationFunctions.h"
 
 using namespace std;
 using namespace SN_Base;

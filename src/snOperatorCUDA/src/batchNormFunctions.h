@@ -25,11 +25,7 @@
 #pragma once
 
 #include "snBase/snBase.h"
-//
-//void channelBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, batchNorm prm);
-//
-//void layerBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm);
-//
-//void batchNormForward(const SN_Base::snSize& insz, snFloat* in, snFloat* out, batchNorm prm);
-//
-//void batchNormBackward(const SN_Base::snSize& insz, snFloat* gradIn, snFloat* gradOut, batchNorm prm);
+
+void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
+
+void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);

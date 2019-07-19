@@ -26,7 +26,7 @@
 #include "snAux/auxFunc.h"
 #include "snOperatorCPU/src/Operator/convolution.h"
 #include "snOperatorCPU/src/weightInit.h"
-#include "snOperatorCPU/src/activeFunctions.h"
+#include "snOperatorCPU/src/activationFunctions.h"
 #include "snOperatorCPU/src/optimizer.h"
 #include "snOperatorCPU/src/structurs.h"
 #include "snOperatorCPU/src/batchNormFunctions.h"

@@ -5,6 +5,7 @@
 #include "../structurs.h"
 #include "../activationFunctions.h"
 
+
 using namespace SN_Base;
 
 __global__ void fv_sigmoid(const snSize& outsz, snFloat* output){
@@ -20,7 +21,7 @@ __global__ void fv_sigmoid(const snSize& outsz, snFloat* output){
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
                
-        output[i] = 1.F / (1.F + std::exp(-output[i]));
+        output[i] = 1.F / (1.F + exp(-output[i]));
 
         output[i] = (output[i] < 0.99999F) ? output[i] : 0.99999F;
         output[i] = (output[i] > 0.00001F) ? output[i] : 0.00001F;
@@ -158,28 +159,30 @@ __global__ void df_elu(const snSize& outsz, snFloat* output){
     }
 }
 
-void activationForward(const snSize& sz, snFloat* data, activeType active, uint32_t deviceId){
+void activationForward(const snSize& sz, snFloat* data, activeType active){
+         
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(sz.d), int(sz.n));
        
-    cudaSetDevice(deviceId);
-      
     switch (active){
-    case activeType::sigmoid:   fv_sigmoid(sz, data); break;
-       case activeType::relu:      fv_relu(data, sz); break;
-       case activeType::leakyRelu: fv_leakyRelu(data, sz); break;
-       case activeType::elu:       fv_elu(data, sz); break;
+       case activeType::sigmoid:   fv_sigmoid   <<< dimGrid, dimBlock >>>(sz, data); break;
+       case activeType::relu:      fv_relu      <<< dimGrid, dimBlock >>>(sz, data); break;
+       case activeType::leakyRelu: fv_leakyRelu <<< dimGrid, dimBlock >>>(sz, data); break;
+       case activeType::elu:       fv_elu       <<< dimGrid, dimBlock >>>(sz, data); break;
        default: break;
     }
 }
 
-void activeFuncBackward(const snSize& sz, snFloat* data, activeType active, uint32_t deviceId){
+void activeFuncBackward(const snSize& sz, snFloat* data, activeType active){
 
-    cudaSetDevice(deviceId);
-    
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(sz.d), int(sz.n));
+
     switch (active){
-      case activeType::sigmoid:   df_sigmoid(data, sz); break;
-      case activeType::relu:      df_relu(data, sz); break;
-      case activeType::leakyRelu: df_leakyRelu(data, sz); break;
-      case activeType::elu:       df_elu(data, sz); break;
+      case activeType::sigmoid:   df_sigmoid   <<< dimGrid, dimBlock >>>(sz, data); break;
+      case activeType::relu:      df_relu      <<< dimGrid, dimBlock >>>(sz, data); break;
+      case activeType::leakyRelu: df_leakyRelu <<< dimGrid, dimBlock >>>(sz, data); break;
+      case activeType::elu:       df_elu       <<< dimGrid, dimBlock >>>(sz, data); break;
       default: break;
     }
 }

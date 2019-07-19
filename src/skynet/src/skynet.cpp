@@ -23,7 +23,6 @@
 // THE SOFTWARE.
 //
 
-#include "stdafx.h"
 #include "snBase/snBase.h"
 #include "skynet/skyNet.h"
 #include "skynet/src/snet.h"

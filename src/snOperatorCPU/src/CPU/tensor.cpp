@@ -32,7 +32,7 @@ Tensor& Tensor::operator=(const Tensor& other){
 
 Tensor& Tensor::operator+=(const Tensor& other){
 
-    assert(other == *this);
+    ASSERT_MESS(other == *this, "");
 
     auto od = other.getDataCPU();
 
@@ -46,7 +46,7 @@ Tensor& Tensor::operator+=(const Tensor& other){
 
 Tensor& Tensor::operator-=(const Tensor& other){
 
-    assert(other == *this);
+    ASSERT_MESS(other == *this, "");
 
     auto od = other.getDataCPU();
 
@@ -61,7 +61,7 @@ Tensor& Tensor::operator-=(const Tensor& other){
 void Tensor::setDataCPU(const snFloat* data, const snSize& nsz){
 
     size_t nnsz = nsz.size();
-    assert(data && (nnsz > 0));
+    ASSERT_MESS(data && (nnsz > 0), "");
 
     if (sz_.size() < nnsz)
         dataCPU_ = (snFloat*)realloc(dataCPU_, nnsz * sizeof(snFloat));
@@ -78,7 +78,7 @@ snFloat* Tensor::getDataCPU() const{
 void Tensor::resize(const snSize& nsz){
 
     size_t nnsz = nsz.size(), csz = sz_.size();
-    assert(nnsz > 0);
+    ASSERT_MESS(nnsz > 0, "");
 
     if (csz < nnsz){
         dataCPU_ = (snFloat*)realloc(dataCPU_, nnsz * sizeof(snFloat));

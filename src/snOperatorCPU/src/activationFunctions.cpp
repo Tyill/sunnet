@@ -24,7 +24,7 @@
 //
 #include "stdafx.h"
 #include "structurs.h"
-#include "activeFunctions.h"
+#include "activationFunctions.h"
 
 using namespace std;
 using namespace SN_Base;

@@ -25,13 +25,9 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
 #include <algorithm>
 #include <omp.h>
 #include "snBase/snBase.h"
-#include "snOperatorCUDA/snOperator.h"
 
 #define PROFILE_START double ctm = omp_get_wtime(); 
 #define PROFILE_END(func) g_statusMess(this, name_ + " " + node_ + " " + func + " " + std::to_string(omp_get_wtime() - ctm)); ctm = omp_get_wtime(); 
@@ -45,8 +41,4 @@ void g_userCBack(SN_Base::OperatorBase* opr, const std::string& cbname, const st
 
 #define cuCHECK(func) if (func != 0){ ERROR_MESS("CUDA error: " + cudaGetErrorString(cudaGetLastError())); return;}
 
-#define cuAssert(func) \
-   if (func != 0){                                                                            \
-     std::string mess = std::string("CUDA error: ") + cudaGetErrorString(cudaGetLastError()); \
-     assert(!mess.c_str());                                                                   \
-   }
+#define cuAssert(func) ASSERT_MESS(func == 0, std::string("CUDA error: ") + cudaGetErrorString(cudaGetLastError()));                                                  

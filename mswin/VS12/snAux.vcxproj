@@ -12,7 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snAux\auxFunc.h" />
-    <ClInclude Include="..\..\src\snAux\src\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snAux\src\auxFunc.cpp" />

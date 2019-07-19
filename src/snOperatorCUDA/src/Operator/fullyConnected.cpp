@@ -30,6 +30,8 @@
 #include "snOperatorCUDA/src/optimizer.h"
 #include "snOperatorCUDA/src/structurs.h"
 #include "snOperatorCUDA/src/batchNornFunctions.h"
+#include "snOperatorCUDA/src/cudaCommon.h"
+#include "snOperatorCUDA/src/dropOut.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -43,6 +45,8 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 
 FullyConnected::~FullyConnected(){
     
+    setDeviceId(gpuDeviceId_);
+
     freeParamCUDA(gpuParams_);    
 }
 
@@ -183,6 +187,8 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
 
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
+    setDeviceId(gpuDeviceId_);
+
     if (operPrm.action == snAction::forward){
 
         if (neighbOpr.size() > 1){
@@ -236,9 +242,9 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
    
     /// dropOut
-    snSize outSz = baseOut_.size();
- //   if (dropOut_ > 0.F)
- //       dropOut(operPrm.isLerning, dropOut_, outSz, out);
+    snSize outsz = baseOut_.size();
+    if (dropOut_ > 0.F)
+        dropOut(operPrm.isLerning, dropOut_, outsz, out);
     
     /// batchNorm
   //  if (batchNormType_ == batchNormType::beforeActive)

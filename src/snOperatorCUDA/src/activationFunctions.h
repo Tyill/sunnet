@@ -29,6 +29,6 @@
 
 // fv - value, df - deriv
 
-void activationForward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType, uint32_t deviceId);
+void activationForward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType);
 
-void activationBackward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType, uint32_t deviceId);
+void activationBackward(const SN_Base::snSize& sz, SN_Base::snFloat* data, activeType);

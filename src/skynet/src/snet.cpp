@@ -26,7 +26,6 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
-#include "stdafx.h"
 #include "snAux/auxFunc.h"
 #include "snBase/snBase.h"
 #include "snet.h"

@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\snOperatorCPU\src\activeFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\snOperatorCPU\src\optimizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -99,6 +96,9 @@
     <ClInclude Include="..\..\src\snOperatorCPU\src\paddingOffs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\snOperatorCPU\src\activationFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\activation.cpp">
@@ -149,9 +149,6 @@
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\userLayer.cpp">
       <Filter>Operator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snOperatorCPU\src\activeFunctions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCPU\src\optimizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -186,6 +183,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCPU\src\batchNormFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperatorCPU\src\activationFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

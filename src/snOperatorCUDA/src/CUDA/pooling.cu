@@ -44,9 +44,7 @@ struct gpuParams{
 };
 
 void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** pGpuPrm){
-    
-    cudaSetDevice(gpuDeviceId_);
-  
+     
     bool isFirst = false;
 
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
@@ -131,9 +129,7 @@ void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz,
 }
 
 void Pooling::freeParamCUDA(void* gpuPrms){
-  
-    cudaSetDevice(gpuDeviceId_);
-
+    
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
@@ -162,9 +158,7 @@ __global__ void cuFiltrNegative(snSize outsz, snFloat* out){
 
 void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const snFloat* input,
     const snSize& outsz, snFloat* output, void* gpuPrms){
-  
-    cudaSetDevice(gpuDeviceId_);
-
+    
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
       
     // run
@@ -188,9 +182,7 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const 
 
 void Pooling::backwardCUDA(const poolParams& poolPrms, const snSize& outsz, const snFloat* output, const snFloat* gradIn,
     const snSize& insz, const snFloat* input, snFloat* gradOut, void* gpuPrms){
-    
-    cudaSetDevice(gpuDeviceId_);
-
+       
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     
     // run

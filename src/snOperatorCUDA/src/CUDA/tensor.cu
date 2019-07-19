@@ -41,7 +41,7 @@ Tensor& Tensor::operator=(const Tensor& other){
 
 Tensor& Tensor::operator+=(const Tensor& other){
 
-    assert(other == *this);
+    ASSERT_MESS(other == *this, "");
        
    
     return *this;
@@ -49,7 +49,7 @@ Tensor& Tensor::operator+=(const Tensor& other){
 
 Tensor& Tensor::operator-=(const Tensor& other){
 
-    assert(other == *this);
+    ASSERT_MESS(other == *this, "");
 
     
     return *this;
@@ -58,7 +58,7 @@ Tensor& Tensor::operator-=(const Tensor& other){
 void Tensor::setDataGPU(const snFloat* data, const snSize& nsz){
 
     size_t nnsz = nsz.size();
-    assert(data && (nnsz > 0));
+    ASSERT_MESS(data && (nnsz > 0), "");
 
     if (sz_.size() < nnsz){
      
@@ -75,7 +75,7 @@ void Tensor::setDataGPU(const snFloat* data, const snSize& nsz){
 void Tensor::setDataCPU(const snFloat* data, const snSize& nsz){
 
     size_t nnsz = nsz.size();
-    assert(data && (nnsz > 0));
+    ASSERT_MESS(data && (nnsz > 0), "");
 
     if (sz_.size() < nnsz){
 
@@ -108,7 +108,7 @@ snFloat* Tensor::getDataCPU() const{
 void Tensor::resize(const snSize& nsz){
 
     size_t nnsz = nsz.size(), csz = sz_.size();
-    assert(nnsz > 0);
+    ASSERT_MESS(nnsz > 0, "");
 
     if (csz < nnsz){
 
@@ -116,7 +116,8 @@ void Tensor::resize(const snSize& nsz){
         cuAssert(cudaMalloc(&mem, nnsz * sizeof(snFloat)));
 
         if (dataGPU_){
-            cuAssert(cudaMemcpy(mem, dataGPU_, csz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+            if (csz > 0)
+               cuAssert(cudaMemcpy(mem, dataGPU_, csz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
             cuAssert(cudaFree(dataGPU_));
         }
         dataGPU_ = mem;

@@ -27,9 +27,11 @@
 #include "snAux/auxFunc.h"
 #include "snOperatorCUDA/src/weightInit.h"
 #include "snOperatorCUDA/src/activationFunctions.h"
+#include "snOperatorCUDA/src/batchNormFunctions.h"
 #include "snOperatorCUDA/src/optimizer.h"
 #include "snOperatorCUDA/src/structurs.h"
 #include "snOperatorCUDA/src/dropOut.h"
+#include "snOperatorCUDA/src/cudaCommon.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -44,6 +46,8 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 
 Convolution::~Convolution(){
         
+    setDeviceId(gpuDeviceId_);
+
     freeParamCUDA(convGPUParams_);   
 }
 
@@ -93,7 +97,7 @@ void Convolution::load(std::map<std::string, std::string>& prms){
         else
             ERROR_MESS("param 'batchNorm' = " + bnType + " indefined");
     }
- 
+        
     setInternPrm(prms);
 }
 
@@ -162,20 +166,53 @@ bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
 
 bool Convolution::setBatchNorm(const batchNorm& bn){
 
-    size_t osz = bn.sz.size();
-       
-  /*  memcpy(baseBatchNorm_.mean, bn.mean, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.varce, bn.varce, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.scale, bn.scale, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.schift, bn.schift, osz * sizeof(snFloat));
-*/
+    size_t csz = baseBatchNorm_.sz.size(),
+           osz = bn.sz.size();
+      
+    baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
+    baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
+    baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
+    baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+
+    memCpyCPU2GPU(osz, baseBatchNorm_.mean, osz, bn.mean);
+    memCpyCPU2GPU(osz, baseBatchNorm_.varce, osz, bn.varce);
+    memCpyCPU2GPU(osz, baseBatchNorm_.scale, osz, bn.scale);
+    memCpyCPU2GPU(osz, baseBatchNorm_.schift, osz, bn.schift);
+
     baseBatchNorm_.sz = bn.sz;
 
     return true;
 }
 
+batchNorm Convolution::getBatchNorm(){
+
+    size_t csz = baseBatchNorm_.sz.size();
+
+    auxCPUParams_["bn_mean"] = vector<snFloat>(csz);
+    auxCPUParams_["bn_varce"] = vector<snFloat>(csz);
+    auxCPUParams_["bn_scale"] = vector<snFloat>(csz);
+    auxCPUParams_["bn_schift"] = vector<snFloat>(csz);
+      
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), csz, baseBatchNorm_.mean);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), csz, baseBatchNorm_.varce);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), csz, baseBatchNorm_.scale);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), csz, baseBatchNorm_.schift);
+
+    batchNorm bn;
+    bn.mean = auxCPUParams_["bn_mean"].data();
+    bn.varce = auxCPUParams_["bn_varce"].data();
+    bn.scale = auxCPUParams_["bn_scale"].data();
+    bn.schift = auxCPUParams_["bn_schift"].data();
+    
+    bn.sz = csz;
+
+    return bn;
+}
+
 std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
-       
+    
+    setDeviceId(gpuDeviceId_);
+
     if (operPrm.action == snAction::forward){
         
         if (neighbOpr.size() > 1){
@@ -202,47 +239,48 @@ std::vector<std::string> Convolution::Do(const operationParam& operPrm, const st
             backward(tns, operPrm);
         }
     }
-       
+
     return std::vector<std::string>();
 }
 
 void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
 
-    //snSize insz = inTns.size();
-    //inputMem_ = &inTns;
+    snSize insz = inTns.size();
+    inputMem_ = &inTns;
 
-    ///// Has the size of the data changed?
-    //if (insz != inSzMem_){
-    //    inSzMem_ = insz;
-    //    updateConfig(operPrm.isLerning, insz, inDataExpSz_);
-    //}
+    // Has the size of the data changed?
+    if (insz != inSzMem_){
+        inSzMem_ = insz;
+        updateConfig(operPrm.isLerning, insz, inDataExpSz_);
+    }
 
-    ///// copy with offset padding for each image
-    //snFloat* in = inputMem_->getDataGPU();
+    // copy with offset padding for each image
+    snFloat* in = inputMem_->getDataGPU();
   
-    ///// calculation of the output values
+    // calculation of the output values
     snFloat* out = baseOut_.getDataGPU(),
            * weight = baseWeight_.getDataGPU();
 
     snSize outsz = baseOut_.size();
-    //   
-    //// calculation
-    //forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, convGPUParams_);
+       
+    // calculation
+    forwardCUDA(convPrms_, weight, inDataExpSz_, in, outsz, out, convGPUParams_);
 
     /// dropOut
-    //if (dropOut_ > 0.F)
-   //     dropOutForward(dropOut_, out, outsz, gpuDeviceId_, &dropGPUParams_);
+    if (dropOut_ > 0.F)
+        dropOut(operPrm.isLerning, dropOut_, outsz, out);
 
-    /// batchNorm
- //   if (batchNormType_ == batchNormType::beforeActive)
-  //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    // batchNorm
+    if (batchNormType_ == batchNormType::beforeActive)
+       channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
         
     /// active function
-    activationForward(outsz, out, activeType_, gpuDeviceId_);
+    if (activeType_ != activeType::none)
+       activationForward(outsz, out, activeType_);
            
-    /// batchNorm
-  //  if (batchNormType_ == batchNormType::postActive)
-  //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+    // batchNorm
+    if (batchNormType_ == batchNormType::postActive)
+        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
 }
 
 void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
@@ -250,54 +288,46 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     snFloat* gradIn = inTns.getDataGPU(); 
     snSize insz = inTns.size();
 
-    /// batchNorm
-   // if (batchNormType_ == batchNormType::postActive)
-  //      channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
+    // batchNorm
+    if (batchNormType_ == batchNormType::postActive)
+        channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
     
     // active function
-    if (activeType_ != activeType::none){
-               
-        size_t osz = baseOut_.size().size();
-   //     activationBackward(inputMem_->getDataGPU(), baseOut_.getDataGPU(), gradIn, osz, gpuDeviceId_, activGPUParams_);
-              
-    }
-
-    /// batchNorm
-  //  if (batchNormType_ == batchNormType::beforeActive)
-  //      channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
+    if (activeType_ != activeType::none)        
+        activationBackward(baseOut_.size(), baseOut_.getDataGPU(), activeType_);
     
-    /// dropOut
- //   if (dropOut_ > 0.F)
- //       dropOutBackward(gradIn, insz, gpuDeviceId_, dropGPUParams_);
-
+    // batchNorm
+    if (batchNormType_ == batchNormType::beforeActive)
+        channelBatchNorm(false, true, insz, gradIn, gradIn, baseBatchNorm_);
+   
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_.getDataGPU();
          
     snFloat* weight = baseWeight_.getDataGPU();
   
     if (!isFreeze_){
-       // snFloat* dWeight = auxParams_["dWeight"].data();
+        snFloat* dWeight = auxGPUParams_["dWeight"];
         
         snFloat* in = inputMem_->getDataGPU();
        
         // calculation
-   //     backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, convGPUParams_);
+        backwardCUDA_GW(convPrms_, weight, inDataExpSz_, in, baseOut_.size(), gradIn, gradOut, dWeight, convGPUParams_);
                        
         // correct weight
-   //     snFloat* dWPrev = auxParams_["dWPrev"].data();
-    //    snFloat* dWGrad = auxParams_["dWGrad"].data();
+        snFloat* dWPrev = auxGPUParams_["dWPrev"];
+        snFloat* dWGrad = auxGPUParams_["dWGrad"];
         size_t wsz = baseWeight_.size().size();
               
-  /*      optimizer(dWeight,
+        optimizer(dWeight,
                   dWPrev,
                   dWGrad,
                   weight,
-                  wsz,
+                  snSize(convPrms_.fWidth, convPrms_.fHeight, insz.d, convPrms_.kernel),
                   operPrm.lr,
                   optLmbRegular_,
                   optDecayMomentDW_,
                   optDecayMomentWGr_,
-                  optimizerType_);*/
+                  optimizerType_);
     }
     else{ // isFreeze
         backwardCUDA_G(convPrms_, weight, inDataExpSz_, baseOut_.size(), gradIn, gradOut, convGPUParams_);
@@ -357,24 +387,31 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
     expSz = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
       
     baseOut_.resize(outSz);
-
-    if (isLern)
+      
+    if (isLern){
         baseGrad_.resize(newsz);
 
-    size_t osz = outSz.w * outSz.h * outSz.d;
+        // aux array
+        auxGPUParams_["dWeight"] = memRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
+        auxGPUParams_["dWPrev"] = memRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
+        auxGPUParams_["dWGrad"] = memRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
+    }
+
+    size_t csz = baseBatchNorm_.sz.w * baseBatchNorm_.sz.h * baseBatchNorm_.sz.d,
+           osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-    /*    auxParams_["bn_mean"].resize(osz, 0);             baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-        auxParams_["bn_varce"].resize(osz, 1);            baseBatchNorm_.varce = auxParams_["bn_varce"].data();
-        auxParams_["bn_scale"].resize(osz, 1);            baseBatchNorm_.scale = auxParams_["bn_scale"].data();
-        auxParams_["bn_schift"].resize(osz, 0);           baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+        baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
+        baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
+        baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
+        baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
       
         if (isLern){
-            auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-            auxParams_["bn_dScale"].resize(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
-            auxParams_["bn_dSchift"].resize(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-            auxParams_["bn_onc"].resize(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
-        }*/
+            baseBatchNorm_.norm = memRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.mean, 0);
+            baseBatchNorm_.dScale = memRealloc(csz, osz, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = memRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
+        }
+
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  

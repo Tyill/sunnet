@@ -45,7 +45,7 @@ void channelBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, s
             for (size_t j = 0; j < bsz; ++j){
 
                 snFloat* cin = in + stepN * j + stepD * i,
-                    *cout = out + stepN * j + stepD * i;
+                       * cout = out + stepN * j + stepD * i;
                 for (size_t k = 0; k < stepD; ++k)
                     cout[k] = (cin[k] - prm.mean[k]) * prm.scale[k] / prm.varce[k] + prm.schift[k];
             }

@@ -185,7 +185,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\snOperatorCPU\snOperator.h" />
-    <ClInclude Include="..\..\src\snOperatorCPU\src\activeFunctions.h" />
+    <ClInclude Include="..\..\src\snOperatorCPU\src\activationFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\batchNormFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\dropOut.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\activation.h" />
@@ -212,7 +212,7 @@
     <ClInclude Include="..\..\src\snOperatorCPU\src\weightInit.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\snOperatorCPU\src\activeFunctions.cpp" />
+    <ClCompile Include="..\..\src\snOperatorCPU\src\activationFunctions.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\batchNormFunctions.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\convolutionCPU.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\deconvolutionCPU.cpp" />

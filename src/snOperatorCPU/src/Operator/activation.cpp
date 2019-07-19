@@ -24,7 +24,7 @@
 //
 #include "../stdafx.h"
 #include "snOperatorCPU/src/Operator/activation.h"
-#include "snOperatorCPU/src/activeFunctions.h"
+#include "snOperatorCPU/src/activationFunctions.h"
 #include "snAux/auxFunc.h"
 
 using namespace std;

@@ -93,6 +93,12 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\activationFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\cudaCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\batchNormFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\activation.cpp">
@@ -143,9 +149,6 @@
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\userLayer.cpp">
       <Filter>Operator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\snOperatorCUDA\src\optimizer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\random.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -176,6 +179,12 @@
       <Filter>CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\batchNorm.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\common.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\optimizer.cu">
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

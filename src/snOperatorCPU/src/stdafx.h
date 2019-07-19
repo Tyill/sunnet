@@ -25,9 +25,6 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <map>
 #include <algorithm>
 #include <omp.h>
 #include "snBase/snBase.h"

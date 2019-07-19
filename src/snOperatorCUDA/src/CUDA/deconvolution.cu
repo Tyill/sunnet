@@ -61,9 +61,7 @@ struct gpuParams{
 
 void Deconvolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz,
     const deconvParams& prms, void** pGpuPrm){
-
-    cudaSetDevice(gpuDeviceId_);
-
+   
     bool isFirst = false;
 
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
@@ -217,9 +215,7 @@ void Deconvolution::iniParamCUDA(bool isLern, const snSize& insz, const snSize& 
 }
 
 void Deconvolution::freeParamCUDA(void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
-
+       
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
 
     if (!gpuPrm) return;
@@ -245,9 +241,7 @@ void Deconvolution::freeParamCUDA(void* gpuPrms){
 
 void Deconvolution::forwardCUDA(const deconvParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, snFloat* output, void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
-
+     
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
        
     // run
@@ -288,9 +282,7 @@ __global__ void cuBwdBias(snSize insz, snFloat* bias, snFloat* grout){
 
 void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
-
+ 
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
     
     // run       
@@ -338,8 +330,6 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
 
 void Deconvolution::backwardCUDA_G(const deconvParams& prms,
     const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
-
-    cudaSetDevice(gpuDeviceId_);
     
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
   
