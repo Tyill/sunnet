@@ -65,8 +65,10 @@ enum class poolType{
     avg = 1,
 };
 
-enum class calcMode{
-    CPU = 0,
-    CUDA = 1,
-    OpenCL = 2,
+// loss
+enum class lossType{
+    softMaxACrossEntropy = 0,
+    binaryCrossEntropy = 1,
+    regressionMSE = 2,
+    userLoss = 3,
 };

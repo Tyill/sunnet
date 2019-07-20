@@ -25,6 +25,7 @@
 #pragma once
 
 #include "snBase/snBase.h"
+#include "../structurs.h"
 
 
 /// оператор - расчет ошибки
@@ -39,13 +40,7 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private:
-    enum class lossType{
-        softMaxACrossEntropy = 0,
-        binaryCrossEntropy = 1,
-        regressionMSE = 2,
-        userLoss = 3,
-    };
-
+ 
     lossType lossType_ = lossType::softMaxACrossEntropy;
        
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_; ///< вспом данные для расчета

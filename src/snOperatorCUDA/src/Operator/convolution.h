@@ -42,7 +42,7 @@ public:
     
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
-    batchNorm getBatchNorm() override;
+    SN_Base::batchNorm getBatchNorm()const override;
 
 private:
     
@@ -81,7 +81,7 @@ private:
     void* convGPUParams_ = nullptr;                         ///< gpu aux params 
         
     std::map<std::string, SN_Base::snFloat*> auxGPUParams_; ///< aux data 
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
+    mutable std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
 
     void load(std::map<std::string, std::string>& prms);
 

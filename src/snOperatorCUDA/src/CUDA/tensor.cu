@@ -7,7 +7,6 @@
 
 using namespace SN_Base;
 
-
 /// tensor - input data and output data of each node of the network.
 
 Tensor::Tensor(const snSize& sz) : sz_(sz){
@@ -44,7 +43,7 @@ Tensor& Tensor::operator+=(const Tensor& other){
 
     ASSERT_MESS(other == *this, "");
        
-    summ(sz_, dataGPU_, other->getDataGPU());
+    summ(sz_, dataGPU_, other.getDataGPU());
    
     return *this;
 }
@@ -53,7 +52,7 @@ Tensor& Tensor::operator-=(const Tensor& other){
 
     ASSERT_MESS(other == *this, "");
 
-    difference(sz_, dataGPU_, other->getDataGPU());
+    difference(sz_, dataGPU_, other.getDataGPU());
     
     return *this;
 }
@@ -115,7 +114,8 @@ void Tensor::resize(const snSize& nsz){
 
     if (csz < nnsz){
 
-        snFloat* mem = nullptr;
+        std::cout << nnsz << std::endl;
+        snFloat* mem;
         cuAssert(cudaMalloc(&mem, nnsz * sizeof(snFloat)));
 
         if (dataGPU_){

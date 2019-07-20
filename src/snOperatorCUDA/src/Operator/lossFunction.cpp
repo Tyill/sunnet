@@ -63,7 +63,7 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
         return std::vector < std::string > {"noWay"};
     }
 
-    if (lossType_ == LossFunction::lossType::userLoss){
+    if (lossType_ == lossType::userLoss){
         if (basePrms_.find("cbackName") == basePrms_.end()){
             ERROR_MESS("not set param 'cbackName'");
             return std::vector < std::string > {"noWay"};
@@ -86,49 +86,27 @@ void LossFunction::forward(const Tensor& inTns){
     auto out = baseOut_.getDataGPU();
 
     switch (lossType_){
-    case LossFunction::lossType::softMaxACrossEntropy:{
+    case lossType::softMaxACrossEntropy:{
 
-        if (auxParams_.find("sm_aux") == auxParams_.end())
-            auxParams_["sm_aux"] = vector<snFloat>(tsz.w * tsz.h * tsz.d);
-
-        // run through softMax each image separately
-        snFloat* aux = auxParams_["sm_aux"].data();
-        size_t nsz = tsz.n, width = tsz.w * tsz.h * tsz.d;
-        for (size_t i = 0; i < nsz; ++i){
-
-            snFloat maxv = *std::max_element(out, out + width);
-
-            snFloat denom = 0.F;
-            for (size_t j = 0; j < width; ++j){
-
-                aux[j] = (out[j] - maxv > -20) ? std::exp(out[j] - maxv) : 0.1E-8F;
-                denom += aux[j];
-            }
-
-            for (size_t j = 0; j < width; ++j)
-                out[j] = aux[j] / denom;
-
-            out += width;
-        }
     }
-    case LossFunction::lossType::binaryCrossEntropy:{
+    case lossType::binaryCrossEntropy:{
 
         break;
     }
-    case LossFunction::lossType::regressionMSE:{
+    case lossType::regressionMSE:{
                
     
         break;
     }
-    case LossFunction::lossType::userLoss:{
+    case lossType::userLoss:{
                
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-           true, inTns.size(), inTns.getDataGPU(), outSz, &outData);
+           true, inTns.size(), inTns.getDataCPU(), outSz, &outData);
 
         if (outData){
-            baseOut_.setDataGPU(outData, outSz);
+            baseOut_.setDataCPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
@@ -157,7 +135,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
     auto grad = baseGrad_.getDataGPU();  
 
     switch (lossType_){
-    case LossFunction::lossType::softMaxACrossEntropy:{
+    case lossType::softMaxACrossEntropy:{
 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
@@ -166,7 +144,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::lossType::binaryCrossEntropy:{
+    case lossType::binaryCrossEntropy:{
 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
@@ -175,7 +153,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
     // Mean Square Error
-    case LossFunction::lossType::regressionMSE:{
+    case lossType::regressionMSE:{
                 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i){
@@ -186,15 +164,15 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::lossType::userLoss:{
+    case lossType::userLoss:{
 
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, inTns.size(), inTns.getDataGPU(), outSz, &outData);
+            false, inTns.size(), inTns.getDataCPU(), outSz, &outData);
 
         if (outData){
-            baseGrad_.setDataGPU(outData, outSz);
+            baseGrad_.setDataCPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");

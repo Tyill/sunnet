@@ -32,7 +32,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-  <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -103,7 +103,7 @@
     </CudaCompile>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cudart_static.lib;cublas.lib;cudnn.lib;</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;cublas.lib;cudnn.lib;curand.lib;</AdditionalDependencies>
     </Lib>
     <CudaLink>
       <PerformDeviceLink>true</PerformDeviceLink>
@@ -171,7 +171,7 @@
     </CudaCompile>
     <Lib>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OutDir);$(CudaToolkitLibDir);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>cudart_static.lib;cublas.lib;cudnn.lib;</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;cublas.lib;cudnn.lib;curand.lib;</AdditionalDependencies>
     </Lib>
     <CudaLink>
       <PerformDeviceLink>true</PerformDeviceLink>
@@ -193,6 +193,7 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\batchNormFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\cudaCommon.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\dropOut.h" />
+    <ClInclude Include="..\..\src\snOperatorCUDA\src\lossFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\activation.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\concat.h" />
@@ -238,21 +239,20 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\activation.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\arithmetic.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\batchNorm.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\common.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\convolution.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\deconvolution.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\dropOut.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\fullyConnected.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\lossFunctions.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\optimizer.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\pooling.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\tensor.cu" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\snOperatorCUDA\src\CUDA\arithmetic.cu" />
-    <None Include="..\..\src\snOperatorCUDA\src\CUDA\dropOut.cu" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-  <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 9.2.targets" />
   </ImportGroup>
 </Project>

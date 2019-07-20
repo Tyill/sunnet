@@ -24,51 +24,9 @@
 //
 #pragma once
 
-/// тип ф-ии активации
-enum class activeType{
-    none = -1,
-    sigmoid = 0,
-    relu = 1,
-    leakyRelu = 2,
-    elu = 3,
-};
+#include "snBase/snBase.h"
+#include "structurs.h"
 
-/// тип инициализации весов
-enum class weightInitType{
-    uniform = 0,
-    he = 1,
-    lecun = 2,
-    xavier = 3,
-};
+void lossForward(const SN_Base::snSize& insz, SN_Base::snFloat* inout, lossType loss);
 
-/// тип оптимизации весов
-enum class optimizerType{
-    sgd = 0,
-    sgdMoment = 1,
-    adagrad = 2,
-    RMSprop = 3,
-    adam = 4,
-};
-
-/// batchNorm
-enum class batchNormType{
-    none = -1,
-    beforeActive = 0,
-    postActive = 1,
-    byChannels = 2,
-    byLayer = 3,
-};
-
-/// pooling
-enum class poolType{
-    max = 0,
-    avg = 1,
-};
-
-// loss
-enum class lossType{
-    softMaxACrossEntropy = 0,
-    binaryCrossEntropy = 1,
-    regressionMSE = 2,
-    userLoss = 3,
-};
+void lossBackward(const SN_Base::Tensor& inTns, SN_Base::snFloat* out, SN_Base::snFloat* targ, SN_Base::snFloat* grad, lossType loss);

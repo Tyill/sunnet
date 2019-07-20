@@ -64,7 +64,7 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
         return std::vector < std::string > {"noWay"};
     }
 
-    if (lossType_ == LossFunction::lossType::userLoss){
+    if (lossType_ == lossType::userLoss){
         if (basePrms_.find("cbackName") == basePrms_.end()){
             ERROR_MESS("not set param 'cbackName'");
             return std::vector < std::string > {"noWay"};
@@ -87,7 +87,7 @@ void LossFunction::forward(const Tensor& inTns){
     auto out = baseOut_.getDataCPU();
 
     switch (lossType_){
-    case LossFunction::lossType::softMaxACrossEntropy:{
+    case lossType::softMaxACrossEntropy:{
 
         if (auxParams_.find("sm_aux") == auxParams_.end())
             auxParams_["sm_aux"] = vector<snFloat>(tsz.w * tsz.h * tsz.d);
@@ -112,16 +112,16 @@ void LossFunction::forward(const Tensor& inTns){
             out += width;
         }
     }
-    case LossFunction::lossType::binaryCrossEntropy:{
+    case lossType::binaryCrossEntropy:{
 
         break;
     }
-    case LossFunction::lossType::regressionMSE:{
+    case lossType::regressionMSE:{
                
     
         break;
     }
-    case LossFunction::lossType::userLoss:{
+    case lossType::userLoss:{
                
         snSize outSz;
         snFloat* outData = nullptr;
@@ -158,7 +158,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
     auto grad = baseGrad_.getDataCPU();  
 
     switch (lossType_){
-    case LossFunction::lossType::softMaxACrossEntropy:{
+    case lossType::softMaxACrossEntropy:{
 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
@@ -167,7 +167,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::lossType::binaryCrossEntropy:{
+    case lossType::binaryCrossEntropy:{
 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i)
@@ -176,7 +176,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
     // Mean Square Error
-    case LossFunction::lossType::regressionMSE:{
+    case lossType::regressionMSE:{
                 
         size_t nsz = tsz.size();
         for (size_t i = 0; i < nsz; ++i){
@@ -187,7 +187,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
         break;
     }
 
-    case LossFunction::lossType::userLoss:{
+    case lossType::userLoss:{
 
         snSize outSz;
         snFloat* outData = nullptr;

@@ -262,7 +262,7 @@ void Deconvolution::forwardCUDA(const deconvParams& prms,
    
 }
 
-__global__ void cuBwdBias(snSize insz, snFloat* bias, snFloat* grout){
+__global__ void cuBwdBias(snSize insz, const snFloat* bias, snFloat* grout){
 
     size_t isz = insz.w * insz.h;
 
@@ -284,7 +284,8 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
  
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    
+    size_t wStepByN = prms.fWidth * prms.fHeight * insz.d * outsz.d;
+
     // run       
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnConvolutionForward(gpuPrm->cudnn,
@@ -315,16 +316,16 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
         gpuPrm->dw_desc,
         dWeightOut));
 
-   /* cuCHECK(cudnnConvolutionBackwardBias(gpuPrm->cudnn,
+    cuCHECK(cudnnConvolutionBackwardBias(gpuPrm->cudnn,
         &alpha,
         gpuPrm->in_desc,
         input,
         &beta,
         gpuPrm->bias_desc,
-        gpuPrm->d_bias));*/
+        dWeightOut + wStepByN));
 
     // +bias
-  //  cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
+    cuBwdBias << < int(insz.n), 128 >> > (insz, weight + wStepByN, gradOut);
      
 }
 
@@ -332,7 +333,8 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
     const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
     
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-  
+    size_t wStepByN = prms.fWidth * prms.fHeight * insz.d * outsz.d;
+
     // run      
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnConvolutionForward(gpuPrm->cudnn,
@@ -350,6 +352,6 @@ void Deconvolution::backwardCUDA_G(const deconvParams& prms,
         gradOut));
 
     // +bias
-  //  cuBwdBias << < int(insz.n), 128 >> > (insz, gpuPrm->d_bias, gradOut);
+    cuBwdBias << < int(insz.n), 128 >> > (insz, weight + wStepByN, gradOut);
        
 }

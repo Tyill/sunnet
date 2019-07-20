@@ -38,9 +38,7 @@ struct gpuParams{
 };
 
 void FullyConnected::iniParamCUDA(bool isLern, const snSize& insz, size_t kernel, void** pGpuPrm){
-    
-    size_t ida = insz.w * insz.h * insz.d, bsz = insz.n;
-
+      
     gpuParams* gpuPrm = (gpuParams*)*pGpuPrm;
     if (!gpuPrm){
     
@@ -70,7 +68,7 @@ void FullyConnected::freeParamCUDA(void* gpuPrms){
     cublasDestroy(gpuPrm->cuBLAS);
 }
 
-__global__ void cuFwdBias(size_t kernel, snSize insz, snFloat* weight, snFloat* output){
+__global__ void cuFwdBias(size_t kernel, snSize insz, const snFloat* weight, snFloat* output){
        
     weight += insz.w * insz.h * insz.d * kernel;
    
@@ -87,12 +85,10 @@ __global__ void cuFwdBias(size_t kernel, snSize insz, snFloat* weight, snFloat* 
 void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloat* input, const snFloat* weight, snFloat* output, void* gpuPrms){
     
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
-   
-  //  cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, gpuPrm->d_in, bsz));
-  
-   // cuCHECK(cudaMemcpy(gpuPrm->d_w, weight, (ida + 1) * krn * sizeof(snFloat), cudaMemcpyHostToDevice));
-
+    int ida = int(insz.w * insz.h * insz.d),
+        bsz = int(insz.n), 
+        krn = int(kernel);
+       
     // Out = α * W * In + βC
     // In - data input matrix - values from the previous layer
     // W - weights matrix
@@ -114,17 +110,18 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloa
         krn));                         // Out, step to next Y (Y21 - Y11) 
     
     // +bias
-//    cuFwdBias <<< int(insz.n), 128 >>> (kernel, insz, gpuPrm->d_w, gpuPrm->d_out);
+    cuFwdBias << < int(insz.n), 128 >> > (kernel, insz, weight, output);
     
 }
 
-__global__ void cuBwdBias(size_t kernel, snSize insz, snFloat* gradIn, snFloat* dWOut){
+__global__ void cuBwdBias(size_t kernel, snSize insz, const snFloat* gradIn, snFloat* dWOut){
     
     dWOut += insz.w * insz.h * insz.d * kernel;
     unsigned int k = threadIdx.x;
     while (k < kernel){
    
-        snFloat* grin = gradIn + k, b = 0;
+        const snFloat* grin = gradIn + k;
+        snFloat b = 0;
         for (size_t j = 0; j < insz.n; ++j)
             b += grin[kernel * j];
 
@@ -137,12 +134,9 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
     const snSize& insz, const snFloat* input, const snFloat* gradIn, snFloat* gradOut, snFloat* dWOut, void* gpuPrms){
   
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
-   /*
-    cuCHECK(cublasSetMatrix(bsz, ida, sizeof(snFloat), input, bsz, gpuPrm->d_in, bsz));
-  
-    cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
-*/
+    int ida = int(insz.w * insz.h * insz.d),
+        bsz = int(insz.n),
+        krn = int(kernel);   
 
     // Weight gradient
     // dW = αIn^T * GrIn + βdW
@@ -165,10 +159,8 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
         krn));                   // dW, step to next 
  
     // bias
-//    cuBwdBias <<< 1, 128 >>> (kernel, insz, d_grin, gpuPrm->d_dw);
-     
-//    cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, gpuPrm->d_w, ida));
-
+    cuBwdBias << < 1, 128 >> > (kernel, insz, gradIn, dWOut);
+      
     //// Gradient for previous layer
     //// GrOut = αGrIn * W^T + βGrOut
     //// GrIn - gradient matrix from the next layer
@@ -194,13 +186,10 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
 void FullyConnected::backwardCUDA_G(size_t kernel, const snFloat* weight, const snSize& insz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
         
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    int ida = int(insz.w * insz.h * insz.d), bsz = int(insz.n), krn = int(kernel);
-        
-    /*cuCHECK(cublasSetMatrix(bsz, krn, sizeof(snFloat), gradIn, bsz, d_grin, bsz));
-
-    cuCHECK(cublasSetMatrix(ida, krn, sizeof(snFloat), weight, ida, gpuPrm->d_w, ida));
-*/
-
+    int ida = int(insz.w * insz.h * insz.d),
+        bsz = int(insz.n), 
+        krn = int(kernel);       
+   
     //// Gradient for previous layer
     //// GrOut = αGrIn * W^T + βGrOut
     //// GrIn - gradient matrix from the next layer

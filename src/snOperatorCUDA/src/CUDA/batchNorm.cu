@@ -5,6 +5,15 @@
 
 using namespace SN_Base;
 
+__device__ void bnOffset(batchNorm& bn, size_t offs){
+    bn.mean += offs;
+    bn.varce += offs;
+    bn.scale += offs;
+    bn.dScale += offs;
+    bn.schift += offs;
+    bn.dSchift += offs;
+}
+
 __global__ void channelBatchNormInf(const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
     
     size_t inStepByD = insz.w * insz.h,     // step out by input
@@ -16,7 +25,7 @@ __global__ void channelBatchNormInf(const snSize& insz, snFloat* in, snFloat* ou
     snFloat* cin = in + inStepByN * blockIdx.y + inStepByD * blockIdx.x,
            * cout = out + inStepByN * blockIdx.y + inStepByD * blockIdx.x;
     
-    prm.offset(inStepByD * blockIdx.x);
+    bnOffset(prm, inStepByD * blockIdx.x);
     
     unsigned int i = threadIdx.x;
     while (i < inStepByD){

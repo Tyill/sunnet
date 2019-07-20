@@ -184,7 +184,7 @@ bool Convolution::setBatchNorm(const batchNorm& bn){
     return true;
 }
 
-batchNorm Convolution::getBatchNorm(){
+batchNorm Convolution::getBatchNorm()const{
 
     size_t csz = baseBatchNorm_.sz.size();
 
@@ -355,7 +355,12 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz, SN_Base::snSize
         if (wcsz == 0)
            weightInit(baseWeight_, ntp, stp + 1, kernel, weightInitType_);
     }
-        
+    
+    // +bias?
+    /*   if (!useBias_){
+    memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
+    }*/
+
     snSize outSz(0, 0, kernel, newsz.n);
           
     if (isPaddingSame_){

@@ -247,7 +247,7 @@ void Convolution::freeParamCUDA(void* gpuPrms){
     }
 }
 
-__global__ void cuFwdBias(snSize outsz, snFloat* bias, snFloat* output){
+__global__ void cuFwdBias(snSize outsz, const snFloat* bias, snFloat* output){
 
     size_t osz = outsz.w * outsz.h;
 
@@ -270,8 +270,8 @@ void Convolution::forwardCUDA(const convParams& prms,
  
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
        
-    size_t isz = insz.size(), osz = outsz.size();
-       
+    size_t wStepByN = prms.fWidth * prms.fHeight * insz.d * outsz.d;  
+
     // run
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnConvolutionForward(gpuPrm->cudnn,
@@ -289,15 +289,15 @@ void Convolution::forwardCUDA(const convParams& prms,
         output));
 
     // +bias
-//    cuFwdBias <<< int(insz.n), 128 >>> (outsz, gpuPrm->d_bias, gpuPrm->d_out);   
+    cuFwdBias << < int(insz.n), 128 >> > (outsz, weight + wStepByN, output);
 }
 
 void Convolution::backwardCUDA_GW(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snFloat* input, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, snFloat* dWeightOut, void* gpuPrms){
        
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    size_t isz = insz.size(), osz = outsz.size();
-        
+    size_t wStepByN = prms.fWidth * prms.fHeight * insz.d * outsz.d;
+
     // run
     snFloat alpha = 1.f, beta = 0.f;
     cuCHECK(cudnnConvolutionBackwardData(gpuPrm->cudnn,
@@ -328,13 +328,13 @@ void Convolution::backwardCUDA_GW(const convParams& prms,
         gpuPrm->dw_desc,
         dWeightOut));
 
-    /*cuCHECK(cudnnConvolutionBackwardBias(gpuPrm->cudnn,
+    cuCHECK(cudnnConvolutionBackwardBias(gpuPrm->cudnn,
         &alpha,
         gpuPrm->grin_desc,
         gradIn,
         &beta,
         gpuPrm->bias_desc,
-        gpuPrm->d_bias));*/
+        dWeightOut + wStepByN));
        
 }
 
@@ -342,7 +342,6 @@ void Convolution::backwardCUDA_G(const convParams& prms,
     const snFloat* weight, const snSize& insz, const snSize& outsz, const snFloat* gradIn, snFloat* gradOut, void* gpuPrms){
     
     gpuParams* gpuPrm = (gpuParams*)gpuPrms;
-    size_t isz = insz.size(), osz = outsz.size();
   
     // run
     snFloat alpha = 1.f, beta = 0.f;

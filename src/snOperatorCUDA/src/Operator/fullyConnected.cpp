@@ -178,7 +178,7 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
     return true;
 }
 
-batchNorm FullyConnected::getBatchNorm(){
+batchNorm FullyConnected::getBatchNorm()const{
 
     size_t csz = baseBatchNorm_.sz.size();
 
@@ -248,14 +248,9 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
     
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_.getDataGPU(), *weight = baseWeight_.getDataGPU();
-    
-    // +bias?
-    if (!useBias_){
-        size_t stepByN = insz.w * insz.h * insz.d * kernel_;
-        memset(weight + stepByN, 0, kernel_ * sizeof(snFloat));
-    }
-
+    snFloat* out = baseOut_.getDataGPU(), 
+           * weight = baseWeight_.getDataGPU();
+  
     // calculation
     forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
    
@@ -339,6 +334,11 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
             weightInit(baseWeight_, ntp - wcsz, stp + 1, kernel_, weightInitType_);
     }
     
+    // +bias?
+ /*   if (!useBias_){
+        memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
+    }*/
+
     baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));
 
     if (isLern){

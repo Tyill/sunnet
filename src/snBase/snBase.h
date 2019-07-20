@@ -205,7 +205,7 @@ namespace SN_Base{
             return baseWeight_;
         }
 
-        virtual batchNorm getBatchNorm(){
+        virtual batchNorm getBatchNorm() const{
             return baseBatchNorm_;
         }
 

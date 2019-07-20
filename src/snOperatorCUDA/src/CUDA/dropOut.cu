@@ -6,7 +6,7 @@
 
 using namespace SN_Base;
 
-__global__ dropOutLern(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* rnd, SN_Base::snFloat* out){
+__global__ void dropOutLern(SN_Base::snFloat dropOut, const snSize& outsz, snFloat* rnd, SN_Base::snFloat* out){
     
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -14,7 +14,7 @@ __global__ dropOutLern(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, S
     // gridDim.x - number of out layers
     // gridDim.y - batch size
 
-    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    out += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     
@@ -29,7 +29,7 @@ __global__ dropOutLern(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, S
     }
 }
 
-__global__ dropOutInf(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* out){
+__global__ void dropOutInf(SN_Base::snFloat dropOut, const snSize& outsz, snFloat* out){
 
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -37,7 +37,7 @@ __global__ dropOutInf(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN
     // gridDim.x - number of out layers
     // gridDim.y - batch size
 
-    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    out += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
 
@@ -50,7 +50,7 @@ __global__ dropOutInf(SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN
 }
 
 
-void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz, SN_Base::snFloat* inout){
+void dropOut(bool isLern, snFloat dropOut, const snSize& outsz, snFloat* inout){
        
     if (isLern){
         int blockSz = 128;
@@ -68,7 +68,7 @@ void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz
         dim3 dimBlock(blockSz);
         dim3 dimGrid(int(outsz.d), int(outsz.n));
                
-        dropOutLern <<< dimGrid, dimBlock >>>(dropOut, outsz, rndData, out);
+        dropOutLern << < dimGrid, dimBlock >> >(dropOut, outsz, rndData, inout);
         
         cuAssert(curandDestroyGenerator(gen));
         cuAssert(cudaFree(rndData));
@@ -78,6 +78,6 @@ void dropOut(bool isLern, SN_Base::snFloat dropOut, const SN_Base::snSize& outsz
         dim3 dimBlock(128);
         dim3 dimGrid(int(outsz.d), int(outsz.n));
         
-        dropOutInf << <dimGrid, dimBlock >> >(dropOut, outsz, out);
+        dropOutInf << <dimGrid, dimBlock >> >(dropOut, outsz, inout);
     }
 }

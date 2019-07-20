@@ -172,7 +172,7 @@ bool Deconvolution::setBatchNorm(const batchNorm& bn){
     return true;
 }
 
-SN_Base::batchNorm Deconvolution::getBatchNorm(){
+SN_Base::batchNorm Deconvolution::getBatchNorm()const{
 
     size_t csz = baseBatchNorm_.sz.size();
 
@@ -333,7 +333,12 @@ void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
         if (wcsz == 0)
           weightInit(baseWeight_, ntp - wcsz, stp + 1, deconvParams_.kernel, weightInitType_);
     }
-        
+    
+    // +bias?
+    /*   if (!useBias_){
+    memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
+    }*/
+
     snSize outSz(0, 0, deconvParams_.kernel, newsz.n);
         
    
