@@ -252,7 +252,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
            * weight = baseWeight_.getDataGPU();
   
     // calculation
-    forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
+  //  forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
    
     /// dropOut
     snSize outsz = baseOut_.size();
@@ -264,7 +264,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
         layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
     /// active func
-    activationForward(kernel_ * insz.n, out, activeType_);
+    activationForward(outsz, out, activeType_);
        
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)

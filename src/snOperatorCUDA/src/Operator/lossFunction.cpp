@@ -87,7 +87,7 @@ void LossFunction::forward(const Tensor& inTns){
 
     switch (lossType_){
     case lossType::softMaxACrossEntropy:{
-
+        break;
     }
     case lossType::binaryCrossEntropy:{
 

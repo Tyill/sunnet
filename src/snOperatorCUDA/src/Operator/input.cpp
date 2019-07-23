@@ -37,6 +37,7 @@ OperatorBase(net, name, node, prms){
 
 bool Input::setInput(const snFloat* data, const snSize& dsz){
     baseOut_.setDataCPU(data, dsz);
+  
     return true;
 }
 

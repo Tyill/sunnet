@@ -58,12 +58,13 @@ __global__ void fv_relu(const snSize& outsz, snFloat* output){
     // gridDim.x - number of out layers
     // gridDim.y - batch size
 
-    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+  //  output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
 
-        output[i] = output[i] >= 0 ? output[i] : 0;
+       // if (output[i] < 0)
+       //    output[i] = 0;
 
         i += blockDim.x;
     }
@@ -171,14 +172,14 @@ void activationForward(const snSize& sz, snFloat* data, activeType active){
          
     dim3 dimBlock(128);
     dim3 dimGrid(int(sz.d), int(sz.n));
-       
+    
     switch (active){
        case activeType::sigmoid:   fv_sigmoid   <<< dimGrid, dimBlock >>>(sz, data); break;
        case activeType::relu:      fv_relu      <<< dimGrid, dimBlock >>>(sz, data); break;
        case activeType::leakyRelu: fv_leakyRelu <<< dimGrid, dimBlock >>>(sz, data); break;
        case activeType::elu:       fv_elu       <<< dimGrid, dimBlock >>>(sz, data); break;
        default: break;
-    }
+    }    
 }
 
 void activationBackward(const snSize& sz, snFloat* data, snFloat* gradIn, activeType active){

@@ -247,8 +247,8 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
 
     // metrics
     if (outAccurate){
-        auto setGrad = operats_["EndNet"]->getGradient();
-        auto outTensor = operats_["EndNet"]->getOutput();
+        auto& setGrad = operats_["EndNet"]->getGradient();
+        auto& outTensor = operats_["EndNet"]->getOutput();
         *outAccurate = calcAccurate(setGrad, outTensor);
     }
 
@@ -271,7 +271,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
     engine_->forward(operPrm_);
 
     if (isEndNet_){
-        auto tnsOut = operats_["EndNet"]->getOutput();
+        auto& tnsOut = operats_["EndNet"]->getOutput();
 
         auto tnsOutSz = tnsOut.size();
         if (tnsOutSz != osz){
@@ -295,7 +295,7 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     }
 
     if (isEndNet_){
-        auto outTensor = operats_["EndNet"]->getOutput();
+        auto& outTensor = operats_["EndNet"]->getOutput();
 
         auto tsz = outTensor.size();
         if (tsz != gsz){
@@ -416,7 +416,7 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
         return false;
     }
 
-    auto outTns = operats_[nodeName]->getOutput();
+    auto& outTns = operats_[nodeName]->getOutput();
 
     osz = outTns.size();
 

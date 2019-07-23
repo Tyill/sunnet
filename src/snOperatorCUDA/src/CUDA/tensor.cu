@@ -113,9 +113,8 @@ void Tensor::resize(const snSize& nsz){
     ASSERT_MESS(nnsz > 0, "");
 
     if (csz < nnsz){
-
-        std::cout << nnsz << std::endl;
-        snFloat* mem;
+             
+        snFloat* mem = nullptr;
         cuAssert(cudaMalloc(&mem, nnsz * sizeof(snFloat)));
 
         if (dataGPU_){

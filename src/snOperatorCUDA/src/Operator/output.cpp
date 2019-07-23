@@ -44,7 +44,7 @@ std::vector<std::string> Output::Do(const operationParam& operPrm, const std::ve
 
     if (operPrm.action == snAction::forward)
         baseOut_ = neighbOpr[0]->getOutput();
-    
+ 
     return std::vector<std::string>();
 }
 
