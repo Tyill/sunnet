@@ -139,6 +139,10 @@ void Pooling::freeParamCUDA(void* gpuPrms){
     cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->in_desc));
     cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->out_desc));
       
+    if (gpuPrm->grin_desc){ // isLern
+      cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->grin_desc));
+      cuCHECK(cudnnDestroyTensorDescriptor(gpuPrm->grout_desc));
+    }
 }
 
 __global__ void cuFiltrNegative(snSize outsz, snFloat* out){

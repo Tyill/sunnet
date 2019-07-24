@@ -38,6 +38,7 @@ __global__ void df_sigmoid(snSize outsz, snFloat* output, snFloat* grad){
     // gridDim.y - batch size
 
     output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    grad += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
@@ -78,6 +79,7 @@ __global__ void df_relu(snSize outsz, snFloat* output, snFloat* grad){
     // gridDim.y - batch size
 
     output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    grad += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
@@ -117,6 +119,7 @@ __global__ void df_leakyRelu(snSize outsz, snFloat* output, snFloat* grad){
     // gridDim.y - batch size
 
     output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    grad += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
@@ -156,6 +159,7 @@ __global__ void df_elu(snSize outsz, snFloat* output, snFloat* grad){
     // gridDim.y - batch size
 
     output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    grad += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
