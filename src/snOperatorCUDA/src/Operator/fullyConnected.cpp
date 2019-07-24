@@ -252,7 +252,7 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
            * weight = baseWeight_.getDataGPU();
   
     // calculation
-  //  forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
+    forwardCUDA(kernel_, insz, inTns.getDataGPU(), weight, out, gpuParams_);
    
     /// dropOut
     snSize outsz = baseOut_.size();
@@ -299,13 +299,10 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
         // calculation
         backwardCUDA_GW(kernel_, weight, inSzMem_, inputMem_->getDataGPU(), gradIn, gradOut, dWeight, gpuParams_);
                         
-        // correct weight
-        snFloat* dWPrev = auxGPUParams_["dWPrev"];
-        snFloat* dWGrad = auxGPUParams_["dWGrad"];
-        
+        // correct weight              
         optimizer(dWeight,
-                  dWPrev,
-                  dWGrad,
+                  auxGPUParams_["dWPrev"],
+                  auxGPUParams_["dWGrad"],
                   weight,
                   baseWeight_.size(),
                   operPrm.lr,

@@ -29,7 +29,7 @@ using namespace std;
 using namespace SN_Base;
 
 
-__global__ void softMaxACrossEntropy(const snSize& iosz, snFloat* inout){
+__global__ void softMaxACrossEntropy(snSize iosz, snFloat* inout){
       
     size_t inStepByD = iosz.w * iosz.h,     // step out by input
            inStepByN = inStepByD * iosz.d;  // step out by batch       

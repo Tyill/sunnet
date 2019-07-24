@@ -7,7 +7,7 @@
 using namespace SN_Base;
 
 /// adaptive gradient method
-__global__ void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat eps){
+__global__ void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, snSize sz, snFloat alpha, snFloat lambda, snFloat eps){
 
     size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
                    
@@ -26,7 +26,7 @@ __global__ void opt_adagrad(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snS
 }
 
 /// RMSprop
-__global__ void opt_RMSprop(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mu, snFloat eps){
+__global__ void opt_RMSprop(snFloat* dW, snFloat* ioWGr, snFloat* ioW, snSize sz, snFloat alpha, snFloat lambda, snFloat mu, snFloat eps){
 
     size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
@@ -45,7 +45,7 @@ __global__ void opt_RMSprop(snFloat* dW, snFloat* ioWGr, snFloat* ioW, const snS
 }
 
 /// adam
-__global__ void opt_adam(snFloat* dW, snFloat* iodWPrev, snFloat* ioWGr, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mudW, snFloat muGr, snFloat eps){
+__global__ void opt_adam(snFloat* dW, snFloat* iodWPrev, snFloat* ioWGr, snFloat* ioW, snSize sz, snFloat alpha, snFloat lambda, snFloat mudW, snFloat muGr, snFloat eps){
 
     size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
@@ -69,7 +69,7 @@ __global__ void opt_adam(snFloat* dW, snFloat* iodWPrev, snFloat* ioWGr, snFloat
 }
 
 /// SGD without momentum
-__global__ void opt_sgd(snFloat* dW, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda){
+__global__ void opt_sgd(snFloat* dW, snFloat* ioW, snSize sz, snFloat alpha, snFloat lambda){
     
     size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 
@@ -86,7 +86,7 @@ __global__ void opt_sgd(snFloat* dW, snFloat* ioW, const snSize& sz, snFloat alp
 }
 
 /// SGD with momentum
-__global__ void opt_sgdMoment(snFloat* dW, snFloat* iodWPrev, snFloat* ioW, const snSize& sz, snFloat alpha, snFloat lambda, snFloat mu){
+__global__ void opt_sgdMoment(snFloat* dW, snFloat* iodWPrev, snFloat* ioW, snSize sz, snFloat alpha, snFloat lambda, snFloat mu){
 
     size_t wStepByD = sz.h;  // wsz.h := fWidth * fHeight * d + 1
 

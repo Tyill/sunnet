@@ -51,11 +51,7 @@ private:
     poolParams poolPrms_;
                                                                       
     SN_Base::snSize inSzMem_;                                         ///< input size mem
-    SN_Base::snSize inDataExpSz_;                                     ///< input size expand
   
-    SN_Base::Tensor inTnsExp_;
-    SN_Base::Tensor gradOutExp_;
-
     const SN_Base::Tensor* inputMem_ = nullptr;
 
                                 

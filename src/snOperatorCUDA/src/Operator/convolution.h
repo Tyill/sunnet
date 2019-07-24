@@ -64,7 +64,6 @@ private:
     weightInitType weightInitType_ = weightInitType::he;    ///< init weight type
     batchNormType batchNormType_ = batchNormType::none;     ///< batchNorm 
     SN_Base::snSize inSzMem_;                               ///< insz mem
-    SN_Base::snSize inDataExpSz_;                           ///< insz expansion
    
     const SN_Base::Tensor* inputMem_ = nullptr;
          
@@ -85,7 +84,7 @@ private:
 
     void load(std::map<std::string, std::string>& prms);
 
-    void updateConfig(bool isLern, const SN_Base::snSize& newSz, SN_Base::snSize& expSz);
+    void updateConfig(bool isLern, const SN_Base::snSize& newSz);
          
         
     void forward(const SN_Base::Tensor& inTns, const SN_Base::operationParam& operPrm);

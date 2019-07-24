@@ -43,7 +43,7 @@ struct gpuParams{
    
 };
 
-void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz, const poolParams& poolPrms, void** pGpuPrm){
+void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz, const poolParams& prms, void** pGpuPrm){
      
     bool isFirst = false;
 
@@ -80,11 +80,11 @@ void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz,
     cuCHECK(cudnnCreatePoolingDescriptor(&pool_desc));
 
     cudnnPoolingMode_t poolT = cudnnPoolingMode_t::CUDNN_POOLING_MAX;
-    if (poolPrms.type == poolType::avg)
+    if (prms.type == poolType::avg)
         poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
-        int(poolPrms.kernel), int(poolPrms.kernel), 0, 0, int(poolPrms.stride), int(poolPrms.stride)));
+        int(prms.kernel), int(prms.kernel), prms.paddingH, prms.paddingW, int(prms.stride), int(prms.stride)));
     if (!isFirst)
         cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
     gpuPrm->pool_desc = pool_desc;
@@ -173,10 +173,10 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const 
         output));
    
     // filtrNegative
-    dim3 dimBlock(256);
-    dim3 dimGrid(int(outsz.n));
+  //  dim3 dimBlock(256);
+   // dim3 dimGrid(int(outsz.n));
 
-    cuFiltrNegative << < dimGrid, dimBlock >> >(outsz, output);
+  //  cuFiltrNegative << < dimGrid, dimBlock >> >(outsz, output);
   
 }
 

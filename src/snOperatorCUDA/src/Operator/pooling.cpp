@@ -143,7 +143,7 @@ void Pooling::backward(const SN_Base::Tensor& inTns, const operationParam& operP
            * gradOut = baseGrad_.getDataGPU();    
 
     /// grad calculation
-    backwardCUDA(poolPrms_, baseOut_.size(), baseOut_.getDataGPU(), gradIn, inDataExpSz_, input, gradOut, gpuParams_);
+    backwardCUDA(poolPrms_, baseOut_.size(), baseOut_.getDataGPU(), gradIn, inSzMem_, input, gradOut, gpuParams_);
 }
 
 void Pooling::updateConfig(bool isLern, const snSize& newsz){
@@ -163,9 +163,7 @@ void Pooling::updateConfig(bool isLern, const snSize& newsz){
            resH = (newsz.h - kernel) % stride;
     
     isPadding_ = (resW != 0) || (resH != 0);
-
-    inDataExpSz_ = newsz;
-
+    
     if (isPadding_){   
        
         paddingW = 1;
@@ -174,7 +172,6 @@ void Pooling::updateConfig(bool isLern, const snSize& newsz){
         outSz.w = (newsz.w + paddingW * 2 - kernel) / stride + 1;
         outSz.h = (newsz.h + paddingH * 2 - kernel) / stride + 1;
 
-        inDataExpSz_ = snSize(newsz.w + paddingW * 2, newsz.h + paddingH * 2, newsz.d, newsz.n);
     }
         
     baseOut_.resize(outSz);
@@ -182,5 +179,5 @@ void Pooling::updateConfig(bool isLern, const snSize& newsz){
     if (isLern)
        baseGrad_.resize(newsz);
     
-    iniParamCUDA(isLern, inDataExpSz_, outSz, poolPrms_, &gpuParams_);    
+    iniParamCUDA(isLern, newsz, outSz, poolPrms_, &gpuParams_);
 }

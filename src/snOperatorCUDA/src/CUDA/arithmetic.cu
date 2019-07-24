@@ -7,7 +7,7 @@ using namespace SN_Base;
 
 
 
-__global__ void summInf(const SN_Base::snSize& sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
+__global__ void summInf(SN_Base::snSize sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
 
     size_t outStepByD = sz.w * sz.h,        // step out by input
         outStepByN = outStepByD * sz.d;  // step out by batch       
@@ -28,7 +28,7 @@ __global__ void summInf(const SN_Base::snSize& sz, SN_Base::snFloat* one, const 
     }
 }
 
-__global__ void differenceInf(const SN_Base::snSize& sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
+__global__ void differenceInf(SN_Base::snSize sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
 
     size_t outStepByD = sz.w * sz.h,        // step out by input
         outStepByN = outStepByD * sz.d;  // step out by batch       
@@ -49,7 +49,7 @@ __global__ void differenceInf(const SN_Base::snSize& sz, SN_Base::snFloat* one, 
     }
 }
 
-__global__ void meanInf(const SN_Base::snSize& sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
+__global__ void meanInf(SN_Base::snSize sz, SN_Base::snFloat* one, const SN_Base::snFloat* two){
 
     size_t outStepByD = sz.w * sz.h,        // step out by input
         outStepByN = outStepByD * sz.d;  // step out by batch       

@@ -6,7 +6,7 @@
 
 using namespace SN_Base;
 
-__global__ void dropOutLern(SN_Base::snFloat dropOut, const snSize& outsz, snFloat* rnd, SN_Base::snFloat* out){
+__global__ void dropOutLern(SN_Base::snFloat dropOut, snSize outsz, snFloat* rnd, SN_Base::snFloat* out){
     
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -29,7 +29,7 @@ __global__ void dropOutLern(SN_Base::snFloat dropOut, const snSize& outsz, snFlo
     }
 }
 
-__global__ void dropOutInf(SN_Base::snFloat dropOut, const snSize& outsz, snFloat* out){
+__global__ void dropOutInf(SN_Base::snFloat dropOut, snSize outsz, snFloat* out){
 
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       

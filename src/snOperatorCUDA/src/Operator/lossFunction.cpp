@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../lossFunctions.h"
 #include "snOperatorCUDA/src/Operator/lossFunction.h"
 
 using namespace std;
@@ -80,46 +81,24 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
 
 void LossFunction::forward(const Tensor& inTns){
 
-    snSize tsz = inTns.size();
-    baseOut_ = inTns;
-    
-    auto out = baseOut_.getDataGPU();
+    baseOut_ = inTns;    
+   
+    if (lossType_ != lossType::userLoss){
 
-    switch (lossType_){
-    case lossType::softMaxACrossEntropy:{
-        break;
+        lossForward(baseOut_.size(), baseOut_.getDataGPU(), lossType_);
     }
-    case lossType::binaryCrossEntropy:{
-
-        break;
-    }
-    case lossType::regressionMSE:{
-               
-    
-        break;
-    }
-    case lossType::userLoss:{
-               
+    else{
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-           true, inTns.size(), inTns.getDataCPU(), outSz, &outData);
+            true, inTns.size(), inTns.getDataCPU(), outSz, &outData);
 
         if (outData){
             baseOut_.setDataCPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
-
-        break;
-    }
-
-    break;
-    default:
-        ERROR_MESS("param 'loss' indefined");
-        break;
-    }
-
+    }    
 }
 
 void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){

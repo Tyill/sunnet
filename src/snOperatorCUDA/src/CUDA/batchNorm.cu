@@ -5,16 +5,16 @@
 
 using namespace SN_Base;
 
-__device__ void bnOffset(batchNorm& bn, size_t offs){
-    bn.mean += offs;
-    bn.varce += offs;
-    bn.scale += offs;
-    bn.dScale += offs;
-    bn.schift += offs;
-    bn.dSchift += offs;
+__device__ void bnOffset(batchNorm* bn, size_t offs){
+    bn->mean += offs;
+    bn->varce += offs;
+    bn->scale += offs;
+    bn->dScale += offs;
+    bn->schift += offs;
+    bn->dSchift += offs;
 }
 
-__global__ void channelBatchNormInf(const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
+__global__ void channelBatchNormInf(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
     
     size_t inStepByD = insz.w * insz.h,     // step out by input
            inStepByN = inStepByD * insz.d;  // step out by batch       
@@ -25,7 +25,7 @@ __global__ void channelBatchNormInf(const snSize& insz, snFloat* in, snFloat* ou
     snFloat* cin = in + inStepByN * blockIdx.y + inStepByD * blockIdx.x,
            * cout = out + inStepByN * blockIdx.y + inStepByD * blockIdx.x;
     
-    bnOffset(prm, inStepByD * blockIdx.x);
+    bnOffset(&prm, inStepByD * blockIdx.x);
     
     unsigned int i = threadIdx.x;
     while (i < inStepByD){
@@ -36,7 +36,7 @@ __global__ void channelBatchNormInf(const snSize& insz, snFloat* in, snFloat* ou
     }
 }
 
-__global__ void layerBatchNormInf(const snSize& insz, snFloat* in, snFloat* out, batchNorm prm){
+__global__ void layerBatchNormInf(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
      
     size_t inStepByD = insz.w * insz.h,     // step out by input
            inStepByN = inStepByD * insz.d;  // step out by batch       

@@ -8,7 +8,7 @@
 
 using namespace SN_Base;
 
-__global__ void fv_sigmoid(const snSize& outsz, snFloat* output){
+__global__ void fv_sigmoid(snSize outsz, snFloat* output){
       
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -29,7 +29,7 @@ __global__ void fv_sigmoid(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_sigmoid(const snSize& outsz, snFloat* output, snFloat* grad){
+__global__ void df_sigmoid(snSize outsz, snFloat* output, snFloat* grad){
         
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
            outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -50,7 +50,7 @@ __global__ void df_sigmoid(const snSize& outsz, snFloat* output, snFloat* grad){
     }
 }
 
-__global__ void fv_relu(const snSize& outsz, snFloat* output){
+__global__ void fv_relu(snSize outsz, snFloat* output){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -58,18 +58,18 @@ __global__ void fv_relu(const snSize& outsz, snFloat* output){
     // gridDim.x - number of out layers
     // gridDim.y - batch size
 
-  //  output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
+    output += blockIdx.x * outStepByD + blockIdx.y * outStepByN;
 
     unsigned int i = threadIdx.x;
     while (i < outStepByD){
 
-       // if (output[i] < 0)
-       //    output[i] = 0;
+        if (output[i] < 0)
+           output[i] = 0;
 
         i += blockDim.x;
     }
 };
-__global__ void df_relu(const snSize& outsz, snFloat* output, snFloat* grad){
+__global__ void df_relu(snSize outsz, snFloat* output, snFloat* grad){
       
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -90,7 +90,7 @@ __global__ void df_relu(const snSize& outsz, snFloat* output, snFloat* grad){
     }
 };
 
-__global__ void fv_leakyRelu(const snSize& outsz, snFloat* output){
+__global__ void fv_leakyRelu(snSize outsz, snFloat* output){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -108,7 +108,7 @@ __global__ void fv_leakyRelu(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_leakyRelu(const snSize& outsz, snFloat* output, snFloat* grad){
+__global__ void df_leakyRelu(snSize outsz, snFloat* output, snFloat* grad){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -129,7 +129,7 @@ __global__ void df_leakyRelu(const snSize& outsz, snFloat* output, snFloat* grad
     }
 }
 
-__global__ void fv_elu(const snSize& outsz, snFloat* output){
+__global__ void fv_elu(snSize outsz, snFloat* output){
         
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
@@ -147,7 +147,7 @@ __global__ void fv_elu(const snSize& outsz, snFloat* output){
         i += blockDim.x;
     }
 }
-__global__ void df_elu(const snSize& outsz, snFloat* output, snFloat* grad){
+__global__ void df_elu(snSize outsz, snFloat* output, snFloat* grad){
        
     size_t outStepByD = outsz.w * outsz.h,     // step out by input
         outStepByN = outStepByD * outsz.d;  // step out by batch       
