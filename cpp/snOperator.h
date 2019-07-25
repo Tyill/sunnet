@@ -70,9 +70,7 @@ namespace SN_API{
         optimizer opt = optimizer::adam;           ///< Optimizer of weights. Optional parameter
         snFloat dropOut = 0.0;                     ///< Random disconnection of neurons. Optional parameter [0..1.F]
         batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
-        calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
         uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
-        bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         bool useBias = true;                       ///< +bias. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
@@ -86,17 +84,13 @@ namespace SN_API{
                        optimizer opt_ = optimizer::adam,          
                        snFloat dropOut_ = 0.0,                    
                        batchNormType bnorm_ = batchNormType::none,
-                       calcMode mode_ = calcMode::CPU,            
                        uint32_t gpuDeviceId_ = 0):
                        
             units(units_), act(act_), opt(opt_),
-            dropOut(dropOut_), bnorm(bnorm_), mode(mode_), gpuDeviceId(gpuDeviceId_){};
+            dropOut(dropOut_), bnorm(bnorm_), gpuDeviceId(gpuDeviceId_){};
 
-        FullyConnected(uint32_t units_, calcMode mode_ = calcMode::CPU, batchNormType bnorm_ = batchNormType::none) :
-            units(units_), mode(mode_), bnorm(bnorm_){}
-
-        FullyConnected(uint32_t units_, active act_, calcMode mode_) :
-            units(units_), act(act_), mode(mode_){}
+        FullyConnected(uint32_t units_, batchNormType bnorm_ = batchNormType::none) :
+            units(units_), bnorm(bnorm_){}
 
         ~FullyConnected(){};
               
@@ -112,12 +106,10 @@ namespace SN_API{
                 "\"decayMomentDW\":\"" << decayMomentDW << "\","
                 "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
                 "\"lmbRegular\":\"" << lmbRegular << "\","
-                "\"dropOut\":\"" << dropOut << "\","
-                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"dropOut\":\"" << dropOut << "\","                
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
                 "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
-                "\"useBias\":\"" << (useBias ? 1 : 0) << "\","
-                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "\"useBias\":\"" << (useBias ? 1 : 0) << "\""                
                 "}";
 
            return ss.str();
@@ -145,9 +137,7 @@ namespace SN_API{
         int padding = 0;                           ///< Padding around the edges. Optional parameter
         uint32_t stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
         uint32_t dilate = 1;                       ///< Expansion mask. Optional parameter(> 0)
-        calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
         uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
-        bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         bool useBias = true;                       ///< +bias. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
@@ -166,21 +156,20 @@ namespace SN_API{
             uint32_t fHeight_ = 3,                    
             int padding_ = 0,
             uint32_t stride_ = 1,                      
-            uint32_t dilate_ = 1,                      
-            calcMode mode_ = calcMode::CPU,            
+            uint32_t dilate_ = 1,
             uint32_t gpuDeviceId_ = 0):
             
             filters(filters_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
             fWidth(fWidth_), fHeight(fHeight_), padding(padding_), stride(stride_),
-            dilate(dilate_), mode(mode_), gpuDeviceId(gpuDeviceId_){}           
+            dilate(dilate_), gpuDeviceId(gpuDeviceId_){}           
        
         Convolution(uint32_t filters_, uint32_t kernelSz, int padding_ = 0, uint32_t stride_ = 1,
-            batchNormType bnorm_ = batchNormType::none, active act_ = active::relu, calcMode mode_ = calcMode::CPU) :
+            batchNormType bnorm_ = batchNormType::none, active act_ = active::relu) :
             filters(filters_), fWidth(kernelSz), fHeight(kernelSz), padding(padding_), stride(stride_),
-            bnorm(bnorm_), act(act_), mode(mode_){}
+            bnorm(bnorm_), act(act_){}
 
-        Convolution(uint32_t filters_, int padding_ = 0, calcMode mode_ = calcMode::CPU) :
-            filters(filters_), padding(padding_), mode(mode_){}
+        Convolution(uint32_t filters_, int padding_ = 0) :
+            filters(filters_), padding(padding_){}
 
         ~Convolution(){};            
       
@@ -201,12 +190,10 @@ namespace SN_API{
                 "\"decayMomentDW\":\"" << decayMomentDW << "\","
                 "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
                 "\"lmbRegular\":\"" << lmbRegular << "\","
-                "\"dropOut\":\"" << dropOut << "\","
-                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"dropOut\":\"" << dropOut << "\","                
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
                 "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
-                "\"useBias\":\"" << (useBias ? 1 : 0) << "\","
-                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "\"useBias\":\"" << (useBias ? 1 : 0) << "\""                
                 "}";
 
             return ss.str();
@@ -232,10 +219,8 @@ namespace SN_API{
         batchNormType bnorm = batchNormType::none; ///< Type of batch norm. Optional parameter
         uint32_t fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
         uint32_t fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
-        uint32_t stride = 2;                       ///< Mask movement step. Optional parameter(> 0)
-        calcMode mode = calcMode::CPU;             ///< Сalculation mode. Optional parameter           
-        uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
-        bool gpuClearMem = false;                  ///< Clear memory GPU. Optional parameter
+        uint32_t stride = 2;                       ///< Mask movement step. Optional parameter(> 0)                
+        uint32_t gpuDeviceId = 0;                  ///< GPU Id. Optional parameter      
         bool freeze = false;                       ///< Do not change weights. Optional parameter
         weightInit wini = weightInit::he;          ///< Type of initialization of weights. Optional parameter
         snFloat decayMomentDW = 0.9F;              ///< Optimizer of weights moment change. Optional parameter [0..1.F]
@@ -250,16 +235,15 @@ namespace SN_API{
             batchNormType bnorm_ = batchNormType::none,
             uint32_t fWidth_ = 3,
             uint32_t fHeight_ = 3,
-            uint32_t stride_ = 2,
-            calcMode mode_ = calcMode::CPU,
+            uint32_t stride_ = 2,           
             uint32_t gpuDeviceId_ = 0):
             
             filters(filters_), act(act_), opt(opt_), dropOut(dropOut_), bnorm(bnorm_),
             fWidth(fWidth_), fHeight(fHeight_), stride(stride_),
-            mode(mode_), gpuDeviceId(gpuDeviceId_){}
+            gpuDeviceId(gpuDeviceId_){}
        
-        Deconvolution(uint32_t filters_, calcMode mode_ = calcMode::CPU) :
-            filters(filters_), mode(mode_){}
+        Deconvolution(uint32_t filters_) :
+            filters(filters_){}
 
         ~Deconvolution(){};
   
@@ -278,11 +262,9 @@ namespace SN_API{
                 "\"decayMomentDW\":\"" << decayMomentDW << "\","
                 "\"decayMomentWGr\":\"" << decayMomentWGr << "\","
                 "\"lmbRegular\":\"" << lmbRegular << "\","
-                "\"dropOut\":\"" << dropOut << "\","
-                "\"mode\":\"" << calcModeStr(mode) << "\","
+                "\"dropOut\":\"" << dropOut << "\","                
                 "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
-                "\"freeze\":\"" << (freeze ? 1 : 0) << "\","
-                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "\"freeze\":\"" << (freeze ? 1 : 0) << "\""               
                 "}";
 
            return ss.str();
@@ -304,18 +286,13 @@ namespace SN_API{
         uint32_t kernel = 2;              ///< Square Mask Size. Optional parameter (> 0) 
         uint32_t stride = 2;              ///< Mask movement step. Optional parameter(> 0)
         poolType pool = poolType::max;    ///< Operator Type. Optional parameter 
-        calcMode mode = calcMode::CPU;    ///< Сalculation mode. Optional parameter           
         uint32_t gpuDeviceId = 0;         ///< GPU Id. Optional parameter
-        bool gpuClearMem = false;         ///< Clear memory GPU. Optional parameter
-
-        Pooling(calcMode mode_ = calcMode::CPU,
-            uint32_t gpuDeviceId_ = 0,
-            bool gpuClearMem_ = false):
-            mode(mode_),
-            gpuDeviceId(gpuDeviceId_), gpuClearMem(gpuClearMem_){}
+   
+        Pooling(uint32_t gpuDeviceId_ = 0):            
+            gpuDeviceId(gpuDeviceId_){}
               
-        Pooling(uint32_t kernel_, uint32_t stride_, poolType pool_ = poolType::max, calcMode mode_ = calcMode::CPU) :
-            kernel(kernel_), stride(stride_), pool(pool_), mode(mode_){}
+        Pooling(uint32_t kernel_, uint32_t stride_, poolType pool_ = poolType::max) :
+            kernel(kernel_), stride(stride_), pool(pool_){}
 
         ~Pooling(){};
                 
@@ -324,10 +301,8 @@ namespace SN_API{
             std::stringstream ss;
             ss << "{\"kernel\":\"" << kernel << "\","
                 "\"stride\":\"" << stride << "\","
-                "\"pool\":\"" << poolTypeStr(pool) << "\","                
-                "\"mode\":\"" << calcModeStr(mode) << "\","
-                "\"gpuDeviceId\":\"" << gpuDeviceId << "\","
-                "\"gpuClearMem\":\"" << (gpuClearMem ? 1 : 0) << "\""
+                "\"pool\":\"" << poolTypeStr(pool) << "\","
+                "\"gpuDeviceId\":\"" << gpuDeviceId << "\""                
                 "}";
 
             return ss.str();

@@ -67,24 +67,24 @@ namespace Test
             Console.WriteLine("Version snlib " + ver);
         
             snet.addNode("Input", new sn.Input(), "C1")
-                .addNode("C1", new sn.Convolution(15, -1, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "C2")
-                .addNode("C2", new sn.Convolution(15, 0, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "P1")
-                .addNode("P1", new sn.Pooling(sn.calcMode.type.CUDA), "C3")
+                .addNode("C1", new sn.Convolution(15, -1, sn.batchNormType.type.beforeActive), "C2")
+                .addNode("C2", new sn.Convolution(15, 0, sn.batchNormType.type.beforeActive), "P1")
+                .addNode("P1", new sn.Pooling(), "C3")
 
-                .addNode("C3", new sn.Convolution(25, -1, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "C4")
-                .addNode("C4", new sn.Convolution(25, 0, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "P2")
-                .addNode("P2", new sn.Pooling(sn.calcMode.type.CUDA), "C5")
+                .addNode("C3", new sn.Convolution(25, -1, sn.batchNormType.type.beforeActive), "C4")
+                .addNode("C4", new sn.Convolution(25, 0, sn.batchNormType.type.beforeActive), "P2")
+                .addNode("P2", new sn.Pooling(), "C5")
 
-                .addNode("C5", new sn.Convolution(25, -1, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "C6")
-                .addNode("C6", new sn.Convolution(25, 0, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "P3")
-                .addNode("P3", new sn.Pooling(sn.calcMode.type.CUDA), "FC1")
+                .addNode("C5", new sn.Convolution(25, -1, sn.batchNormType.type.beforeActive), "C6")
+                .addNode("C6", new sn.Convolution(25, 0, sn.batchNormType.type.beforeActive), "P3")
+                .addNode("P3", new sn.Pooling(), "FC1")
 
-                .addNode("FC1", new sn.FullyConnected(2048, sn.calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "FC2")
-                .addNode("FC2", new sn.FullyConnected(128, sn::calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "FC3")
-                .addNode("FC3", new sn.FullyConnected(10, sn::calcMode.type.CUDA, sn.batchNormType.type.beforeActive), "LS")
+                .addNode("FC1", new sn.FullyConnected(2048, sn.batchNormType.type.beforeActive), "FC2")
+                .addNode("FC2", new sn.FullyConnected(128, sn.batchNormType.type.beforeActive), "FC3")
+                .addNode("FC3", new sn.FullyConnected(10, sn.batchNormType.type.beforeActive), "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.softMaxToCrossEntropy), "Output");
 
-            string imgPath = "c://C++//skyNet//example//cifar10//images//";
+            string imgPath = "c://cpp//skyNet//example//cifar10//images//";
 
                       
             uint batchSz = 100, classCnt = 10, w = 32, h = 32, d = 3; float lr = 0.001F;
@@ -99,7 +99,7 @@ namespace Test
                 return;
             }
 
-            string wpath = "c:/C++/w.dat";
+            string wpath = "c:/cpp/w.dat";
           //  if (snet.loadAllWeightFromFile(wpath))
            //     Console.WriteLine("Load weight ok path: " + wpath);
            // else

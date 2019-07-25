@@ -60,12 +60,6 @@ class poolType(Enum):
     max = 'max'
     avg = 'avg'
 
-class calcMode(Enum):
-    """Calc mode."""
-    CPU = 'CPU'
-    CUDA = 'CUDA'
-    #OpenCL = 'OpenCL'
-
 class lockType(Enum):
     """Lock type."""
     lock = 'lock'

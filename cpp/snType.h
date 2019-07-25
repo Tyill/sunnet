@@ -117,22 +117,7 @@ namespace SN_API{
         default:            return "max";
         }
     }
-
-    /// CPU, CUDA or OpenCL(for the future)
-    enum class calcMode{
-        CPU = 0,
-        CUDA = 1,
-        //OpenCL = 2,  
-    };
-    std::string calcModeStr(calcMode mode){
-
-        switch (mode){
-        case calcMode::CPU:  return "CPU";
-        case calcMode::CUDA: return "CUDA";
-        default:             return "CPU";
-        }
-    }
-
+      
     enum class lockType{
         lock = 0,
         unlock = 1,

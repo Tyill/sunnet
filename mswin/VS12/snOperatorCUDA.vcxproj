@@ -193,7 +193,6 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\batchNormFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\cudaCommon.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\dropOut.h" />
-    <ClInclude Include="..\..\src\snOperatorCUDA\src\lossFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\activation.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperatorCUDA\src\Operator\concat.h" />
@@ -243,6 +242,7 @@
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\batchNorm.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\common.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\convolution.cu" />
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\crop.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\deconvolution.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\dropOut.cu" />
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\fullyConnected.cu" />

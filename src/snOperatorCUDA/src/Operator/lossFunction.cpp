@@ -79,6 +79,12 @@ std::vector<std::string> LossFunction::Do(const operationParam& operPrm, const s
     return std::vector<std::string>();
 }
 
+// CUDA/lossFunctions.cu
+void lossForward(const SN_Base::snSize& insz, SN_Base::snFloat* inout, lossType loss);
+
+// CUDA/lossFunctions.cu
+void lossBackward(const SN_Base::snSize& outsz, SN_Base::snFloat* out, SN_Base::snFloat* targ, SN_Base::snFloat* grad, lossType loss);
+
 void LossFunction::forward(const Tensor& inTns){
 
     baseOut_ = inTns;    
@@ -105,63 +111,28 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
 
     snSize tsz = inTns.size();        
    
-    snSize grsz = baseGrad_.size();
-    if (grsz != tsz)
-        baseGrad_.resize(tsz);
-        
-    auto smOut = baseOut_.getDataGPU();    
-    auto target = inTns.getDataGPU();      
-    auto grad = baseGrad_.getDataGPU();  
+    if (inTns != baseGrad_)
+        baseGrad_.resize(tsz);       
+  
+    if (lossType_ != lossType::userLoss){
 
-    switch (lossType_){
-    case lossType::softMaxACrossEntropy:{
+        auto smOut = baseOut_.getDataGPU();
+        auto target = inTns.getDataGPU();
+        auto grad = baseGrad_.getDataGPU();
 
-        size_t nsz = tsz.size();
-        for (size_t i = 0; i < nsz; ++i)
-            grad[i] = smOut[i] - target[i];
-
-        break;
+        lossBackward(tsz, smOut, target, grad, lossType_);
     }
-
-    case lossType::binaryCrossEntropy:{
-
-        size_t nsz = tsz.size();
-        for (size_t i = 0; i < nsz; ++i)
-            grad[i] = (smOut[i] - target[i]) / (smOut[i] * (1.F - smOut[i]));
-    
-        break;
-    }
-    // Mean Square Error
-    case lossType::regressionMSE:{
-                
-        size_t nsz = tsz.size();
-        for (size_t i = 0; i < nsz; ++i){
-                        
-            grad[i] = 2 * (smOut[i] - target[i]) / nsz;
-        }
-
-        break;
-    }
-
-    case lossType::userLoss:{
+    else{
 
         snSize outSz;
         snFloat* outData = nullptr;
         g_userCBack(this, basePrms_["cbackName"], node_,
-            false, inTns.size(), inTns.getDataCPU(), outSz, &outData);
+            false, tsz, inTns.getDataCPU(), outSz, &outData);
 
         if (outData){
             baseGrad_.setDataCPU(outData, outSz);
         }
         else
             ERROR_MESS("not set 'outData' in userCBack");
-
-        break;
-    }
-
-
-    default:
-        ERROR_MESS("param 'lossType' indefined");
-        break;
     }
 }

@@ -72,3 +72,10 @@ enum class lossType{
     regressionMSE = 2,
     userLoss = 3,
 };
+
+struct roi{
+    size_t x, y, w, h;
+
+    roi(size_t x_ = 0, size_t y_ = 0, size_t w_ = 0, size_t h_ = 0) :
+        x(x_), y(y_), w(w_), h(h_){}
+};

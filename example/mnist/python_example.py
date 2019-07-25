@@ -12,15 +12,15 @@ import datetime
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, 0, snType.calcMode.CPU), 'C2') \
-   .addNode('C2', snOperator.Convolution(25, 0, snType.calcMode.CPU), 'P1') \
-   .addNode('P1', snOperator.Pooling(snType.poolType.max, snType.calcMode.CPU), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(256, snType.calcMode.CPU), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(10, snType.calcMode.CPU), 'LS') \
+   .addNode('C1', snOperator.Convolution(15, 0), 'C2') \
+   .addNode('C2', snOperator.Convolution(25, 0), 'P1') \
+   .addNode('P1', snOperator.Pooling(snType.poolType.max), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(256), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(10), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
 
 # load of weight
-#if (net.loadAllWeightFromFile('c:/C++/w.dat')):
+#if (net.loadAllWeightFromFile('c:/cpp/w.dat')):
  #   print('weight is load')
 #else:
 #    print('error load weight')

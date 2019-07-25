@@ -25,6 +25,7 @@
 #pragma once
 
 #include "snBase/snBase.h"
+#include "../structurs.h"
 
 
 /// Trimming data
@@ -39,16 +40,7 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
 private: 
-
-    struct roi{
-        size_t x, y, w, h;
-
-        roi(size_t x_ = 0, size_t y_ = 0, size_t w_ = 0, size_t h_ = 0) :
-            x(x_), y(y_), w(w_), h(h_){}
-    };
-
+        
     roi roi_;
     SN_Base::snSize baseSz_;
-
-    void copyTo(bool inToOut, const roi& roi, const SN_Base::snSize& srcSz, SN_Base::snFloat* in, SN_Base::snFloat* out);
 };

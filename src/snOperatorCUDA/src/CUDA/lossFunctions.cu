@@ -29,17 +29,16 @@ using namespace std;
 using namespace SN_Base;
 
 
-__global__ void softMaxACrossEntropy(snSize iosz, snFloat* inout){
+__global__ void softMaxACrossEntropyFwd(snSize iosz, snFloat* inout){
       
     size_t inStepByD = iosz.w * iosz.h,     // step out by input
            inStepByN = inStepByD * iosz.d;  // step out by batch       
 
     // gridDim.x - number of out layers
-    // gridDim.y - batch size
-
+ 
     inout += blockIdx.x * inStepByN;
            
-    __shared__ int tmax;
+    __shared__ unsigned long long int tmax;
     __shared__ snFloat tsumm;
 
     tmax = 0;
@@ -51,7 +50,7 @@ __global__ void softMaxACrossEntropy(snSize iosz, snFloat* inout){
 
     while (i < inStepByN){
 
-        atomicMax(&tmax, int(inout[i]));
+        atomicMax(&tmax, unsigned long long int(inout[i] * 100.F));
        
         i += blockDim.x;
     }
@@ -60,7 +59,7 @@ __global__ void softMaxACrossEntropy(snSize iosz, snFloat* inout){
     
     while (i < inStepByN){
        
-        inout[i] = (inout[i] - tmax > -20) ? exp(inout[i] - tmax) : 0.1E-8F;
+        inout[i] = ((inout[i] - tmax / 100.F) > -20) ? exp(inout[i] - tmax / 100.F) : 0.1E-8F;
 
         atomicAdd(&tsumm, inout[i]);
              
@@ -77,20 +76,110 @@ __global__ void softMaxACrossEntropy(snSize iosz, snFloat* inout){
     }   
 }
 
-void lossForward(const snSize& insz, snFloat* inout, lossType loss){
+__global__ void softMaxACrossEntropyBwd(snSize iosz, snFloat* out, snFloat* targ, snFloat* grad){
+
+    size_t inStepByD = iosz.w * iosz.h,     // step out by input
+           inStepByN = inStepByD * iosz.d;  // step out by batch       
+
+    // gridDim.x - number of out layers
+    // gridDim.y - batch size  
+    
+    grad += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    out += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    targ += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+
+    unsigned int i = threadIdx.x;
+
+    while (i < inStepByD){
+
+        grad[i] = out[i] - targ[i];
+
+        i += blockDim.x;
+    } 
+}
+
+__global__ void binaryCrossEntropyBwd(snSize iosz, snFloat* out, snFloat* targ, snFloat* grad){
+
+    size_t inStepByD = iosz.w * iosz.h,     // step out by input
+           inStepByN = inStepByD * iosz.d;  // step out by batch       
+
+    // gridDim.x - number of out layers
+    // gridDim.y - batch size  
+
+    grad += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    out += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    targ += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+
+    unsigned int i = threadIdx.x;
+
+    while (i < inStepByD){
+        
+        grad[i] = (out[i] - targ[i]) / (out[i] * (1.F - out[i]));
+
+        i += blockDim.x;
+    }
+}
+
+__global__ void regressionMSEBwd(snSize iosz, snFloat* out, snFloat* targ, snFloat* grad){
+
+    size_t inStepByD = iosz.w * iosz.h,     // step out by input
+        inStepByN = inStepByD * iosz.d;  // step out by batch       
+
+    // gridDim.x - number of out layers
+    // gridDim.y - batch size  
+
+    grad += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    out += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+    targ += blockIdx.x * inStepByD + blockIdx.y * inStepByN;
+
+    unsigned int i = threadIdx.x;
+
+    while (i < inStepByD){
+        
+        grad[i] = 2 * (out[i] - targ[i]) / inStepByN;
+
+        i += blockDim.x;
+    }
+}
+
+
+void lossForward(const snSize& sz, snFloat* inout, lossType loss){
 
     dim3 dimBlock(256);
-    dim3 dimGrid(int(insz.n));
+    dim3 dimGrid(int(sz.n));
 
     switch (loss){
         case lossType::softMaxACrossEntropy:
-            softMaxACrossEntropy <<<dimGrid, dimBlock >>>(insz, inout);
+            softMaxACrossEntropyFwd <<<dimGrid, dimBlock >>>(sz, inout);
+            break;
+
+        case lossType::binaryCrossEntropy:
+            break;
+
+        case lossType::regressionMSE: 
             break;
     }
 }
 
-void lossBackward(const Tensor& inTns, snFloat* out, snFloat* targ, snFloat* grad, lossType loss){
+void lossBackward(const snSize& sz, snFloat* out, snFloat* targ, snFloat* grad, lossType loss){
 
-    
-   
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(sz.d), int(sz.n));
+
+    switch (loss){
+      case lossType::softMaxACrossEntropy:
+          
+          softMaxACrossEntropyBwd << <dimGrid, dimBlock >> >(sz, out, targ, grad); 
+          break;    
+      
+      case lossType::binaryCrossEntropy:
+      
+          binaryCrossEntropyBwd << <dimGrid, dimBlock >> >(sz, out, targ, grad);
+          break;
+                                           
+      case lossType::regressionMSE: // Mean Square Error
+      
+          regressionMSEBwd << <dimGrid, dimBlock >> >(sz, out, targ, grad);
+          break;
+    }   
 }

@@ -149,8 +149,7 @@ void LossFunction::backward(const Tensor& inTns, const operationParam& operPrm){
 
     snSize tsz = inTns.size();        
    
-    snSize grsz = baseGrad_.size();
-    if (grsz != tsz)
+   if (inTns != baseGrad_)
         baseGrad_.resize(tsz);
         
     auto smOut = baseOut_.getDataCPU();    

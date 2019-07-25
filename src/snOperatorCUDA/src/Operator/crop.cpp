@@ -45,6 +45,9 @@ OperatorBase(net, name, node, prms){
         ERROR_MESS("no set param 'roi'");
 }
 
+// CUDA/crop.cu
+void crop(bool inToOut, const roi& roi, const snSize& sz, snFloat* in, snFloat* out);
+
 std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
       
     if (operPrm.action == snAction::forward){
@@ -77,7 +80,7 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
         snFloat* src = baseOut_.getDataGPU(),
                * dst = tns.getDataGPU();
 
-        copyTo(true, roi_, baseSz_, src, dst);
+        crop(true, roi_, baseSz_, src, dst);
 
         baseOut_ = tns;
     }
@@ -99,7 +102,7 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
         snFloat* dst = tns.getDataGPU(),
                * src = baseGrad_.getDataGPU();
                 
-        copyTo(false, roi_, baseSz_, dst, src);
+        crop(false, roi_, baseSz_, dst, src);
 
         baseGrad_ = tns;
     }
@@ -107,41 +110,4 @@ std::vector<std::string> Crop::Do(const operationParam& operPrm, const std::vect
     return vector<string>();
 }
 
-void Crop::copyTo(bool inToOut, const roi& roi, const snSize& srcSz, snFloat* in, snFloat* out){
-       
-    size_t bsz = srcSz.d * srcSz.n, srcStp = srcSz.w * srcSz.h, dstStp = roi.w * roi.h;
-
-    if (inToOut){
-        for (size_t i = 0; i < bsz; ++i){
-            
-            snFloat* pIn = in + roi.x + roi.y * srcSz.w + srcStp * i;
-            snFloat* pOut = out + dstStp * i;
-
-            for (size_t j = 0; j < roi.h; ++j){
-                            
-                for (size_t k = 0; k < roi.w; ++k)
-                    pOut[k] = pIn[k];  
-
-                pIn += srcSz.w;
-                pOut += roi.w;
-            }
-        }
-    }
-    else{
-        for (size_t i = 0; i < bsz; ++i){
-
-            snFloat* pIn = in + roi.x + roi.y * srcSz.w + srcStp * i;
-            snFloat* pOut = out + dstStp * i;
-
-            for (size_t j = 0; j < roi.h; ++j){
-                                
-                for (size_t k = 0; k < roi.w; ++k)
-                    pIn[k] = pOut[k];    
-
-                pIn += srcSz.w;
-                pOut += roi.w;
-            }            
-        }
-    }
-}
 

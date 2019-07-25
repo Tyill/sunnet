@@ -8,8 +8,7 @@ def _idntBlock(net,
               kernelSize,
               filters,
               oprName,
-              nextOprName,
-              mode: snType.calcMode):
+              nextOprName):
     """The identity block is the block that has no conv layer at shortcut.
 
     # Arguments
@@ -25,21 +24,21 @@ def _idntBlock(net,
                                                        0,  # no padding
                                                        1,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.relu, mode),
+                                                       snType.active.relu),
                                                        oprName + '2b') \
        .addNode(oprName + '2b', snOperator.Convolution(filters[1],
                                                        kernelSize,
                                                        -1,  # same padding
                                                        1,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.relu, mode),
+                                                       snType.active.relu),
                                                        oprName + '2c') \
        .addNode(oprName + '2c', snOperator.Convolution(filters[2],
                                                        (1, 1),
                                                        0,  # no padding
                                                        1,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.none, mode),
+                                                       snType.active.none),
                                                        oprName + 'Sum') \
     # summator
     net.addNode(oprName + 'Sum', snOperator.Summator(snType.summatorType.summ), oprName + 'Act') \
@@ -51,8 +50,7 @@ def _convBlock(net,
                filters,
                stride,
                oprName,
-               nextOprName,
-               mode: snType.calcMode):
+               nextOprName):
     """A block that has a conv layer at shortcut.
 
     # Arguments
@@ -69,21 +67,21 @@ def _convBlock(net,
                                                        0,  # no padding
                                                        stride,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.relu, mode),
+                                                       snType.active.relu),
                                                        oprName + '2b') \
        .addNode(oprName + '2b', snOperator.Convolution(filters[1],
                                                        kernelSize,
                                                        -1,  # same padding
                                                        1,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.relu, mode),
+                                                       snType.active.relu),
                                                        oprName + '2c') \
        .addNode(oprName + '2c', snOperator.Convolution(filters[2],
                                                        (1, 1),
                                                        0,  # no padding
                                                        1,
                                                        snType.batchNormType.beforeActive,
-                                                       snType.active.none, mode),
+                                                       snType.active.none),
                                                        oprName + 'Sum') \
     # shortcut
     net.addNode(oprName + '1', snOperator.Convolution(filters[2],
@@ -91,14 +89,14 @@ def _convBlock(net,
                                                       0,      # no padding
                                                       stride,
                                                       snType.batchNormType.beforeActive,
-                                                      snType.active.none, mode),
+                                                      snType.active.none),
                                                       oprName + 'Sum') \
     # summator
     net.addNode(oprName + 'Sum', snOperator.Summator(snType.summatorType.summ), oprName + 'Act') \
        .addNode(oprName + 'Act', snOperator.Activation(snType.active.relu), nextOprName)
 
 
-def createNet(mode = snType.calcMode.CPU):
+def createNet():
     """
     Create net
     :return: net
@@ -108,48 +106,48 @@ def createNet(mode = snType.calcMode.CPU):
 
     net.addNode('In', snOperator.Input(), 'conv1') \
        .addNode('conv1',
-                snOperator.Convolution(64, (7, 7), 3, 2, snType.batchNormType.beforeActive, snType.active.none, mode),
+                snOperator.Convolution(64, (7, 7), 3, 2, snType.batchNormType.beforeActive, snType.active.none),
                 'pool1_pad') \
-       .addNode('pool1_pad', snOperator.Pooling(3, 2, snType.poolType.max, mode), 'res2a_branch1 res2a_branch2a')
+       .addNode('pool1_pad', snOperator.Pooling(3, 2, snType.poolType.max), 'res2a_branch1 res2a_branch2a')
 
     _convBlock(net, (3, 3), filters=[64, 64, 256], stride=1, oprName='res2a_branch',
-              nextOprName='res2b_branch2a res2b_branchSum', mode=mode)
+              nextOprName='res2b_branch2a res2b_branchSum')
     _idntBlock(net, (3, 3), filters=[64, 64, 256], oprName='res2b_branch',
-               nextOprName='res2c_branch2a res2c_branchSum', mode=mode)
+               nextOprName='res2c_branch2a res2c_branchSum')
     _idntBlock(net, (3, 3), filters=[64, 64, 256], oprName='res2c_branch',
-               nextOprName='res3a_branch1 res3a_branch2a', mode=mode)
+               nextOprName='res3a_branch1 res3a_branch2a')
 
     _convBlock(net, (3, 3), filters=[128, 128, 512], stride=2, oprName='res3a_branch',
-              nextOprName='res3b_branch2a res3b_branchSum', mode=mode)
+              nextOprName='res3b_branch2a res3b_branchSum')
     _idntBlock(net, (3, 3), filters=[128, 128, 512], oprName='res3b_branch',
-              nextOprName='res3c_branch2a res3c_branchSum', mode=mode)
+              nextOprName='res3c_branch2a res3c_branchSum')
     _idntBlock(net, (3, 3), filters=[128, 128, 512], oprName='res3c_branch',
-              nextOprName='res3d_branch2a res3d_branchSum', mode=mode)
+              nextOprName='res3d_branch2a res3d_branchSum')
     _idntBlock(net, (3, 3), filters=[128, 128, 512], oprName='res3d_branch',
-              nextOprName='res4a_branch1 res4a_branch2a', mode=mode)
+              nextOprName='res4a_branch1 res4a_branch2a')
 
     _convBlock(net, (3, 3), filters=[256, 256, 1024], stride=2, oprName='res4a_branch',
-              nextOprName='res4b_branch2a res4b_branchSum', mode=mode)
+              nextOprName='res4b_branch2a res4b_branchSum')
     _idntBlock(net, (3, 3), filters=[256, 256, 1024], oprName='res4b_branch',
-              nextOprName='res4c_branch2a res4c_branchSum', mode=mode)
+              nextOprName='res4c_branch2a res4c_branchSum')
     _idntBlock(net, (3, 3), filters=[256, 256, 1024], oprName='res4c_branch',
-              nextOprName='res4d_branch2a res4d_branchSum', mode=mode)
+              nextOprName='res4d_branch2a res4d_branchSum')
     _idntBlock(net, (3, 3), filters=[256, 256, 1024], oprName='res4d_branch',
-              nextOprName='res4e_branch2a res4e_branchSum', mode=mode)
+              nextOprName='res4e_branch2a res4e_branchSum')
     _idntBlock(net, (3, 3), filters=[256, 256, 1024], oprName='res4e_branch',
-              nextOprName='res4f_branch2a res4f_branchSum', mode=mode)
+              nextOprName='res4f_branch2a res4f_branchSum')
     _idntBlock(net, (3, 3), filters=[256, 256, 1024], oprName='res4f_branch',
-              nextOprName='res5a_branch1 res5a_branch2a', mode=mode)
+              nextOprName='res5a_branch1 res5a_branch2a')
 
     _convBlock(net, (3, 3), filters=[512, 512, 2048], stride=2, oprName='res5a_branch',
-              nextOprName='res5b_branch2a res5b_branchSum', mode=mode)
+              nextOprName='res5b_branch2a res5b_branchSum')
     _idntBlock(net, (3, 3), filters=[512, 512, 2048], oprName='res5b_branch',
-              nextOprName='res5c_branch2a res5c_branchSum', mode=mode)
+              nextOprName='res5c_branch2a res5c_branchSum')
     _idntBlock(net, (3, 3), filters=[512, 512, 2048], oprName='res5c_branch',
-              nextOprName='avg_pool', mode=mode)
+              nextOprName='avg_pool')
 
-    net.addNode('avg_pool', snOperator.Pooling(7, 7, snType.poolType.avg, mode), 'fc1000') \
-        .addNode('fc1000', snOperator.FullyConnected(1000, snType.active.none, mode), 'LS') \
+    net.addNode('avg_pool', snOperator.Pooling(7, 7, snType.poolType.avg), 'fc1000') \
+        .addNode('fc1000', snOperator.FullyConnected(1000, snType.active.none), 'LS') \
         .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
 
     return net

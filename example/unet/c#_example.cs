@@ -34,41 +34,41 @@ namespace Test
             Console.WriteLine("Version snlib " + ver);
 
             snet.addNode("In", new sn.Input(), "C1")
-                .addNode("C1", new sn.Convolution(10, -1, sn::calcMode.type.CUDA), "C2")
-                .addNode("C2", new sn.Convolution(10, 0, sn::calcMode.type.CUDA), "P1 Crop1")
+                .addNode("C1", new sn.Convolution(10, -1), "C2")
+                .addNode("C2", new sn.Convolution(10, 0), "P1 Crop1")
                 .addNode("Crop1", new sn.Crop(new sn.rect(0, 0, 487, 487)), "Rsz1")
                 .addNode("Rsz1", new sn.Resize(new sn.diap(0, 10), new sn.diap(0, 10)), "Conc1")
-                .addNode("P1", new sn.Pooling(sn.calcMode.type.CUDA), "C3")
+                .addNode("P1", new sn.Pooling(), "C3")
 
-                .addNode("C3", new sn.Convolution(10, -1, sn::calcMode.type.CUDA), "C4")
-                .addNode("C4", new sn.Convolution(10, 0, sn::calcMode.type.CUDA), "P2 Crop2")
+                .addNode("C3", new sn.Convolution(10, -1), "C4")
+                .addNode("C4", new sn.Convolution(10, 0), "P2 Crop2")
                 .addNode("Crop2", new sn.Crop(new sn.rect(0, 0, 247, 247)), "Rsz2")
                 .addNode("Rsz2", new sn.Resize(new sn.diap(0, 10), new sn.diap(0, 10)), "Conc2")
-                .addNode("P2", new sn.Pooling(sn.calcMode.type.CUDA), "C5")
+                .addNode("P2", new sn.Pooling(), "C5")
 
-                .addNode("C5", new sn.Convolution(10, 0, sn.calcMode.type.CUDA), "C6")
-                .addNode("C6", new sn.Convolution(10, 0, sn.calcMode.type.CUDA), "DC1")
-                .addNode("DC1", new sn.Deconvolution(10, sn.calcMode.type.CUDA), "Rsz3")
+                .addNode("C5", new sn.Convolution(10, 0, ), "C6")
+                .addNode("C6", new sn.Convolution(10, 0, ), "DC1")
+                .addNode("DC1", new sn.Deconvolution(10, ), "Rsz3")
                 .addNode("Rsz3", new sn.Resize(new sn.diap(0, 10), new sn.diap(10, 20)), "Conc2")
 
                 .addNode("Conc2", new sn.Concat("Rsz2 Rsz3"), "C7")
 
-                .addNode("C7", new sn.Convolution(10, 0, sn.calcMode.type.CUDA), "C8")
-                .addNode("C8", new sn.Convolution(10, 0, sn.calcMode.type.CUDA), "DC2")
-                .addNode("DC2", new sn.Deconvolution(10, sn.calcMode.type.CUDA), "Rsz4")
+                .addNode("C7", new sn.Convolution(10, 0, ), "C8")
+                .addNode("C8", new sn.Convolution(10, 0, ), "DC2")
+                .addNode("DC2", new sn.Deconvolution(10, ), "Rsz4")
                 .addNode("Rsz4", new sn.Resize(new sn.diap(0, 10), new sn.diap(10, 20)), "Conc1")
 
                 .addNode("Conc1", new sn.Concat("Rsz1 Rsz4"), "C9")
 
-                .addNode("C9", new sn.Convolution(10, 0, sn.calcMode.type.CUDA), "C10");
+                .addNode("C9", new sn.Convolution(10, 0, ), "C10");
 
-            sn.Convolution convOut = new sn.Convolution(1, 0, sn.calcMode.type.CUDA);
+            sn.Convolution convOut = new sn.Convolution(1, 0, );
             convOut.act = new sn.active(sn.active.type.sigmoid);
             snet.addNode("C10", convOut, "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.binaryCrossEntropy), "Output");
                        
-            string imgPath = "c://C++//skyNet//example//unet//images//";
-            string targPath = "c://C++//skyNet//example//unet//labels//";
+            string imgPath = "c://cpp//skyNet//example//unet//images//";
+            string targPath = "c://cpp//skyNet//example//unet//labels//";
 
 
             uint batchSz = 3, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;
@@ -83,7 +83,7 @@ namespace Test
                 return;
             }
 
-            string wpath = "c:/C++/w.dat";
+            string wpath = "c:/cpp/w.dat";
             //  if (snet.loadAllWeightFromFile(wpath))
             //     Console.WriteLine("Load weight ok path: " + wpath);
             // else

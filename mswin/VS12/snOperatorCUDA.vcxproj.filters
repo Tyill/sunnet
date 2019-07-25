@@ -102,9 +102,6 @@
     <ClInclude Include="..\..\src\snOperatorCUDA\src\arithmetic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\snOperatorCUDA\src\lossFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCUDA\src\Operator\activation.cpp">
@@ -200,6 +197,9 @@
       <Filter>CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\arithmetic.cu">
+      <Filter>CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\src\snOperatorCUDA\src\CUDA\crop.cu">
       <Filter>CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

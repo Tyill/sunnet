@@ -27,6 +27,3 @@
 #include "snBase/snBase.h"
 #include "structurs.h"
 
-void lossForward(const SN_Base::snSize& insz, SN_Base::snFloat* inout, lossType loss);
-
-void lossBackward(const SN_Base::Tensor& inTns, SN_Base::snFloat* out, SN_Base::snFloat* targ, SN_Base::snFloat* grad, lossType loss);

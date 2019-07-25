@@ -195,36 +195,7 @@ namespace SN_API
         private type type_;
     }
 
-    /// <summary>
-    /// CPU, CUDA or OpenCL
-    /// </summary>
-    public class calcMode
-    {
-
-        public calcMode(type tp)
-        {
-            type_ = tp;
-        }
-        
-        public enum type
-        {
-            CPU = 0,
-            CUDA = 1,
-            OpenCL = 2,  
-        };
-        public string str()
-        {
-            switch (type_)
-            {
-            case type.CPU:    return "CPU";
-            case type.CUDA:   return "CUDA";
-            case type.OpenCL: return "OpenCL";
-            default:          return "CPU";
-            }
-        }
-        private type type_;
-    }
-
+   
     /// <summary>
     /// lockType
     /// </summary>
