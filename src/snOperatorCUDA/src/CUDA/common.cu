@@ -66,18 +66,19 @@ snFloat* memRealloc(size_t csz, size_t nsz, snFloat* data, int initVal){
     return data;
 }
 
-void memCpyCPU2GPU(size_t dstSz, SN_Base::snFloat* dstGPU, size_t srcSz, SN_Base::snFloat* srcCPU){
-
-    ASSERT_MESS(dstSz == srcSz, "");
-
-    cuAssert(cudaMemcpy(dstGPU, srcCPU, srcSz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyHostToDevice));
+void memCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU){
+  
+    cuAssert(cudaMemcpy(dstGPU, srcCPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyHostToDevice));
 }
+                          
+void memCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU){
 
-void memCpyGPU2CPU(size_t dstSz, SN_Base::snFloat* dstCPU, size_t srcSz, SN_Base::snFloat* srcGPU){
-
-    ASSERT_MESS(dstSz == srcSz, "");
-
-    cuAssert(cudaMemcpy(dstCPU, srcGPU, srcSz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToHost));
+    cuAssert(cudaMemcpy(dstCPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToHost));
+}
+                          
+void memCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU){
+ 
+    cuAssert(cudaMemcpy(dstGPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
 }
 
 void memFree(snFloat* data){

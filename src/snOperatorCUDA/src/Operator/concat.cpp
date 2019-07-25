@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../cudaCommon.h"
 #include "snOperatorCUDA/src/Operator/concat.h"
 #include "snAux/auxFunc.h"
 
@@ -89,20 +90,19 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
             baseOut_.resize(snSize(csz.w, csz.h, csz.d + nbsz.d, csz.n));
 
             size_t sz = csz.w * csz.h * (csz.d + nbsz.d),
-                 cstp = csz.w * csz.h * csz.d,
-                 nstp = nbsz.w * nbsz.h * nbsz.d;
+                   cstp = csz.w * csz.h * csz.d,
+                   nstp = nbsz.w * nbsz.h * nbsz.d;
             for (size_t j = 0; j < csz.n; ++j){
 
                 snFloat* dst = baseOut_.getDataGPU() + sz * j,
-                    *src = buff.getDataGPU() + cstp * j;
+                       * src = buff.getDataGPU() + cstp * j;
 
-                memcpy(dst, src, cstp * sizeof(snFloat));
-
+                memCpyGPU2GPU(cstp, dst, src);
 
                 dst += cstp;
                 src = neighb->getOutput().getDataGPU() + nstp * j;
 
-                memcpy(dst, src, nstp * sizeof(snFloat));
+                memCpyGPU2GPU(nstp, dst, src);
             }
         }
     }

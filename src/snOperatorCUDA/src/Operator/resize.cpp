@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../cudaCommon.h"
 #include "snOperatorCUDA/src/Operator/resize.h"
 #include "snAux/auxFunc.h"
 
@@ -69,14 +70,14 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                 baseOut_.resize(snSize(csz.w, csz.h, (end - begin), csz.n));
 
                 size_t sz = csz.w * csz.h * (end - begin),
-                    offset = csz.w * csz.h * begin,
-                    cstp = csz.w * csz.h * csz.d;
+                       offset = csz.w * csz.h * begin,
+                       cstp = csz.w * csz.h * csz.d;
                 for (size_t j = 0; j < csz.n; ++j){
 
                     snFloat* dst = baseOut_.getDataGPU() + sz * j,
-                        *src = buff.getDataGPU() + cstp * j + offset;
+                           * src = buff.getDataGPU() + cstp * j + offset;
 
-                    memcpy(dst, src, sz * sizeof(snFloat));
+                    memCpyGPU2GPU(sz, dst, src);
                 }
             }
         }
@@ -120,9 +121,9 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                 for (size_t j = 0; j < csz.n; ++j){
 
                     snFloat* dst = baseGrad_.getDataGPU() + sz * j,
-                        *src = buff.getDataGPU() + cstp * j + offset;
+                           * src = buff.getDataGPU() + cstp * j + offset;
 
-                    memcpy(dst, src, sz * sizeof(snFloat));
+                    memCpyGPU2GPU(sz, dst, src);
                 }
             }
         }

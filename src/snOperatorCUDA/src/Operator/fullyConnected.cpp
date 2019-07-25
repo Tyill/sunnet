@@ -168,10 +168,10 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
     baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
     baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
 
-    memCpyCPU2GPU(osz, baseBatchNorm_.mean, osz, bn.mean);
-    memCpyCPU2GPU(osz, baseBatchNorm_.varce, osz, bn.varce);
-    memCpyCPU2GPU(osz, baseBatchNorm_.scale, osz, bn.scale);
-    memCpyCPU2GPU(osz, baseBatchNorm_.schift, osz, bn.schift);
+    memCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
+    memCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
+    memCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
+    memCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
 
     baseBatchNorm_.sz = bn.sz;
     
@@ -187,10 +187,10 @@ batchNorm FullyConnected::getBatchNorm()const{
     auxCPUParams_["bn_scale"] = vector<snFloat>(csz);
     auxCPUParams_["bn_schift"] = vector<snFloat>(csz);
 
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), csz, baseBatchNorm_.mean);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), csz, baseBatchNorm_.varce);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), csz, baseBatchNorm_.scale);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), csz, baseBatchNorm_.schift);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
+    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
 
     batchNorm bn;
     bn.mean = auxCPUParams_["bn_mean"].data();
