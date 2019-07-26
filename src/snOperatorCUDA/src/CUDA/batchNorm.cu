@@ -254,7 +254,7 @@ void channelBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, s
             snFloat* pIn = in + stepD * i;
             for (size_t j = 0; j < bsz; ++j){
 
-                cuAssert(cudaMemcpy(pSh, pIn, stepD * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+                cuMemCpyGPU2GPU(stepD, pSh, pIn, true);
                 pSh += stepD;
                 pIn += stepN;
             }
@@ -267,7 +267,7 @@ void channelBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, s
             pSh = share;
             snFloat* pOut = out + stepD * i;
             for (size_t j = 0; j < bsz; ++j){
-                cuAssert(cudaMemcpy(pOut, pSh, stepD * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+                cuMemCpyGPU2GPU(stepD, pOut, pSh, true));
                 pSh += stepD;
                 pOut += stepN;
             }

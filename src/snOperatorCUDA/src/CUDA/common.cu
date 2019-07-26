@@ -81,9 +81,12 @@ void cuMemCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcG
     cuAssert(cudaMemcpy(dstCPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToHost));
 }
                           
-void cuMemCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU){
+void cuMemCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU, bool isAsync){
  
-    cuAssert(cudaMemcpy(dstGPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
+    if (isAsync)
+       cuAssert(cudaMemcpyAsync(dstGPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice, 0));
+    else
+       cuAssert(cudaMemcpy(dstGPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
 }
 
 void cuMemFree(snFloat* data){

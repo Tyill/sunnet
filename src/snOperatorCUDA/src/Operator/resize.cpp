@@ -77,7 +77,7 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                     snFloat* dst = baseOut_.getDataGPU() + sz * j,
                            * src = buff.getDataGPU() + cstp * j + offset;
 
-                    cuMemCpyGPU2GPU(sz, dst, src);
+                    cuMemCpyGPU2GPU(sz, dst, src, true);
                 }
             }
         }
@@ -123,7 +123,7 @@ std::vector<std::string> Resize::Do(const operationParam& operPrm, const std::ve
                     snFloat* dst = baseGrad_.getDataGPU() + sz * j,
                            * src = buff.getDataGPU() + cstp * j + offset;
 
-                    cuMemCpyGPU2GPU(sz, dst, src);
+                    cuMemCpyGPU2GPU(sz, dst, src, true);
                 }
             }
         }

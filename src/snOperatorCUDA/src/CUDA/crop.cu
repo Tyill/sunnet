@@ -12,8 +12,8 @@ __global__ void cropIn2Out(roi roi, snSize srcSz, snFloat* in, snFloat* out){
     size_t srcStp = srcSz.w * srcSz.h,
            dstStp = roi.w * roi.h;
       
-    in += roi.x + roi.y * srcSz.w + srcStp * blockIdx.x * blockIdx.y;
-    out += dstStp * blockIdx.x * blockIdx.y;
+    in += roi.x + roi.y * srcSz.w + srcStp * blockIdx.x + srcStp * srcSz.d * blockIdx.y;
+    out += dstStp * blockIdx.x + dstStp * srcSz.d * blockIdx.y;
         
     // gridDim.x - srcSz.d 
     // gridDim.y - srcSz.n
@@ -41,8 +41,8 @@ __global__ void cropOut2In(roi roi, snSize srcSz, snFloat* in, snFloat* out){
     size_t srcStp = srcSz.w * srcSz.h,
            dstStp = roi.w * roi.h;
 
-    in += roi.x + roi.y * srcSz.w + srcStp * blockIdx.x * blockIdx.y;
-    out += dstStp * blockIdx.x * blockIdx.y;
+    in += roi.x + roi.y * srcSz.w + srcStp * blockIdx.x + srcStp * srcSz.d * blockIdx.y;
+    out += dstStp * blockIdx.x + dstStp * srcSz.d * blockIdx.y;
 
     // gridDim.x - srcSz.d 
     // gridDim.y - srcSz.n
