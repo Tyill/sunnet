@@ -51,8 +51,9 @@ private:
         size_t fWidth = 3;                                      ///< mask width
         size_t fHeight = 3;                                     ///< mask height  
         size_t stride = 1;                                      ///< mask step
+        bool useBias_ = true;
     };
-    deconvParams deconvParams_;
+    deconvParams deconvPrms_;
 
     activeType activeType_ = activeType::relu;                  ///< activation type
     optimizerType optimizerType_ = optimizerType::adam;         ///< optimizer

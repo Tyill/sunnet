@@ -97,12 +97,12 @@ std::vector<std::string> Concat::Do(const operationParam& operPrm, const std::ve
                 snFloat* dst = baseOut_.getDataGPU() + sz * j,
                        * src = buff.getDataGPU() + cstp * j;
 
-                memCpyGPU2GPU(cstp, dst, src);
+                cuMemCpyGPU2GPU(cstp, dst, src);
 
                 dst += cstp;
                 src = neighb->getOutput().getDataGPU() + nstp * j;
 
-                memCpyGPU2GPU(nstp, dst, src);
+                cuMemCpyGPU2GPU(nstp, dst, src);
             }
         }
     }

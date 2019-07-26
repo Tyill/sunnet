@@ -24,16 +24,18 @@
 //
 #pragma once
 
-void setDeviceId(int);
+void cuSetDeviceId(int);
 
-SN_Base::snFloat* memAlloc(size_t sz, int initVal);
+SN_Base::snFloat* cuMemAlloc(size_t sz, int initVal);
 
-SN_Base::snFloat* memRealloc(size_t csz, size_t nsz, SN_Base::snFloat*, int initVal);
+SN_Base::snFloat* cuMemRealloc(size_t csz, size_t nsz, SN_Base::snFloat*, int initVal);
 
-void memCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU);
+void cuMemSet(size_t sz, SN_Base::snFloat* data, int val);
 
-void memCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU);
+void cuMemCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU);
+
+void cuMemCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU);
                    
-void memCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU);
+void cuMemCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU);
 
-void memFree(SN_Base::snFloat*);
+void cuMemFree(SN_Base::snFloat*);

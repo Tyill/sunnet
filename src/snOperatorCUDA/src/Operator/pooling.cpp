@@ -40,7 +40,7 @@ Pooling::Pooling(void* net, const string& name, const string& node, std::map<std
 
 Pooling::~Pooling(){
 
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     freeParamCUDA(gpuParams_);   
 }
@@ -86,7 +86,7 @@ void Pooling::load(std::map<std::string, std::string>& prms){
 
 std::vector<std::string> Pooling::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     if (operPrm.action == snAction::forward){
 

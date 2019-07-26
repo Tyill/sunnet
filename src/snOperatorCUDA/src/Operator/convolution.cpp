@@ -46,7 +46,7 @@ Convolution::Convolution(void* net, const string& name, const string& node, std:
 
 Convolution::~Convolution(){
         
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     freeParamCUDA(convGPUParams_);   
 }
@@ -169,15 +169,15 @@ bool Convolution::setBatchNorm(const batchNorm& bn){
     size_t csz = baseBatchNorm_.sz.size(),
            osz = bn.sz.size();
       
-    baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
-    baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
-    baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
-    baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+    baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
+    baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
+    baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
+    baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
 
-    memCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
-    memCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
-    memCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
-    memCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
 
     baseBatchNorm_.sz = bn.sz;
 
@@ -193,10 +193,10 @@ batchNorm Convolution::getBatchNorm()const{
     auxCPUParams_["bn_scale"] = vector<snFloat>(csz);
     auxCPUParams_["bn_schift"] = vector<snFloat>(csz);
       
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
 
     batchNorm bn;
     bn.mean = auxCPUParams_["bn_mean"].data();
@@ -211,7 +211,7 @@ batchNorm Convolution::getBatchNorm()const{
 
 std::vector<std::string> Convolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     if (operPrm.action == snAction::forward){
         
@@ -350,9 +350,9 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz){
     }
     
     // +bias?
-    /*   if (!useBias_){
-    memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
-    }*/
+    if (!convPrms_.useBias_){
+        cuMemSet(kernel, baseWeight_.getDataGPU() + stp * kernel, 0);
+    }
 
     snSize outSz(0, 0, kernel, newsz.n);
           
@@ -387,24 +387,24 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz){
         baseGrad_.resize(newsz);
 
         // aux array
-        auxGPUParams_["dWeight"] = memRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
-        auxGPUParams_["dWPrev"] = memRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
-        auxGPUParams_["dWGrad"] = memRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
+        auxGPUParams_["dWeight"] = cuMemRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
+        auxGPUParams_["dWPrev"] = cuMemRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
+        auxGPUParams_["dWGrad"] = cuMemRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
     }
 
     size_t csz = baseBatchNorm_.sz.w * baseBatchNorm_.sz.h * baseBatchNorm_.sz.d,
            osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-        baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
-        baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
-        baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
-        baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+        baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
+        baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
+        baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
+        baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
       
         if (isLern){
-            baseBatchNorm_.norm = memRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.mean, 0);
-            baseBatchNorm_.dScale = memRealloc(csz, osz, baseBatchNorm_.dScale, 0);
-            baseBatchNorm_.dSchift = memRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
+            baseBatchNorm_.norm = cuMemRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.norm, 0);
+            baseBatchNorm_.dScale = cuMemRealloc(csz, osz, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = cuMemRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
         }
 
         baseBatchNorm_.sz = outSz;

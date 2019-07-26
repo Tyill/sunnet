@@ -29,12 +29,12 @@
 
 using namespace SN_Base;
 
-void setDeviceId(int id){
+void cuSetDeviceId(int id){
 
    cuAssert(cudaSetDevice(id));
 }
 
-snFloat* memAlloc(size_t sz, int initVal){
+snFloat* cuMemAlloc(size_t sz, int initVal){
 
     snFloat* mem = nullptr;
     cuAssert(cudaMalloc(&mem, sz * sizeof(snFloat)));
@@ -44,7 +44,7 @@ snFloat* memAlloc(size_t sz, int initVal){
     return mem;
 }
 
-snFloat* memRealloc(size_t csz, size_t nsz, snFloat* data, int initVal){
+snFloat* cuMemRealloc(size_t csz, size_t nsz, snFloat* data, int initVal){
 
     ASSERT_MESS(nsz > 0, "");
 
@@ -66,22 +66,27 @@ snFloat* memRealloc(size_t csz, size_t nsz, snFloat* data, int initVal){
     return data;
 }
 
-void memCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU){
+void cuMemSet(size_t sz, snFloat* data, int val){
+      
+    cuAssert(cudaMemset(data, val, sz * sizeof(snFloat)));
+}
+
+void cuMemCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU){
   
     cuAssert(cudaMemcpy(dstGPU, srcCPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyHostToDevice));
 }
                           
-void memCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU){
+void cuMemCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU){
 
     cuAssert(cudaMemcpy(dstCPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToHost));
 }
                           
-void memCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU){
+void cuMemCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU){
  
     cuAssert(cudaMemcpy(dstGPU, srcGPU, sz * sizeof(snFloat), cudaMemcpyKind::cudaMemcpyDeviceToDevice));
 }
 
-void memFree(snFloat* data){
+void cuMemFree(snFloat* data){
 
     cuAssert(cudaFree(data));
 }

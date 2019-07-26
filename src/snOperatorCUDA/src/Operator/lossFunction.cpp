@@ -23,7 +23,6 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
-#include "../lossFunctions.h"
 #include "snOperatorCUDA/src/Operator/lossFunction.h"
 
 using namespace std;

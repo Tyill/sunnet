@@ -45,7 +45,7 @@ Deconvolution::Deconvolution(void* net, const string& name, const string& node, 
 
 Deconvolution::~Deconvolution(){
        
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     freeParamCUDA(gpuParams_);   
 }
@@ -66,11 +66,14 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             ERROR_MESS("not found (or not numder) param '" + name + "'");
     };
         
-    setIntParam("filters", false, true, deconvParams_.kernel);
-    setIntParam("fWidth", false, false, deconvParams_.fWidth);
-    setIntParam("fHeight", false, false, deconvParams_.fHeight);
+    setIntParam("filters", false, true, deconvPrms_.kernel);
+    setIntParam("fWidth", false, false, deconvPrms_.fWidth);
+    setIntParam("fHeight", false, false, deconvPrms_.fHeight);
   
-    setIntParam("stride", false, false, deconvParams_.stride);
+    if (prms.find("useBias") != prms.end())
+        deconvPrms_.useBias_ = prms["useBias"] == "1";
+
+    setIntParam("stride", false, false, deconvPrms_.stride);
   
     if (prms.find("batchNorm") != prms.end()){
 
@@ -157,15 +160,15 @@ bool Deconvolution::setBatchNorm(const batchNorm& bn){
     size_t csz = baseBatchNorm_.sz.size(),
         osz = bn.sz.size();
 
-    baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
-    baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
-    baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
-    baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+    baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
+    baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
+    baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
+    baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
 
-    memCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
-    memCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
-    memCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
-    memCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
 
     baseBatchNorm_.sz = bn.sz;
 
@@ -181,10 +184,10 @@ SN_Base::batchNorm Deconvolution::getBatchNorm()const{
     auxCPUParams_["bn_scale"] = vector<snFloat>(csz);
     auxCPUParams_["bn_schift"] = vector<snFloat>(csz);
 
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
 
     batchNorm bn;
     bn.mean = auxCPUParams_["bn_mean"].data();
@@ -199,7 +202,7 @@ SN_Base::batchNorm Deconvolution::getBatchNorm()const{
 
 std::vector<std::string> Deconvolution::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
        
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     if (operPrm.action == snAction::forward){
 
@@ -247,7 +250,7 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
     snSize outsz = baseOut_.size();
 
     // calculation
-    forwardCUDA(deconvParams_, weight, insz, pInTns, outsz, out, gpuParams_);
+    forwardCUDA(deconvPrms_, weight, insz, pInTns, outsz, out, gpuParams_);
    
     /// dropOut
     if (dropOut_ > 0.F)
@@ -296,7 +299,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
         snFloat* dWeight = auxGPUParams_["dWeight"];
         
         // calculation
-        backwardCUDA_GW(deconvParams_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_);        
+        backwardCUDA_GW(deconvPrms_, weight, insz, in, outsz, gradIn, grOut, dWeight, gpuParams_);        
 
         snFloat* dWPrev = auxGPUParams_["dWPrev"];
         snFloat* dWGrad = auxGPUParams_["dWGrad"];
@@ -314,14 +317,14 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
             optimizerType_);
     }
     else{ // isFreeze
-        backwardCUDA_G(deconvParams_, weight, insz, outsz, gradIn, grOut, gpuParams_);
+        backwardCUDA_G(deconvPrms_, weight, insz, outsz, gradIn, grOut, gpuParams_);
        
     }        
 }
 
 void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
     
-    size_t stp = deconvParams_.fWidth * deconvParams_.fHeight * deconvParams_.kernel,
+    size_t stp = deconvPrms_.fWidth * deconvPrms_.fHeight * deconvPrms_.kernel,
         ntp = (stp + 1) * newsz.d;
         
     // leave the existing weights as they are, initialize the remainder
@@ -331,19 +334,19 @@ void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
         baseWeight_.resize(snSize(newsz.d, stp + 1));
        
         if (wcsz == 0)
-          weightInit(baseWeight_, ntp - wcsz, stp + 1, deconvParams_.kernel, weightInitType_);
+          weightInit(baseWeight_, ntp - wcsz, stp + 1, deconvPrms_.kernel, weightInitType_);
     }
     
     // +bias?
-    /*   if (!useBias_){
-    memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
-    }*/
+    if (!deconvPrms_.useBias_){
+        cuMemSet(newsz.d, baseWeight_.getDataGPU() + stp * newsz.d, 0);
+    }
 
-    snSize outSz(0, 0, deconvParams_.kernel, newsz.n);
+    snSize outSz(0, 0, deconvPrms_.kernel, newsz.n);
         
    
-    outSz.w = (newsz.w - 1) * deconvParams_.stride + deconvParams_.fWidth;
-    outSz.h = (newsz.h - 1) * deconvParams_.stride + deconvParams_.fHeight;
+    outSz.w = (newsz.w - 1) * deconvPrms_.stride + deconvPrms_.fWidth;
+    outSz.h = (newsz.h - 1) * deconvPrms_.stride + deconvPrms_.fHeight;
     
     baseOut_.resize(outSz);
 
@@ -351,31 +354,31 @@ void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
         baseGrad_.resize(newsz);
 
         // aux array
-        auxGPUParams_["dWeight"] = memRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
-        auxGPUParams_["dWPrev"] = memRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
-        auxGPUParams_["dWGrad"] = memRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
+        auxGPUParams_["dWeight"] = cuMemRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
+        auxGPUParams_["dWPrev"] = cuMemRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
+        auxGPUParams_["dWGrad"] = cuMemRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
     }
 
     size_t csz = baseBatchNorm_.sz.w * baseBatchNorm_.sz.h * baseBatchNorm_.sz.d,
            osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-        baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
-        baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
-        baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
-        baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+        baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
+        baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
+        baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
+        baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
 
         if (isLern){
-            baseBatchNorm_.norm = memRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.mean, 0);
-            baseBatchNorm_.dScale = memRealloc(csz, osz, baseBatchNorm_.dScale, 0);
-            baseBatchNorm_.dSchift = memRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
+            baseBatchNorm_.norm = cuMemRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.norm, 0);
+            baseBatchNorm_.dScale = cuMemRealloc(csz, osz, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = cuMemRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
         }
 
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
     }  
 
-    iniParamCUDA(isLern, newsz, outSz, deconvParams_, &gpuParams_);
+    iniParamCUDA(isLern, newsz, outSz, deconvPrms_, &gpuParams_);
     
 } 
 

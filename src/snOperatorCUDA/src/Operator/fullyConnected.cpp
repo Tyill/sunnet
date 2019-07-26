@@ -45,7 +45,7 @@ FullyConnected::FullyConnected(void* net, const string& name, const string& node
 
 FullyConnected::~FullyConnected(){
     
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     freeParamCUDA(gpuParams_);    
 }
@@ -86,10 +86,10 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
 
     if (batchNormType_ != batchNormType::none){
 
-        baseBatchNorm_.mean = memRealloc(0, kernel_, baseBatchNorm_.mean, 0);
-        baseBatchNorm_.varce = memRealloc(0, kernel_, baseBatchNorm_.varce, 1);
-        baseBatchNorm_.scale = memRealloc(0, kernel_, baseBatchNorm_.scale, 1);
-        baseBatchNorm_.schift = memRealloc(0, kernel_, baseBatchNorm_.schift, 0);
+        baseBatchNorm_.mean = cuMemRealloc(0, kernel_, baseBatchNorm_.mean, 0);
+        baseBatchNorm_.varce = cuMemRealloc(0, kernel_, baseBatchNorm_.varce, 1);
+        baseBatchNorm_.scale = cuMemRealloc(0, kernel_, baseBatchNorm_.scale, 1);
+        baseBatchNorm_.schift = cuMemRealloc(0, kernel_, baseBatchNorm_.schift, 0);
              
         baseBatchNorm_.sz = snSize(kernel_);
     }
@@ -163,15 +163,15 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
     size_t csz = baseBatchNorm_.sz.size(),
            osz = bn.sz.size();
 
-    baseBatchNorm_.mean = memRealloc(csz, osz, baseBatchNorm_.mean, 0);
-    baseBatchNorm_.varce = memRealloc(csz, osz, baseBatchNorm_.varce, 1);
-    baseBatchNorm_.scale = memRealloc(csz, osz, baseBatchNorm_.scale, 1);
-    baseBatchNorm_.schift = memRealloc(csz, osz, baseBatchNorm_.schift, 0);
+    baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
+    baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
+    baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
+    baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
 
-    memCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
-    memCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
-    memCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
-    memCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
 
     baseBatchNorm_.sz = bn.sz;
     
@@ -187,10 +187,10 @@ batchNorm FullyConnected::getBatchNorm()const{
     auxCPUParams_["bn_scale"] = vector<snFloat>(csz);
     auxCPUParams_["bn_schift"] = vector<snFloat>(csz);
 
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
-    memCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
 
     batchNorm bn;
     bn.mean = auxCPUParams_["bn_mean"].data();
@@ -205,7 +205,7 @@ batchNorm FullyConnected::getBatchNorm()const{
 
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
     
-    setDeviceId(gpuDeviceId_);
+    cuSetDeviceId(gpuDeviceId_);
 
     if (operPrm.action == snAction::forward){
 
@@ -332,9 +332,9 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     }
     
     // +bias?
- /*   if (!useBias_){
-        memset(baseWeight_.getDataCPU() + stp * kernel, 0, kernel * sizeof(snFloat));
-    }*/
+    if (!useBias_){
+        cuMemSet(kernel_, baseWeight_.getDataGPU() + stp * kernel_, 0);
+    }
 
     baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));
 
@@ -342,17 +342,17 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
         baseGrad_.resize(newsz);
 
         // aux array
-        auxGPUParams_["dWeight"] = memRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
-        auxGPUParams_["dWPrev"] = memRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
-        auxGPUParams_["dWGrad"] = memRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
+        auxGPUParams_["dWeight"] = cuMemRealloc(0, ntp, auxGPUParams_["dWeight"], 0);
+        auxGPUParams_["dWPrev"] = cuMemRealloc(0, ntp, auxGPUParams_["dWPrev"], 0);
+        auxGPUParams_["dWGrad"] = cuMemRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
 
         if (batchNormType_ != batchNormType::none){
 
             auto bcsz = baseBatchNorm_.sz.size();
 
-            baseBatchNorm_.norm = memRealloc(bcsz, newsz.n * kernel_, baseBatchNorm_.norm, 0);
-            baseBatchNorm_.dScale = memRealloc(bcsz, kernel_, baseBatchNorm_.dScale, 0);
-            baseBatchNorm_.dSchift = memRealloc(bcsz, kernel_, baseBatchNorm_.dSchift, 0);
+            baseBatchNorm_.norm = cuMemRealloc(bcsz, newsz.n * kernel_, baseBatchNorm_.norm, 0);
+            baseBatchNorm_.dScale = cuMemRealloc(bcsz, kernel_, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = cuMemRealloc(bcsz, kernel_, baseBatchNorm_.dSchift, 0);
             
             baseBatchNorm_.sz = snSize(kernel_);
         }
