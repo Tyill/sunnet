@@ -86,10 +86,10 @@ void lossBackward(const SN_Base::snSize& outsz, SN_Base::snFloat* out, SN_Base::
 
 void LossFunction::forward(const Tensor& inTns){
 
-    baseOut_ = inTns;    
+    baseOut_ = inTns;   
    
     if (lossType_ != lossType::userLoss){
-
+        
         lossForward(baseOut_.size(), baseOut_.getDataGPU(), lossType_);
     }
     else{

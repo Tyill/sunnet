@@ -251,17 +251,16 @@ __global__ void cuFwdBias(snSize outsz, const snFloat* bias, snFloat* output){
 
     size_t osz = outsz.w * outsz.h;
 
-    snFloat* pOut = output + osz * outsz.d * blockIdx.x;
-    unsigned int d = threadIdx.x;
-    while (d < outsz.d){
+    snFloat* pOut = output + osz * blockIdx.x + osz * outsz.d * blockIdx.y;
 
-        snFloat b = bias[d];
-        for (size_t j = 0; j < osz; ++j)
-            pOut[j] += b;
+    snFloat b = bias[blockIdx.x];
 
-        pOut += osz * blockDim.x;
+    unsigned int i = threadIdx.x;
+    while (i < osz){
+                
+        pOut[i] += b;
 
-        d += blockDim.x;
+        i += blockDim.x;
     }
 }
 
@@ -289,7 +288,10 @@ void Convolution::forwardCUDA(const convParams& prms,
         output));
 
     // +bias
-    cuFwdBias << < int(insz.n), 128 >> > (outsz, weight + wStepByN, output);
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(outsz.d), int(outsz.n));
+       
+    cuFwdBias << < dimGrid, dimBlock >> > (outsz, weight + wStepByN, output);   
 }
 
 void Convolution::backwardCUDA_GW(const convParams& prms,

@@ -102,8 +102,8 @@ void layerBatchNorm(bool fwBw, bool isLern, const snSize& insz, snFloat* in, snF
         }
     }
     else{ // isLerning
-        if (fwBw)
-            batchNormForward(insz, in, out, prm);
+        if (fwBw) 
+            batchNormForward(insz, in, out, prm);        
         else
             batchNormBackward(insz, in, out, prm);
     }

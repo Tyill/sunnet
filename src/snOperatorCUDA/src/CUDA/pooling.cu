@@ -147,16 +147,15 @@ void Pooling::freeParamCUDA(void* gpuPrms){
 
 __global__ void cuFiltrNegative(snSize outsz, snFloat* out){
 
-    out += blockIdx.x * outsz.w * outsz.h * outsz.d;
+    out += blockIdx.x * outsz.w * outsz.h + blockIdx.y * outsz.w * outsz.h * outsz.d;
        
-    unsigned int k = threadIdx.x;
-    while (k < outsz.d){
+    unsigned int i = threadIdx.x;
+    while (i < (outsz.w * outsz.h)){
 
-        snFloat* pOut = out + outsz.w * outsz.h * k;
-        for (size_t j = 0; j < (outsz.w * outsz.h); ++j)
-            if (pOut[j] < 0) pOut[j] = 0.0;
+        if (out[i] < 0)
+           out[i] = 0.0;
 
-        k += blockDim.x;
+        i += blockDim.x;
     }    
 }
 
@@ -177,10 +176,10 @@ void Pooling::forwardCUDA(const poolParams& poolPrms, const snSize& insz, const 
         output));
    
     // filtrNegative
-  //  dim3 dimBlock(256);
-   // dim3 dimGrid(int(outsz.n));
-
-  //  cuFiltrNegative << < dimGrid, dimBlock >> >(outsz, output);
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(outsz.d), int(outsz.n));
+         
+    cuFiltrNegative << < dimGrid, dimBlock >> >(outsz, output);
   
 }
 

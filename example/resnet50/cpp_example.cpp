@@ -90,13 +90,13 @@ int main(int argc, char* argv[]){
     // CMD: cd c:\cpp\other\skyNet\example\resnet50\
     // CMD: python createNet.py  
     
-    if (!snet.loadAllWeightFromFile("c:/cpp/other/skyNet/example/resnet50/resNet50Weights.dat")){
+    if (!snet.loadAllWeightFromFile("c:/cpp/skyNet/example/resnet50/resNet50Weights.dat")){
         cout << "error loadAllWeightFromFile: " << snet.getLastErrorStr() << endl;
         system("pause");
         return -1;
     }
     
-    string imgPath = "c:/cpp/other/skyNet/example/resnet50/images/elephant.jpg";
+    string imgPath = "c:/cpp/skyNet/example/resnet50/images/elephant.jpg";
     
     int classCnt = 1000, w = 224, h = 224;
   
@@ -151,6 +151,6 @@ int main(int argc, char* argv[]){
         cout << "inx " << maxInx << " accurate " << refOutput[maxInx] << snet.getLastErrorStr() << endl;
     }
 
-   // system("pause");
+    system("pause");
     return 0;
 }

@@ -38,7 +38,7 @@ __global__ void softMaxACrossEntropyFwd(snSize iosz, snFloat* inout){
  
     inout += blockIdx.x * inStepByN;
            
-    __shared__ unsigned long long int tmax;
+    __shared__ int tmax;
     __shared__ snFloat tsumm;
 
     tmax = 0;
@@ -47,16 +47,16 @@ __global__ void softMaxACrossEntropyFwd(snSize iosz, snFloat* inout){
     __syncthreads();
 
     unsigned int i = threadIdx.x;
-
     while (i < inStepByN){
 
-        atomicMax(&tmax, unsigned long long int(inout[i] * 100.F));
+        atomicMax(&tmax, int(inout[i] * 100.F));
        
         i += blockDim.x;
     }
 
     __syncthreads();
     
+    i = threadIdx.x;
     while (i < inStepByN){
        
         inout[i] = ((inout[i] - tmax / 100.F) > -20) ? exp(inout[i] - tmax / 100.F) : 0.1E-8F;
@@ -68,6 +68,7 @@ __global__ void softMaxACrossEntropyFwd(snSize iosz, snFloat* inout){
 
     __syncthreads();
 
+    i = threadIdx.x;
     while (i < inStepByN){
 
         inout[i] /= tsumm;

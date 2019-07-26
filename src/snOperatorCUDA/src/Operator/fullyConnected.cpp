@@ -84,13 +84,18 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
     // currrect params
     setInternPrm(prms);  
 
+    // aux array
+    auxGPUParams_["dWeight"] = nullptr;
+    auxGPUParams_["dWPrev"] = nullptr;
+    auxGPUParams_["dWGrad"] = nullptr;
+
     if (batchNormType_ != batchNormType::none){
 
         baseBatchNorm_.mean = cuMemRealloc(0, kernel_, baseBatchNorm_.mean, 0);
         baseBatchNorm_.varce = cuMemRealloc(0, kernel_, baseBatchNorm_.varce, 1);
         baseBatchNorm_.scale = cuMemRealloc(0, kernel_, baseBatchNorm_.scale, 1);
         baseBatchNorm_.schift = cuMemRealloc(0, kernel_, baseBatchNorm_.schift, 0);
-             
+           
         baseBatchNorm_.sz = snSize(kernel_);
     }
 }
@@ -258,11 +263,11 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     snSize outsz = baseOut_.size();
     if (dropOut_ > 0.F)
         dropOut(operPrm.isLerning, dropOut_, outsz, out);
-    
+       
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
         layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-    
+   
     /// active func
     activationForward(outsz, out, activeType_);
        
@@ -283,7 +288,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     // active func
     if (activeType_ != activeType::none)                
         activationBackward(baseOut_.size(), baseOut_.getDataGPU(), gradIn, activeType_); 
-
+    
     // batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
         layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
@@ -337,7 +342,7 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     }
 
     baseOut_.resize(snSize(kernel_, 1, 1, newsz.n));
-
+       
     if (isLern){
         baseGrad_.resize(newsz);
 
@@ -347,12 +352,10 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
         auxGPUParams_["dWGrad"] = cuMemRealloc(0, ntp, auxGPUParams_["dWGrad"], 0);
 
         if (batchNormType_ != batchNormType::none){
-
-            auto bcsz = baseBatchNorm_.sz.size();
-
-            baseBatchNorm_.norm = cuMemRealloc(bcsz, newsz.n * kernel_, baseBatchNorm_.norm, 0);
-            baseBatchNorm_.dScale = cuMemRealloc(bcsz, kernel_, baseBatchNorm_.dScale, 0);
-            baseBatchNorm_.dSchift = cuMemRealloc(bcsz, kernel_, baseBatchNorm_.dSchift, 0);
+            
+            baseBatchNorm_.norm = cuMemRealloc(0, newsz.n * kernel_, baseBatchNorm_.norm, 0);
+            baseBatchNorm_.dScale = cuMemRealloc(0, kernel_, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = cuMemRealloc(0, kernel_, baseBatchNorm_.dSchift, 0);
             
             baseBatchNorm_.sz = snSize(kernel_);
         }

@@ -266,17 +266,16 @@ __global__ void cuBwdBias(snSize insz, const snFloat* bias, snFloat* grout){
 
     size_t isz = insz.w * insz.h;
 
-    snFloat* pGrOut = grout + isz * insz.d * blockIdx.x;
-    unsigned int d = threadIdx.x;
-    while (d < insz.d){
+    snFloat* pGrOut = grout + isz * blockIdx.x + isz * insz.d * blockIdx.y;
 
-        snFloat b = bias[d];
-        for (size_t j = 0; j < isz; ++j)
-            pGrOut[j] += b;
+    snFloat b = bias[blockIdx.x];
 
-        pGrOut += isz * blockDim.x;
+    unsigned int i = threadIdx.x;
+    while (i < isz){
+        
+        pGrOut[i] += b;
 
-        d += blockDim.x;
+        i += blockDim.x;
     }
 }
 
@@ -325,7 +324,10 @@ void Deconvolution::backwardCUDA_GW(const deconvParams& prms,
         dWeightOut + wStepByN));
 
     // +bias
-    cuBwdBias << < int(insz.n), 128 >> > (insz, weight + wStepByN, gradOut);
+    dim3 dimBlock(128);
+    dim3 dimGrid(int(insz.d), int(insz.n));
+
+    cuBwdBias << < dimGrid, dimBlock >> > (insz, weight + wStepByN, gradOut);
      
 }
 

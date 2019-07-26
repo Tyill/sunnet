@@ -90,6 +90,11 @@ void Deconvolution::load(std::map<std::string, std::string>& prms){
             
    
     setInternPrm(prms);
+
+    // aux array
+    auxGPUParams_["dWeight"] = nullptr;
+    auxGPUParams_["dWPrev"] = nullptr;
+    auxGPUParams_["dWGrad"] = nullptr;
 }
 
 bool Deconvolution::setInternPrm(std::map<std::string, std::string>& prms){

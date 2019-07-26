@@ -69,9 +69,7 @@ void FullyConnected::freeParamCUDA(void* gpuPrms){
 }
 
 __global__ void cuFwdBias(size_t kernel, snSize insz, const snFloat* weight, snFloat* output){
-       
-    weight += insz.w * insz.h * insz.d * kernel;
-   
+          
     snFloat* out = output + kernel * blockIdx.x;
     unsigned int k = threadIdx.x;
     while (k < kernel){
@@ -110,13 +108,12 @@ void FullyConnected::forwardCUDA(size_t kernel, const snSize& insz, const snFloa
         krn));                         // Out, step to next Y (Y21 - Y11) 
     
     // +bias
-    cuFwdBias << < int(insz.n), 128 >> > (kernel, insz, weight, output);
+    cuFwdBias << < int(insz.n), 128 >> > (kernel, insz, weight + ida * krn, output);
     
 }
 
 __global__ void cuBwdBias(size_t kernel, snSize insz, const snFloat* gradIn, snFloat* dWOut){
     
-    dWOut += insz.w * insz.h * insz.d * kernel;
     unsigned int k = threadIdx.x;
     while (k < kernel){
    
@@ -159,7 +156,7 @@ void FullyConnected::backwardCUDA_GW(size_t kernel, const snFloat* weight,
         krn));                   // dW, step to next 
  
     // bias
-    cuBwdBias << < 1, 128 >> > (kernel, insz, gradIn, dWOut);
+    cuBwdBias << < 1, 128 >> > (kernel, insz, gradIn, dWOut + ida * krn);
       
     //// Gradient for previous layer
     //// GrOut = αGrIn * W^T + βGrOut

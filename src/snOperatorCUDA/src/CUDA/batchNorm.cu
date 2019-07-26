@@ -63,7 +63,7 @@ __global__ void calcMeanAndVarce(SN_Base::snSize insz, snFloat* in, batchNorm pr
     size_t sz = insz.w * insz.h * insz.d,
            bsz = insz.n;
 
-    // gridDim.x = insz.d
+    // gridDim.x = insz.d    
     // blockDim.x <= insz.w * insz.h
 
     in += insz.w * insz.h * blockIdx.x;
@@ -72,6 +72,8 @@ __global__ void calcMeanAndVarce(SN_Base::snSize insz, snFloat* in, batchNorm pr
 
     unsigned int i = threadIdx.x;
     while (i < (insz.w * insz.h)){
+
+        prm.mean[i] = 0;
 
         snFloat srq = 0.F;
         for (size_t j = 0; j < bsz; ++j){
@@ -135,6 +137,8 @@ __global__ void calcDSchiftAndDScale(SN_Base::snSize insz, snFloat* gradIn, batc
     unsigned int i = threadIdx.x;
     while (i < (insz.w * insz.h)){
 
+        prm.dSchift[i] = 0;
+
         snFloat dScale = 0.F;
         for (size_t j = 0; j < bsz; ++j){
             
@@ -157,7 +161,7 @@ __global__ void calcGrOut(SN_Base::snSize insz, snFloat* gradIn, snFloat* gradOu
            bsz = insz.n;
 
     // gridDim.x = insz.d
-    // gridDim.x = insz.n
+    // gridDim.y = insz.n
     // blockDim.x <= insz.w * insz.h
 
     prm.scale += insz.w * insz.h * blockIdx.x;

@@ -89,7 +89,7 @@ namespace SN_API{
             units(units_), act(act_), opt(opt_),
             dropOut(dropOut_), bnorm(bnorm_), gpuDeviceId(gpuDeviceId_){};
 
-        FullyConnected(uint32_t units_, batchNormType bnorm_ = batchNormType::none) :
+        FullyConnected(uint32_t units_, batchNormType bnorm_) :
             units(units_), bnorm(bnorm_){}
 
         ~FullyConnected(){};

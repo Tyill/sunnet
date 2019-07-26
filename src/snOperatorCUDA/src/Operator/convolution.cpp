@@ -99,6 +99,11 @@ void Convolution::load(std::map<std::string, std::string>& prms){
     }
         
     setInternPrm(prms);
+
+    // aux array
+    auxGPUParams_["dWeight"] = nullptr;
+    auxGPUParams_["dWPrev"] = nullptr;
+    auxGPUParams_["dWGrad"] = nullptr;        
 }
 
 bool Convolution::setInternPrm(std::map<std::string, std::string>& prms){
@@ -396,15 +401,15 @@ void Convolution::updateConfig(bool isLern, const snSize& newsz){
            osz = outSz.w * outSz.h * outSz.d;
     
     if (batchNormType_ != batchNormType::none){        
-        baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0);
-        baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1);
-        baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1);
-        baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0);
+        baseBatchNorm_.mean = cuMemRealloc(0, osz, baseBatchNorm_.mean, 0);
+        baseBatchNorm_.varce = cuMemRealloc(0, osz, baseBatchNorm_.varce, 1);
+        baseBatchNorm_.scale = cuMemRealloc(0, osz, baseBatchNorm_.scale, 1);
+        baseBatchNorm_.schift = cuMemRealloc(0, osz, baseBatchNorm_.schift, 0);
       
         if (isLern){
-            baseBatchNorm_.norm = cuMemRealloc(csz * outSz.n, osz * outSz.n, baseBatchNorm_.norm, 0);
-            baseBatchNorm_.dScale = cuMemRealloc(csz, osz, baseBatchNorm_.dScale, 0);
-            baseBatchNorm_.dSchift = cuMemRealloc(csz, osz, baseBatchNorm_.dSchift, 0);
+            baseBatchNorm_.norm = cuMemRealloc(0, osz * outSz.n, baseBatchNorm_.norm, 0);
+            baseBatchNorm_.dScale = cuMemRealloc(0, osz, baseBatchNorm_.dScale, 0);
+            baseBatchNorm_.dSchift = cuMemRealloc(0, osz, baseBatchNorm_.dSchift, 0);
         }
 
         baseBatchNorm_.sz = outSz;
