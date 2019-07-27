@@ -263,14 +263,14 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
     // active func
     activationForward(outsz, out, activeType_);
     
     // batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
 }
 
@@ -280,7 +280,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
 
     // batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
@@ -290,7 +290,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
 
     // batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_.getDataGPU();   

@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../batchNormFunctions.h"
 #include "snOperatorCUDA/src/Operator/batchNorm.h"
 #include "snAux/auxFunc.h"
 
@@ -33,14 +34,7 @@ using namespace SN_Base;
 BatchNorm::BatchNorm(void* net, const string& name, const string& node, std::map<std::string, std::string>& prms) :
 OperatorBase(net, name, node, prms){
 
-    if (basePrms_.find("bnType") != basePrms_.end()){
-
-        if (basePrms_["bnType"] == "byChannels")
-            bnType_ = batchNormType::byChannels;
-        else
-            bnType_ = batchNormType::byLayer;
-    }      
-
+   
     inSzMem_ = snSize(0);
 }
 
@@ -82,16 +76,8 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
             updateConfig(operPrm.isLerning, outsz);
         }
 
-        switch (bnType_){        
-            case batchNormType::byChannels:
-          //      channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-                break;
-            case batchNormType::byLayer:
-           //     layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-                break;
-            default:
-                break;
-        }         
+      batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+              
     }
     else{ // backward
        
@@ -109,16 +95,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
         snFloat* out = baseGrad_.getDataGPU();
         snSize outsz = baseGrad_.size();
 
-        switch (bnType_){
-            case batchNormType::byChannels:
-          //      channelBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-                break;
-            case batchNormType::byLayer:
-          //      layerBatchNorm(false, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-                break;
-            default:
-                break;
-        }
+        batchNormBackward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);           
     }
     
     return vector<string>();

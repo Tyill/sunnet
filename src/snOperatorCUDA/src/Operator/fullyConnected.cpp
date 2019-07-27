@@ -266,14 +266,14 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
        
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
    
     /// active func
     activationForward(outsz, out, activeType_);
        
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        layerBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward( operPrm.isLerning, outsz, out, out, baseBatchNorm_);
 }
 
 void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
@@ -283,7 +283,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     /// batchNorm
     snSize gsz = inTns.size();
     if (batchNormType_ == batchNormType::postActive)
-        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(gsz, gradIn, gradIn, baseBatchNorm_);
       
     // active func
     if (activeType_ != activeType::none)                
@@ -291,7 +291,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     
     // batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_.getDataGPU();

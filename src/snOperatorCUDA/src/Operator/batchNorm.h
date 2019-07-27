@@ -42,9 +42,7 @@ public:
 private: 
 
     std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
-    
-    batchNormType bnType_ = batchNormType::byLayer;
-    
+   
     SN_Base::snSize inSzMem_;                                         ///< insz mem
 
 
