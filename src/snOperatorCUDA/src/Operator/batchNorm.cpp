@@ -95,7 +95,7 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
         snFloat* out = baseGrad_.getDataGPU();
         snSize outsz = baseGrad_.size();
 
-        batchNormBackward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);           
+        batchNormBackward(outsz, out, out, baseBatchNorm_);           
     }
     
     return vector<string>();

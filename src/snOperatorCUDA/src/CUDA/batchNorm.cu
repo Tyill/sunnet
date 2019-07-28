@@ -6,15 +6,6 @@
 
 using namespace SN_Base;
 
-__device__ void bnOffset(batchNorm* bn, size_t offs){
-    bn->mean += offs;
-    bn->varce += offs;
-    bn->scale += offs;
-    bn->dScale += offs;
-    bn->schift += offs;
-    bn->dSchift += offs;
-}
-
 __global__ void batchNormInf(snSize insz, snFloat* in, snFloat* out, batchNorm prm){
     
     size_t inStepByD = insz.w * insz.h,     // step out by input
@@ -26,7 +17,10 @@ __global__ void batchNormInf(snSize insz, snFloat* in, snFloat* out, batchNorm p
     snFloat* cin = in + inStepByN * blockIdx.y + inStepByD * blockIdx.x,
            * cout = out + inStepByN * blockIdx.y + inStepByD * blockIdx.x;
     
-    bnOffset(&prm, inStepByD * blockIdx.x);
+    prm.mean += inStepByD * blockIdx.x;
+    prm.varce += inStepByD * blockIdx.x;
+    prm.scale += inStepByD * blockIdx.x;
+    prm.schift += inStepByD * blockIdx.x;
     
     unsigned int i = threadIdx.x;
     while (i < inStepByD){
@@ -202,14 +196,12 @@ void batchNormForward(bool isLern, const snSize& insz, snFloat* in, snFloat* out
 void batchNormBackward(const snSize& insz, snFloat* in, snFloat* out, const batchNorm& prm){
       
     calcDSchiftAndDScale << <int(insz.d), 256 >> > (insz, in, prm);
-
+        
     dim3 dimBlock(128);
     dim3 dimGrid(int(insz.d), int(insz.n));
 
-    calcGrOut << < dimGrid, dimBlock >> > (insz, in, out, prm);
+    calcGrOut << < dimGrid, dimBlock >> > (insz, in, out, prm);       
 
-    calcSchiftAndScale << <int(insz.d), 256 >> > (insz, prm);
-      
-  
+    calcSchiftAndScale << <int(insz.d), 256 >> > (insz, prm);   
 }
 

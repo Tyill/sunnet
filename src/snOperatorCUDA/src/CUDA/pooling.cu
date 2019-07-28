@@ -84,7 +84,7 @@ void Pooling::iniParamCUDA(bool isLern, const snSize& insz, const snSize& outsz,
         poolT = cudnnPoolingMode_t::CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
    
     cuCHECK(cudnnSetPooling2dDescriptor(pool_desc, poolT, cudnnNanPropagation_t::CUDNN_NOT_PROPAGATE_NAN,
-        int(prms.kernel), int(prms.kernel), prms.paddingH, prms.paddingW, int(prms.stride), int(prms.stride)));
+        int(prms.kernel), int(prms.kernel), int(prms.paddingH), int(prms.paddingW), int(prms.stride), int(prms.stride)));
     if (!isFirst)
         cuCHECK(cudnnDestroyPoolingDescriptor(gpuPrm->pool_desc));
     gpuPrm->pool_desc = pool_desc;

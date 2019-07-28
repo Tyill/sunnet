@@ -69,8 +69,6 @@ namespace SN_API{
         none = -1,
         beforeActive = 0,
         postActive = 1,
-        byChannels = 2,
-        byLayer = 3,
     };
     std::string batchNormTypeStr(batchNormType bnorm){
 
@@ -78,8 +76,6 @@ namespace SN_API{
             case batchNormType::none:         return "none";
             case batchNormType::beforeActive: return "beforeActive";
             case batchNormType::postActive:   return "postActive";
-            case batchNormType::byChannels:   return "byChannels";
-            case batchNormType::byLayer:      return "byLayer";
             default:                          return "none";
         }
     }

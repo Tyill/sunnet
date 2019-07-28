@@ -26,16 +26,16 @@
 
 void cuSetDeviceId(int);
 
-SN_Base::snFloat* cuMemAlloc(size_t sz, int initVal);
+SN_Base::snFloat* cuMemAlloc(const SN_Base::snSize& sz, SN_Base::snFloat initVal);
 
-SN_Base::snFloat* cuMemRealloc(size_t csz, size_t nsz, SN_Base::snFloat*, int initVal);
+SN_Base::snFloat* cuMemRealloc(const SN_Base::snSize& csz, const SN_Base::snSize& nsz, SN_Base::snFloat*, SN_Base::snFloat initVal);
 
-void cuMemSet(size_t sz, SN_Base::snFloat* data, int val);
+void cuMemSet(const SN_Base::snSize& sz, SN_Base::snFloat* data, SN_Base::snFloat val);
 
-void cuMemCpyCPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU);
+void cuMemCpyCPU2GPU(const SN_Base::snSize& sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcCPU);
 
-void cuMemCpyGPU2CPU(size_t sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU);
+void cuMemCpyGPU2CPU(const SN_Base::snSize& sz, SN_Base::snFloat* dstCPU, SN_Base::snFloat* srcGPU);
                    
-void cuMemCpyGPU2GPU(size_t sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU, bool isAsync = false);
+void cuMemCpyGPU2GPU(const SN_Base::snSize& sz, SN_Base::snFloat* dstGPU, SN_Base::snFloat* srcGPU, bool isAsync = false);
 
 void cuMemFree(SN_Base::snFloat*);
