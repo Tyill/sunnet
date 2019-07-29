@@ -25,6 +25,8 @@
 
 #pragma once
 
+
+#include <cstring>
 #include <algorithm>
 #include <omp.h>
 #include "snBase/snBase.h"

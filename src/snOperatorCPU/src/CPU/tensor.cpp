@@ -1,5 +1,6 @@
 ﻿
 #include "snBase/snBase.h"
+#include <cstring>
 
 using namespace SN_Base;
 

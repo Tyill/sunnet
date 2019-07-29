@@ -39,7 +39,7 @@ public:
 
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
     
-    SN_Base::batchNorm BatchNorm::getBatchNorm()const override;
+    SN_Base::batchNorm getBatchNorm()const override;
 
 private: 
 

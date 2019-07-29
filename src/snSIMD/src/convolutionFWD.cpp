@@ -23,9 +23,11 @@
 // THE SOFTWARE.
 //
 
+#include <immintrin.h>
 #include <omp.h>
 #include <thread>
 #include <iostream>
+#include <cstring>
 #include "snBase/snBase.h"
 #include "Lib/OpenBLAS/cblas.h"
 

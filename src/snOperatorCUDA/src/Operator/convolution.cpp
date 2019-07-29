@@ -332,7 +332,6 @@ void Convolution::backward(const SN_Base::Tensor& inTns, const operationParam& o
     }   
 }
 
-#include <cuda_runtime.h>
 void Convolution::updateConfig(bool isLern, const snSize& newsz){
     
     size_t& kernel = convPrms_.kernel,

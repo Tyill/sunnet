@@ -24,8 +24,10 @@
 //
 
 
+#include <immintrin.h>
 #include <omp.h>
 #include <thread>
+#include <cstring>
 #include "snBase/snBase.h"
 
 using namespace std;

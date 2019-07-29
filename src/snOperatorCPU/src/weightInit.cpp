@@ -22,6 +22,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+
+#include <cstring>
+#include <cmath>
+
 #include "snBase/snBase.h"
 #include "random.h"
 #include "structurs.h"
