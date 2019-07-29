@@ -27,7 +27,11 @@
 #include "skynet/skyNet.h"
 #include "skynet/src/snet.h"
 
-#define SN_VERSION "1.0.3" // 02.05.2019 a.medvedev
+#define SN_VERSION "1.0.4" // 29.07.2019 a.medvedev
+// -add snOperatorCUDA project - everything related to CUDA ferried there
+// -refactoring
+
+//#define SN_VERSION "1.0.3" // 02.05.2019 a.medvedev
 // -add snSIMD project - AVX instr for CPU faster
 // -add operator 'Activation'
 // -add example resnet50 with weights from TF
