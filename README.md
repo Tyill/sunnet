@@ -16,7 +16,7 @@ SkyNet is a light deep learning library.
 |    Skynet        |        195            |          15           |       600        |       800        |               
 |    Tensorflow    |        250            |          25           |       400        |       1400       |               
 
-Compare with Tensorflow, inference ResNet50. [Code.](https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py) PC: i5-2400, GF1050, Win7, MSVC12. 
+[Compare with Tensorflow](https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py), inference ResNet50. PC: i5-2400, GF1050, Win7, MSVC12. 
 
 
 ## Features
