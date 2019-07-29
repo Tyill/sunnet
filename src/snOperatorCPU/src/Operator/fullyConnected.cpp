@@ -92,7 +92,6 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
         auxParams_["bn_norm"] = vector<snFloat>();               baseBatchNorm_.norm = auxParams_["bn_norm"].data();
         auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
         auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"] = vector<snFloat>();                baseBatchNorm_.onc = auxParams_["bn_onc"].data();
     
         baseBatchNorm_.sz = snSize(kernel_);
     }
@@ -241,14 +240,14 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outSz, out, out, baseBatchNorm_);
     
     /// active func
     activationForward(kernel_ * insz.n, out, activeType_);
        
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        layerBatchNorm(true, operPrm.isLerning, outSz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outSz, out, out, baseBatchNorm_);
 }
 
 void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam& operPrm){
@@ -258,7 +257,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
     /// batchNorm
     snSize gsz = inTns.size();
     if (batchNormType_ == batchNormType::postActive)
-        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(gsz, gradIn, gradIn, baseBatchNorm_);
       
     // active func
     if (activeType_ != activeType::none){
@@ -274,7 +273,7 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        layerBatchNorm(false, true, gsz, gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(gsz, gradIn, gradIn, baseBatchNorm_);
       
     // calculation of the output gradient and weight correction
     snFloat* gradOut = baseGrad_.getDataCPU();
@@ -334,7 +333,6 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
 
         if (batchNormType_ != batchNormType::none){
             auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-            auxParams_["bn_onc"].resize(newsz.n, 1.F);          baseBatchNorm_.onc = auxParams_["bn_onc"].data();
         }
     }       
 } 

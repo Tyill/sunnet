@@ -100,7 +100,7 @@ private:
     /// CPU ///////////////////////////
         
     /// init aux params
-    void iniParamCPU(bool isLern, const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
+    void iniParamCPU(const SN_Base::snSize& insz, const SN_Base::snSize& outsz,
         const convParams&, CPUParams& cpuPrm);
 
     /// free aux params

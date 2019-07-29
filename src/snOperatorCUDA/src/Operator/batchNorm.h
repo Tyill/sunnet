@@ -38,11 +38,14 @@ public:
     std::vector<std::string> Do(const SN_Base::operationParam&, const std::vector<OperatorBase*>& neighbOpr) override;
 
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
+    
+    SN_Base::batchNorm BatchNorm::getBatchNorm()const override;
 
 private: 
 
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_;  ///< aux data 
-   
+    std::map<std::string, SN_Base::snFloat*> auxGPUParams_;       ///< aux data 
+    mutable std::map<std::string, std::vector<SN_Base::snFloat>> auxCPUParams_;
+
     SN_Base::snSize inSzMem_;                                         ///< insz mem
 
 

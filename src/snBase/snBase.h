@@ -142,18 +142,8 @@ namespace SN_Base{
        SN_Base::snFloat* dScale = nullptr;     ///< dγ
        SN_Base::snFloat* schift = nullptr;     ///< β
        SN_Base::snFloat* dSchift = nullptr;    ///< dβ
-       SN_Base::snFloat* onc = nullptr;        ///< 1 vector 
        SN_Base::snFloat lr = 0.001F;           ///< lrate for γ и β
-       snSize sz = snSize(0,0,0,0,0);
-             
-       void offset(size_t offs){
-           mean += offs;
-           varce += offs;
-           scale += offs;
-           dScale += offs;
-           schift += offs;
-           dSchift += offs;
-       }
+       snSize sz = snSize(0,0,0,0,0);    
     };
 
     /// basic network operator. All settlement operators are inherited from it.

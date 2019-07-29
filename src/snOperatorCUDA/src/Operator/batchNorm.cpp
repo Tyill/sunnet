@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 //
 #include "../stdafx.h"
+#include "../cudaCommon.h"
 #include "../batchNormFunctions.h"
 #include "snOperatorCUDA/src/Operator/batchNorm.h"
 #include "snAux/auxFunc.h"
@@ -40,21 +41,47 @@ OperatorBase(net, name, node, prms){
 
 bool BatchNorm::setBatchNorm(const batchNorm& bn){
 
-    size_t osz = bn.sz.size();
+    const snSize& csz = baseBatchNorm_.sz,
+                  osz = bn.sz;
 
-    auxParams_["bn_mean"] = vector<snFloat>(osz, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-    auxParams_["bn_varce"] = vector<snFloat>(osz, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
-    auxParams_["bn_scale"] = vector<snFloat>(osz, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
-    auxParams_["bn_schift"] = vector<snFloat>(osz, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+    baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0.F);
+    baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1.F);
+    baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1.F);
+    baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0.F);
 
-    memcpy(baseBatchNorm_.mean, bn.mean, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.varce, bn.varce, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.scale, bn.scale, osz * sizeof(snFloat));
-    memcpy(baseBatchNorm_.schift, bn.schift, osz * sizeof(snFloat));
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.mean, bn.mean);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.varce, bn.varce);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.scale, bn.scale);
+    cuMemCpyCPU2GPU(osz, baseBatchNorm_.schift, bn.schift);
 
     baseBatchNorm_.sz = bn.sz;
 
     return true;
+}
+
+batchNorm BatchNorm::getBatchNorm()const{
+
+    const snSize& csz = baseBatchNorm_.sz;
+
+    auxCPUParams_["bn_mean"] = vector<snFloat>(csz.size());
+    auxCPUParams_["bn_varce"] = vector<snFloat>(csz.size());
+    auxCPUParams_["bn_scale"] = vector<snFloat>(csz.size());
+    auxCPUParams_["bn_schift"] = vector<snFloat>(csz.size());
+
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_mean"].data(), baseBatchNorm_.mean);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_varce"].data(), baseBatchNorm_.varce);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_scale"].data(), baseBatchNorm_.scale);
+    cuMemCpyGPU2CPU(csz, auxCPUParams_["bn_schift"].data(), baseBatchNorm_.schift);
+
+    batchNorm bn;
+    bn.mean = auxCPUParams_["bn_mean"].data();
+    bn.varce = auxCPUParams_["bn_varce"].data();
+    bn.scale = auxCPUParams_["bn_scale"].data();
+    bn.schift = auxCPUParams_["bn_schift"].data();
+
+    bn.sz = csz;
+
+    return bn;
 }
 
 std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -93,9 +120,8 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
         }
                
         snFloat* out = baseGrad_.getDataGPU();
-        snSize outsz = baseGrad_.size();
-
-        batchNormBackward(outsz, out, out, baseBatchNorm_);           
+        
+        batchNormBackward(baseGrad_.size(), out, out, baseBatchNorm_);
     }
     
     return vector<string>();
@@ -103,19 +129,19 @@ std::vector<std::string> BatchNorm::Do(const operationParam& operPrm, const std:
 
 void BatchNorm::updateConfig(bool isLern, const snSize& newsz){
         
-    size_t osz = newsz.w * newsz.h * newsz.d;
+    const snSize& csz = baseBatchNorm_.sz,
+                  osz = snSize(newsz.w, newsz.h, newsz.d);
 
-    auxParams_["bn_mean"] = vector<snFloat>(osz, 0);         baseBatchNorm_.mean = auxParams_["bn_mean"].data();
-    auxParams_["bn_varce"] = vector<snFloat>(osz, 1);        baseBatchNorm_.varce = auxParams_["bn_varce"].data();
-    auxParams_["bn_scale"] = vector<snFloat>(osz, 1);        baseBatchNorm_.scale = auxParams_["bn_scale"].data();
-    auxParams_["bn_schift"] = vector<snFloat>(osz, 0);       baseBatchNorm_.schift = auxParams_["bn_schift"].data();
- 
+    baseBatchNorm_.mean = cuMemRealloc(csz, osz, baseBatchNorm_.mean, 0.F);
+    baseBatchNorm_.varce = cuMemRealloc(csz, osz, baseBatchNorm_.varce, 1.F);
+    baseBatchNorm_.scale = cuMemRealloc(csz, osz, baseBatchNorm_.scale, 1.F);
+    baseBatchNorm_.schift = cuMemRealloc(csz, osz, baseBatchNorm_.schift, 0.F);
+
     if (isLern){
-        auxParams_["bn_norm"] = vector<snFloat>(osz * newsz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
-        auxParams_["bn_dScale"] = vector<snFloat>(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
-        auxParams_["bn_dSchift"] = vector<snFloat>(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-        auxParams_["bn_onc"] = vector<snFloat>(newsz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
+        baseBatchNorm_.norm = cuMemRealloc(snSize(0), snSize(newsz.w, newsz.h, newsz.d, newsz.n), baseBatchNorm_.norm, 0.F);
+        baseBatchNorm_.dScale = cuMemRealloc(snSize(0), osz, baseBatchNorm_.dScale, 0.F);
+        baseBatchNorm_.dSchift = cuMemRealloc(snSize(0), osz, baseBatchNorm_.dSchift, 0.F);
     }
-    baseBatchNorm_.sz = newsz;
-    baseBatchNorm_.sz.n = 1;
+
+    baseBatchNorm_.sz = osz;
 }

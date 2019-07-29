@@ -26,16 +26,13 @@
 
 #include "snBase/snBase.h"
 
-void channelBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, SN_Base::batchNorm prm);
-
-void layerBatchNorm(bool fwBw, bool isLern, const SN_Base::snSize& insz, SN_Base::snFloat* in, SN_Base::snFloat* out, const SN_Base::batchNorm& prm);
-
-void batchNormForward(const SN_Base::snSize& insz,
+void batchNormForward(bool isLern,
+    const SN_Base::snSize& insz,
     SN_Base::snFloat* in,
     SN_Base::snFloat* out,
-    SN_Base::batchNorm);
+    const SN_Base::batchNorm&);
 
 void batchNormBackward(const SN_Base::snSize& insz,
     SN_Base::snFloat* gradIn,
     SN_Base::snFloat* gradOut,
-    SN_Base::batchNorm);
+    const SN_Base::batchNorm&);

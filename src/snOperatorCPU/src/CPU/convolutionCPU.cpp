@@ -36,12 +36,12 @@ using namespace SN_Base;
 
 
 
-void Convolution::iniParamCPU(bool isLern, const snSize& insz, const snSize& outsz,
+void Convolution::iniParamCPU(const snSize& insz, const snSize& outsz,
     const convParams& prms, CPUParams& cpuPrm){
      
 #ifdef SN_AVX 
     // M * M * insz.d * outsz.w * outsz.h
-    size_t sz = prms.fWidth * prms.fHeight * insz.d * outsz.w * outsz.h;
+    size_t sz = prms.fWidth * prms.fHeight * insz.d * outsz.w * outsz.h + 8; // 8 - end for _mm256_storeu_ps
 
     cpuPrm.buffMemFWD = (snFloat*)realloc(cpuPrm.buffMemFWD, sz * sizeof(snFloat));
 #endif

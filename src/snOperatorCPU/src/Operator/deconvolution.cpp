@@ -237,14 +237,14 @@ void Deconvolution::forward(const SN_Base::Tensor& inTns, const operationParam& 
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
        
     /// active func
     activationForward(outsz.size(), out, activeType_);
     
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(true, operPrm.isLerning, outsz, out, out, baseBatchNorm_);
+        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
     
 }
 
@@ -254,7 +254,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
 
     /// batchNorm
     if (batchNormType_ == batchNormType::postActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     /// active func
     if (activeType_ != activeType::none){
@@ -270,7 +270,7 @@ void Deconvolution::backward(const SN_Base::Tensor& inTns, const operationParam&
 
     /// batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
-        channelBatchNorm(false, true, inTns.size(), gradIn, gradIn, baseBatchNorm_);
+        batchNormBackward(inTns.size(), gradIn, gradIn, baseBatchNorm_);
     
     // calculation of the output gradient and weight correction
     snFloat* grOut = baseGrad_.getDataCPU();   
@@ -349,7 +349,6 @@ void Deconvolution::updateConfig(bool isLern, const snSize& newsz){
             auxParams_["bn_norm"].resize(osz * outSz.n);  baseBatchNorm_.norm = auxParams_["bn_norm"].data();
             auxParams_["bn_dScale"].resize(osz, 0);       baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
             auxParams_["bn_dSchift"].resize(osz, 0);      baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
-            auxParams_["bn_onc"].resize(outSz.n, 1.F);    baseBatchNorm_.onc = auxParams_["bn_onc"].data();
         }
         baseBatchNorm_.sz = outSz;
         baseBatchNorm_.sz.n = 1;
