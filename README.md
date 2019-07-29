@@ -10,6 +10,16 @@ SkyNet is a light deep learning library.
 [ResNet cpp-example for Win](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
 
 
+Compare with Tensorflow, inference ResNet50. [Code.] (https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py)
+PC: i5-2400, GF1050, Win7, MSVC12. 
+
+|                  | **CPU: time/img, ms** | **GPU: time/img, ms** | **CPU: RAM, Mb** | **GPU: RAM, Mb** |
+|------------------|-----------------------|-----------------------|------------------|------------------|
+|    Skynet        |        195            |          15           |       600        |       800        |               
+|--------------------------------------------------------------------------------------------------------|
+|    Tensorflow    |        250            |          25           |       400        |       1400       |               
+
+
 ## Features
 
 * the library is written from scratch in C++ (only STL + OpenBLAS for calculation), C-interface
@@ -68,7 +78,7 @@ for n in range(1000):
 
 * pip install libskynet     -  CPU
 
-* pip install libskynet-cu  -  CPU + cuDNN7.3.1
+* pip install libskynet-cu  -  CUDA + cuDNN7.3.1
 
  
 ## [Wiki](https://github.com/Tyill/skynet/wiki) 

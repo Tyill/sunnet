@@ -122,14 +122,13 @@ int main(int argc, char* argv[]){
 
         // training
         float accurat = 0;
-     /*   snet.training(lr,
+        snet.training(lr,
             inLayer,
             outLayer,
             targetLayer,
-            accurat);*/
+            accurat);
 
-        snet.forward(false, inLayer, outLayer);
-
+      
         // calc error
         sn::snFloat* targetData = targetLayer.data();
         sn::snFloat* outData = outLayer.data();

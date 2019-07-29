@@ -37,15 +37,15 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 setup(
-    name="libskynet",
+    name="libskynet-cu",
     version=__version__,
     url="https://github.com/Tyill/skynet",
     packages=find_packages(),
-    package_dir={'libskynet': 'libskynet'},
-    package_data={'libskynet': ['*.so', '*.dll']},
+    package_dir={'libskynet-cu': 'libskynet-cu'},
+    package_data={'libskynet-cu': ['*.so', '*.dll']},
     description="neural net with blackjack and hookers",
     long_description=long_description,
     long_description_content_type="text/markdown",
