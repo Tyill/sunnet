@@ -181,8 +181,9 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
         OperatorBase* opr = SN_Opr::createOperator(this, n.second.oprName, n.first, n.second.oprPrms);
 
         if (!opr){
+            for (auto& o : inout_net.operats)
+                SN_Opr::freeOperator(o.second, o.second->name());
             out_err = "Error createNet: not found operator '" + n.second.oprName + "'";
-            inout_net.operats.clear();
             return false;
         }
         inout_net.operats[n.first] = opr;
@@ -220,7 +221,7 @@ SNet::~SNet(){
 
     if (engine_) delete engine_;
 
-    for (auto o : operats_)
+    for (auto& o : operats_)
         SN_Opr::freeOperator(o.second, o.second->name());
 }
 
