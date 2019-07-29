@@ -26,7 +26,7 @@ branches:
     
 env:
   global:
-    
+    - USE_CUDA=OFF
   matrix:
     - USE_AVX=OFF
     - USE_AVX=ON
@@ -49,8 +49,7 @@ before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       cd src;
       cmake -DUSE_AVX=$USE_AVX
-            -DGPU=NONE .;
-      ls ;
+            -DGPU=NONE .;     
     fi
     
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
