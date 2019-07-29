@@ -62,14 +62,14 @@ int main(int argc, char* argv[]){
 
         .addNode("C5", sn::Convolution(10, 0), "C6")
         .addNode("C6", sn::Convolution(10, 0), "DC1")
-        .addNode("DC1", sn::Deconvolution(10), "Rsz3")
+        .addNode("DC1", sn::Deconvolution(10, sn::active::relu), "Rsz3")
         .addNode("Rsz3", sn::Resize(sn::diap(0, 10), sn::diap(10, 20)), "Conc2")
 
         .addNode("Conc2", sn::Concat("Rsz2 Rsz3"), "C7")
 
         .addNode("C7", sn::Convolution(10, 0), "C8")
         .addNode("C8", sn::Convolution(10, 0), "DC2")
-        .addNode("DC2", sn::Deconvolution(10), "Rsz4")
+        .addNode("DC2", sn::Deconvolution(10, sn::active::relu), "Rsz4")
         .addNode("Rsz4", sn::Resize(sn::diap(0, 10), sn::diap(10, 20)), "Conc1")
 
         .addNode("Conc1", sn::Concat("Rsz1 Rsz4"), "C9")
@@ -81,8 +81,8 @@ int main(int argc, char* argv[]){
     snet.addNode("C10", convOut, "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::binaryCrossEntropy), "Output");
     
-    string imgPath = "c://cpp//skyNet//example//unet//images//";
-    string labelPath = "c://cpp//skyNet//example//unet//labels//";
+    string imgPath = "c://cpp//other//skyNet//example//unet//images//";
+    string labelPath = "c://cpp//other//skyNet//example//unet//labels//";
 
     int batchSz = 10, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;
     vector<string> imgName;

@@ -46,29 +46,29 @@ namespace Test
                 .addNode("Rsz2", new sn.Resize(new sn.diap(0, 10), new sn.diap(0, 10)), "Conc2")
                 .addNode("P2", new sn.Pooling(), "C5")
 
-                .addNode("C5", new sn.Convolution(10, 0, ), "C6")
-                .addNode("C6", new sn.Convolution(10, 0, ), "DC1")
-                .addNode("DC1", new sn.Deconvolution(10, ), "Rsz3")
+                .addNode("C5", new sn.Convolution(10, 0), "C6")
+                .addNode("C6", new sn.Convolution(10, 0), "DC1")
+                .addNode("DC1", new sn.Deconvolution(10, 0), "Rsz3")
                 .addNode("Rsz3", new sn.Resize(new sn.diap(0, 10), new sn.diap(10, 20)), "Conc2")
 
                 .addNode("Conc2", new sn.Concat("Rsz2 Rsz3"), "C7")
 
-                .addNode("C7", new sn.Convolution(10, 0, ), "C8")
-                .addNode("C8", new sn.Convolution(10, 0, ), "DC2")
-                .addNode("DC2", new sn.Deconvolution(10, ), "Rsz4")
+                .addNode("C7", new sn.Convolution(10, 0), "C8")
+                .addNode("C8", new sn.Convolution(10, 0), "DC2")
+                .addNode("DC2", new sn.Deconvolution(10, 0), "Rsz4")
                 .addNode("Rsz4", new sn.Resize(new sn.diap(0, 10), new sn.diap(10, 20)), "Conc1")
 
                 .addNode("Conc1", new sn.Concat("Rsz1 Rsz4"), "C9")
 
-                .addNode("C9", new sn.Convolution(10, 0, ), "C10");
+                .addNode("C9", new sn.Convolution(10, 0), "C10");
 
-            sn.Convolution convOut = new sn.Convolution(1, 0, );
+            sn.Convolution convOut = new sn.Convolution(1, 0);
             convOut.act = new sn.active(sn.active.type.sigmoid);
             snet.addNode("C10", convOut, "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.binaryCrossEntropy), "Output");
                        
-            string imgPath = "c://cpp//skyNet//example//unet//images//";
-            string targPath = "c://cpp//skyNet//example//unet//labels//";
+            string imgPath = "c://cpp//other//skyNet//example//unet//images//";
+            string targPath = "c://cpp//other//skyNet//example//unet//labels//";
 
 
             uint batchSz = 3, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;

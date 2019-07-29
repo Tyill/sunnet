@@ -34,10 +34,10 @@ for i in range(100):
  net.forward(False, x.copy(), outAr)
  print(time.time() - ct)
 
-mx = np.argmax(outAr[0])
+ mx = np.argmax(outAr[0])
 
-# for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
-print('Predicted:', mx, 'val', outAr[0][0][0][mx])
+ # for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+ print('Predicted:', mx, 'val', outAr[0][0][0][mx])
 
 
 

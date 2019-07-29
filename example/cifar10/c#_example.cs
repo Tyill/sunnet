@@ -79,9 +79,9 @@ namespace Test
                 .addNode("C6", new sn.Convolution(25, 0, sn.batchNormType.type.beforeActive), "P3")
                 .addNode("P3", new sn.Pooling(), "FC1")
 
-                .addNode("FC1", new sn.FullyConnected(2048, sn.batchNormType.type.beforeActive), "FC2")
-                .addNode("FC2", new sn.FullyConnected(128, sn.batchNormType.type.beforeActive), "FC3")
-                .addNode("FC3", new sn.FullyConnected(10, sn.batchNormType.type.beforeActive), "LS")
+                .addNode("FC1", new sn.FullyConnected(2048), "FC2")
+                .addNode("FC2", new sn.FullyConnected(128), "FC3")
+                .addNode("FC3", new sn.FullyConnected(10), "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.softMaxToCrossEntropy), "Output");
 
             string imgPath = "c://cpp//skyNet//example//cifar10//images//";

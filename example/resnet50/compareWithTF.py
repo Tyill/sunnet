@@ -17,7 +17,7 @@ if (not snResNet50.setWeights(net, weightTF)):
 
 #################################
 
-img_path = 'c:\\cpp\\skyNet\\example\\resnet50\\images\\elephant.jpg'
+img_path = 'c:\\cpp\\other\\skyNet\\example\\resnet50\\images\\elephant.jpg'
 img = image.load_img(img_path, target_size=(224, 224))
 x = image.img_to_array(img)
 x = np.expand_dims(x, axis=0)

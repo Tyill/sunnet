@@ -12,8 +12,8 @@ import datetime
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, 0), 'C2') \
-   .addNode('C2', snOperator.Convolution(25, 0), 'P1') \
+   .addNode('C1', snOperator.Convolution(15, (3, 3)), 'C2') \
+   .addNode('C2', snOperator.Convolution(25, (3, 3)), 'P1') \
    .addNode('P1', snOperator.Pooling(snType.poolType.max), 'F1') \
    .addNode('F1', snOperator.FullyConnected(256), 'F2') \
    .addNode('F2', snOperator.FullyConnected(10), 'LS') \

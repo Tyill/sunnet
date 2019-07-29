@@ -51,14 +51,14 @@ int main(int argc, char* argv[]){
     sn::Net snet;
         
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, 3, 0, 1, sn::batchNormType::beforeActive, sn::active::relu), "C2")
-        .addNode("C2", sn::Convolution(15, 3, 0, 1, sn::batchNormType::beforeActive, sn::active::relu), "P1")
+        .addNode("C1", sn::Convolution(15, 3, 0, 1, sn::batchNormType::none, sn::active::relu), "C2")
+        .addNode("C2", sn::Convolution(15, 3, 0, 1, sn::batchNormType::none, sn::active::relu), "P1")
         .addNode("P1", sn::Pooling(), "FC1")
         .addNode("FC1", sn::FullyConnected(128, sn::batchNormType::none), "FC2")
         .addNode("FC2", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://cpp//skyNet//example//mnist//images//";
+    string imgPath = "c://cpp//other//skyNet//example//mnist//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     size_t sum_metric = 0;
     size_t num_inst = 0;
     float accuratSumm = 0;
-    for (int k = 0; k < 1000; ++k){
+    for (int k = 0; k < 10; ++k){
 
         targetLayer.clear();
        
@@ -122,11 +122,13 @@ int main(int argc, char* argv[]){
 
         // training
         float accurat = 0;
-        snet.training(lr,
+     /*   snet.training(lr,
             inLayer,
             outLayer,
             targetLayer,
-            accurat);
+            accurat);*/
+
+        snet.forward(false, inLayer, outLayer);
 
         // calc error
         sn::snFloat* targetData = targetLayer.data();

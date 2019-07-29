@@ -74,7 +74,7 @@ namespace Test
                 .addNode("FC2", new sn.FullyConnected(10), "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.softMaxToCrossEntropy), "Output");
 
-            string imgPath = "c://C++//skyNet//example//mnist//images//";
+            string imgPath = "c://cpp//skyNet//example//mnist//images//";
 
                       
             uint batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
@@ -89,7 +89,7 @@ namespace Test
                 return;
             }
 
-            string wpath = "c:/C++/w.dat";
+            string wpath = "c://cpp//w.dat";
             if (snet.loadAllWeightFromFile(wpath))
                 Console.WriteLine("Load weight ok path: " + wpath);
             else

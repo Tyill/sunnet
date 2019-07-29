@@ -11,17 +11,17 @@ import datetime
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, -1, snType.batchNormType.beforeActive), 'C2') \
-   .addNode('C2', snOperator.Convolution(15, 0, snType.batchNormType.beforeActive), 'P1') \
+   .addNode('C1', snOperator.Convolution(15, (3, 3), -1, 1, snType.batchNormType.beforeActive), 'C2') \
+   .addNode('C2', snOperator.Convolution(15, (3, 3), 0, 1, snType.batchNormType.beforeActive), 'P1') \
    .addNode('P1', snOperator.Pooling(snType.poolType.max), 'C3') \
-   .addNode('C3', snOperator.Convolution(25, -1, snType.batchNormType.beforeActive), 'C4') \
-   .addNode('C4', snOperator.Convolution(25, 0, snType.batchNormType.beforeActive), 'P2') \
+   .addNode('C3', snOperator.Convolution(25, (3, 3), -1, 1, snType.batchNormType.beforeActive), 'C4') \
+   .addNode('C4', snOperator.Convolution(25, (3, 3), 0, 1, snType.batchNormType.beforeActive), 'P2') \
    .addNode('P2', snOperator.Pooling(snType.poolType.max), 'C5') \
-   .addNode('C5', snOperator.Convolution(40, -1, snType.batchNormType.beforeActive), 'C6') \
-   .addNode('C6', snOperator.Convolution(40, 0, snType.batchNormType.beforeActive), 'P3') \
+   .addNode('C5', snOperator.Convolution(40, (3, 3), -1, 1, snType.batchNormType.beforeActive), 'C6') \
+   .addNode('C6', snOperator.Convolution(40, (3, 3), 0, 1, snType.batchNormType.beforeActive), 'P3') \
    .addNode('P3', snOperator.Pooling(snType.poolType.max), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(2048, snType.batchNormType.beforeActive), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(128, snType.batchNormType.beforeActive), 'F3') \
+   .addNode('F1', snOperator.FullyConnected(2048), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(128), 'F3') \
    .addNode('F3', snOperator.FullyConnected(10), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
 
@@ -32,7 +32,7 @@ for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 
 bsz = 100
-lr = 0.001
+lr = 0.0001
 accuratSumm = 0.
 inLayer = np.zeros((bsz, 3, 32, 32), ctypes.c_float)
 outLayer = np.zeros((bsz, 1, 1, 10), ctypes.c_float)

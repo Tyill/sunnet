@@ -9,9 +9,9 @@ import os
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(10, 0), 'P1') \
+   .addNode('C1', snOperator.Convolution(10, (3, 3)), 'P1') \
    .addNode('P1', snOperator.Pooling(), 'C2') \
-   .addNode('C2', snOperator.Convolution(20, 0), 'P2') \
+   .addNode('C2', snOperator.Convolution(20, (3, 3)), 'P2') \
    .addNode('P2', snOperator.Pooling(), 'F1') \
    .addNode('F1', snOperator.FullyConnected(50), 'F2') \
    .addNode('F2', snOperator.FullyConnected(10), 'LS') \
@@ -25,7 +25,7 @@ net.addNode('In', snOperator.Input(), 'C1') \
 
 # loadImg
 imgList = []
-pathImg = 'c:/cpp/skyNet/example/mnist/images/'
+pathImg = 'c:/cpp/other/skyNet/example/mnist/images/'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 
