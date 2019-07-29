@@ -28,14 +28,16 @@ if (UNIX)
  if (NOT USE_CUDA)
   find_package(BLAS REQUIRED)
  
-  if (USE_AVX)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
-  endif()
+ if (USE_AVX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+ endif()
   
  endif() 
 endif()
 
 if(MSVC)
+  cmake_policy(SET CMP0081 OLD) 
+
   add_definitions(-DWIN32_LEAN_AND_MEAN)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
