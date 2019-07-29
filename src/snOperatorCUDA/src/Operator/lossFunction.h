@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 #include "../structurs.h"
 
-/// оператор - расчет ошибки
+/// РѕРїРµСЂР°С‚РѕСЂ - СЂР°СЃС‡РµС‚ РѕС€РёР±РєРё
 class LossFunction final : SN_Base::OperatorBase{
 
 public:

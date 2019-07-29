@@ -568,18 +568,15 @@ namespace SN_API{
     class BatchNormLayer{
 
     public:
-
-        batchNormType bnType;
-
-        BatchNormLayer(batchNormType bnType_) : bnType(bnType_){};
+      
+        BatchNormLayer(){};
 
         ~BatchNormLayer(){};
 
         std::string getParamsJn(){
 
             std::stringstream ss;
-            ss << "{\"bnType\":\"" << batchNormTypeStr(bnType) << "\""
-                "}";
+            ss << "{}";
 
             return ss.str();
         }

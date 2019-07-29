@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //

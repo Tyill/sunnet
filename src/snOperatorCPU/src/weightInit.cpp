@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -30,7 +30,7 @@
 using namespace std;
 using namespace SN_Base;
 
-// инициализация весов
+// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РІРµСЃРѕРІ
 
 void weightInit(snFloat* ioW, size_t sz, size_t fan_in, size_t fan_out, weightInitType wtype){
 

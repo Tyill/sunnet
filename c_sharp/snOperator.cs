@@ -522,17 +522,14 @@ namespace SN_API
     /// Batch norm
     /// </summary>
     public class BatchNormLayer : IOperator
-    {
-        public batchNormType bnorm = new batchNormType(batchNormType.type.byChannels); ///< Type of batch norm. Optional parameter
-       
-        public BatchNormLayer(batchNormType bnorm_)
+    {       
+        public BatchNormLayer()
         {
-            bnorm = bnorm_;
         }
 
         public string getParamsJn()
         {                       
-            return "{\"bnType\":\"" + bnorm.str() + "\"}";
+            return "{}";
         }
 
         public string name()

@@ -334,12 +334,10 @@ class BatchNormLayer():
     Batch norm
     '''
 
-    _params = {
-        'bnType': batchNormType.byChannels.value,  # Type of batch norm. Optional parameter
-    }
+    _params = {}
 
-    def __init__(self, bnorm = batchNormType.byChannels):
-        self._params['bnType'] = bnorm.value
+    def __init__(self):
+        return
 
     def getParams(self):
         return self._params

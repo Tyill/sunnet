@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -27,7 +27,7 @@
 #include "snBase/snBase.h"
 #include"snOperatorCPU/src/structurs.h"
 
-/// обратная свертка
+/// РѕР±СЂР°С‚РЅР°СЏ СЃРІРµСЂС‚РєР°
 class Deconvolution final : SN_Base::OperatorBase{
 
 public:

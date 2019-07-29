@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -28,7 +28,7 @@
 #include "../structurs.h"
 
 
-/// оператор - расчет ошибки
+/// РѕРїРµСЂР°С‚РѕСЂ - СЂР°СЃС‡РµС‚ РѕС€РёР±РєРё
 class LossFunction final : SN_Base::OperatorBase{
 
 public:
@@ -43,7 +43,7 @@ private:
  
     lossType lossType_ = lossType::softMaxACrossEntropy;
        
-    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_; ///< вспом данные для расчета
+    std::map<std::string, std::vector<SN_Base::snFloat>> auxParams_; ///< РІСЃРїРѕРј РґР°РЅРЅС‹Рµ РґР»СЏ СЂР°СЃС‡РµС‚Р°
 
     void load(std::map<std::string, std::string>& prms);
 

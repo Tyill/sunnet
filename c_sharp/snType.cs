@@ -114,9 +114,7 @@ namespace SN_API
         {
             none = -1,
             beforeActive = 0,
-            postActive = 1,
-            byChannels = 2,
-            byLayer = 3,
+            postActive = 1,           
         };
         public string str()
         {
@@ -124,9 +122,7 @@ namespace SN_API
             {
                 case type.none:         return "none";
                 case type.beforeActive: return "beforeActive";
-                case type.postActive:   return "postActive";
-                case type.byChannels:   return "byChannels";
-                case type.byLayer:      return "byLayer";
+                case type.postActive:   return "postActive";             
                 default:                return "none";
             }
         }

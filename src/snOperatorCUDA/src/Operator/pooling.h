@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -84,7 +84,7 @@ private:
         SN_Base::snFloat* output,       
         void* gpuParams);
 
-    /// обратный проход CUDA
+    /// РѕР±СЂР°С‚РЅС‹Р№ РїСЂРѕС…РѕРґ CUDA
     void backwardCUDA(const poolParams& poolPrms,
         const SN_Base::snSize& outsz,  
         const SN_Base::snFloat* output,

@@ -1,4 +1,4 @@
-
+﻿
 #include <cuda_runtime.h>
 #include <curand.h>
 

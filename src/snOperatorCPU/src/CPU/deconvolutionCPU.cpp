@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -131,7 +131,7 @@ void Deconvolution::backwardCPU_GW(const deconvParams& prms,
     auto core = std::thread::hardware_concurrency();
     if (core == 0) core = 4;
 
-    // по батчу
+    // РїРѕ Р±Р°С‚С‡Сѓ
 #pragma omp parallel for num_threads(core)
     for (int n = 0; n < int(insz.n); ++n){
 
