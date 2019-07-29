@@ -32,9 +32,6 @@
     <ClInclude Include="..\..\src\skynet\src\snet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\skynet\src\stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\skynet\skyNet.h">
       <Filter>Header Files</Filter>
     </ClInclude>

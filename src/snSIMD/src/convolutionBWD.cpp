@@ -1,4 +1,4 @@
-//
+﻿//
 // SkyNet Project
 // Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
 //
@@ -24,10 +24,11 @@
 //
 
 
+#include <immintrin.h>
 #include <omp.h>
 #include <thread>
+#include <cstring>
 #include "snBase/snBase.h"
-#include "base.h"
 
 using namespace std;
 using namespace SN_Base;

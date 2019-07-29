@@ -62,35 +62,35 @@ int main(int argc, char* argv[])
         "\"NodeName\":\"C1\","
         "\"NextNodes\":\"C2\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"15\",\"mode\":\"CUDA\"}"
+        "\"OperatorParams\":{\"kernel\":\"15\"}"
         "},"
 
         "{"
         "\"NodeName\":\"C2\","
         "\"NextNodes\":\"P1\","
         "\"OperatorName\":\"Convolution\","
-        "\"OperatorParams\":{\"kernel\":\"15\",\"mode\":\"CUDA\"}"
+        "\"OperatorParams\":{\"kernel\":\"15\"}"
         "},"
 
         "{"
         "\"NodeName\":\"P1\","
         "\"NextNodes\":\"FC1\","
         "\"OperatorName\":\"Pooling\","
-        "\"OperatorParams\":{\"mode\":\"CUDA\"}"
+        "\"OperatorParams\":{}"
         "},"
 
         "{"
         "\"NodeName\":\"FC1\","
         "\"NextNodes\":\"FC2\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"128\",\"mode\":\"CUDA\"}"
+        "\"OperatorParams\":{\"kernel\":\"128\"}"
         "},"
 
         "{"
         "\"NodeName\":\"FC2\","
         "\"NextNodes\":\"LS\","
         "\"OperatorName\":\"FullyConnected\","
-        "\"OperatorParams\":{\"kernel\":\"10\",\"mode\":\"CUDA\"}"
+        "\"OperatorParams\":{\"kernel\":\"10\"}"
         "},"
 
         "{"
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    string imgPath = "c:\\C++\\skyNet\\example\\mnist\\images\\";
+    string imgPath = "c:\\cpp\\skyNet\\example\\mnist\\images\\";
   
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);

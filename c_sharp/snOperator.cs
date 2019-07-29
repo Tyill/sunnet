@@ -66,9 +66,7 @@ namespace SN_API
         public optimizer opt = new optimizer(optimizer.type.adam); ///< Optimizer of weights. Optional parameter
         public float dropOut = 0.0f;                               ///< Random disconnection of neurons. Optional parameter [0..1.F]
         public batchNormType bnorm = new batchNormType(batchNormType.type.none); ///< Type of batch norm. Optional parameter
-        public calcMode mode = new calcMode(calcMode.type.CPU);    ///< Сalculation mode. Optional parameter           
         public uint gpuDeviceId = 0;                               ///< GPU Id. Optional parameter
-        public bool gpuClearMem = false;                           ///< Clear memory GPU. Optional parameter
         public bool freeze = false;                                ///< Do not change weights. Optional parameter
 		public bool useBias = true;                                ///< +bias. Optional parameter
         public weightInit wini = new weightInit(weightInit.type.he); ///< Type of initialization of weights. Optional parameter
@@ -81,27 +79,18 @@ namespace SN_API
                        active.type act_ = active.type.relu,                
                        optimizer.type opt_ = optimizer.type.adam,          
                        float dropOut_ = 0.0f,                    
-                       batchNormType.type bnorm_ = batchNormType.type.none,
-                       calcMode.type mode_ = calcMode.type.CPU,            
+                       batchNormType.type bnorm_ = batchNormType.type.none,                             
                        uint gpuDeviceId_ = 0)
         {                                   
             units = units_;
             act = new active(act_);
             opt = new optimizer(opt_); 
             dropOut = dropOut_;
-            bnorm = new batchNormType(bnorm_);
-            mode = new calcMode(mode_);
+            bnorm = new batchNormType(bnorm_);            
             gpuDeviceId = gpuDeviceId_;
         }
 
-        public FullyConnected(uint units_, calcMode.type mode_ = calcMode.type.CPU, 
-            batchNormType.type bnorm_ = batchNormType.type.none)
-        {        
-            units = units_;            
-            bnorm = new batchNormType(bnorm_);
-            mode = new calcMode(mode_);  
-        }
-
+      
         public string getParamsJn()
         {
 
@@ -114,12 +103,10 @@ namespace SN_API
                          "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                          "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                         "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                         "\"mode\":\"" + mode.str() + "\"," +
+                         "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +                         
                          "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                          "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
-						 "\"useBias\":\"" + (useBias ? "1" : "0") + "\"," +
-                         "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
+						 "\"useBias\":\"" + (useBias ? "1" : "0") + "\"" +                         
                          "}";
 
            return ss;
@@ -147,9 +134,7 @@ namespace SN_API
         public int padding = 0;                       ///< Padding around the edges. Optional parameter
         public uint stride = 1;                       ///< Mask movement step. Optional parameter(> 0)
         public uint dilate = 1;                       ///< Expansion mask. Optional parameter(> 0)
-        public calcMode mode = new calcMode(calcMode.type.CPU);        ///< Сalculation mode. Optional parameter           
         public uint gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
-        public bool gpuClearMem = false;              ///< Clear memory GPU. Optional parameter
         public bool freeze = false;                   ///< Do not change weights. Optional parameter
         public bool useBias = true;                   ///< +bias. Optional parameter
         public weightInit wini = new weightInit(weightInit.type.he);   ///< Type of initialization of weights. Optional parameter
@@ -168,7 +153,6 @@ namespace SN_API
             int padding_ = 0,
             uint stride_ = 1,                      
             uint dilate_ = 1,                      
-            calcMode.type mode_ = calcMode.type.CPU,            
             uint gpuDeviceId_ = 0)
             {
                         
@@ -182,16 +166,14 @@ namespace SN_API
             padding  = padding_;
             stride = stride_;
             dilate = dilate_;
-            mode = new calcMode(mode_);
             gpuDeviceId = gpuDeviceId_;
         }
        
-        public Convolution(uint filters_, int padding_ = 0, calcMode.type mode_ = calcMode.type.CPU, 
+        public Convolution(uint filters_, int padding_ = 0, 
             batchNormType.type bnorm_ = batchNormType.type.none)
         {
             filters = filters_;
-            padding = padding_;
-            mode = new calcMode(mode_);
+            padding = padding_;           
             bnorm = new batchNormType(bnorm_);
         }
 
@@ -212,12 +194,10 @@ namespace SN_API
                 "\"decayMomentDW\":\"" + decayMomentDW.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"mode\":\"" + mode.str() + "\"," +
+                "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +               
                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
                 "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
-				"\"useBias\":\"" + (useBias ? "1" : "0") + "\"," +
-                "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
+				"\"useBias\":\"" + (useBias ? "1" : "0") + "\"" +               
                 "}";
 
             return ss;
@@ -244,9 +224,7 @@ namespace SN_API
         public uint fWidth = 3;                       ///< Width of mask. Optional parameter(> 0)
         public uint fHeight = 3;                      ///< Height of mask. Optional parameter(> 0)
         public uint stride = 2;                       ///< Mask movement step. Optional parameter(> 0)
-        public calcMode mode = new calcMode(calcMode.type.CPU);        ///< Сalculation mode. Optional parameter           
         public uint gpuDeviceId = 0;                  ///< GPU Id. Optional parameter
-        public bool gpuClearMem = false;              ///< Clear memory GPU. Optional parameter
         public bool freeze = false;                   ///< Do not change weights. Optional parameter
         public weightInit wini = new weightInit(weightInit.type.he);   ///< Type of initialization of weights. Optional parameter
         public float decayMomentDW = 0.9F;            ///< Optimizer of weights moment change. Optional parameter [0..1.F]
@@ -262,7 +240,6 @@ namespace SN_API
             uint fWidth_ = 3,
             uint fHeight_ = 3,
             uint stride_ = 1,
-            calcMode.type mode_ = calcMode.type.CPU,
             uint gpuDeviceId_ = 0)
         {
 
@@ -274,15 +251,13 @@ namespace SN_API
             fWidth = fWidth_;
             fHeight = fHeight_;
             stride = stride_;
-            mode = new calcMode(mode_);
             gpuDeviceId = gpuDeviceId_;
         }
 
-        public Deconvolution(uint filters_, calcMode.type mode_ = calcMode.type.CPU,
+        public Deconvolution(uint filters_,
             batchNormType.type bnorm_ = batchNormType.type.none)
         {
-            filters = filters_;
-            mode = new calcMode(mode_);
+            filters = filters_;            
             bnorm = new batchNormType(bnorm_);
         }
 
@@ -302,10 +277,8 @@ namespace SN_API
                 "\"decayMomentWGr\":\"" + decayMomentWGr.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"lmbRegular\":\"" + lmbRegular.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
                 "\"dropOut\":\"" + dropOut.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "\"," +
-                "\"mode\":\"" + mode.str() + "\"," +
-                "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
-                "\"freeze\":\"" + (freeze ? "1" : "0") + "\"," +
-                "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
+                 "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
+                "\"freeze\":\"" + (freeze ? "1" : "0") + "\"" +
                 "}";
 
             return ss;
@@ -327,17 +300,11 @@ namespace SN_API
         public uint kernel = 2;              ///< Square Mask Size. Optional parameter (> 0)
         public uint stride = 2;              ///< Mask movement step. Optional parameter(> 0)		
         public pooling pool = new pooling(pooling.type.max);    ///< Operator Type. Optional parameter 
-        public calcMode mode = new calcMode(calcMode.type.CPU); ///< Сalculation mode. Optional parameter           
-        public uint gpuDeviceId = 0;         ///< GPU Id. Optional parameter
-        public bool gpuClearMem = false;     ///< Clear memory GPU. Optional parameter
-
-        public Pooling(calcMode.type mode_ = calcMode.type.CPU,
-            uint gpuDeviceId_ = 0,
-            bool gpuClearMem_ = false)
+         public uint gpuDeviceId = 0;         ///< GPU Id. Optional parameter
+     
+        public Pooling(uint gpuDeviceId_ = 0)
         {
-            mode = new calcMode(mode_);
             gpuDeviceId = gpuDeviceId_;
-            gpuClearMem = gpuClearMem_;
         }
 
         public string getParamsJn()
@@ -345,11 +312,9 @@ namespace SN_API
 
             string ss = "{\"kernel\":\"" + kernel.ToString() + "\"," +
 			             "\"stride\":\"" + stride.ToString() + "\"," +
-                         "\"pool\":\"" + pool.str() + "\"," +
-                         "\"mode\":\"" + mode.str() + "\"," +
-                         "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"," +
-                         "\"gpuClearMem\":\"" + (gpuClearMem ? "1" : "0") + "\"" +
-                         "}";
+                         "\"pool\":\"" + pool.str() + "\"," +                       
+                         "\"gpuDeviceId\":\"" + gpuDeviceId.ToString() + "\"" +
+                          "}";
 
             return ss;
         }
@@ -557,17 +522,14 @@ namespace SN_API
     /// Batch norm
     /// </summary>
     public class BatchNormLayer : IOperator
-    {
-        public batchNormType bnorm = new batchNormType(batchNormType.type.byChannels); ///< Type of batch norm. Optional parameter
-       
-        public BatchNormLayer(batchNormType bnorm_)
+    {       
+        public BatchNormLayer()
         {
-            bnorm = bnorm_;
         }
 
         public string getParamsJn()
         {                       
-            return "{\"bnType\":\"" + bnorm.str() + "\"}";
+            return "{}";
         }
 
         public string name()

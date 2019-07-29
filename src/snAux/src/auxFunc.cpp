@@ -25,10 +25,11 @@
 #include <thread>
 #include <chrono>
 #include <cstring>
-#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <cctype>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "stdafx.h"
 
 #ifdef WIN32
 #include <windows.h>

@@ -4,7 +4,7 @@ import json
 def main():
 
     ### Create net
-    net = snResNet50.createNet(snType.calcMode.CPU)
+    net = snResNet50.createNet()
 
     ### Set weight
     weightTF = snWeight.getResNet50Weights()

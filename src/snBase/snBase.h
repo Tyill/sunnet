@@ -25,16 +25,17 @@
 #pragma once
 
 #include <cstdint>
-#include <cstring>
-#include <cassert>
+#include <string>
 #include <vector>
+#include <iostream>
 #include <map>
 
-#ifdef SN_DEBUG
-#define SN_PRINTMESS(mess) printf("%s \n", (mess).c_str());
-#else
-#define SN_PRINTMESS(mess);
-#endif
+#define ASSERT_MESS(condition, message)                                   \
+      if (!(condition)) {                                                 \
+         std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+         << " line " << __LINE__ << ": " << (message) << std::endl;       \
+         std::abort();                                                    \
+      }
 
 namespace SN_Base{
     
@@ -72,23 +73,15 @@ namespace SN_Base{
     };
         
     /// tensor - input data and output data of each node of the network.
+    /// snOperatorCPU/tensor.cpp - implementation CPU
+    /// snOperatorCUDA/tensor.cu - implementation CUDA
     struct Tensor{
-                
-        explicit Tensor(const snSize& sz = snSize(0,0,0,0,0)) : sz_(sz){
-
-            size_t ssz = sz.size();
         
-            if (ssz > 0)
-                data_ = (snFloat*)calloc(ssz, sizeof(snFloat));
-        }
+        explicit Tensor(const snSize& sz = snSize(0, 0, 0, 0, 0));
 
-        ~Tensor(){            
-            if (data_) free(data_);
-        }
+        ~Tensor();
 
-        Tensor(const Tensor& other){
-            setData(other.getData(), other.size());
-        }
+        Tensor(const Tensor& other);
         
         friend bool operator==(const Tensor& left, const Tensor& right){
                         
@@ -100,84 +93,30 @@ namespace SN_Base{
             return left.sz_ != right.sz_;
         }
 
-        Tensor& operator=(const Tensor& other){
-
-            setData(other.getData(), other.size());
-
-            return *this;
-        }
+        Tensor& operator=(const Tensor& other);
         
-        Tensor& operator+=(const Tensor& other){
+        Tensor& operator+=(const Tensor& other);
 
-            assert(other == *this);
-
-            auto od = other.getData();
-
-            size_t sz = this->size().size();
-            for (size_t i = 0; i < sz; ++i){
-                data_[i] += od[i];
-            }
-            
-            return *this;
-        }
-
-        Tensor& operator-=(const Tensor& other){
-
-            assert(other == *this);
-
-            auto od = other.getData();
-
-            size_t sz = this->size().size();
-            for (size_t i = 0; i < sz; ++i){
-                data_[i] -= od[i];
-            }
-
-            return *this;
-        }
-                              
-        snFloat* getData() const{
-                
-            return data_;
-        }
-                
-        void setData(const snFloat* data, const snSize& nsz){
-
-            size_t nnsz = nsz.size();
-            assert(data && (nnsz > 0));
-            
-            if (sz_.size() < nnsz)
-                data_ = (snFloat*)realloc(data_, nnsz * sizeof(snFloat));
+        Tensor& operator-=(const Tensor& other);
         
-            memcpy(data_, data, nnsz * sizeof(snFloat));
-            sz_ = nsz;
-        }
+        void setDataGPU(const snFloat* data, const snSize& nsz);
 
-        void resize(const snSize& nsz){
+        snFloat* getDataGPU() const;
+        
+        void setDataCPU(const snFloat* data, const snSize& nsz);
 
-            size_t nnsz = nsz.size(), csz = sz_.size();
-            assert(nnsz > 0);
+        snFloat* getDataCPU() const;
 
-            if (csz < nnsz){
-                data_ = (snFloat*)realloc(data_, nnsz * sizeof(snFloat));
-                memset(data_ + csz, 0, (nnsz - csz) * sizeof(snFloat));
-            }
-            
-            sz_ = nsz;
-        }
+        void resize(const snSize& nsz);
                 
         snSize size() const{
 
             return sz_;
         }
-
-        void tfree(){
-            if (data_) free(data_);
-            data_ = nullptr;
-            sz_ = snSize(0, 0, 0, 0, 0);
-        }
-
+        
     private:
-        snFloat* data_ = nullptr;
+        mutable snFloat* dataCPU_ = nullptr,
+                       * dataGPU_ = nullptr;
 
         snSize sz_;
     };
@@ -203,18 +142,8 @@ namespace SN_Base{
        SN_Base::snFloat* dScale = nullptr;     ///< dγ
        SN_Base::snFloat* schift = nullptr;     ///< β
        SN_Base::snFloat* dSchift = nullptr;    ///< dβ
-       SN_Base::snFloat* onc = nullptr;        ///< 1 vector 
        SN_Base::snFloat lr = 0.001F;           ///< lrate for γ и β
-       snSize sz = snSize(0,0,0,0,0);
-             
-       void offset(size_t offs){
-           mean += offs;
-           varce += offs;
-           scale += offs;
-           dScale += offs;
-           schift += offs;
-           dSchift += offs;
-       }
+       snSize sz = snSize(0,0,0,0,0);    
     };
 
     /// basic network operator. All settlement operators are inherited from it.
@@ -239,17 +168,17 @@ namespace SN_Base{
         }
 
         virtual bool setInput(const snFloat* data, const snSize& dsz){
-            baseInput_.setData(data, dsz);
+            baseInput_.setDataCPU(data, dsz);
             return true;
         }
 
         virtual bool setGradient(const snFloat* data, const snSize& dsz){
-            baseGrad_.setData(data, dsz);
+            baseGrad_.setDataCPU(data, dsz);
             return true;
         }
         
         virtual bool setWeight(const snFloat* data, const snSize& dsz){
-            baseWeight_.setData(data, dsz);
+            baseWeight_.setDataCPU(data, dsz);
             return true;
         }
 
@@ -266,7 +195,7 @@ namespace SN_Base{
             return baseWeight_;
         }
 
-        virtual batchNorm getBatchNorm() const final{
+        virtual batchNorm getBatchNorm() const{
             return baseBatchNorm_;
         }
 
@@ -307,7 +236,6 @@ namespace SN_Base{
 
     /// node in the symbol structure of the NN
     struct Node{
-
         std::string name;                             ///< the name of the node is to be unique within the branch, without the '' and '-'. "Begin", "End" are reserved as the beginning, the end of the network
         std::string oprName;                          ///< the node operator that is executed at the node. One operator per node.
         std::map<std::string, std::string> oprPrms;   ///< parameters of the operator (specifies the user when creating the net)

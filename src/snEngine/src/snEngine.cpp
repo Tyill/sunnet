@@ -26,8 +26,6 @@
 #include <set>
 #include "snBase/snBase.h"
 #include "snEngine/snEngine.h"
-#include "snOperator/snOperator.h"
-#include "snAux/auxFunc.h"
 
 using namespace std;
 using namespace SN_Base;

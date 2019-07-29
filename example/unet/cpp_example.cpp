@@ -48,41 +48,41 @@ int main(int argc, char* argv[]){
     sn::Net snet;   
  
     snet.addNode("In", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(10, -1, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(10, 0, sn::calcMode::CUDA), "P1 Crop1")
+        .addNode("C1", sn::Convolution(10, -1), "C2")
+        .addNode("C2", sn::Convolution(10, 0), "P1 Crop1")
         .addNode("Crop1", sn::Crop(sn::rect(0, 0, 487, 487)), "Rsz1")
         .addNode("Rsz1", sn::Resize(sn::diap(0, 10), sn::diap(0, 10)), "Conc1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "C3")
+        .addNode("P1", sn::Pooling(), "C3")
 
-        .addNode("C3", sn::Convolution(10, -1, sn::calcMode::CUDA), "C4")
-        .addNode("C4", sn::Convolution(10, 0, sn::calcMode::CUDA), "P2 Crop2")
+        .addNode("C3", sn::Convolution(10, -1), "C4")
+        .addNode("C4", sn::Convolution(10, 0), "P2 Crop2")
         .addNode("Crop2", sn::Crop(sn::rect(0, 0, 247, 247)), "Rsz2")
         .addNode("Rsz2", sn::Resize(sn::diap(0, 10), sn::diap(0, 10)), "Conc2")
-        .addNode("P2", sn::Pooling(sn::calcMode::CUDA), "C5")
+        .addNode("P2", sn::Pooling(), "C5")
 
-        .addNode("C5", sn::Convolution(10, 0, sn::calcMode::CUDA), "C6")
-        .addNode("C6", sn::Convolution(10, 0, sn::calcMode::CUDA), "DC1")
-        .addNode("DC1", sn::Deconvolution(10, sn::calcMode::CUDA), "Rsz3")
+        .addNode("C5", sn::Convolution(10, 0), "C6")
+        .addNode("C6", sn::Convolution(10, 0), "DC1")
+        .addNode("DC1", sn::Deconvolution(10, sn::active::relu), "Rsz3")
         .addNode("Rsz3", sn::Resize(sn::diap(0, 10), sn::diap(10, 20)), "Conc2")
 
         .addNode("Conc2", sn::Concat("Rsz2 Rsz3"), "C7")
 
-        .addNode("C7", sn::Convolution(10, 0, sn::calcMode::CUDA), "C8")
-        .addNode("C8", sn::Convolution(10, 0, sn::calcMode::CUDA), "DC2")
-        .addNode("DC2", sn::Deconvolution(10, sn::calcMode::CUDA), "Rsz4")
+        .addNode("C7", sn::Convolution(10, 0), "C8")
+        .addNode("C8", sn::Convolution(10, 0), "DC2")
+        .addNode("DC2", sn::Deconvolution(10, sn::active::relu), "Rsz4")
         .addNode("Rsz4", sn::Resize(sn::diap(0, 10), sn::diap(10, 20)), "Conc1")
 
         .addNode("Conc1", sn::Concat("Rsz1 Rsz4"), "C9")
 
-        .addNode("C9", sn::Convolution(10, 0, sn::calcMode::CUDA), "C10");
+        .addNode("C9", sn::Convolution(10, 0), "C10");
 
-    sn::Convolution convOut(1, 0, sn::calcMode::CUDA);
+    sn::Convolution convOut(1, 0);
     convOut.act = sn::active::sigmoid;
     snet.addNode("C10", convOut, "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::binaryCrossEntropy), "Output");
     
-    string imgPath = "c://C++//skyNet//example//unet//images//";
-    string labelPath = "c://C++//skyNet//example//unet//labels//";
+    string imgPath = "c://cpp//other//skyNet//example//unet//images//";
+    string labelPath = "c://cpp//other//skyNet//example//unet//labels//";
 
     int batchSz = 10, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;
     vector<string> imgName;

@@ -26,10 +26,10 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
-#include "stdafx.h"
 #include "snAux/auxFunc.h"
 #include "snBase/snBase.h"
 #include "snet.h"
+#include "snOperatorCPU/snOperator.h"
 
 using namespace std;
 using namespace SN_Base;
@@ -181,8 +181,9 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
         OperatorBase* opr = SN_Opr::createOperator(this, n.second.oprName, n.first, n.second.oprPrms);
 
         if (!opr){
+            for (auto& o : inout_net.operats)
+                SN_Opr::freeOperator(o.second, o.second->name());
             out_err = "Error createNet: not found operator '" + n.second.oprName + "'";
-            inout_net.operats.clear();
             return false;
         }
         inout_net.operats[n.first] = opr;
@@ -220,7 +221,7 @@ SNet::~SNet(){
 
     if (engine_) delete engine_;
 
-    for (auto o : operats_)
+    for (auto& o : operats_)
         SN_Opr::freeOperator(o.second, o.second->name());
 }
 
@@ -247,8 +248,8 @@ bool SNet::training(snFloat lr, const snSize& isz, const snFloat* iLayer, const 
 
     // metrics
     if (outAccurate){
-        auto setGrad = operats_["EndNet"]->getGradient();
-        auto outTensor = operats_["EndNet"]->getOutput();
+        auto& setGrad = operats_["EndNet"]->getGradient();
+        auto& outTensor = operats_["EndNet"]->getOutput();
         *outAccurate = calcAccurate(setGrad, outTensor);
     }
 
@@ -271,7 +272,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
     engine_->forward(operPrm_);
 
     if (isEndNet_){
-        auto tnsOut = operats_["EndNet"]->getOutput();
+        auto& tnsOut = operats_["EndNet"]->getOutput();
 
         auto tnsOutSz = tnsOut.size();
         if (tnsOutSz != osz){
@@ -280,7 +281,7 @@ bool SNet::forward(bool isLern, const snSize& isz, const snFloat* iLayer, const 
             return false;
         }
 
-        memcpy(outData, tnsOut.getData(), tnsOutSz.size() * sizeof(snFloat));
+        memcpy(outData, tnsOut.getDataCPU(), tnsOutSz.size() * sizeof(snFloat));
     }
 
     return true;
@@ -295,7 +296,7 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
     }
 
     if (isEndNet_){
-        auto outTensor = operats_["EndNet"]->getOutput();
+        auto& outTensor = operats_["EndNet"]->getOutput();
 
         auto tsz = outTensor.size();
         if (tsz != gsz){
@@ -317,8 +318,8 @@ bool SNet::backward(snFloat lr, const snSize& gsz, const snFloat* gradErr){
 
 SN_Base::snFloat SNet::calcAccurate(const Tensor& targetTens, const Tensor& outTens){
 
-    snFloat* targetData = targetTens.getData();
-    snFloat* outData = outTens.getData();
+    snFloat* targetData = targetTens.getDataCPU();
+    snFloat* outData = outTens.getDataCPU();
     
     size_t accCnt = 0, osz = outTens.size().size();
     for (size_t i = 0; i < osz; ++i){
@@ -357,7 +358,7 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
 
     *wData = (snFloat*)realloc(*wData, wsz.size() * sizeof(snFloat));
         
-    memcpy(*wData, weight.getData(), wsz.size() * sizeof(snFloat));
+    memcpy(*wData, weight.getDataCPU(), wsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -416,13 +417,13 @@ bool SNet::getOutputNode(const char* nodeName, SN_Base::snSize& osz, SN_Base::sn
         return false;
     }
 
-    auto outTns = operats_[nodeName]->getOutput();
+    auto& outTns = operats_[nodeName]->getOutput();
 
     osz = outTns.size();
 
     *outData = (snFloat*)realloc(*outData, osz.size() * sizeof(snFloat));
 
-    memcpy(*outData, outTns.getData(), osz.size() * sizeof(snFloat));
+    memcpy(*outData, outTns.getDataCPU(), osz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -468,7 +469,7 @@ bool SNet::getGradientNode(const char* nodeName, SN_Base::snSize& gsz, SN_Base::
 
     *gData = (snFloat*)realloc(*gData, gsz.size() * sizeof(snFloat));
 
-    memcpy(*gData, grad.getData(), gsz.size() * sizeof(snFloat));
+    memcpy(*gData, grad.getDataCPU(), gsz.size() * sizeof(snFloat));
 
     return true;
 }
@@ -495,7 +496,7 @@ bool SNet::saveAllWeightToFile(const char* filePath){
         snSize lSize;
         for (auto opr : operats_){
 
-            data = opr.second->getWeight().getData();
+            data = opr.second->getWeight().getDataCPU();
             lSize = opr.second->getWeight().size();
 
             if (data){

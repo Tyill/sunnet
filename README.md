@@ -38,11 +38,11 @@ SkyNet is a light deep learning library.
 # create net
 net = snNet.Net()
 net.addNode('In', snOperator.Input(), 'C1') \
-   .addNode('C1', snOperator.Convolution(15, 0, snType.calcMode.CUDA), 'C2') \
-   .addNode('C2', snOperator.Convolution(25, 0, snType.calcMode.CUDA), 'P1') \
-   .addNode('P1', snOperator.Pooling(snType.calcMode.CUDA), 'F1') \
-   .addNode('F1', snOperator.FullyConnected(256, snType.calcMode.CUDA), 'F2') \
-   .addNode('F2', snOperator.FullyConnected(10, snType.calcMode.CUDA), 'LS') \
+   .addNode('C1', snOperator.Convolution(15), 'C2') \
+   .addNode('C2', snOperator.Convolution(25), 'P1') \
+   .addNode('P1', snOperator.Pooling(), 'F1') \
+   .addNode('F1', snOperator.FullyConnected(256), 'F2') \
+   .addNode('F2', snOperator.FullyConnected(10), 'LS') \
    .addNode('LS', snOperator.LossFunction(snType.lossType.softMaxToCrossEntropy), 'Output')
    
    .............

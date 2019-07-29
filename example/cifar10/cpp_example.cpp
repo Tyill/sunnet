@@ -50,24 +50,24 @@ int main(int argc, char* argv[]){
        
     sn::Net snet;   
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, -1, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "C2")
-        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "P1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "C3")
+        .addNode("C1", sn::Convolution(15, 3, -1, 1,  sn::batchNormType::beforeActive), "C2")
+        .addNode("C2", sn::Convolution(15, 3, 0, 1, sn::batchNormType::beforeActive), "P1")
+        .addNode("P1", sn::Pooling(), "C3")
      
-        .addNode("C3", sn::Convolution(25, -1, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "C4")
-        .addNode("C4", sn::Convolution(25, 0, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "P2")
-        .addNode("P2", sn::Pooling(sn::calcMode::CUDA), "C5")
+        .addNode("C3", sn::Convolution(25, 3, -1, 1, sn::batchNormType::beforeActive), "C4")
+        .addNode("C4", sn::Convolution(25, 3, 0, 1, sn::batchNormType::beforeActive), "P2")
+        .addNode("P2", sn::Pooling(), "C5")
      
-        .addNode("C5", sn::Convolution(40, -1, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "C6")
-        .addNode("C6", sn::Convolution(40, 0, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "P3")
-        .addNode("P3", sn::Pooling(sn::calcMode::CUDA), "FC1")
+        .addNode("C5", sn::Convolution(40, 3, -1, 1, sn::batchNormType::beforeActive), "C6")
+        .addNode("C6", sn::Convolution(40, 3, 0, 1, sn::batchNormType::beforeActive), "P3")
+        .addNode("P3", sn::Pooling(), "FC1")
     
-        .addNode("FC1", sn::FullyConnected(2048, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "FC2")
-        .addNode("FC2", sn::FullyConnected(128, sn::calcMode::CUDA, sn::batchNormType::beforeActive), "FC3")
-        .addNode("FC3", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("FC1", sn::FullyConnected(2048, sn::batchNormType::beforeActive), "FC2")
+        .addNode("FC2", sn::FullyConnected(128, sn::batchNormType::beforeActive), "FC3")
+        .addNode("FC3", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://C++//skyNet//example//cifar10//images//";
+    string imgPath = "c://cpp//other//skyNet//example//cifar10//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 3; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);

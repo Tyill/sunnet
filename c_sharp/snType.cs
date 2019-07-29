@@ -114,9 +114,7 @@ namespace SN_API
         {
             none = -1,
             beforeActive = 0,
-            postActive = 1,
-            byChannels = 2,
-            byLayer = 3,
+            postActive = 1,           
         };
         public string str()
         {
@@ -124,9 +122,7 @@ namespace SN_API
             {
                 case type.none:         return "none";
                 case type.beforeActive: return "beforeActive";
-                case type.postActive:   return "postActive";
-                case type.byChannels:   return "byChannels";
-                case type.byLayer:      return "byLayer";
+                case type.postActive:   return "postActive";             
                 default:                return "none";
             }
         }
@@ -195,36 +191,7 @@ namespace SN_API
         private type type_;
     }
 
-    /// <summary>
-    /// CPU, CUDA or OpenCL
-    /// </summary>
-    public class calcMode
-    {
-
-        public calcMode(type tp)
-        {
-            type_ = tp;
-        }
-        
-        public enum type
-        {
-            CPU = 0,
-            CUDA = 1,
-            OpenCL = 2,  
-        };
-        public string str()
-        {
-            switch (type_)
-            {
-            case type.CPU:    return "CPU";
-            case type.CUDA:   return "CUDA";
-            case type.OpenCL: return "OpenCL";
-            default:          return "CPU";
-            }
-        }
-        private type type_;
-    }
-
+   
     /// <summary>
     /// lockType
     /// </summary>

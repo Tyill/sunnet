@@ -46,9 +46,7 @@ class FullyConnected():
     'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
     'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
     'batchNorm': batchNormType.none.value,  # Type of batch norm. Optional parameter
-    'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
     'gpuDeviceId': '0',                     # GPU Id. Optional parameter
-    'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
     'freeze': '0',                          # Do not change weights. Optional parameter
 	'useBias': '1',                         # +bias. Optional parameter
     'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
@@ -60,12 +58,9 @@ class FullyConnected():
 
     def __init__(self,
                  units,
-                 act=active.relu,
-                 mode=calcMode.CPU,
-                 bnorm=batchNormType.none,
-                 ):
-        self._params['units'] = str(units)
-        self._params['mode'] = mode.value
+                 act=active.relu,                 
+                 bnorm=batchNormType.none):
+        self._params['units'] = str(units)        
         self._params['batchNorm'] = bnorm.value
         self._params['active'] = act.value
 
@@ -90,9 +85,7 @@ class Convolution():
     'optimizer': optimizer.adam.value,      # Optimizer of weights. Optional parameter
     'dropOut': '0',                         # Random disconnection of neurons. Optional parameter [0..1.F]
     'batchNorm': batchNormType.none.value,  # Type of batch norm. Optional parameter
-    'mode': calcMode.CPU.value,             # Сalculation mode. Optional parameter
     'gpuDeviceId': '0',                     # GPU Id. Optional parameter
-    'gpuClearMem': '0',                     # Clear memory GPU. Optional parameter
     'freeze': '0',                          # Do not change weights. Optional parameter
 	'useBias': '1',                         # +bias. Optional parameter
     'weightInit': weightInit.he.value,      # Type of initialization of weights. Optional parameter
@@ -108,8 +101,7 @@ class Convolution():
                  padding=0,
                  stride=1,
                  bnorm=batchNormType.none,
-                 act=active.relu,
-                 mode=calcMode.CPU):
+                 act=active.relu):
         self._params['filters'] = str(filters)
         self._params['fWidth'] = str(kernelSz[0])
         self._params['fHeight'] = str(kernelSz[1])
@@ -117,8 +109,7 @@ class Convolution():
         self._params['stride'] = str(stride)
         self._params['batchNorm'] = bnorm.value
         self._params['active'] = act.value
-        self._params['mode'] = mode.value
-
+     
     def getParams(self):
         return self._params
 
@@ -138,9 +129,7 @@ class Deconvolution():
         'optimizer': optimizer.adam.value,     # Optimizer of weights. Optional parameter
         'dropOut': '0',                        # Random disconnection of neurons. Optional parameter [0..1.F]
         'batchNorm': batchNormType.none.value, # Type of batch norm. Optional parameter
-        'mode': calcMode.CPU.value,            # Сalculation mode. Optional parameter
         'gpuDeviceId': '0',                    # GPU Id. Optional parameter
-        'gpuClearMem': '0',                    # Clear memory GPU. Optional parameter
         'freeze': '0',                         # Do not change weights. Optional parameter
         'weightInit': weightInit.he.value,     # Type of initialization of weights. Optional parameter
         'decayMomentDW': '0.9',                # Optimizer of weights moment change. Optional parameter [0..1.F]
@@ -155,26 +144,20 @@ class Deconvolution():
                  opt=optimizer.adam,
                  dropOut=0.0,
                  bnorm=batchNormType.none,
-                 mode=calcMode.CPU,
-                 gpuDeviceId=0,
-                 gpuClearMem=False,
+                 gpuDeviceId=0,                 
                  freeze=False):
         self._params['filters'] = str(filters)
         self._params['active'] = act.value
         self._params['optimizer'] = opt.value
         self._params['dropOut'] = str(dropOut)
         self._params['batchNorm'] = bnorm.value
-        self._params['mode'] = mode.value
         self._params['gpuDeviceId'] = str(gpuDeviceId)
-        self._params['gpuClearMem'] = '1' if gpuClearMem else '0'
         self._params['freeze'] = '1' if freeze else '0'
 
     def __init__(self,
                  filters,
-                 mode=calcMode.CPU,
                  bnorm=batchNormType.none):
         self._params['filters'] = str(filters)
-        self._params['mode'] = mode.value
         self._params['batchNorm'] = bnorm.value
 
     def getParams(self):
@@ -191,21 +174,17 @@ class Pooling():
         'kernel': '2',              # Square Mask Size. Optional parameter (> 0)
         'stride': '2',              # Mask movement step. Optional parameter(> 0)
         'pool': poolType.max.value, # Operator Type. Optional parameter
-        'mode': calcMode.CPU.value, # Сalculation mode. Optional parameter
-        'gpuDeviceId': '0',         # GPU Id. Optional parameter
-        'gpuClearMem': '0'          # Clear memory GPU. Optional parameter
-    }
+        'gpuDeviceId': '0'          # GPU Id. Optional parameter
+     }
 
     def __init__(self,
                  kernel=2,
                  stride=2,
-                 pool=poolType.max,
-                 mode=calcMode.CPU):
+                 pool=poolType.max):
         self._params['kernel'] = str(kernel)
         self._params['stride'] = str(stride)
         self._params['pool'] = pool.value
-        self._params['mode'] = mode.value
-
+        
     def getParams(self):
         return self._params
 
@@ -355,12 +334,10 @@ class BatchNormLayer():
     Batch norm
     '''
 
-    _params = {
-        'bnType': batchNormType.byChannels.value,  # Type of batch norm. Optional parameter
-    }
+    _params = {}
 
-    def __init__(self, bnorm = batchNormType.byChannels):
-        self._params['bnType'] = bnorm.value
+    def __init__(self):
+        return
 
     def getParams(self):
         return self._params

@@ -44,8 +44,6 @@ class batchNormType(Enum):
     none = 'none'
     beforeActive = 'beforeActive'
     postActive = 'postActive'
-    byChannels = 'byChannels'
-    byLayer    = 'byLayer'
 
 class optimizer(Enum):
     """Optimizer of weights."""
@@ -59,12 +57,6 @@ class poolType(Enum):
     """Pooling type."""
     max = 'max'
     avg = 'avg'
-
-class calcMode(Enum):
-    """Calc mode."""
-    CPU = 'CPU'
-    CUDA = 'CUDA'
-    #OpenCL = 'OpenCL'
 
 class lockType(Enum):
     """Lock type."""

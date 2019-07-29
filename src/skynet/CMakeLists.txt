@@ -19,4 +19,10 @@ if(WIN32)
           COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEPEND_WIN_DIR} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif()
 
-target_link_libraries(skynet snAux snBase snEngine snOperator)
+target_link_libraries(skynet snAux snBase snEngine)
+
+if(USE_CUDA)
+ target_link_libraries(skynet snOperatorCUDA)
+else()
+ target_link_libraries(skynet snOperatorCPU)
+endif()

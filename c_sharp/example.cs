@@ -67,14 +67,14 @@ namespace Test
             Console.WriteLine("Version snlib " + ver);
 
             snet.addNode("Input", new sn.Input(), "C1")
-                .addNode("C1", new sn.Convolution(15, 0, sn.calcMode.type.CUDA), "C2")
-                .addNode("C2", new sn.Convolution(15, 0, sn.calcMode.type.CUDA), "P1")
-                .addNode("P1", new sn.Pooling(sn.calcMode.type.CUDA), "FC1")
-                .addNode("FC1", new sn.FullyConnected(128, sn.calcMode.type.CUDA), "FC2")
-                .addNode("FC2", new sn.FullyConnected(10, sn::calcMode.type.CUDA), "LS")
+                .addNode("C1", new sn.Convolution(15, 0), "C2")
+                .addNode("C2", new sn.Convolution(15, 0), "P1")
+                .addNode("P1", new sn.Pooling(), "FC1")
+                .addNode("FC1", new sn.FullyConnected(128), "FC2")
+                .addNode("FC2", new sn.FullyConnected(10), "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.softMaxToCrossEntropy), "Output");
 
-            string imgPath = "c://C++//skyNet//example//mnist//images//";
+            string imgPath = "c://cpp//skyNet//example//mnist//images//";
 
                       
             uint batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
@@ -89,7 +89,7 @@ namespace Test
                 return;
             }
 
-            string wpath = "c:/C++/w.dat";
+            string wpath = "c://cpp//w.dat";
             if (snet.loadAllWeightFromFile(wpath))
                 Console.WriteLine("Load weight ok path: " + wpath);
             else
