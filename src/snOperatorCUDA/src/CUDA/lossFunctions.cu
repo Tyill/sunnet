@@ -40,53 +40,34 @@ __global__ void softMaxACrossEntropyFwd(snSize iosz, snFloat* inout){
            
     __shared__ int tmax;
     __shared__ snFloat tsumm;
-    extern __shared__ snFloat sdata[];
 
     tmax = 0;
     tsumm = 0;
-    sdata[threadIdx.x] = 0;
 
     __syncthreads();
 
     unsigned int i = threadIdx.x;
     while (i < inStepByN){
 
-        if (inout[i] > sdata[i])
-           sdata[i] = inout[i];       
-
-        __syncthreads();
-
-        unsigned int s = ((inStepByN - i) >= blockDim.x) ? blockDim.x / 2 : (inStepByN - i) / 2;
-        for (; s > 0; s >>= 1) {
-            if ((i < s) && (sdata[i] < sdata[i + s])) {
-                sdata[i] = sdata[i + s];
-            }
-            __syncthreads();
-        }
+        atomicMax(&tmax, int(inout[i] * 100.F));  // TODO redo to reduction
        
         i += blockDim.x;
     }
-    tmax = sdata[0];
-        
+   
+    __syncthreads();
+
     i = threadIdx.x;
     while (i < inStepByN){
        
-        sdata[i] = ((inout[i] - tmax / 100.F) > -20) ? exp(inout[i] - tmax / 100.F) : 0.1E-8F;
+        inout[i] = ((inout[i] - tmax / 100.F) > -20) ? exp(inout[i] - tmax / 100.F) : 0.1E-8F;
+                 
+        atomicAdd(&tsumm, inout[i]); // TODO redo to reduction
 
-        __syncthreads();
-
-        unsigned int s = ((inStepByN - i) >= blockDim.x) ? blockDim.x / 2 : (inStepByN - i) / 2;
-        for (; s > 0; s >>= 1) {
-            if (i < s) {
-                sdata[i] += sdata[i + s];
-            }
-            __syncthreads();
-        }
-                     
         i += blockDim.x;
     }
-    tsumm = sdata[0];
-
+  
+    __syncthreads();
+   
     i = threadIdx.x;
     while (i < inStepByN){
 
@@ -170,7 +151,7 @@ void lossForward(const snSize& sz, snFloat* inout, lossType loss){
 
     switch (loss){
         case lossType::softMaxACrossEntropy:
-            softMaxACrossEntropyFwd <<<dimGrid, dimBlock, 256 >>>(sz, inout);
+            softMaxACrossEntropyFwd <<<dimGrid, dimBlock >>>(sz, inout);
             break;
 
         case lossType::binaryCrossEntropy:
