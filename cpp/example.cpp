@@ -53,14 +53,14 @@ int main(int argc, char* argv[]){
     sn::Net snet;
   
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
+        .addNode("C1", sn::Convolution(15), "C2")
+        .addNode("C2", sn::Convolution(15), "P1")
         .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
-        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("FC1", sn::FullyConnected(128), "FC2")
+        .addNode("FC2", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://C++//skyNet//example//mnist//images//";
+    string imgPath = "c://cpp//skyNet//example//mnist//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);
@@ -170,11 +170,11 @@ int main(int argc, char* argv[]){
     sn::Net snet;
 
     snet.addNode("Input", sn::Input(), "C1")
-        .addNode("C1", sn::Convolution(15, 0, sn::calcMode::CUDA), "C2")
-        .addNode("C2", sn::Convolution(15, 0, sn::calcMode::CUDA), "P1")
-        .addNode("P1", sn::Pooling(sn::calcMode::CUDA), "FC1")
-        .addNode("FC1", sn::FullyConnected(128, sn::calcMode::CUDA), "FC2")
-        .addNode("FC2", sn::FullyConnected(10, sn::calcMode::CUDA), "LS")
+        .addNode("C1", sn::Convolution(15), "C2")
+        .addNode("C2", sn::Convolution(15), "P1")
+        .addNode("P1", sn::Pooling(), "FC1")
+        .addNode("FC1", sn::FullyConnected(128), "FC2")
+        .addNode("FC2", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
     cout << "Hello " <<  SN_API::versionLib() << endl;
