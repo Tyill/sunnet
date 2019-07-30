@@ -6,9 +6,11 @@ SkyNet is a light deep learning library.
 |[![Build Status](https://travis-ci.com/Tyill/skynet.svg?branch=master)](https://travis-ci.com/Tyill/skynet)|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)|
 
 [ResNet cpp-example for Win](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
+
 <img src="https://github.com/Tyill/skynet/blob/master/docs/resnetExample.gif" width="600" height="300" />
 
-[Compare with Tensorflow](https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py), inference ResNet50. PC: i5-2400, GF1050, Win7, MSVC12. 
+[Compare with Tensorflow](https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py), inference ResNet50. PC: i5-2400, GF1050, Win7, MSVC12.
+ 
 |                  | **CPU: time/img, ms** | **GPU: time/img, ms** | **CPU: RAM, Mb** | **GPU: RAM, Mb** |
 |------------------|-----------------------|-----------------------|------------------|------------------|
 |    Skynet        |        195            |          15           |       600        |       800        |               
