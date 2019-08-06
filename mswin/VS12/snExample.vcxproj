@@ -17,7 +17,7 @@
     <ClInclude Include="..\..\cpp\snType.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\example\resnet50\cpp_example.cpp" />
+    <ClCompile Include="..\..\src\snExample\main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{CDDE5523-2322-4C88-B4DE-C42942F2A957}</ProjectGuid>

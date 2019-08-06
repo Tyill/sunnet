@@ -346,32 +346,16 @@ namespace SN_Eng{
         
     /// сброс готовности старта для след-х узлов
     void SNEngine::resetPreStartNode(std::map<std::string, Node>& nodes, const std::string& nname){
-            
-        auto getThrNode = [&nodes](const std::string& nname){
-
-            string res = nname;
-            while (true){ 
-
-                if (nodes[res].prevNodes.size() != 1) break;
-
-                string pn = nodes[res].prevNodes[0];
-                
-                if (nodes[pn].nextNodes.size() > 1) break;
-
-                res = pn;
-            }
-
-            return res;
-        };
-
+           
+       
         if (nodes[nname].prevNodes.size() == 1)
-            thrPoolForward_->resetPrestart(getThrNode(nname));
+            thrPoolForward_->resetPrestart(ndStates_[nname].parentFW);
         else{    
             /// все пред узлы не готовы к запуску?
             bool allPrevNoPrest = true;
             for (auto& n : nodes[nname].prevNodes){
                             
-                if (thrPoolForward_->isPrestart(getThrNode(n))){
+                if (thrPoolForward_->isPrestart(ndStates_[n].parentFW)){
                     allPrevNoPrest = false;
                     break;
                 }
@@ -381,7 +365,7 @@ namespace SN_Eng{
                 thrPoolForward_->resetPrestart(nname);
         }
 
-        if (thrPoolForward_->isPrestart(getThrNode(nname))) return;
+        if (thrPoolForward_->isPrestart(ndStates_[nname].parentFW)) return;
             
         /// для всех след узлов тоже сбрас готовность
         vector<string> nextNodes{ nname };
@@ -404,7 +388,7 @@ namespace SN_Eng{
                     /// все пред узлы не готовы к запуску?
                     bool allPrevNoPrest = true;
                     for (auto& n : nodes[nn].prevNodes){
-                        if (thrPoolForward_->isPrestart(getThrNode(n)))
+                        if (thrPoolForward_->isPrestart(ndStates_[n].parentFW))
                             allPrevNoPrest = false;
                     }
 
