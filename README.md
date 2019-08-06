@@ -24,15 +24,11 @@ SkyNet is a light deep learning library.
 
 * network structure is set in JSON;
 
-* base layers: fully connected, convolutional, pooling. Additional: resize, crop ..;
+* base layers: fully connected, convolutional, pooling. Additional: resize, crop..;
 
-* basic chips: batchNorm, dropout, weight optimizers - adam, adagrad ..;
+* basic chips: batchNorm, dropout, weight optimizers - adam, adagrad..;
 
 * for calculation on the CPU, OpenBLAS is used, for the video card - CUDA / cuDNN;
-
-* for each layer there is an opportunity to separately set on what to count - CPU or GPU (and which one);
-
-* the size of the input data is not rigidly specified, may vary in the process of work / training;
 
 * interfaces for C++, C# and Python.
 
