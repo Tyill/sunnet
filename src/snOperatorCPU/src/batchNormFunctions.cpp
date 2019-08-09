@@ -101,15 +101,20 @@ void batchNormBackward(const snSize& insz, snFloat* gradIn, snFloat* gradOut, co
 
         snFloat* cgr = gradIn + i * insz.w * insz.h,
                * norm = prm.norm + i * insz.w * insz.h,
-               * cscale = prm.dScale + i * insz.w * insz.h;
+               * cscale = prm.dScale + i * insz.w * insz.h,
+               * cschift = prm.dSchift + i * insz.w * insz.h;
         for (size_t j = 0; j < (insz.w * insz.h); ++j){
 
-            snFloat dScale = 0.F;
+            snFloat dScale = 0.F, sum = 0.F;
             for (size_t k = 0; k < bsz; ++k){
 
-                dScale += cgr[j + k * sz] * norm[j + k * sz];
+                snFloat v = cgr[j + k * sz];
+
+                sum += v;
+                dScale += v * norm[j + k * sz];
             }
 
+            cschift[j] = sum;
             cscale[j] = dScale;
         }
     }
