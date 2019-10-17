@@ -59,7 +59,8 @@ namespace SN_Eng{
                 
         std::function<void(const std::string&)> stsCBack_ = nullptr;
 
-        ThreadPool* thrPoolForward_ = nullptr, *thrPoolBackward_ = nullptr;
+        ThreadPool* thrPoolForward_ = nullptr, 
+                  * thrPoolBackward_ = nullptr;
         bool fWorkEnd_ = false;                       ///< закрытие всех потоков
     
         SN_Base::operationParam operParam_;            ///< параметры тек итерации

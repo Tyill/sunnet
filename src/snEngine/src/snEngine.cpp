@@ -48,12 +48,14 @@ namespace SN_Eng{
     /// создание потоков для forward
     void SNEngine::createThreadsFwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool){
                
-        set<string> thrExist;
+        set<string> nodeExist;
 
         for (auto& n : nodes){
             if (n.second.oprName == "Input"){
+
                 thrPool->addNode(n.first);
-                thrExist.insert(n.first);
+                thrPool->addThread(n.first);
+                nodeExist.insert(n.first);
 
                 ndStates_[n.first].parentFW = n.first;
             }
@@ -61,25 +63,25 @@ namespace SN_Eng{
 
         for (auto& n : nodes){
 
-            if (thrExist.find(n.first) != thrExist.end()) continue;
+            if (nodeExist.find(n.first) != nodeExist.end()) continue;
 
             if (n.second.nextNodes.size() > 1){
                 for (auto& nn : n.second.nextNodes){
 
-                    if (thrExist.find(nn) != thrExist.end()) continue;
+                    if (nodeExist.find(nn) != nodeExist.end()) continue;
 
                     thrPool->addNode(nn);
-                    thrExist.insert(nn);
+                    nodeExist.insert(nn);
                 }
             }            
             if (n.second.prevNodes.size() > 1){                
                 thrPool->addNode(n.first);
-                thrExist.insert(n.first);
+                nodeExist.insert(n.first);
             }
             else{
                 if (nodes[n.second.prevNodes[0]].nextNodes.size() > 1){
                     thrPool->addNode(n.first);
-                    thrExist.insert(n.first);
+                    nodeExist.insert(n.first);
                 }
             }
         }
@@ -109,22 +111,26 @@ namespace SN_Eng{
         }
 
         /// подождем пока все запустятся
-        for (auto& thr : thrExist){
-            thrPool->waitExist(thr);
-        }      
+        for (auto& n : nodes){
+            if (n.second.oprName == "Input"){
+                thrPool->waitExist(n.first);
+            }
+        }                      
     }
 
     /// создание потоков для backward
     void SNEngine::createThreadsBwd(std::map<std::string, SN_Base::Node>& nodes, ThreadPool* thrPool){
 
-        set<string> thrExist;
+        set<string> nodeExist;
                
         operParam_.action = SN_Base::snAction::backward;
 
         for (auto& n : nodes){
             if (n.second.oprName == "Output"){
+                
                 thrPool->addNode(n.first);
-                thrExist.insert(n.first);
+                thrPool->addThread(n.first);
+                nodeExist.insert(n.first);
 
                 ndStates_[n.first].parentBW = n.first;
             }
@@ -132,25 +138,25 @@ namespace SN_Eng{
 
         for (auto& n : nodes){
 
-            if (thrExist.find(n.first) != thrExist.end()) continue;
+            if (nodeExist.find(n.first) != nodeExist.end()) continue;
 
             if (n.second.prevNodes.size() > 1){
                 for (auto& nn : n.second.prevNodes){
 
-                    if (thrExist.find(nn) != thrExist.end()) continue;
+                    if (nodeExist.find(nn) != nodeExist.end()) continue;
 
                     thrPool->addNode(nn);
-                    thrExist.insert(nn);
+                    nodeExist.insert(nn);
                 }
             }
             if (n.second.nextNodes.size() > 1){
                 thrPool->addNode(n.first);
-                thrExist.insert(n.first);
+                nodeExist.insert(n.first);
             }
             else{
                 if (nodes[n.second.nextNodes[0]].prevNodes.size() > 1){
                     thrPool->addNode(n.first);
-                    thrExist.insert(n.first);
+                    nodeExist.insert(n.first);
                 }
             }
         }
@@ -180,8 +186,11 @@ namespace SN_Eng{
         }
 
         /// подождем пока все запустятся
-        for (auto& thr : thrExist){
-            thrPool->waitExist(thr);
+        for (auto& n : nodes){
+            if (n.second.oprName == "Output"){
+
+                thrPool->waitExist(n.first);
+            }
         }
     }
     
@@ -192,11 +201,6 @@ namespace SN_Eng{
         nodes_ = brNet.nodes;
         for (auto& n : brNet.nodes)
             ndStates_[n.first] = ndState();
-
-        // только для fwd, поскольку назад может и не пойдем
-        thrPoolForward_ = new ThreadPool(bind(&SNEngine::operatorThreadForward, this, std::placeholders::_1));
-       
-        createThreadsFwd(brNet.nodes, thrPoolForward_);
     }
     
     SNEngine::~SNEngine(){
@@ -210,6 +214,11 @@ namespace SN_Eng{
     bool SNEngine::forward(const SN_Base::operationParam& operPrm){
         
         operParam_ = operPrm;
+
+        if (!thrPoolForward_){
+            thrPoolForward_ = new ThreadPool(bind(&SNEngine::operatorThreadForward, this, std::placeholders::_1));
+            createThreadsFwd(nodes_, thrPoolForward_);
+        }
 
         /// предварительно установим готовность
         thrPoolForward_->preStartAll();
@@ -265,7 +274,7 @@ namespace SN_Eng{
         if (prevNodes.size() == 1){
             
             /// выполнение оператора
-            auto& pn = prevNodes[0];                SN_ENG_DMESS("node " + nname + " actionForward single prevNode " + pn)
+            auto& pn = prevNodes[0];                   SN_ENG_DMESS("node " + nname + " actionForward single prevNode " + pn)
             ndStates_[nname].selectNextNodes = operats_[nname]->Do(operParam_, vector<OperatorBase*>{operats_[pn]});
         }
         else{
@@ -275,9 +284,8 @@ namespace SN_Eng{
             for (auto& n : prevNodes){
             
                 string& firts = ndStates_[n].parentFW;               
-                
-                SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
-                thrPoolForward_->waitFinish(firts);
+               
+                thrPoolForward_->waitFinish(firts);    SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
             }
 
             /// проверим, что предыд оператор выбирал этот узел
@@ -346,8 +354,7 @@ namespace SN_Eng{
         
     /// сброс готовности старта для след-х узлов
     void SNEngine::resetPreStartNode(std::map<std::string, Node>& nodes, const std::string& nname){
-           
-       
+         
         if (nodes[nname].prevNodes.size() == 1)
             thrPoolForward_->resetPrestart(ndStates_[nname].parentFW);
         else{    
@@ -363,42 +370,6 @@ namespace SN_Eng{
 
             if (allPrevNoPrest)
                 thrPoolForward_->resetPrestart(nname);
-        }
-
-        if (thrPoolForward_->isPrestart(ndStates_[nname].parentFW)) return;
-            
-        /// для всех след узлов тоже сбрас готовность
-        vector<string> nextNodes{ nname };
-        while (!nextNodes.empty()){
-
-            string snd = nextNodes.back();
-            nextNodes.pop_back();
-                            
-            if (nodes[snd].nextNodes.empty()) continue;
-
-            for (auto& nn : nodes[snd].nextNodes){
-
-                /// у след узла только один предыд? добавляем в пул для сброса готовности
-                if (nodes[nn].prevNodes.size() == 1){
-                    thrPoolForward_->resetPrestart(nn);
-                    nextNodes.push_back(nn);
-                }
-                else{
-
-                    /// все пред узлы не готовы к запуску?
-                    bool allPrevNoPrest = true;
-                    for (auto& n : nodes[nn].prevNodes){
-                        if (thrPoolForward_->isPrestart(ndStates_[n].parentFW))
-                            allPrevNoPrest = false;
-                    }
-
-                    /// добавляем в пул для сброса готовности
-                    if (allPrevNoPrest){
-                        thrPoolForward_->resetPrestart(nn);
-                        nextNodes.push_back(nn);
-                    }
-                }
-            }                
         }        
     }
 
@@ -419,10 +390,7 @@ namespace SN_Eng{
             if (!ndStates_[nname].selectNextNodes.empty() && 
                 (ndStates_[nname].selectNextNodes[0] == "noWay")){
 
-                resetPreStartNode(nodes, nn);
-
-                /// откат в начало
-                selWay = nnameMem;
+                resetPreStartNode(nodes, nn);                              
 
                 /// тек поток тормозим
                 thrPoolForward_->finish(nnameMem);        SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
@@ -434,24 +402,13 @@ namespace SN_Eng{
                 selWay = nn;                              SN_ENG_DMESS("node " + nname + " selWay " + nn)
             }
             else{
-                /// новый поток для след узла
-                if (!thrPoolForward_->isRun(nn)){
-                    thrPoolForward_->startTask(nn);       SN_ENG_DMESS("node " + nname + " start thread " + nn)
-                }
-
-                /// откат в начало
-                selWay = nnameMem;
-
-                /// тек поток тормозим
-                thrPoolForward_->finish(nnameMem);        SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+                /// рестарт в том же потоке
+                thrPoolForward_->restartTask(nnameMem, nn); SN_ENG_DMESS("node " + nname + " restart thread " + nn)
             }
         }
         /// конец пути?
         else if (nextNodes.empty()){
-
-            /// откат в начало
-            selWay = nnameMem;
-
+                       
             /// тек поток тормозим
             thrPoolForward_->finish(nnameMem);            SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
         }
@@ -474,16 +431,20 @@ namespace SN_Eng{
                                             
             /// ответвления расталкиваем по другим потокам
             for (auto& nw : nextWays){
-                if (!thrPoolForward_->isRun(nw)){
-                    thrPoolForward_->startTask(nw);       SN_ENG_DMESS("node " + nname + " start thread " + nw)
+
+                /// продолжение пути оставляем в этом же потоке
+                if (selWay.empty()){
+                    selWay = nw;                         SN_ENG_DMESS("node " + nname + " selWay " + nw)
+                    continue;
                 }
+
+                thrPoolForward_->startTask(nw);          SN_ENG_DMESS("node " + nname + " start thread " + nw)
             }
 
-            /// откат в начало
-            selWay = nnameMem;
-
-            /// тек поток тормозим
-            thrPoolForward_->finish(nnameMem);           SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+            if (nextWays.empty()){
+                /// тек поток тормозим
+                thrPoolForward_->finish(nnameMem);       SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+            }
         }
 
         return selWay;
@@ -505,10 +466,7 @@ namespace SN_Eng{
             /// дальше идти?
             if (!ndStates_[pn].selectNextNodes.empty() && 
                 (ndStates_[pn].selectNextNodes[0] == "noWay")){
-
-                /// откат в начало
-                selWay = nnameMem;
-
+                
                 /// тек поток тормозим
                 thrPoolBackward_->finish(nnameMem);          SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
             }
@@ -519,23 +477,13 @@ namespace SN_Eng{
                 selWay = pn;                                 SN_ENG_DMESS("node " + nname + " selWay " + pn)
             }
             else{                
-                /// новый поток для след узла
-                if (!thrPoolBackward_->isRun(pn)){
-                    thrPoolBackward_->startTask(pn);         SN_ENG_DMESS("node " + nname + " start thread " + pn)
-                }
-                /// откат в начало
-                selWay = nnameMem;
-
-                /// тек поток тормозим
-                thrPoolBackward_->finish(nnameMem);          SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+                /// рестарт в том же потоке
+                thrPoolBackward_->restartTask(nnameMem, pn); SN_ENG_DMESS("node " + nname + " restart thread " + pn)
             }
         }
         /// конец пути?
         else if (prevNodes.empty()){
-
-            /// откат в начало
-            selWay = nnameMem;
-
+       
             /// тек поток тормозим
             thrPoolBackward_->finish(nnameMem);              SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
         }
@@ -553,16 +501,20 @@ namespace SN_Eng{
                     
             /// ответвления расталкиваем по другим потокам
             for (auto& nw : nextWays){
-                if (!thrPoolBackward_->isRun(nw)){
-                    thrPoolBackward_->startTask(nw);       SN_ENG_DMESS("node " + nname + " start thread " + nw)
+
+                /// продолжение пути оставляем в этом же потоке
+                if (selWay.empty()){
+                    selWay = nw;                                 SN_ENG_DMESS("node " + nname + " selWay " + pn)
+                    continue;
                 }
+
+                thrPoolBackward_->startTask(nw);                 SN_ENG_DMESS("node " + nname + " start thread " + nw)
             }
 
-            /// откат в начало
-            selWay = nnameMem;
-
-            /// тек поток тормозим
-            thrPoolBackward_->finish(nnameMem);            SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+            if (nextWays.empty()){
+                /// тек поток тормозим
+                thrPoolBackward_->finish(nnameMem);              SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+            }
         }
 
         return selWay;
@@ -572,13 +524,16 @@ namespace SN_Eng{
     void SNEngine::operatorThreadForward(std::string nname){
         
         std::string nnameMem = nname;
-                
+        
+        nname = "";
+
         auto& nodes = nodes_;
                             
         while (!fWorkEnd_){
-                        
+               
             /// ждем след итерацию
-            thrPoolForward_->waitStart(nnameMem);
+            if (nname.empty())
+              nname = thrPoolForward_->waitStart(nnameMem);
 
             /// обработка текущего узла
             actionForward(nodes, nname);
@@ -593,12 +548,15 @@ namespace SN_Eng{
 
         std::string nnameMem = nname;
 
+        nname = "";
+
         auto& nodes = nodes_;
 
         while (!fWorkEnd_){
 
             /// ждем след итерацию
-            thrPoolBackward_->waitStart(nnameMem);
+            if (nname.empty())
+              nname = thrPoolBackward_->waitStart(nnameMem);
 
             /// обработка текущего узла
             actionBackward(nodes, nname);

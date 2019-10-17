@@ -51,25 +51,64 @@ public:
             delete r.second;
     }
 
-    void addNode(const std::string& node){
+    void addThread(const std::string& node){
         std::lock_guard<std::mutex> lk(mtx_);
             
         if (fWorkEnd_) return;
+        
+        threads_[node] = new std::thread(func_, node);    
+    }
+
+    void addNode(const std::string& node){
+        std::lock_guard<std::mutex> lk(mtx_);
+
+        if (fWorkEnd_) return;
 
         ready_[node] = new SReady();
-        threads_[node] = new std::thread(func_, node);    
     }
     
     void startTask(const std::string& node){
         std::lock_guard<std::mutex> lk(mtx_);
 
-        if (fWorkEnd_) return;
+        if (fWorkEnd_ || ready_[node]->isRun()) return;
+               
+        for (auto& thr : threads_){
+            if (!ready_[thr.first]->isRun()){
+
+                ready_[thr.first]->start(node);
+                ready_[node]->start(node);
+
+                return;
+            }
+        }
             
-        ready_[node]->start();           
-     }
+        threads_[node] = new std::thread(func_, node);
+
+        ready_[node]->exist();
+        ready_[node]->start(node);
+    }
+
+    void restartTask(const std::string& thr, const std::string& node){
+        std::lock_guard<std::mutex> lk(mtx_);
+
+        if (fWorkEnd_) return;
+
+        auto workNode = ready_[thr]->getWorkNode();
+        if (!workNode.empty())
+           ready_[workNode]->finish();
+
+        if (!ready_[node]->isRun()){
+            ready_[thr]->start(node);
+            ready_[node]->start(node);
+        }
+    }
     
     void finish(const std::string& node){
          std::lock_guard<std::mutex> lk(mtx_);
+
+         auto workNode = ready_[node]->getWorkNode();
+         if (!workNode.empty())
+             ready_[workNode]->finish();
 
          ready_[node]->finish();
      }
@@ -82,17 +121,18 @@ public:
         }
      }
 
-    void waitStart(const std::string& node){
-        if (fWorkEnd_) return;
+    std::string waitStart(const std::string& node){
+        if (fWorkEnd_) return node;
 
-        ready_[node]->exist();
+        if (!ready_[node]->isExist())
+          ready_[node]->exist();
         
-        ready_[node]->waitStart();
+        return ready_[node]->waitStart();
      }
 
     void waitFinish(const std::string& node){
         if (fWorkEnd_) return;
-        
+
         ready_[node]->waitFinish();
      }
 
@@ -101,15 +141,7 @@ public:
 
         ready_[node]->waitExist();
     }
-
-    bool isRun(const std::string& node){
-        std::lock_guard<std::mutex> lk(mtx_);
-
-        bool isRn = ready_[node]->isRun() || !ready_[node]->isPrestart();
-    
-        return isRn;
-    }
-
+       
     bool isPrestart(const std::string& node){
         std::lock_guard<std::mutex> lk(mtx_);
                 
@@ -142,16 +174,17 @@ public:
              end();
          }
 
-         void waitStart() {
+         std::string waitStart() {
              std::unique_lock<std::mutex> lk(lkStart_);
              if (!end_ && !run_){
                  cvrStart_.wait(lk);
              }
+             return workNode_;
          }
 
          void waitFinish() {
              std::unique_lock<std::mutex> lk(lkFinish_);
-             if (!end_ && (run_ || preStart_)){
+             if (!end_ && preStart_){
                  cvrFinish_.wait(lk);
              }
          }
@@ -163,9 +196,10 @@ public:
              }
          }
 
-         void start(){
+         void start(const std::string& workNode){
              std::lock_guard<std::mutex> lk(lkStart_);
-             if (!run_){
+             workNode_ = workNode;
+             if (!run_){                 
                  run_ = true;
                  cvrStart_.notify_all();
              }
@@ -206,6 +240,11 @@ public:
              cvrFinish_.notify_all();
          }
 
+         bool isExist(){
+
+             return isExist_;
+         }
+
          bool isRun(){
 
              return run_;
@@ -216,7 +255,13 @@ public:
              return preStart_;
          }
 
+         std::string getWorkNode(){
+
+             return workNode_;
+         }
+
      private:
+         std::string workNode_;
          std::mutex  lkStart_, lkFinish_, lkExist_;
          std::condition_variable cvrStart_, cvrFinish_, cvrExist_;
          bool run_ = false, preStart_ = false, isExist_ = false, end_ = false;
