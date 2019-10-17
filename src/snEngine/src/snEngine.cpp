@@ -274,7 +274,7 @@ namespace SN_Eng{
         if (prevNodes.size() == 1){
             
             /// выполнение оператора
-            auto& pn = prevNodes[0];                   SN_ENG_DMESS("node " + nname + " actionForward single prevNode " + pn)
+            auto& pn = prevNodes[0];                   SN_ENG_DMESS("node " + nname + " single prevNode " + pn)
             ndStates_[nname].selectNextNodes = operats_[nname]->Do(operParam_, vector<OperatorBase*>{operats_[pn]});
         }
         else{
@@ -284,8 +284,8 @@ namespace SN_Eng{
             for (auto& n : prevNodes){
             
                 string& firts = ndStates_[n].parentFW;               
-               
-                thrPoolForward_->waitFinish(firts);    SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
+                                                       SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
+                thrPoolForward_->waitFinish(firts);    
             }
 
             /// проверим, что предыд оператор выбирал этот узел
@@ -299,9 +299,8 @@ namespace SN_Eng{
                 bool isSel = prevSelNodes.empty() ||
                     (find(prevSelNodes.begin(), prevSelNodes.end(), nname) != prevSelNodes.end());
                                 
-                if (isSel){
-                    SN_ENG_DMESS("node " + nname + " actionForward multi prevNode " + n)
-                    neighb.push_back(operats_[n]);
+                if (isSel){                   
+                    neighb.push_back(operats_[n]);    SN_ENG_DMESS("node " + nname + " multi prevNode " + n)
                 }
             }
             
@@ -320,7 +319,7 @@ namespace SN_Eng{
         if (nodes[nname].nextNodes.size() == 1){            
             
             /// выполнение оператора
-            auto& nd = nodes[nname].nextNodes[0];         SN_ENG_DMESS("node " + nname + " actionBackward single prevNode " + nd)
+            auto& nd = nodes[nname].nextNodes[0];         SN_ENG_DMESS("node " + nname + " single prevNode " + nd)
             operats_[nname]->Do(operParam_, vector<OperatorBase*>{operats_[nd]});
         }
         else{
@@ -333,46 +332,22 @@ namespace SN_Eng{
                 string& firts = ndStates_[n].parentBW;
 
                 if (!ndStates_[firts].isWasRun) continue;
-                                                    
-                SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
-                thrPoolBackward_->waitFinish(firts);
+                                                         SN_ENG_DMESS("node " + nname + " waitFinish thread " + firts)
+                thrPoolBackward_->waitFinish(firts);     
             }
             
 
             /// собираем все пред операторы
             vector<OperatorBase*> neighb;
             for (auto& n : prevNextNodes){
-                SN_ENG_DMESS("node " + nname + " actionBackward multi prevNode " + n)
-                neighb.push_back(operats_[n]);
+                neighb.push_back(operats_[n]);           SN_ENG_DMESS("node " + nname + " multi prevNode " + n)
             }
             
-            /// выполнение оператора
-            SN_ENG_DMESS("node " + nname + " actionBackward multi")
-            operats_[nname]->Do(operParam_, neighb);
+            /// выполнение оператора           
+            operats_[nname]->Do(operParam_, neighb);     SN_ENG_DMESS("node " + nname + " multi")
         }
     }
-        
-    /// сброс готовности старта для след-х узлов
-    void SNEngine::resetPreStartNode(std::map<std::string, Node>& nodes, const std::string& nname){
-         
-        if (nodes[nname].prevNodes.size() == 1)
-            thrPoolForward_->resetPrestart(ndStates_[nname].parentFW);
-        else{    
-            /// все пред узлы не готовы к запуску?
-            bool allPrevNoPrest = true;
-            for (auto& n : nodes[nname].prevNodes){
-                            
-                if (thrPoolForward_->isPrestart(ndStates_[n].parentFW)){
-                    allPrevNoPrest = false;
-                    break;
-                }
-            }
-
-            if (allPrevNoPrest)
-                thrPoolForward_->resetPrestart(nname);
-        }        
-    }
-
+            
     /// выбор след узла при движении вперед
     std::string SNEngine::selectNextForward(std::map<std::string, Node>& nodes, const std::string& nname, std::string& nnameMem){
         if (fWorkEnd_) return nnameMem;
@@ -389,9 +364,7 @@ namespace SN_Eng{
             /// дальше идти?
             if (!ndStates_[nname].selectNextNodes.empty() && 
                 (ndStates_[nname].selectNextNodes[0] == "noWay")){
-
-                resetPreStartNode(nodes, nn);                              
-
+                               
                 /// тек поток тормозим
                 thrPoolForward_->finish(nnameMem);        SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
             }            
@@ -424,26 +397,29 @@ namespace SN_Eng{
                 for (auto& way : nextNodes){
                     if (find(selectNextNodes.begin(), selectNextNodes.end(), way) != selectNextNodes.end())
                         nextWays.push_back(way);
-                    else
-                        resetPreStartNode(nodes, way);
                 }
             }
                                             
             /// ответвления расталкиваем по другим потокам
+            bool isSelNextWay = false;
             for (auto& nw : nextWays){
 
                 /// продолжение пути оставляем в этом же потоке
-                if (selWay.empty()){
-                    selWay = nw;                         SN_ENG_DMESS("node " + nname + " selWay " + nw)
+                if (!isSelNextWay){
+
+                    /// рестарт в том же потоке
+                    thrPoolForward_->restartTask(nnameMem, nw); SN_ENG_DMESS("node " + nname + " restart thread " + nw)
+
+                    isSelNextWay = true;
                     continue;
                 }
 
-                thrPoolForward_->startTask(nw);          SN_ENG_DMESS("node " + nname + " start thread " + nw)
-            }
-
-            if (nextWays.empty()){
-                /// тек поток тормозим
-                thrPoolForward_->finish(nnameMem);       SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
+                thrPoolForward_->startTask(nw);                 SN_ENG_DMESS("node " + nname + " start thread " + nw)
+            }                                                   
+                                                                
+            if (nextWays.empty()){                              
+                /// тек поток тормозим                          
+                thrPoolForward_->finish(nnameMem);              SN_ENG_DMESS("node " + nname + " finish thread " + nnameMem)
             }
         }
 
@@ -500,11 +476,16 @@ namespace SN_Eng{
             }
                     
             /// ответвления расталкиваем по другим потокам
+            bool isSelNextWay = false;
             for (auto& nw : nextWays){
 
                 /// продолжение пути оставляем в этом же потоке
-                if (selWay.empty()){
-                    selWay = nw;                                 SN_ENG_DMESS("node " + nname + " selWay " + pn)
+                if (!isSelNextWay){
+                   
+                    /// рестарт в том же потоке
+                    thrPoolBackward_->restartTask(nnameMem, nw); SN_ENG_DMESS("node " + nname + " restart thread " + nw)
+
+                    isSelNextWay = true;
                     continue;
                 }
 

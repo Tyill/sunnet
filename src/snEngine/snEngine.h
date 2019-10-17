@@ -76,10 +76,7 @@ namespace SN_Eng{
 
         /// выполнение оператора при движении назад
         void actionBackward(std::map<std::string, SN_Base::Node>& nodes, const std::string& nname);
-
-        /// сброс готовности старта для след-х узлов
-        void resetPreStartNode(std::map<std::string, SN_Base::Node>& nodes, const std::string& nname);
-
+                
         /// выбор след узла при движении вперед
         std::string selectNextForward(std::map<std::string, SN_Base::Node>& nodes, const std::string& nname, std::string& nnamemem);
         

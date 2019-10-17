@@ -70,8 +70,10 @@ public:
     void startTask(const std::string& node){
         std::lock_guard<std::mutex> lk(mtx_);
 
-        if (fWorkEnd_ || ready_[node]->isRun()) return;
+        if (fWorkEnd_) return;
                
+        if (ready_[node]->isRun() || !ready_[node]->isPrestart()) return;
+
         for (auto& thr : threads_){
             if (!ready_[thr.first]->isRun()){
 
@@ -94,10 +96,12 @@ public:
         if (fWorkEnd_) return;
 
         auto workNode = ready_[thr]->getWorkNode();
-        if (!workNode.empty())
+        if (workNode != thr)
            ready_[workNode]->finish();
+       
+        ready_[thr]->finish();
 
-        if (!ready_[node]->isRun()){
+        if (!ready_[node]->isRun() && ready_[node]->isPrestart()){
             ready_[thr]->start(node);
             ready_[node]->start(node);
         }
@@ -107,7 +111,7 @@ public:
          std::lock_guard<std::mutex> lk(mtx_);
 
          auto workNode = ready_[node]->getWorkNode();
-         if (!workNode.empty())
+         if (!workNode.empty() && (workNode != node))
              ready_[workNode]->finish();
 
          ready_[node]->finish();
