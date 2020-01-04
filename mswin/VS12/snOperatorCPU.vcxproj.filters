@@ -99,6 +99,9 @@
     <ClInclude Include="..\..\src\snOperatorCPU\src\activationFunctions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\autoEncoder.h">
+      <Filter>Operator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\activation.cpp">
@@ -187,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\snOperatorCPU\src\activationFunctions.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\autoEncoder.cpp">
+      <Filter>Operator</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

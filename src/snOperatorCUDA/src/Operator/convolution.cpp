@@ -275,9 +275,7 @@ void Convolution::forward(const SN_Base::Tensor& inTns, const operationParam& op
     // batchNorm
     if (batchNormType_ == batchNormType::beforeActive)
        batchNormForward(operPrm.isLerning, outsz, out, out, baseBatchNorm_);
-        
-  //  auto bn = getBatchNorm();
-
+ 
     /// active function
     if (activeType_ != activeType::none)
        activationForward(outsz, out, activeType_);

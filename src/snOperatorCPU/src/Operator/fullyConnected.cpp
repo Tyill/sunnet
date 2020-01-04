@@ -100,7 +100,7 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
 bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 
     basePrms_ = prms;
-
+        
     if (prms.find("active") != prms.end()){
 
         string atype = prms["active"];
@@ -177,6 +177,30 @@ bool FullyConnected::setBatchNorm(const batchNorm& bn){
     baseBatchNorm_.sz = bn.sz;
 
     return true;
+}
+
+void FullyConnected::setUnits(uint32_t units){
+
+    kernel_ = units;
+
+    if (batchNormType_ != batchNormType::none){
+        auxParams_["bn_mean"] = vector<snFloat>(kernel_, 0);     baseBatchNorm_.mean = auxParams_["bn_mean"].data();
+        auxParams_["bn_varce"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.varce = auxParams_["bn_varce"].data();
+        auxParams_["bn_scale"] = vector<snFloat>(kernel_, 1);    baseBatchNorm_.scale = auxParams_["bn_scale"].data();
+        auxParams_["bn_schift"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.schift = auxParams_["bn_schift"].data();
+        auxParams_["bn_norm"] = vector<snFloat>();               baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+        auxParams_["bn_dScale"] = vector<snFloat>(kernel_, 0);   baseBatchNorm_.dScale = auxParams_["bn_dScale"].data();
+        auxParams_["bn_dSchift"] = vector<snFloat>(kernel_, 0);  baseBatchNorm_.dSchift = auxParams_["bn_dSchift"].data();
+
+        baseBatchNorm_.sz = snSize(kernel_);
+    }
+}
+
+void FullyConnected::resizeOut(const snSize& nsz){
+
+    ASSERT_MESS(baseOut_.size().size() == nsz.size(), "FullyConnected::resizeOut: baseOut_.size().size() == nsz.size()");
+
+    baseOut_.resize(nsz);
 }
 
 std::vector<std::string> FullyConnected::Do(const operationParam& operPrm, const std::vector<OperatorBase*>& neighbOpr){
@@ -310,7 +334,8 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
 
 void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     
-    size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
+    size_t stp = newsz.w * newsz.h * newsz.d, 
+           ntp = (stp + 1) * kernel_;
         
     // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_.size().size();

@@ -189,6 +189,7 @@
     <ClInclude Include="..\..\src\snOperatorCPU\src\batchNormFunctions.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\dropOut.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\activation.h" />
+    <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\autoEncoder.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\batchNorm.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\concat.h" />
     <ClInclude Include="..\..\src\snOperatorCPU\src\Operator\convolution.h" />
@@ -221,6 +222,7 @@
     <ClCompile Include="..\..\src\snOperatorCPU\src\CPU\tensor.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\dropOut.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\activation.cpp" />
+    <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\autoEncoder.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\batchNorm.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\concat.cpp" />
     <ClCompile Include="..\..\src\snOperatorCPU\src\Operator\convolution.cpp" />
