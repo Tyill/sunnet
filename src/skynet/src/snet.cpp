@@ -195,19 +195,14 @@ bool SNet::createNet(Net& inout_net, std::string& out_err){
 SNet::SNet(const char* jnNet, char* out_err /*sz 256*/,
     SN_API::snStatusCBack sts, SN_API::snUData ud) : stsCBack_(sts), udata_(ud){
 
-    string err;  SN_Base::Net net;
-    if (!jnParseNet(jnNet, net, err)){
+    string err;  
+    SN_Base::Net net;
+    if (!jnParseNet(jnNet, net, err) || !createNet(net, err)){
         statusMess(err);
         strcpy(out_err, err.c_str());
         return;
     }
      
-    if (!createNet(net, err)){
-        statusMess(err);
-        strcpy(out_err, err.c_str());
-        return;
-    }
-
     nodes_ = net.nodes;
     operats_ = net.operats;
 
@@ -352,7 +347,7 @@ bool SNet::getWeightNode(const char* nodeName, SN_Base::snSize& wsz, SN_Base::sn
         return false;
     }
     
-    auto weight = operats_[nodeName]->getWeight();
+    const Tensor& weight = operats_[nodeName]->getWeight();
 
     wsz = weight.size();
 
@@ -496,8 +491,10 @@ bool SNet::saveAllWeightToFile(const char* filePath){
         snSize lSize;
         for (auto opr : operats_){
 
-            data = opr.second->getWeight().getDataCPU();
-            lSize = opr.second->getWeight().size();
+            const Tensor& wt = opr.second->getWeight();
+
+            data = wt.getDataCPU();
+            lSize = wt.size();
 
             if (data){
                 ofs << opr.first << " w " << lSize.w << " " << lSize.h << " " << lSize.d << endl;

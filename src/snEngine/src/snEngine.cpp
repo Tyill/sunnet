@@ -506,10 +506,8 @@ namespace SN_Eng{
         
         std::string nnameMem = nname;
         
-        nname = "";
-
-        auto& nodes = nodes_;
-                            
+        nname.clear();
+                                    
         while (!fWorkEnd_){
                
             /// ждем след итерацию
@@ -517,10 +515,10 @@ namespace SN_Eng{
               nname = thrPoolForward_->waitStart(nnameMem);
 
             /// обработка текущего узла
-            actionForward(nodes, nname);
+            actionForward(nodes_, nname);
 
             /// выбор следующего узла 
-            nname = selectNextForward(nodes, nname, nnameMem);                
+            nname = selectNextForward(nodes_, nname, nnameMem);                
         }        
     }
 
@@ -529,10 +527,8 @@ namespace SN_Eng{
 
         std::string nnameMem = nname;
 
-        nname = "";
-
-        auto& nodes = nodes_;
-
+        nname.clear();
+                
         while (!fWorkEnd_){
 
             /// ждем след итерацию
@@ -540,10 +536,10 @@ namespace SN_Eng{
               nname = thrPoolBackward_->waitStart(nnameMem);
 
             /// обработка текущего узла
-            actionBackward(nodes, nname);
+            actionBackward(nodes_, nname);
 
             /// выбор следующего узла 
-            nname = selectNextBackward(nodes, nname, nnameMem);
+            nname = selectNextBackward(nodes_, nname, nnameMem);
         }
     }
 }
