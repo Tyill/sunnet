@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snEngine", "SNEngine.vcxproj", "{87E622F8-2436-40B6-A5A6-3F5DDE14BAC5}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -28,6 +28,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snAux", "SNAux.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skynet", "SkyNet.vcxproj", "{507A9B3C-E5E6-4CEC-A99D-729D2171DF81}"
 	ProjectSection(ProjectDependencies) = postProject
+		{2C7FA033-361B-4429-97E9-64F2A0A20CBE} = {2C7FA033-361B-4429-97E9-64F2A0A20CBE}
 		{C993F645-29F0-4079-ACBA-033BFED8B8F6} = {C993F645-29F0-4079-ACBA-033BFED8B8F6}
 		{F3E981BD-4BA4-4538-9D21-6ACD252F4895} = {F3E981BD-4BA4-4538-9D21-6ACD252F4895}
 		{87E622F8-2436-40B6-A5A6-3F5DDE14BAC5} = {87E622F8-2436-40B6-A5A6-3F5DDE14BAC5}
@@ -39,6 +40,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snSIMD", "snSIMD.vcxproj", "{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snOperatorCPU", "snOperatorCPU.vcxproj", "{F3E981BD-4BA4-4538-9D21-6ACD252F4895}"
+	ProjectSection(ProjectDependencies) = postProject
+		{30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6} = {30FAF753-DBAE-4701-B5F4-29C7FBCBF9F6}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "snOperatorCUDA", "snOperatorCUDA.vcxproj", "{2C7FA033-361B-4429-97E9-64F2A0A20CBE}"
 EndProject
