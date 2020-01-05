@@ -42,6 +42,7 @@ public:
         
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
+   
 private:
         
     size_t kernel_ = 10;                                      ///< number of hidden neurons

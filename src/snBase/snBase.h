@@ -187,23 +187,23 @@ namespace SN_Base{
             return true;
         }
 
-        virtual std::map<std::string, std::string> getInternPrm() const final{
+        virtual std::map<std::string, std::string> getInternPrm() const{
             return basePrms_;
         }
-
-        virtual const SN_Base::Tensor& getWeight() const final{
-            return baseWeight_;
-        }
-
+              
         virtual batchNorm getBatchNorm() const{
             return baseBatchNorm_;
         }
 
-        virtual const SN_Base::Tensor& getOutput() const final{
+        virtual const SN_Base::Tensor& getWeight() const{
+            return baseWeight_;
+        }
+
+        virtual const SN_Base::Tensor& getOutput() const{
             return baseOut_;
         }
 
-        virtual const SN_Base::Tensor& getGradient() const final{
+        virtual const SN_Base::Tensor& getGradient() const{
             return baseGrad_;
         }
 

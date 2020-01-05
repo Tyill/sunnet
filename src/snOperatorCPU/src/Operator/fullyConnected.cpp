@@ -100,7 +100,7 @@ void FullyConnected::load(std::map<std::string, std::string>& prms){
 bool FullyConnected::setInternPrm(std::map<std::string, std::string>& prms){
 
     basePrms_ = prms;
-
+        
     if (prms.find("active") != prms.end()){
 
         string atype = prms["active"];
@@ -222,7 +222,8 @@ void FullyConnected::forward(const SN_Base::Tensor& inTns, const operationParam&
     }
     
     /// calculation of the output values of neurons
-    snFloat* out = baseOut_.getDataCPU(), *weight = baseWeight_.getDataCPU();
+    snFloat* out = baseOut_.getDataCPU(),
+           * weight = baseWeight_.getDataCPU();
     
     // +bias?
     if (!useBias_){
@@ -265,10 +266,12 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
         snFloat* out = baseOut_.getDataCPU();
         
         size_t osz = kernel_ * inSzMem_.n;
+
         activationBackward(osz, out, activeType_);
                 
         // update grad
-        for (size_t i = 0; i < osz; ++i) gradIn[i] *= out[i];
+        for (size_t i = 0; i < osz; ++i)
+            gradIn[i] *= out[i];
     }
 
     /// batchNorm
@@ -310,7 +313,8 @@ void FullyConnected::backward(const SN_Base::Tensor& inTns, const operationParam
 
 void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
     
-    size_t stp = newsz.w * newsz.h * newsz.d, ntp = (stp + 1) * kernel_;
+    size_t stp = newsz.w * newsz.h * newsz.d, 
+           ntp = (stp + 1) * kernel_;
         
     // leave the existing weights as they are, initialize the remainder
     size_t wcsz = baseWeight_.size().size();
@@ -332,7 +336,7 @@ void FullyConnected::updateConfig(bool isLern, const snSize& newsz){
         auxParams_["dWGrad"].resize(ntp, 0);
 
         if (batchNormType_ != batchNormType::none){
-            auxParams_["bn_norm"].resize(newsz.n * kernel_, 0); baseBatchNorm_.norm = auxParams_["bn_norm"].data();
+            auxParams_["bn_norm"].resize(newsz.n * kernel_, 0);     baseBatchNorm_.norm = auxParams_["bn_norm"].data();
         }
     }       
 } 

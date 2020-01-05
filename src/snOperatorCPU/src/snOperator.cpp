@@ -64,7 +64,7 @@ namespace SN_Opr{
         else if (fname == "Resize")         ret = (SN_Base::OperatorBase*)new Resize(net, fname, node, prms);
         else if (fname == "BatchNorm")      ret = (SN_Base::OperatorBase*)new BatchNorm(net, fname, node, prms);
         else if (fname == "Activation")     ret = (SN_Base::OperatorBase*)new Activation(net, fname, node, prms);
-
+       
         return ret;
     }
     
