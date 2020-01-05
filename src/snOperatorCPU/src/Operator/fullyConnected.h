@@ -42,12 +42,7 @@ public:
         
     bool setBatchNorm(const SN_Base::batchNorm& bn) override;
 
-    /// for autoEncoder
-    void setUnits(uint32_t);
-
-    void resizeOut(const snSize&);
-    /// for autoEncoder
-
+   
 private:
         
     size_t kernel_ = 10;                                      ///< number of hidden neurons
