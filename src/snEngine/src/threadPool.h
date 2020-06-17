@@ -201,7 +201,6 @@ public:
          }
 
          void start(const std::string& workNode){
-             std::lock_guard<std::mutex> lk(lkStart_);
              workNode_ = workNode;
              if (!run_){                 
                  run_ = true;
@@ -210,7 +209,6 @@ public:
          }
 
          void finish() {
-             std::lock_guard<std::mutex> lk(lkFinish_);
              if (run_){
                  run_ = false;
                  preStart_ = false;
@@ -226,7 +224,6 @@ public:
          }
 
          void exist(){
-             std::lock_guard<std::mutex> lk(lkExist_);
              if (!isExist_){
                  isExist_ = true;
                  cvrExist_.notify_all();
