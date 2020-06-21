@@ -34,21 +34,16 @@ public:
     ThreadPool(std::function<void(std::string node)> func) : func_(func){}
 
     ~ThreadPool(){
-        std::lock_guard<std::mutex> lk(mtx_);
         fWorkEnd_ = true;
         
         for (auto& r : ready_){
-            r.second->end();
+            r.second.end();
         }
 
         for (auto& thr : threads_){
-            if (thr.second->joinable())
-                thr.second->join();
-            delete thr.second;
+            if (thr.second.joinable())
+                thr.second.join();
         }
-        
-        for (auto& r : ready_)
-            delete r.second;
     }
 
     void addThread(const std::string& node){
@@ -56,7 +51,7 @@ public:
             
         if (fWorkEnd_) return;
         
-        threads_[node] = new std::thread(func_, node);    
+        threads_[node] = std::thread(func_, node);    
     }
 
     void addNode(const std::string& node){
@@ -64,7 +59,7 @@ public:
 
         if (fWorkEnd_) return;
 
-        ready_[node] = new SReady();
+        ready_[node] = SReady();
     }
     
     void startTask(const std::string& node){
@@ -72,22 +67,22 @@ public:
 
         if (fWorkEnd_) return;
                
-        if (ready_[node]->isRun() || !ready_[node]->isPrestart()) return;
+        if (ready_[node].isRun() || !ready_[node].isPrestart()) return;
 
         for (auto& thr : threads_){
-            if (!ready_[thr.first]->isRun()){
+            if (!ready_[thr.first].isRun()){
 
-                ready_[thr.first]->start(node);
-                ready_[node]->start(node);
+                ready_[thr.first].start(node);
+                ready_[node].start(node);
 
                 return;
             }
         }
             
-        threads_[node] = new std::thread(func_, node);
+        threads_[node] = std::thread(func_, node);
 
-        ready_[node]->exist();
-        ready_[node]->start(node);
+        ready_[node].exist();
+        ready_[node].start(node);
     }
 
     void restartTask(const std::string& thr, const std::string& node){
@@ -95,61 +90,61 @@ public:
 
         if (fWorkEnd_) return;
 
-        auto workNode = ready_[thr]->getWorkNode();
+        auto workNode = ready_[thr].getWorkNode();
         if (workNode != thr)
-           ready_[workNode]->finish();
+           ready_[workNode].finish();
        
-        ready_[thr]->finish();
+        ready_[thr].finish();
 
-        if (!ready_[node]->isRun() && ready_[node]->isPrestart()){
-            ready_[thr]->start(node);
-            ready_[node]->start(node);
+        if (!ready_[node].isRun() && ready_[node].isPrestart()){
+            ready_[thr].start(node);
+            ready_[node].start(node);
         }
     }
     
     void finish(const std::string& node){
          std::lock_guard<std::mutex> lk(mtx_);
 
-         auto workNode = ready_[node]->getWorkNode();
+         auto workNode = ready_[node].getWorkNode();
          if (!workNode.empty() && (workNode != node))
-             ready_[workNode]->finish();
+             ready_[workNode].finish();
 
-         ready_[node]->finish();
+         ready_[node].finish();
      }
 
     void waitAll(){
         if (fWorkEnd_) return;
 
         for (auto& r : ready_){
-            r.second->waitFinish();
+            r.second.waitFinish();
         }
      }
 
     std::string waitStart(const std::string& node){
         if (fWorkEnd_) return node;
 
-        if (!ready_[node]->isExist())
-          ready_[node]->exist();
+        if (!ready_[node].isExist())
+          ready_[node].exist();
         
-        return ready_[node]->waitStart();
+        return ready_[node].waitStart();
      }
 
     void waitFinish(const std::string& node){
         if (fWorkEnd_) return;
 
-        ready_[node]->waitFinish();
+        ready_[node].waitFinish();
      }
 
     void waitExist(const std::string& node){
         if (fWorkEnd_) return;
 
-        ready_[node]->waitExist();
+        ready_[node].waitExist();
     }
        
     bool isPrestart(const std::string& node){
         std::lock_guard<std::mutex> lk(mtx_);
                 
-        bool isPr = (ready_.find(node) != ready_.end()) && ready_[node]->isPrestart();
+        bool isPr = (ready_.find(node) != ready_.end()) && ready_[node].isPrestart();
 
         return isPr;
     }
@@ -158,7 +153,7 @@ public:
         std::lock_guard<std::mutex> lk(mtx_);
 
         for (auto& r : ready_){
-            r.second->setPrestart();
+            r.second.setPrestart();
         }
     }
 
@@ -166,7 +161,7 @@ public:
         std::lock_guard<std::mutex> lk(mtx_);
 
         if (ready_.find(node) != ready_.end())
-           ready_[node]->resetPrestart();
+           ready_[node].resetPrestart();
     }
                         
  private:
@@ -176,6 +171,9 @@ public:
          SReady(){}
          ~SReady(){
              end();
+         }
+         SReady& operator=(SReady&& other){
+             return *this;
          }
 
          std::string waitStart() {
@@ -263,7 +261,7 @@ public:
 
      private:
          std::string workNode_;
-         std::mutex  lkStart_, lkFinish_, lkExist_;
+         std::mutex lkStart_, lkFinish_, lkExist_;
          std::condition_variable cvrStart_, cvrFinish_, cvrExist_;
          bool run_ = false, preStart_ = false, isExist_ = false, end_ = false;
      };
@@ -271,8 +269,8 @@ public:
      std::function<void(std::string node)> func_ = nullptr;
 
      std::mutex mtx_;
-     std::map<std::string, std::thread*> threads_;
-     std::map<std::string, SReady*> ready_;
+     std::map<std::string, std::thread> threads_;
+     std::map<std::string, SReady> ready_;
      bool fWorkEnd_ = false;
 
 };
