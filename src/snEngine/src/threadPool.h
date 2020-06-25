@@ -59,7 +59,7 @@ public:
 
         if (fWorkEnd_) return;
 
-        ready_[node] = SReady();
+        ready_[node];
     }
     
     void startTask(const std::string& node){
@@ -172,10 +172,7 @@ public:
          ~SReady(){
              end();
          }
-         SReady& operator=(SReady&& other){
-             return *this;
-         }
-
+     
          std::string waitStart() {
              std::unique_lock<std::mutex> lk(lkStart_);
              if (!end_ && !run_){
