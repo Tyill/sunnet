@@ -67,8 +67,8 @@ namespace Test
             snet.addNode("C10", convOut, "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.binaryCrossEntropy), "Output");
                        
-            string imgPath = "c://cpp//other//skyNet//example//unet//images//";
-            string targPath = "c://cpp//other//skyNet//example//unet//labels//";
+            string imgPath = "c://cpp//other//sunnet//example//unet//images//";
+            string targPath = "c://cpp//other//sunnet//example//unet//labels//";
 
 
             uint batchSz = 3, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;

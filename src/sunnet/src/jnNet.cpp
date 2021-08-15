@@ -1,6 +1,6 @@
 //
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnet project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -29,7 +29,7 @@
 #include "Lib/rapidjson/document.h"
 #include "Lib/rapidjson/stringbuffer.h"
 #include "Lib/rapidjson/writer.h"
-#include "skynet/src/snet.h"
+#include "sunnet/src/snet.h"
 
 using namespace std;
 using namespace SN_Aux;

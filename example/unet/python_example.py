@@ -1,7 +1,7 @@
 
 import os
 
-from libskynet import*
+from libsunnetimport*
 import numpy as np
 import imageio
 import random
@@ -47,10 +47,10 @@ net.addNode("C10", convOut, "LS") \
 
 # loadImg
 
-pathImg = 'c:/cpp/other/skyNet/example/unet/images/'
+pathImg = 'c:/cpp/other/sunnet/example/unet/images/'
 imgList = os.listdir(pathImg)
 
-pathLabel= 'c:/cpp/other/skyNet/example/unet/labels/'
+pathLabel= 'c:/cpp/other/sunnet/example/unet/labels/'
 labelsList = os.listdir(pathLabel)
 
 bsz = 5

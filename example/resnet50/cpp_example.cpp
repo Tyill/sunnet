@@ -87,16 +87,16 @@ int main(int argc, char* argv[]){
     sn::Net snet = createNet();
   
     // using python for create file 'resNet50Weights.dat' as: 
-    // CMD: cd c:\cpp\other\skyNet\example\resnet50\
+    // CMD: cd c:\cpp\other\sunnet\example\resnet50\
     // CMD: python createNet.py  
     
-    if (!snet.loadAllWeightFromFile("c:/cpp/other/skyNet/example/resnet50/resNet50Weights.dat")){
+    if (!snet.loadAllWeightFromFile("c:/cpp/other/sunnet/example/resnet50/resNet50Weights.dat")){
         cout << "error loadAllWeightFromFile: " << snet.getLastErrorStr() << endl;
         system("pause");
         return -1;
     }
     
-    string imgPath = "c:/cpp/other/skyNet/example/resnet50/images/elephant.jpg";
+    string imgPath = "c:/cpp/other/sunnet/example/resnet50/images/elephant.jpg";
     
     int classCnt = 1000, w = 224, h = 224;
   
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]){
 
         int maxInx = distance(refOutput, max_element(refOutput, refOutput + classCnt));
 
-        // for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+        // for check: c:\cpp\other\sunnet\example\resnet50\imagenet_class_index.json
     
         cout << "inx " << maxInx << " accurate " << refOutput[maxInx] << snet.getLastErrorStr() << endl;
     }

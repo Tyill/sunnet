@@ -1,6 +1,6 @@
 ﻿//
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnetProject
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -84,7 +84,7 @@ namespace Test
                 .addNode("FC3", new sn.FullyConnected(10), "LS")
                 .addNode("LS", new sn.LossFunction(sn.lossType.type.softMaxToCrossEntropy), "Output");
 
-            string imgPath = "c://cpp//skyNet//example//cifar10//images//";
+            string imgPath = "c://cpp//sunnet//example//cifar10//images//";
 
                       
             uint batchSz = 100, classCnt = 10, w = 32, h = 32, d = 3; float lr = 0.001F;

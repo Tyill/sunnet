@@ -5,7 +5,7 @@
 #include <map>
 #include <filesystem>
 
-#include "../skynet/skyNet.h"
+#include "../sunnet/sunnet.h"
 
 #include "Lib/OpenCV_3.3.0/opencv2/core/core_c.h"
 #include "Lib/OpenCV_3.3.0/opencv2/core/core.hpp"
@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    string imgPath = "c:\\cpp\\skyNet\\example\\mnist\\images\\";
+    string imgPath = "c:\\cpp\\sunnet\\example\\mnist\\images\\";
   
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);

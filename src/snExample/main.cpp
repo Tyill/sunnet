@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
         .addNode("P2", sn::Pooling(), "S")
         .addNode("S", sn::Summator(), "Output");
       
-    string imgPath = "c:/cpp/other/skyNet/example/mnist/images/";
+    string imgPath = "c:/cpp/other/sunnet/example/mnist/images/";
 
     sn::Tensor inLayer(sn::snLSize(9, 9, 3, 1));
     sn::Tensor outLayer(sn::snLSize(2, 2, 1, 1));

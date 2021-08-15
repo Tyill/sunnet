@@ -1,6 +1,6 @@
 #
-# SkyNet Project
-# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/skynet>
+# sunnet project
+# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/sunnet>
 #
 # This code is licensed under the MIT License.
 #
@@ -40,12 +40,12 @@ with open("README.md", "r") as fh:
 __version__ = '1.0.4'
 
 setup(
-    name="libskynet-cu",
+    name="libsunnet-cu",
     version=__version__,
-    url="https://github.com/Tyill/skynet",
+    url="https://github.com/Tyill/sunnet",
     packages=find_packages(),
-    package_dir={'libskynet-cu': 'libskynet-cu'},
-    package_data={'libskynet-cu': ['*.so', '*.dll']},
+    package_dir={'libsunnet-cu': 'libsunnet-cu'},
+    package_data={'libsunnet-cu': ['*.so', '*.dll']},
     description="neural net with blackjack and hookers",
     long_description=long_description,
     long_description_content_type="text/markdown",

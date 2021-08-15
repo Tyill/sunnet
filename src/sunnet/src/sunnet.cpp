@@ -1,6 +1,6 @@
 //
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnet project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -24,8 +24,8 @@
 //
 
 #include "snBase/snBase.h"
-#include "skynet/skyNet.h"
-#include "skynet/src/snet.h"
+#include "sunnet/sunnet.h"
+#include "sunnet/src/snet.h"
 
 #define SN_VERSION "1.0.4" // 29.07.2019 a.medvedev
 // -add snOperatorCUDA project - everything related to CUDA ferried there
@@ -57,7 +57,7 @@ namespace SN_API{
     /// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
     /// @param[in] statusCBack - callback state. Not necessary
     /// @param[in] udata - user data. Not necessary
-    skyNet snCreateNet(const char* jnNet,
+    sunnet snCreateNet(const char* jnNet,
         char* outErr /*sz 256*/,
         snStatusCBack sts,
         snUData ud){
@@ -75,9 +75,9 @@ namespace SN_API{
     }
     
     /// get last error
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[out] outErr - parse error jnNet. "" - ok. The memory is allocated by the user
-    void snGetLastErrorStr(skyNet fn, char* outErr){
+    void snGetLastErrorStr(sunnet fn, char* outErr){
 
         if (!fn || !outErr) return;
 
@@ -85,7 +85,7 @@ namespace SN_API{
     }
 
     /// training - a cycle forward-back with auto-correction of weights
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] lr - learning rate
     /// @param[in] isz - input layer size
     /// @param[in] iLayer - input layer        
@@ -94,7 +94,7 @@ namespace SN_API{
     /// @param[in] targetData - target, the size must match the markup. The memory is allocated by the user
     /// @param[out] outAccurate - current accuracy
     /// @return true - ok
-    bool snTraining(skyNet fn,
+    bool snTraining(sunnet fn,
                     snFloat lr,
                     snLSize isz,
                     const snFloat* iLayer,
@@ -122,14 +122,14 @@ namespace SN_API{
     }
 
     /// forward pass
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] isLern - is lern?
     /// @param[in] isz - input layer size
     /// @param[in] iLayer - input layer       
     /// @param[in] osz - size of result. Sets for verification
     /// @param[out] outData - result, the size must match the markup. The memory is allocated by the user
     /// @return true - ok
-    bool snForward(skyNet fn,
+    bool snForward(sunnet fn,
                    bool isLern,
                    snLSize isz,
                    const snFloat* iLayer,
@@ -155,12 +155,12 @@ namespace SN_API{
     }
 
     /// backward pass
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] lr - learning rate
     /// @param[in] gsz - size of the error gradient. Sets for verification
     /// @param[in] grad - error gradient, the size must match the output
     /// @return true - ok
-    bool snBackward(skyNet fn,
+    bool snBackward(sunnet fn,
                     snFloat lr,
                     snLSize gsz,
                     const snFloat* grad){
@@ -183,12 +183,12 @@ namespace SN_API{
     }
 
     /// set weight of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[in] wsz - size
     /// @param[in] wData - weight        
     /// @return true - ok
-    bool snSetWeightNode(skyNet fn, const char* nodeName, snLSize wsz, const snFloat* wData){
+    bool snSetWeightNode(sunnet fn, const char* nodeName, snLSize wsz, const snFloat* wData){
 
         if (!fn) return false;
 
@@ -208,12 +208,12 @@ namespace SN_API{
     }
 
     /// get weight of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[out] wsz - output size
     /// @param[out] wData - output data. First pass NULL, then pass it to the same 
     /// @return true - ok
-    bool snGetWeightNode(skyNet fn, const char* nodeName, snLSize* wsz, snFloat** wData){
+    bool snGetWeightNode(sunnet fn, const char* nodeName, snLSize* wsz, snFloat** wData){
 
         if (!fn) return false;
 
@@ -234,12 +234,12 @@ namespace SN_API{
     }
 
     /// set batchNorm of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[in] bnsz - data size
     /// @param[in] bnData - data       
     /// @return true - ok
-    bool snSetBatchNormNode(skyNet fn, const char* nodeName, snLSize bnsz, SN_API::batchNorm bnData){
+    bool snSetBatchNormNode(sunnet fn, const char* nodeName, snLSize bnsz, SN_API::batchNorm bnData){
 
         if (!fn) return false;
 
@@ -264,12 +264,12 @@ namespace SN_API{
     }
 
     /// get batchNorm of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[out] bnsz - data size
     /// @param[out] bnData - data         
     /// @return true - ok
-    bool snGetBatchNormNode(skyNet fn, const char* nodeName, snLSize* bnsz, batchNorm* bnData){
+    bool snGetBatchNormNode(sunnet fn, const char* nodeName, snLSize* bnsz, batchNorm* bnData){
 
         if (!fn) return false;
 
@@ -298,12 +298,12 @@ namespace SN_API{
     }
     
     /// set input node (relevant for additional inputs)
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[in] isz - data size
     /// @param[in] inData - data       
     /// @return true - ok
-    bool snSetInputNode(skyNet fn,
+    bool snSetInputNode(sunnet fn,
                         const char* nodeName,
                         snLSize isz,
                         const snFloat* inData){
@@ -326,12 +326,12 @@ namespace SN_API{
     }
 
     /// get output node (relevant for additional inputs)
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[out] osz - data size
     /// @param[out] outData - data. First pass NULL, then pass it to the same 
     /// @return true - ok
-    bool snGetOutputNode(skyNet fn,
+    bool snGetOutputNode(sunnet fn,
                          const char* nodeName,
                          snLSize* osz,
                          snFloat** outData){
@@ -356,12 +356,12 @@ namespace SN_API{
     }
 
     /// set gradient node (relevant for additional outputs)
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[in] gsz - data size
     /// @param[in] gData - data        
     /// @return true - ok
-    bool snSetGradientNode(skyNet fn,
+    bool snSetGradientNode(sunnet fn,
         const char* nodeName,
         snLSize gsz,
         const snFloat* gData){
@@ -384,12 +384,12 @@ namespace SN_API{
     }
 
     /// get gradient node (relevant for additional outputs)
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[out] gsz - data size
     /// @param[out] gData - data. First pass NULL, then pass it to the same 
     /// @return true - ok
-    bool snGetGradientNode(skyNet fn,
+    bool snGetGradientNode(sunnet fn,
         const char* nodeName,
         snLSize* gsz,
         snFloat** gData){
@@ -413,11 +413,11 @@ namespace SN_API{
     }
 
     /// set params of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[in] jnParam - params of node in JSON. 
     /// @return true - ok
-    bool snSetParamNode(skyNet fn, const char* nodeName, const char* jnParam){
+    bool snSetParamNode(sunnet fn, const char* nodeName, const char* jnParam){
         
         if (!fn) return false;
 
@@ -430,11 +430,11 @@ namespace SN_API{
     }
 
     /// get params of node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] nodeName - name node
     /// @param[out] jnParam - params of node in JSON
     /// @return true - ok
-    bool snGetParamNode(skyNet fn, const char* nodeName, char** jnParam){
+    bool snGetParamNode(sunnet fn, const char* nodeName, char** jnParam){
 
         if (!fn) return false;
 
@@ -447,10 +447,10 @@ namespace SN_API{
     }
 
     /// get architecture of net
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[out] jnNet - architecture of net in JSON
     /// @return true - ok
-    bool snGetArchitecNet(skyNet fn, char** jnArchitecNet){
+    bool snGetArchitecNet(sunnet fn, char** jnArchitecNet){
 
         if (!fn) return false;
 
@@ -463,11 +463,11 @@ namespace SN_API{
     }
 
     /// add user callBack for 'userLayer' node
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] cbackName - name 
     /// @param[in] snUserCBack - callBack
     /// @return true - ok
-    bool snAddUserCallBack(skyNet fn, const char* cbackName, snUserCBack ucb, snUData ud){
+    bool snAddUserCallBack(sunnet fn, const char* cbackName, snUserCBack ucb, snUData ud){
 
         if (!fn) return false;
 
@@ -480,10 +480,10 @@ namespace SN_API{
     }
 
     /// save all weight's (and bnorm if exist) to file
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] filePath - path to file
     /// @return true - ok
-    bool snSaveAllWeightToFile(skyNet fn, const char* filePath){
+    bool snSaveAllWeightToFile(sunnet fn, const char* filePath){
 
         if (!fn) return false;
 
@@ -496,10 +496,10 @@ namespace SN_API{
     }
 
     /// load all weight's (and bnorm if exist) from file
-    /// @param[in] skyNet - object net
+    /// @param[in] sunnet - object net
     /// @param[in] filePath - path to file
     /// @return true - ok
-    bool snLoadAllWeightFromFile(skyNet fn, const char* filePath){
+    bool snLoadAllWeightFromFile(sunnet fn, const char* filePath){
 
         if (!fn) return false;
 
@@ -512,8 +512,8 @@ namespace SN_API{
     }
 
     /// free object net
-    /// @param[in] skyNet - object net
-    void snFreeNet(skyNet fn){
+    /// @param[in] sunnet - object net
+    void snFreeNet(sunnet fn){
 
         if (fn) delete static_cast<SNet*>(fn);
     }

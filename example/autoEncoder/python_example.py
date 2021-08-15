@@ -1,7 +1,7 @@
 
 import os
 
-from libskynet import*
+from libsunnetimport*
 import numpy as np
 import imageio
 import random
@@ -28,7 +28,7 @@ net.addNode('In', snOperator.Input(), 'FC1') \
 
 # loadImg
 imgList = []
-pathImg = 'c:\\cpp\\skyNet\\example\\autoEncoder\\images\\'
+pathImg = 'c:\\cpp\\sunnet\\example\\autoEncoder\\images\\'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 

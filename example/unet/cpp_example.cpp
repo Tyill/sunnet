@@ -81,8 +81,8 @@ int main(int argc, char* argv[]){
     snet.addNode("C10", convOut, "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::binaryCrossEntropy), "Output");
     
-    string imgPath = "c://cpp//other//skyNet//example//unet//images//";
-    string labelPath = "c://cpp//other//skyNet//example//unet//labels//";
+    string imgPath = "c://cpp//other//sunnet//example//unet//images//";
+    string labelPath = "c://cpp//other//sunnet//example//unet//labels//";
 
     int batchSz = 10, w = 512, h = 512, wo = 483, ho = 483; float lr = 0.001F;
     vector<string> imgName;

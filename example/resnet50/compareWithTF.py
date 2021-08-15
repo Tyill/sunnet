@@ -1,5 +1,5 @@
 
-from libskynet import*
+from libsunnetimport*
 import numpy as np
 import time
 from keras.preprocessing import image
@@ -17,7 +17,7 @@ if (not snResNet50.setWeights(net, weightTF)):
 
 #################################
 
-img_path = 'c:\\cpp\\other\\skyNet\\example\\resnet50\\images\\elephant.jpg'
+img_path = 'c:\\cpp\\other\\sunnet\\example\\resnet50\\images\\elephant.jpg'
 img = image.load_img(img_path, target_size=(224, 224))
 x = image.img_to_array(img)
 x = np.expand_dims(x, axis=0)
@@ -34,7 +34,7 @@ for i in range(100):
  print('Predicted:', mx, 'val', outAr[0][0][0][mx], 'time', time.time() - st)
 
 
-# for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+# for check: c:\cpp\other\sunnet\example\resnet50\imagenet_class_index.json
 
 
 #################################

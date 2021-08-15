@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
         .addNode("FC6", sn::FullyConnected(784, sn::active::sigmoid), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::binaryCrossEntropy), "Output");
 
-    string imgPath = "c://cpp//skyNet//example//autoEncoder//images//";
+    string imgPath = "c://cpp//sunnet//example//autoEncoder//images//";
 
     int classCnt = 5, batchSz = 100, w = 28, h = 28;
     float lr = 0.001F;

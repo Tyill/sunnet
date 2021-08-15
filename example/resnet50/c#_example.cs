@@ -1,6 +1,6 @@
 ﻿//
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnet project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -43,12 +43,12 @@ namespace Test
         {          
                       
             // using python for create file 'resNet50Weights.dat' as: 
-            // CMD: cd c:\cpp\other\skyNet\example\resnet50\
+            // CMD: cd c:\cpp\other\sunnet\example\resnet50\
             // CMD: python createNet.py  
 
-            string arch = File.ReadAllText(@"c:\cpp\other\skyNet\example\resnet50\resNet50Struct.json", Encoding.UTF8);
+            string arch = File.ReadAllText(@"c:\cpp\other\sunnet\example\resnet50\resNet50Struct.json", Encoding.UTF8);
 
-            sn.Net snet = new sn.Net(arch, @"c:\cpp\other\skyNet\example\resnet50\resNet50Weights.dat");
+            sn.Net snet = new sn.Net(arch, @"c:\cpp\other\sunnet\example\resnet50\resNet50Weights.dat");
 
             if (snet.getLastErrorStr().Count() > 0)
             {
@@ -57,7 +57,7 @@ namespace Test
                 return;
             }
 
-            string imgPath = @"c:\cpp\other\skyNet\example\resnet50\images\elephant.jpg";
+            string imgPath = @"c:\cpp\other\sunnet\example\resnet50\images\elephant.jpg";
                                   
             int classCnt = 1000, w = 224, h = 224;
 
@@ -131,7 +131,7 @@ namespace Test
                 }
              }
 
-            // for check: c:\cpp\other\skyNet\example\resnet50\imagenet_class_index.json
+            // for check: c:\cpp\other\sunnet\example\resnet50\imagenet_class_index.json
                 
             Console.WriteLine("inx " + maxOutInx.ToString() + " accurate " + maxval.ToString() + " " + snet.getLastErrorStr());
             Console.ReadKey();

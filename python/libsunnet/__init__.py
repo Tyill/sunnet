@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# SkyNet Project
-# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/skynet>
+# sunnet project
+# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/sunnet>
 #
 # This code is licensed under the MIT License.
 #
@@ -35,9 +35,9 @@ from . import snOperator
 from . import snWeight
 from . import snResNet50
 
-libname = 'libskynet.so'
+libname = 'libsunnet.so'
 if os.name == 'nt':
-    libname = 'libskynet.dll'
+    libname = 'libsunnet.dll'
 
 libpath = os.path.dirname(__file__)
 

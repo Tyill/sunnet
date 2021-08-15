@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
         .addNode("FC3", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://cpp//other//skyNet//example//cifar10//images//";
+    string imgPath = "c://cpp//other//sunnet//example//cifar10//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28, d = 3; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);

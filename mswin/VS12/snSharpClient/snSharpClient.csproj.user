@@ -12,6 +12,6 @@
     <ProjectView>ProjectFiles</ProjectView>
   </PropertyGroup>
   <PropertyGroup>
-    <ReferencePath>C:\C++\skyNet\c_sharp\</ReferencePath>
+    <ReferencePath>C:\C++\sunnet\c_sharp\</ReferencePath>
   </PropertyGroup>
 </Project>

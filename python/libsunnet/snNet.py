@@ -1,6 +1,6 @@
 #
-# SkyNet Project
-# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/skynet>
+# sunnet project
+# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/sunnet>
 #
 # This code is licensed under the MIT License.
 #
@@ -23,9 +23,9 @@
 # THE SOFTWARE.
 import ctypes
 
-from libskynet.__init__ import _LIB
+from libsunnet.__init__ import _LIB
 import json
-from libskynet.snBase import*
+from libsunnet.snBase import*
 import numpy
 
 class Net():

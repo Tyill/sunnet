@@ -1,4 +1,4 @@
-from libskynet import*
+from libsunnet import*
 import json
 
 def main():

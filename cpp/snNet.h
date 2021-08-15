@@ -1,6 +1,6 @@
 //
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnet project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -30,7 +30,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
-#include "../src/skynet/skyNet.h"
+#include "../src/sunnet/sunnet.h"
 #include "snTensor.h"
 
 namespace SN_API{
@@ -277,7 +277,7 @@ namespace SN_API{
         std::vector<node> nodes_;
         std::vector<uCBack> ucb_;
 
-        skyNet net_ = nullptr;
+        sunnet net_ = nullptr;
 
         std::string netStruct_;
 

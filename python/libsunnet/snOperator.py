@@ -1,6 +1,6 @@
 #
-# SkyNet Project
-# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/skynet>
+# sunnet project
+# Copyright (C) 2018 by Contributors <https:#github.com/Tyill/sunnet>
 #
 # This code is licensed under the MIT License.
 #
@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from libskynet.snType import *
+from libsunnet.snType import *
 
 class Input():
     """Input layer."""

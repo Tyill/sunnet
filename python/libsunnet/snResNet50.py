@@ -1,5 +1,5 @@
 
-from libskynet import snOperator, snType, snNet
+from libsunnet import snOperator, snType, snNet
 import numpy as np
 
 ######## Create net
@@ -247,7 +247,7 @@ def _setConvWeight(net, wName, bnName, weight, outSz: (), isIdnt=True) -> bool:
 def setWeights(net, weightTF) -> bool:
     """
     setWeights
-    :param net: skynet
+    :param net: sunnet
     :param weightTF: weight TF
     :return: true - ok
     """

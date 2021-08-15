@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
         .addNode("FC2", sn::FullyConnected(10), "LS")
         .addNode("LS", sn::LossFunction(sn::lossType::softMaxToCrossEntropy), "Output");
 
-    string imgPath = "c://cpp//skyNet//example//mnist//images//";
+    string imgPath = "c://cpp//sunnet//example//mnist//images//";
     
     int batchSz = 100, classCnt = 10, w = 28, h = 28; float lr = 0.001F;
     vector<vector<string>> imgName(classCnt);

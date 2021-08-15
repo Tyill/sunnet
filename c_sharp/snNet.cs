@@ -1,6 +1,6 @@
 ﻿//
-// SkyNet Project
-// Copyright (C) 2018 by Contributors <https://github.com/Tyill/skynet>
+// sunnet project
+// Copyright (C) 2018 by Contributors <https://github.com/Tyill/sunnet>
 //
 // This code is licensed under the MIT License.
 //
@@ -60,7 +60,7 @@ namespace SN_API
         private List<uCBack> ucb_ = new List<uCBack>();             
         private void* net_ = null;             
         
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void snVersionLib(IntPtr ver); 
        
         /// <summary>
@@ -93,7 +93,7 @@ namespace SN_API
                 loadAllWeightFromFile(weightPath);            
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void snFreeNet(void* net); 
 
         ~Net()
@@ -102,7 +102,7 @@ namespace SN_API
                 snFreeNet(net_);        
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void snGetLastErrorStr(void* net, IntPtr err); 
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace SN_API
             return this;
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snSetParamNode(void* net, IntPtr name, IntPtr prms); 
                 
         /// <summary>
@@ -179,7 +179,7 @@ namespace SN_API
             return ok;
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snForward(void* net, bool isLern, snLSize isz, float* iLayer, snLSize osz, float* outData); 
          
         /// <summary>
@@ -196,7 +196,7 @@ namespace SN_API
             return snForward(net_, isLern, inTns.size(), inTns.data(), outTns.size(), outTns.data());
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snBackward(void* net, float lr, snLSize gsz, float* grad); 
          
         /// <summary>
@@ -213,7 +213,7 @@ namespace SN_API
             return snBackward(net_, lr, gradTns.size(), gradTns.data());
         }
            
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snTraining(void* net, float lr, snLSize insz, float* iLayer,
             snLSize osz, float* outData, float* targetData, float* outAccurate); 
         
@@ -241,7 +241,7 @@ namespace SN_API
             return ok;
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snSetWeightNode(void* net, IntPtr name, snLSize wsz, float* wData);
                    
         /// <summary>
@@ -264,10 +264,10 @@ namespace SN_API
             return ok;
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snGetWeightNode(void* net, IntPtr name, snLSize* wsz, float** wData);
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void snFreeResources(float* data, char* str);
                 
         /// <summary>
@@ -298,7 +298,7 @@ namespace SN_API
             return ok;
         }
         
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snGetOutputNode(void* net, IntPtr name, snLSize* wsz, float** wData);
                
         /// <summary>
@@ -329,7 +329,7 @@ namespace SN_API
             return ok;
         }
         
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snSaveAllWeightToFile(void* net, IntPtr path);
                
         /// <summary>
@@ -351,7 +351,7 @@ namespace SN_API
             return ok;
         }
             
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snLoadAllWeightFromFile(void* net, IntPtr path); 
 
         /// <summary>
@@ -388,7 +388,7 @@ namespace SN_API
         //    return ok;
         //}
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern bool snGetArchitecNet(void* net, char** arch); 
 
         /// <summary>
@@ -468,7 +468,7 @@ namespace SN_API
             return createNetJN(ss);
         }
 
-        [DllImport("libskynet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libsunnet.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern void* snCreateNet(IntPtr jnnet, IntPtr isnet); 
 
         private bool createNetJN(string jnNet){

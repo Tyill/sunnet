@@ -1,4 +1,4 @@
-from libskynet import*
+from libsunnetimport*
 import numpy as np
 import imageio
 import random
@@ -25,7 +25,7 @@ net.addNode('In', snOperator.Input(), 'C1') \
 
 # loadImg
 imgList = []
-pathImg = 'c:/cpp/other/skyNet/example/mnist/images/'
+pathImg = 'c:/cpp/other/sunnet/example/mnist/images/'
 for i in range(10):
    imgList.append(os.listdir(pathImg + str(i)))
 

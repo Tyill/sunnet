@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
-PROJECT(skynet)
+PROJECT(sunnet)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Builds/$<CONFIG>/${CMAKE_VS_PLATFORM_NAME})
@@ -47,7 +47,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(snAux)
 add_subdirectory(snBase)
 add_subdirectory(snEngine)
-add_subdirectory(skynet)
+add_subdirectory(sunnet)
 
 if(USE_CUDA)
  add_subdirectory(snOperatorCUDA)

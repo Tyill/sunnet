@@ -15,24 +15,24 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\skynet\src\dllmain.cpp">
+    <ClCompile Include="..\..\src\sunnet\src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\skynet\src\jnNet.cpp">
+    <ClCompile Include="..\..\src\sunnet\src\jnNet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\skynet\src\skynet.cpp">
+    <ClCompile Include="..\..\src\sunnet\src\sunnet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\skynet\src\snet.cpp">
+    <ClCompile Include="..\..\src\sunnet\src\snet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\skynet\src\snet.h">
+    <ClInclude Include="..\..\src\sunnet\src\snet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\skynet\skyNet.h">
+    <ClInclude Include="..\..\src\sunnet\sunnet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

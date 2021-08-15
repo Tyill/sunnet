@@ -6,7 +6,7 @@ FILE(GLOB_RECURSE SRC_exmpl "*.cpp" "*.h")
 
 add_executable(snExample ${SRC_exmpl})
 
-target_link_libraries(snExample skynet)
+target_link_libraries(snExample sunnet)
 
 if (UNIX)
     target_link_libraries(snExample stdc++fs)

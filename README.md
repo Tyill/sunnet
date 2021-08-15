@@ -1,19 +1,19 @@
 
-SkyNet is a light deep learning library. 
+Sunnet is a light deep learning library. 
 
 | **`Linux/Windows`** | **`License`** |
 |------------------|------------------|
-|[![Build Status](https://travis-ci.com/Tyill/skynet.svg?branch=master)](https://travis-ci.com/Tyill/skynet)|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)|
+|[![Build Status](https://travis-ci.com/Tyill/sunnet.svg?branch=master)](https://travis-ci.com/Tyill/sunnet)|[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)|
 
 [ResNet cpp-example for Win](https://github.com/Tyill/storage/tree/master/resnetDemo/Builds) 
 
-<img src="https://github.com/Tyill/skynet/blob/master/docs/resnetExample.gif" width="600" height="300" />
+<img src="https://github.com/Tyill/sunnet/blob/master/docs/resnetExample.gif" width="600" height="300" />
 
-[Compare with Tensorflow](https://github.com/Tyill/skynet/blob/master/example/resnet50/compareWithTF.py), inference ResNet50. PC: i5-2400, GF1050, Win7, MSVC12.
+[Compare with Tensorflow](https://github.com/Tyill/sunnet/blob/master/example/resnet50/compareWithTF.py), inference ResNet50. PC: i5-2400, GF1050, Win7, MSVC12.
  
 |                  | **CPU: time/img, ms** | **GPU: time/img, ms** | **CPU: RAM, Mb** | **GPU: RAM, Mb** |
 |------------------|-----------------------|-----------------------|------------------|------------------|
-|    Skynet        |        195            |          15           |       600        |       800        |               
+|    Sunnet        |        195            |          15           |       600        |       800        |               
 |    Tensorflow    |        250            |          25           |       400        |       1400       |               
 
 ## Features
@@ -66,16 +66,10 @@ for n in range(1000):
 
 ```
 
-## Install in Python
-
-* pip install libskynet     -  CPU
-
-* pip install libskynet-cu  -  CUDA + cuDNN7.3.1
-
  
-## [Wiki](https://github.com/Tyill/skynet/wiki) 
+## [Wiki](https://github.com/Tyill/sunnet/wiki) 
 
-## [Examples](https://github.com/Tyill/skynet/tree/master/example) 
+## [Examples](https://github.com/Tyill/sunnet/tree/master/example) 
  
 ## License
 Licensed under an [MIT-2.0]-[license](LICENSE).
